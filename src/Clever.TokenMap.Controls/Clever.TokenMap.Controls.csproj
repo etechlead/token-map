@@ -8,4 +8,8 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj" />
+  </ItemGroup>
 </Project>

@@ -49,6 +49,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public SummaryViewModel Summary { get; }
 
+    public ProjectNode? TreemapRootNode { get; private set; }
+
     [ObservableProperty]
     private AnalysisState analysisState = AnalysisState.Idle;
 
@@ -122,9 +124,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ApplySnapshot(ProjectSnapshot snapshot)
     {
         var rootNode = new ProjectTreeNodeViewModel(snapshot.Root);
+        TreemapRootNode = snapshot.Root;
         Tree.LoadRoot(rootNode);
         Details.ShowNode(rootNode);
         Summary.SetCompleted(snapshot);
+        OnPropertyChanged(nameof(TreemapRootNode));
     }
 
     private void CancelAnalysis()

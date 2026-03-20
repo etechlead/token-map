@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Clever.TokenMap.Controls;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
@@ -26,6 +27,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(window.FindControl<Control>("TreemapPane"));
         Assert.NotNull(window.FindControl<Control>("DetailsPane"));
         Assert.NotNull(window.FindControl<Control>("StatusStrip"));
+        Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
     }
 
     [AvaloniaFact]
@@ -67,6 +69,59 @@ public sealed class MainWindowLayoutTests
 
         var statusText = window.FindControl<TextBlock>("StatusValueText");
         Assert.Equal("Cancelled", statusText?.Text);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_RendersSnapshotWithoutChildControls()
+    {
+        var control = new TreemapControl
+        {
+            Width = 320,
+            Height = 180,
+            RootNode = CreateSnapshot().Root,
+            Metric = "Tokens",
+        };
+        var window = new Window
+        {
+            Content = control,
+            Width = 360,
+            Height = 240,
+        };
+
+        window.Show();
+
+        Assert.NotEmpty(control.NodeVisuals);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_HitTest_ReturnsRenderedNode()
+    {
+        var control = new TreemapControl
+        {
+            Width = 320,
+            Height = 180,
+            RootNode = CreateSnapshot().Root,
+            Metric = "Tokens",
+        };
+        var window = new Window
+        {
+            Content = control,
+            Width = 360,
+            Height = 240,
+        };
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        var point = new Avalonia.Point(
+            visual.Bounds.X + (visual.Bounds.Width / 2),
+            visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+        var hitNode = control.HitTestNode(point);
+
+        Assert.NotNull(hitNode);
+        Assert.Equal(visual.Node.RelativePath, hitNode.RelativePath);
+        Assert.Null(control.HitTestNode(new Avalonia.Point(-10, -10)));
     }
 
     private static ProjectSnapshot CreateSnapshot() =>

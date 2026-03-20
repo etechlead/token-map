@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 5 завершён**
-- Цель текущего цикла: **Этап 6 - Treemap layout engine и TreemapControl**
+- Статус проекта: **Этап 6 завершён**
+- Цель текущего цикла: **Этап 7 - Hover tooltip, selection sync, details panel справа**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -14,7 +14,7 @@
 - [x] Этап 3 - Token counting и Tokei integration
 - [x] Этап 4 - Analyzer orchestration, progress, cancel, cache
 - [x] Этап 5 - Main window, ViewModels, layout
-- [ ] Этап 6 - Treemap layout engine и TreemapControl
+- [x] Этап 6 - Treemap layout engine и TreemapControl
 - [ ] Этап 7 - Hover tooltip, selection sync, details panel справа
 - [ ] Этап 8 - Polish MVP и Windows-first publish
 - [ ] Этап 9 - MVP handoff
@@ -169,12 +169,35 @@
   - полноценная selection sync tree ↔ treemap ↔ details закрывается только после появления treemap;
   - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
 
+### 2026-03-20
+- Этап: **Этап 6 - Treemap layout engine и TreemapControl**
+- Что сделано:
+  - добавлен `Clever.TokenMap.Controls` → `Clever.TokenMap.Core` reference, чтобы treemap работал напрямую с `ProjectNode`;
+  - реализован `SquarifiedTreemapLayout`, который раскладывает узлы по выбранной метрике `Tokens / Total lines / Code lines` и строит плоский набор `TreemapNodeVisual`;
+  - реализован `TreemapControl` с custom rendering без дочерних контролов на каждый прямоугольник;
+  - treemap интегрирован в `MainWindow.axaml`, а `MainWindowViewModel` теперь прокидывает в него `TreemapRootNode`;
+  - control считает layout на arrange/property change, рендерит placeholder для пустого состояния и поддерживает базовый hit testing через `HitTestNode`, `HoveredNode` и `PressedNode`;
+  - добавлены unit tests на границы layout, отсутствие overlap у верхнего уровня и масштабирование по выбранной метрике;
+  - добавлены headless tests на присутствие treemap в окне, базовый render smoke и hit testing по нарисованному прямоугольнику.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - layout возвращает плоский набор visual-моделей, а не отдельное visual tree, чтобы treemap оставался дешёвым для больших snapshot;
+  - для hit testing выбирается самый глубокий прямоугольник под точкой, потому что список visual-узлов строится в порядке parent → children;
+  - визуальные hover/selection state и синхронизация с остальным UI сознательно отложены на следующий этап, но механика hit testing уже подготовлена.
+- Открытые вопросы / Отложено:
+  - tooltip, persistent highlight и tree ↔ treemap ↔ details sync остаются на Этапе 7;
+  - styling treemap пока утилитарный и будет дошлифован на последующих этапах;
+  - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
 - Cache пока только in-memory и живёт в пределах процесса.
 - `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
 - `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
-- Treemap пока остаётся placeholder, selection sync с ним ещё не реализована.
+- Treemap уже рендерится как custom control, но hover tooltip, persistent selection highlight и sync с деревом ещё не завершены.
 - Linux support не доводится в MVP.
 - Installer/signing не входят в MVP.
 - Single-file publish не входит в MVP.

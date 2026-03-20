@@ -1,4 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
+        xmlns:controls="using:Clever.TokenMap.Controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -175,19 +176,19 @@
                             BorderBrush="#233041"
                             BorderThickness="1"
                             CornerRadius="8"
-                            Padding="24">
-                        <StackPanel HorizontalAlignment="Center"
-                                    VerticalAlignment="Center"
-                                    Spacing="10">
-                            <TextBlock Classes="panel-body"
-                                       HorizontalAlignment="Center"
-                                       Text="Treemap custom control will be added in a dedicated stage." />
+                            Padding="8">
+                        <Grid RowDefinitions="*,Auto"
+                              RowSpacing="10">
+                            <controls:TreemapControl Name="ProjectTreemapControl"
+                                                     RootNode="{Binding TreemapRootNode}"
+                                                     Metric="{Binding Toolbar.SelectedMetric}" />
                             <TextBlock Name="ProgressTextBlock"
+                                       Grid.Row="1"
                                        Classes="panel-body"
                                        HorizontalAlignment="Center"
                                        Foreground="#8FA3B8"
                                        Text="{Binding Summary.ProgressText}" />
-                        </StackPanel>
+                        </Grid>
                     </Border>
                 </Grid>
             </Border>
