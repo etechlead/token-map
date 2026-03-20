@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 1 завершён**
-- Цель текущего цикла: **Этап 2 - Ignore / exclude policy**
+- Статус проекта: **Этап 2 завершён**
+- Цель текущего цикла: **Этап 3 - Token counting и Tokei integration**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -10,7 +10,7 @@
 ## Этапы
 - [x] Этап 0 - Bootstrap solution
 - [x] Этап 1 - Core contracts и scanner skeleton
-- [ ] Этап 2 - Ignore / exclude policy
+- [x] Этап 2 - Ignore / exclude policy
 - [ ] Этап 3 - Token counting и Tokei integration
 - [ ] Этап 4 - Analyzer orchestration, progress, cancel, cache
 - [ ] Этап 5 - Main window, ViewModels, layout
@@ -23,7 +23,7 @@
 - Стек MVP: `.NET 10 + Avalonia stable + CommunityToolkit.Mvvm`.
 - Версии пакетов централизованы через `Directory.Packages.props`.
 - SDK закреплён через `global.json` на `10.0.201`.
-- Добавлен `.gitignore`, чтобы последующие этапы не тащили `bin/obj` в коммиты.
+- Репозиторий очищен от build-артефактов через `.gitignore`.
 - Tokei используется в MVP как sidecar.
 - Treemap реализуется собственным custom control.
 - UI layout: toolbar сверху, tree слева, treemap по центру, details справа.
@@ -79,8 +79,29 @@
   - реальные токены, text/binary detection и интеграция с `tokei` остаются на Этап 3;
   - orchestration analyzer и cache остаются на Этап 4.
 
+### 2026-03-20
+- Этап: **Этап 2 - Ignore / exclude policy**
+- Что сделано:
+  - добавлен parser/evaluator ignore-правил для `.gitignore` и `.ignore`;
+  - `FileSystemProjectScanner` теперь учитывает root и nested ignore-файлы в пределах поддерева;
+  - добавлены default excludes для `.git`, `.vs`, `.idea`, `.vscode`, `node_modules`, `bin`, `obj`, `dist`, `build`, `out`, `coverage`, `target`, `Debug`, `Release`;
+  - добавлена обработка user excludes относительно root через `ScanOptions.UserExcludes`;
+  - исключённые пути больше не попадают в дерево snapshot;
+  - добавлен fixture-проект `tests/Fixtures/IgnorePolicyFixture` и тесты на default excludes, nested `.gitignore`/`.ignore`, toggles и user excludes.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - default excludes реализованы как жёсткие directory-name rules, применяемые рекурсивно;
+  - user excludes трактуются как root-relative patterns и не расширяются на одноимённые вложенные пути;
+  - nested ignore rules применяются только к своему поддереву через контекст правил, который накапливается во время обхода scanner.
+- Открытые вопросы / Отложено:
+  - полная gitignore-совместимость за пределами MVP-необходимого поднабора правил не добавлялась;
+  - метрики токенов и LOC остаются на следующем этапе.
+
 ## Известные ограничения на текущем этапе
-- Scanner пока не применяет `.gitignore`, `.ignore`, дефолтные excludes и user excludes.
+- Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
 - Метрики `Tokens` и LOC пока не рассчитываются, `NodeMetrics` остаются пустыми.
 - UI пока не подключён к scanner и остаётся shell-заглушкой.
 - Linux support не доводится в MVP.

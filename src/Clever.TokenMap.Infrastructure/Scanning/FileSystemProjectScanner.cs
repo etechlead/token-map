@@ -2,14 +2,21 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Filtering;
+using Clever.TokenMap.Infrastructure.Filtering.Ignore;
 using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Scanning;
 
 public sealed class FileSystemProjectScanner : IProjectScanner
 {
+    private static readonly string[] IgnoreFileNames = [".gitignore", ".ignore"];
+
+    private readonly DefaultExcludeMatcher _defaultExcludeMatcher = new();
+    private readonly IgnoreFileEvaluator _ignoreFileEvaluator = new();
+    private readonly IgnoreFileParser _ignoreFileParser = new();
     private readonly IPathFilter _pathFilter;
     private readonly PathNormalizer _pathNormalizer;
+    private readonly UserExcludeMatcher _userExcludeMatcher = new();
     private int _processedNodeCount;
 
     public FileSystemProjectScanner(IPathFilter? pathFilter = null, PathNormalizer? pathNormalizer = null)
@@ -41,7 +48,9 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         var rootNode = ScanDirectory(
             directoryInfo,
             normalizedRootPath,
+            IgnoreDirectoryContext.Empty,
             isRoot: true,
+            options,
             warnings,
             progress,
             cancellationToken);
@@ -61,7 +70,9 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private ProjectNode ScanDirectory(
         DirectoryInfo directoryInfo,
         string normalizedRootPath,
+        IgnoreDirectoryContext parentIgnoreContext,
         bool isRoot,
+        ScanOptions options,
         List<string> warnings,
         IProgress<AnalysisProgress>? progress,
         CancellationToken cancellationToken)
@@ -78,6 +89,12 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             diagnosticMessage: null);
 
         ReportProgress(progress, normalizedRelativePath);
+        var ignoreContext = LoadIgnoreContext(
+            directoryInfo,
+            normalizedRootPath,
+            parentIgnoreContext,
+            options,
+            warnings);
 
         FileSystemInfo[] entries;
         try
@@ -108,6 +125,16 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             var entryRelativePath = _pathNormalizer.NormalizeRelativePath(normalizedRootPath, entry.FullName);
             var isDirectory = entry.Attributes.HasFlag(FileAttributes.Directory);
 
+            if (IsExcludedByBuiltInPolicy(options, entryRelativePath, isDirectory))
+            {
+                continue;
+            }
+
+            if (!_ignoreFileEvaluator.IsIncluded(ignoreContext, entryRelativePath, isDirectory))
+            {
+                continue;
+            }
+
             if (!_pathFilter.IsIncluded(entry.FullName, entryRelativePath, isDirectory))
             {
                 continue;
@@ -133,7 +160,9 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                     node.Children.Add(ScanDirectory(
                         (DirectoryInfo)entry,
                         normalizedRootPath,
+                        ignoreContext,
                         isRoot: false,
+                        options,
                         warnings,
                         progress,
                         cancellationToken));
@@ -217,4 +246,58 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         or IOException
         or DirectoryNotFoundException
         or PathTooLongException;
+
+    private IgnoreDirectoryContext LoadIgnoreContext(
+        DirectoryInfo directoryInfo,
+        string normalizedRootPath,
+        IgnoreDirectoryContext parentContext,
+        ScanOptions options,
+        List<string> warnings)
+    {
+        var additionalRules = new List<IgnoreRule>();
+        var directoryRelativePath = _pathNormalizer.NormalizeRelativePath(normalizedRootPath, directoryInfo.FullName);
+
+        foreach (var ignoreFileName in IgnoreFileNames)
+        {
+            if (ignoreFileName == ".gitignore" && !options.RespectGitIgnore)
+            {
+                continue;
+            }
+
+            if (ignoreFileName == ".ignore" && !options.RespectDotIgnore)
+            {
+                continue;
+            }
+
+            var ignoreFilePath = Path.Combine(directoryInfo.FullName, ignoreFileName);
+            if (!File.Exists(ignoreFilePath))
+            {
+                continue;
+            }
+
+            try
+            {
+                additionalRules.AddRange(_ignoreFileParser.Parse(ignoreFilePath, directoryRelativePath));
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                warnings.Add($"Unable to read '{ignoreFilePath}': {exception.Message}");
+            }
+        }
+
+        return additionalRules.Count == 0
+            ? parentContext
+            : parentContext.Append(additionalRules);
+    }
+
+    private bool IsExcludedByBuiltInPolicy(ScanOptions options, string normalizedRelativePath, bool isDirectory)
+    {
+        if (options.UseDefaultExcludes &&
+            _defaultExcludeMatcher.IsExcluded(normalizedRelativePath, isDirectory))
+        {
+            return true;
+        }
+
+        return _userExcludeMatcher.IsExcluded(options.UserExcludes, normalizedRelativePath, isDirectory);
+    }
 }
