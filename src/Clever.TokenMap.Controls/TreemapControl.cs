@@ -5,6 +5,7 @@ using Avalonia.Media;
 using Clever.TokenMap.Controls.Layout;
 using Clever.TokenMap.Controls.Models;
 using Clever.TokenMap.Core.Models;
+using System.IO;
 
 namespace Clever.TokenMap.Controls;
 
@@ -15,6 +16,9 @@ public sealed class TreemapControl : Control
 
     public static readonly StyledProperty<ProjectNode?> RootNodeProperty =
         AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(RootNode));
+
+    public static readonly StyledProperty<ProjectNode?> SelectedNodeProperty =
+        AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(SelectedNode), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
     private readonly SquarifiedTreemapLayout _layout = new();
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
@@ -37,9 +41,17 @@ public sealed class TreemapControl : Control
         set => SetValue(RootNodeProperty, value);
     }
 
+    public ProjectNode? SelectedNode
+    {
+        get => GetValue(SelectedNodeProperty);
+        set => SetValue(SelectedNodeProperty, value);
+    }
+
     internal ProjectNode? HoveredNode { get; private set; }
 
     internal ProjectNode? PressedNode { get; private set; }
+
+    internal string? TooltipText { get; private set; }
 
     internal IReadOnlyList<TreemapNodeVisual> NodeVisuals => _nodeVisuals;
 
@@ -57,6 +69,11 @@ public sealed class TreemapControl : Control
         if (change.Property == MetricProperty || change.Property == RootNodeProperty)
         {
             UpdateVisuals(Bounds.Size);
+            InvalidateVisual();
+        }
+
+        if (change.Property == SelectedNodeProperty)
+        {
             InvalidateVisual();
         }
     }
@@ -89,9 +106,7 @@ public sealed class TreemapControl : Control
         {
             var fill = new SolidColorBrush(CreateColor(visual.Node.Id, visual.Depth));
             context.FillRectangle(fill, visual.Bounds);
-            context.DrawRectangle(
-                pen: new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1),
-                rect: visual.Bounds);
+            context.DrawRectangle(CreateBorderPen(visual.Node), visual.Bounds);
 
             if (visual.Bounds.Width >= 56 && visual.Bounds.Height >= 22)
             {
@@ -110,19 +125,19 @@ public sealed class TreemapControl : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
-        HoveredNode = HitTestNode(e.GetPosition(this));
+        UpdateHover(e.GetPosition(this));
     }
 
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
-        HoveredNode = null;
+        ClearHover();
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        PressedNode = HitTestNode(e.GetPosition(this));
+        SelectNodeAt(e.GetPosition(this));
     }
 
     private void DrawPlaceholder(DrawingContext context, string message)
@@ -167,6 +182,93 @@ public sealed class TreemapControl : Control
 
         return null;
     }
+
+    internal void UpdateHover(Point point)
+    {
+        var hoveredNode = HitTestNode(point);
+        if (ReferenceEquals(HoveredNode, hoveredNode))
+        {
+            return;
+        }
+
+        HoveredNode = hoveredNode;
+        TooltipText = hoveredNode is null ? null : BuildTooltip(hoveredNode);
+        ToolTip.SetTip(this, TooltipText);
+        InvalidateVisual();
+    }
+
+    internal void ClearHover()
+    {
+        if (HoveredNode is null && TooltipText is null)
+        {
+            return;
+        }
+
+        HoveredNode = null;
+        TooltipText = null;
+        ToolTip.SetTip(this, null);
+        InvalidateVisual();
+    }
+
+    internal void SelectNodeAt(Point point)
+    {
+        PressedNode = HitTestNode(point);
+        SelectedNode = PressedNode;
+    }
+
+    private Pen CreateBorderPen(ProjectNode node)
+    {
+        var isSelected = SelectedNode?.Id == node.Id;
+        var isHovered = HoveredNode?.Id == node.Id;
+
+        if (isSelected)
+        {
+            return new Pen(new SolidColorBrush(Color.Parse("#FFF0B3")), 2);
+        }
+
+        if (isHovered)
+        {
+            return new Pen(new SolidColorBrush(Color.Parse("#B7D7FF")), 2);
+        }
+
+        return new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1);
+    }
+
+    private string BuildTooltip(ProjectNode node)
+    {
+        var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
+        var share = RootNode is null
+            ? "n/a"
+            : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
+        var breakdown = node.Metrics.CodeLines is null && node.Metrics.CommentLines is null && node.Metrics.BlankLines is null
+            ? "n/a"
+            : $"{node.Metrics.CodeLines ?? 0:N0}/{node.Metrics.CommentLines ?? 0:N0}/{node.Metrics.BlankLines ?? 0:N0}";
+        var languageOrExtension = node.Metrics.Language
+            ?? (node.Kind == Core.Enums.ProjectNodeKind.File
+                ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
+                : "n/a");
+
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nCode/Comments/Blanks: {breakdown}\nLanguage/Ext: {languageOrExtension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+    }
+
+    private double GetMetricValue(ProjectNode node) =>
+        Metric switch
+        {
+            "Total lines" => node.Metrics.TotalLines,
+            "Code lines" => node.Metrics.CodeLines ?? 0,
+            _ => node.Metrics.Tokens,
+        };
+
+    private static string FormatShare(double current, double total) =>
+        total <= 0 || current <= 0 ? "n/a" : $"{current / total:P1}";
+
+    private static string GetKindText(ProjectNode node) =>
+        node.Kind switch
+        {
+            Core.Enums.ProjectNodeKind.Root => "Root",
+            Core.Enums.ProjectNodeKind.Directory => "Directory",
+            _ => "File",
+        };
 
     private static Color CreateColor(string seed, int depth)
     {

@@ -181,7 +181,8 @@
                               RowSpacing="10">
                             <controls:TreemapControl Name="ProjectTreemapControl"
                                                      RootNode="{Binding TreemapRootNode}"
-                                                     Metric="{Binding Toolbar.SelectedMetric}" />
+                                                     Metric="{Binding Toolbar.SelectedMetric}"
+                                                     SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
                             <TextBlock Name="ProgressTextBlock"
                                        Grid.Row="1"
                                        Classes="panel-body"
@@ -220,9 +221,19 @@
                         <TextBlock Classes="panel-body"
                                    Text="{Binding Details.LinesText}" />
                         <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.BreakdownText}" />
+                        <TextBlock Classes="panel-body"
                                    Text="{Binding Details.LanguageText}" />
                         <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.ExtensionText}" />
+                        <TextBlock Classes="panel-body"
                                    Text="{Binding Details.SizeText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.DescendantsText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.ShareText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.TopChildrenText}" />
                         <TextBlock Classes="panel-body"
                                    Text="{Binding Details.DiagnosticsText}" />
                     </StackPanel>

@@ -124,6 +124,94 @@ public sealed class MainWindowLayoutTests
         Assert.Null(control.HitTestNode(new Avalonia.Point(-10, -10)));
     }
 
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapSelection_SynchronizesTreeAndDetails()
+    {
+        var window = new MainWindow();
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            new StubFolderPickerService("C:\\Demo"));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        Assert.NotNull(control);
+
+        var visual = Assert.Single(control.NodeVisuals);
+        var point = new Avalonia.Point(
+            visual.Bounds.X + (visual.Bounds.Width / 2),
+            visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+        control.SelectNodeAt(point);
+
+        var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
+
+        Assert.Equal("Program.cs", viewModel.Tree.SelectedNode?.Node.RelativePath);
+        Assert.Equal("Program.cs", viewModel.SelectedNode?.RelativePath);
+        Assert.Equal("Path: Program.cs", detailsPathText?.Text);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreeSelection_SynchronizesTreemapAndDetails()
+    {
+        var window = new MainWindow();
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            new StubFolderPickerService("C:\\Demo"));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var childNode = Assert.Single(viewModel.Tree.RootNodes[0].Children);
+        viewModel.Tree.SelectedNode = childNode;
+
+        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
+
+        Assert.NotNull(control);
+        Assert.Equal("Program.cs", control.SelectedNode?.RelativePath);
+        Assert.Equal("Path: Program.cs", detailsPathText?.Text);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_Hover_UpdatesTooltipStateWithoutChangingSelection()
+    {
+        var control = new TreemapControl
+        {
+            Width = 320,
+            Height = 180,
+            RootNode = CreateSnapshot().Root,
+            Metric = "Tokens",
+        };
+        var window = new Window
+        {
+            Content = control,
+            Width = 360,
+            Height = 240,
+        };
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        var point = new Avalonia.Point(
+            visual.Bounds.X + (visual.Bounds.Width / 2),
+            visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+        control.UpdateHover(point);
+
+        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
+        Assert.Null(control.SelectedNode);
+        Assert.Contains("Program.cs", control.TooltipText);
+
+        control.ClearHover();
+
+        Assert.Null(control.HoveredNode);
+        Assert.Null(control.TooltipText);
+    }
+
     private static ProjectSnapshot CreateSnapshot() =>
         new()
         {

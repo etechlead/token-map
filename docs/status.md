@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 6 завершён**
-- Цель текущего цикла: **Этап 7 - Hover tooltip, selection sync, details panel справа**
+- Статус проекта: **Этап 7 завершён**
+- Цель текущего цикла: **Этап 8 - Polish MVP и Windows-first publish**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -15,7 +15,7 @@
 - [x] Этап 4 - Analyzer orchestration, progress, cancel, cache
 - [x] Этап 5 - Main window, ViewModels, layout
 - [x] Этап 6 - Treemap layout engine и TreemapControl
-- [ ] Этап 7 - Hover tooltip, selection sync, details panel справа
+- [x] Этап 7 - Hover tooltip, selection sync, details panel справа
 - [ ] Этап 8 - Polish MVP и Windows-first publish
 - [ ] Этап 9 - MVP handoff
 
@@ -192,12 +192,34 @@
   - styling treemap пока утилитарный и будет дошлифован на последующих этапах;
   - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
 
+### 2026-03-20
+- Этап: **Этап 7 - Hover tooltip, selection sync, details panel справа**
+- Что сделано:
+  - `MainWindowViewModel` теперь хранит единый `SelectedNode`, который используется как источник истины для tree, treemap и details;
+  - `ProjectTreeViewModel` получил индекс по `ProjectNode.Id` и умеет выбирать узел по id для обратной синхронизации из treemap;
+  - `TreemapControl` получил two-way `SelectedNode`, hover state, tooltip content, distinct hover/selected borders и selection-by-hit-test;
+  - details panel отвязан от tree-specific VM и теперь строится напрямую от `ProjectNode` с полным набором MVP-метрик: path, kind, tokens, lines, code/comments/blanks, language, extension, size, descendants, share и top children по текущей метрике;
+  - metric switch в toolbar теперь обновляет details panel для уже выбранного узла без повторного анализа;
+  - добавлены headless tests на treemap → tree/details sync, tree → treemap/details sync и tooltip hover state.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - hover остаётся локальным состоянием treemap, а глобально синхронизируется только selected node;
+  - selection sync строится по `ProjectNode.Id`, а не по строковым путям из UI, чтобы tree и treemap ссылались на один и тот же snapshot;
+  - details panel считает share и top children относительно текущей выбранной treemap-метрики, а не только по токенам.
+- Открытые вопросы / Отложено:
+  - tooltip styling пока текстовый и минималистичный, без отдельного кастомного popup layout;
+  - раскрытие пути к выбранному treemap-узлу в `TreeView` специально не усложнялось и остаётся потенциальной polish-задачей;
+  - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
 - Cache пока только in-memory и живёт в пределах процесса.
 - `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
 - `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
-- Treemap уже рендерится как custom control, но hover tooltip, persistent selection highlight и sync с деревом ещё не завершены.
+- Tooltip у treemap пока минималистичный и не оформлен отдельным кастомным popup.
 - Linux support не доводится в MVP.
 - Installer/signing не входят в MVP.
 - Single-file publish не входит в MVP.

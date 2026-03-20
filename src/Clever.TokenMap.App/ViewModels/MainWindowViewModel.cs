@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Models;
@@ -15,6 +16,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IFolderPickerService _folderPickerService;
     private readonly IProjectAnalyzer _projectAnalyzer;
     private CancellationTokenSource? _analysisCancellationTokenSource;
+    private ProjectSnapshot? _currentSnapshot;
     private string? _selectedFolderPath;
 
     public MainWindowViewModel()
@@ -35,7 +37,8 @@ public partial class MainWindowViewModel : ViewModelBase
         Details = new DetailsPanelViewModel();
         Summary = new SummaryViewModel();
 
-        Tree.SelectedNodeChanged += (_, node) => Details.ShowNode(node);
+        Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
+        Toolbar.PropertyChanged += HandleToolbarPropertyChanged;
         Toolbar.RefreshAvailability(hasSelectedFolder: false, isBusy: false);
     }
 
@@ -50,6 +53,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public SummaryViewModel Summary { get; }
 
     public ProjectNode? TreemapRootNode { get; private set; }
+
+    [ObservableProperty]
+    private ProjectNode? selectedNode;
 
     [ObservableProperty]
     private AnalysisState analysisState = AnalysisState.Idle;
@@ -123,11 +129,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void ApplySnapshot(ProjectSnapshot snapshot)
     {
+        _currentSnapshot = snapshot;
         var rootNode = new ProjectTreeNodeViewModel(snapshot.Root);
         TreemapRootNode = snapshot.Root;
         Tree.LoadRoot(rootNode);
-        Details.ShowNode(rootNode);
         Summary.SetCompleted(snapshot);
+        SelectedNode = snapshot.Root;
         OnPropertyChanged(nameof(TreemapRootNode));
     }
 
@@ -140,6 +147,24 @@ public partial class MainWindowViewModel : ViewModelBase
     {
         AnalysisState = state;
         Summary.SetState(state, message);
+    }
+
+    partial void OnSelectedNodeChanged(ProjectNode? value)
+    {
+        if (value is not null)
+        {
+            Tree.SelectNodeById(value.Id);
+        }
+
+        Details.ShowNode(value, _currentSnapshot?.Root, Toolbar.SelectedMetric);
+    }
+
+    private void HandleToolbarPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ToolbarViewModel.SelectedMetric))
+        {
+            Details.ShowNode(SelectedNode, _currentSnapshot?.Root, Toolbar.SelectedMetric);
+        }
     }
 
     private sealed class NullFolderPickerService : IFolderPickerService
