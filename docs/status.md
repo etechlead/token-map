@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 7 завершён**
-- Цель текущего цикла: **Этап 8 - Polish MVP и Windows-first publish**
+- Статус проекта: **Этап 8 завершён**
+- Цель текущего цикла: **Этап 9 - MVP handoff**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -16,7 +16,7 @@
 - [x] Этап 5 - Main window, ViewModels, layout
 - [x] Этап 6 - Treemap layout engine и TreemapControl
 - [x] Этап 7 - Hover tooltip, selection sync, details panel справа
-- [ ] Этап 8 - Polish MVP и Windows-first publish
+- [x] Этап 8 - Polish MVP и Windows-first publish
 - [ ] Этап 9 - MVP handoff
 
 ## Зафиксированные решения
@@ -214,10 +214,47 @@
   - раскрытие пути к выбранному treemap-узлу в `TreeView` специально не усложнялось и остаётся потенциальной polish-задачей;
   - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
 
+### 2026-03-20
+- Этап: **Этап 8 - Polish MVP и Windows-first publish**
+- Что сделано:
+  - `SummaryViewModel` и `MainWindow.axaml` получили summary strip с карточками `Tokens / Lines / Files / Warnings` и более явные status/progress messages;
+  - `Clever.TokenMap.App.csproj` настроен на `RuntimeIdentifiers` `win-x64;osx-arm64` и копирование `third_party/**` в build/publish output;
+  - собран и добавлен Windows sidecar `third_party/tokei/win-x64/tokei.exe`, а также подготовлены README и reserved path для `third_party/tokei/osx-arm64/tokei`;
+  - добавлен fixture `TokeiSidecarFixture` и integration smoke-test на то, что `ProcessTokeiRunner` действительно находит sidecar через стандартный discovery path;
+  - проверены publish targets `win-x64` и `osx-arm64`, а опубликованный `win-x64` `.exe` успешно стартует локально;
+  - `.gitignore` дополнен исключениями для `.artifacts/` и `artifacts/`, чтобы publish-выход не попадал в git.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/publish/win-x64`
+  - launch smoke для `artifacts/publish/win-x64/Clever.TokenMap.App.exe`
+  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r osx-arm64 --self-contained false -o artifacts/publish/osx-arm64`
+- Принятые решения:
+  - для sidecar зафиксирован `tokei 12.1.2`, собранный через `cargo install --locked`, потому что более новые релизы в текущем toolchain упирались в несовместимые зависимости/требования rustc;
+  - Windows publish остаётся основным артефактом MVP, а `osx-arm64` пока рассматривается как secondary smoke target без ручной проверки запуска;
+  - publish остаётся framework-dependent, без single-file и без Native AOT, чтобы не выходить за scope MVP.
+- Открытые вопросы / Отложено:
+  - macOS sidecar binary физически ещё не добавлен; сейчас подготовлен only-path и publish plumbing;
+  - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным;
+  - полноценные installer/signing/notarization остаются post-MVP.
+
+## Как запустить MVP
+- Dev run:
+  - `dotnet run --project src/Clever.TokenMap.App/Clever.TokenMap.App.csproj`
+- Windows publish:
+  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/publish/win-x64`
+  - запускать `artifacts/publish/win-x64/Clever.TokenMap.App.exe`
+- Sidecar paths:
+  - Windows: `third_party/tokei/win-x64/tokei.exe`
+  - macOS ARM64: `third_party/tokei/osx-arm64/tokei`
+- Sidecar deployment note:
+  - publish output уже копирует `third_party/` рядом с приложением, поэтому `ProcessTokeiRunner` на Windows подхватывает sidecar без настройки `PATH`.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
 - Cache пока только in-memory и живёт в пределах процесса.
-- `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
+- `tokei` sidecar поставляется для `win-x64`; для `osx-arm64` пока подготовлен только путь размещения.
 - `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
 - Tooltip у treemap пока минималистичный и не оформлен отдельным кастомным popup.
 - Linux support не доводится в MVP.

@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <RuntimeIdentifiers>win-x64;osx-arm64</RuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,5 +28,13 @@
     <ProjectReference Include="..\Clever.TokenMap.Controls\Clever.TokenMap.Controls.csproj" />
     <ProjectReference Include="..\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj" />
     <ProjectReference Include="..\Clever.TokenMap.Infrastructure\Clever.TokenMap.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\third_party\**\*">
+      <Link>third_party\%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
   </ItemGroup>
 </Project>

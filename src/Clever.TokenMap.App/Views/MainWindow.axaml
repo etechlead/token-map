@@ -37,6 +37,22 @@
             <Setter Property="Foreground" Value="#B7C2CC" />
             <Setter Property="TextWrapping" Value="Wrap" />
         </Style>
+        <Style Selector="Border.summary-card">
+            <Setter Property="Background" Value="#162131" />
+            <Setter Property="BorderBrush" Value="#233041" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+        <Style Selector="TextBlock.summary-label">
+            <Setter Property="Foreground" Value="#8FA3B8" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+        <Style Selector="TextBlock.summary-value">
+            <Setter Property="Foreground" Value="#F5F7FA" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -161,7 +177,7 @@
             <Border Name="TreemapPane"
                     Grid.Column="2"
                     Classes="panel">
-                <Grid RowDefinitions="Auto,Auto,*"
+                <Grid RowDefinitions="Auto,Auto,Auto,*"
                       RowSpacing="12">
                     <TextBlock Classes="panel-title"
                                Text="Treemap" />
@@ -171,7 +187,50 @@
                                Classes="panel-body"
                                Foreground="#8FA3B8"
                                Text="{Binding Summary.TotalsText}" />
-                    <Border Grid.Row="2"
+                    <Grid Grid.Row="2"
+                          ColumnDefinitions="*,*,*,*"
+                          ColumnSpacing="10">
+                        <Border Classes="summary-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="summary-label"
+                                           Text="Tokens" />
+                                <TextBlock Name="TokenSummaryValueText"
+                                           Classes="summary-value"
+                                           Text="{Binding Summary.TokenSummaryValue}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1"
+                                Classes="summary-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="summary-label"
+                                           Text="Lines" />
+                                <TextBlock Name="LineSummaryValueText"
+                                           Classes="summary-value"
+                                           Text="{Binding Summary.LineSummaryValue}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2"
+                                Classes="summary-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="summary-label"
+                                           Text="Files" />
+                                <TextBlock Name="FileSummaryValueText"
+                                           Classes="summary-value"
+                                           Text="{Binding Summary.FileSummaryValue}" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="3"
+                                Classes="summary-card">
+                            <StackPanel Spacing="4">
+                                <TextBlock Classes="summary-label"
+                                           Text="Warnings" />
+                                <TextBlock Name="WarningSummaryValueText"
+                                           Classes="summary-value"
+                                           Text="{Binding Summary.WarningSummaryValue}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                    <Border Grid.Row="3"
                             Background="#0B1018"
                             BorderBrush="#233041"
                             BorderThickness="1"

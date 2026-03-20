@@ -45,11 +45,15 @@ public sealed class MainWindowLayoutTests
         var treeView = window.FindControl<TreeView>("ProjectTreeControl");
         var statusText = window.FindControl<TextBlock>("StatusValueText");
         var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
+        var tokenSummaryText = window.FindControl<TextBlock>("TokenSummaryValueText");
+        var warningSummaryText = window.FindControl<TextBlock>("WarningSummaryValueText");
 
         Assert.NotNull(treeView);
         Assert.Single(viewModel.Tree.RootNodes);
         Assert.Equal("Completed", statusText?.Text);
         Assert.Equal("Path: (root)", detailsPathText?.Text);
+        Assert.Equal("42", tokenSummaryText?.Text);
+        Assert.Equal("0", warningSummaryText?.Text);
     }
 
     [AvaloniaFact]
