@@ -1,0 +1,9 @@
+profile = "dev"
+
+[profiles.dev]
+sandbox_mode = "workspace-write"
+approval_policy = "on-request"
+
+[profiles.review]
+sandbox_mode = "read-only"
+approval_policy = "never"

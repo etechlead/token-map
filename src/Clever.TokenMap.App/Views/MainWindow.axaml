@@ -1,0 +1,204 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        x:Class="Clever.TokenMap.App.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="1440"
+        Height="860"
+        MinWidth="1100"
+        MinHeight="650"
+        d:DesignWidth="1440"
+        d:DesignHeight="860"
+        mc:Ignorable="d"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="{Binding WindowTitle}">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel />
+    </Design.DataContext>
+
+    <Window.Styles>
+        <Style Selector="Border.panel">
+            <Setter Property="BorderBrush" Value="#2E3A46" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="#111722" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style Selector="TextBlock.panel-title">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+        </Style>
+        <Style Selector="TextBlock.panel-body">
+            <Setter Property="Foreground" Value="#B7C2CC" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Margin="18">
+        <Border Name="ToolbarHost"
+                Grid.Row="0"
+                Classes="panel"
+                Padding="14">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,16*,Auto,Auto,Auto">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="8">
+                    <Button Name="OpenFolderButton"
+                            Content="Open Folder"
+                            IsEnabled="False" />
+                    <Button Name="RescanButton"
+                            Content="Rescan"
+                            IsEnabled="False" />
+                    <Button Name="CancelButton"
+                            Content="Cancel"
+                            IsEnabled="False" />
+                </StackPanel>
+
+                <Border Grid.Column="1"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        Width="1"
+                        Height="28"
+                        Background="#2E3A46" />
+
+                <StackPanel Grid.Column="2"
+                            Margin="16,0,0,0"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                    <TextBlock Foreground="#8FA3B8"
+                               FontSize="11"
+                               Text="Selected folder" />
+                    <TextBlock FontSize="13"
+                               FontWeight="Medium"
+                               Text="{Binding SelectedFolderDisplay}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="4"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="12">
+                    <StackPanel Width="150"
+                                Spacing="4">
+                        <TextBlock Foreground="#8FA3B8"
+                                   FontSize="11"
+                                   Text="Treemap metric" />
+                        <ComboBox ItemsSource="{Binding MetricOptions}"
+                                  SelectedItem="{Binding SelectedMetric}"
+                                  IsEnabled="False" />
+                    </StackPanel>
+
+                    <StackPanel Width="150"
+                                Spacing="4">
+                        <TextBlock Foreground="#8FA3B8"
+                                   FontSize="11"
+                                   Text="Tokenizer" />
+                        <ComboBox ItemsSource="{Binding TokenProfiles}"
+                                  SelectedItem="{Binding SelectedTokenProfile}"
+                                  IsEnabled="False" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="5"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            Spacing="4">
+                    <CheckBox Content="Respect .gitignore"
+                              IsChecked="{Binding RespectGitIgnore}"
+                              IsEnabled="False" />
+                    <CheckBox Content="Respect .ignore"
+                              IsChecked="{Binding RespectIgnore}"
+                              IsEnabled="False" />
+                </StackPanel>
+
+                <CheckBox Grid.Column="6"
+                          Margin="12,0,0,0"
+                          VerticalAlignment="Center"
+                          Content="Use default excludes"
+                          IsChecked="{Binding UseDefaultExcludes}"
+                          IsEnabled="False" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1"
+              Margin="0,16,0,16"
+              ColumnDefinitions="300,10,*,10,340">
+            <Border Name="ProjectTreePane"
+                    Grid.Column="0"
+                    Classes="panel">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="12">
+                    <TextBlock Classes="panel-title"
+                               Text="Project Tree" />
+                    <TextBlock Grid.Row="1"
+                               Classes="panel-body"
+                               VerticalAlignment="Center"
+                               Text="The left pane will host the project tree with stable folder-first ordering and selection sync." />
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1"
+                          ResizeDirection="Columns"
+                          Background="#2E3A46" />
+
+            <Border Name="TreemapPane"
+                    Grid.Column="2"
+                    Classes="panel">
+                <Grid RowDefinitions="Auto,Auto,*"
+                      RowSpacing="12">
+                    <TextBlock Classes="panel-title"
+                               Text="Treemap" />
+                    <TextBlock Classes="panel-body"
+                               Text="{Binding SummaryText}" />
+                    <Border Grid.Row="2"
+                            Background="#0B1018"
+                            BorderBrush="#233041"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="24">
+                        <TextBlock Classes="panel-body"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Text="Treemap custom control will be added in a dedicated stage." />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="3"
+                          ResizeDirection="Columns"
+                          Background="#2E3A46" />
+
+            <Border Name="DetailsPane"
+                    Grid.Column="4"
+                    Classes="panel">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="12">
+                    <TextBlock Classes="panel-title"
+                               Text="Details" />
+                    <TextBlock Grid.Row="1"
+                               Classes="panel-body"
+                               VerticalAlignment="Center"
+                               Text="The details panel will show the selected node path, type, token totals and LOC breakdown." />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Name="StatusStrip"
+                Grid.Row="2"
+                Classes="panel"
+                Padding="12">
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Foreground="#8FA3B8"
+                           FontSize="12"
+                           Text="Status" />
+                <TextBlock Grid.Column="1"
+                           Margin="10,0,0,0"
+                           FontSize="12"
+                           Text="{Binding StatusText}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
