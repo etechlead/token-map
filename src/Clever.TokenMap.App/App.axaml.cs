@@ -4,8 +4,15 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
+using Clever.TokenMap.Infrastructure.Analysis;
+using Clever.TokenMap.Infrastructure.Caching;
+using Clever.TokenMap.Infrastructure.Scanning;
+using Clever.TokenMap.Infrastructure.Text;
+using Clever.TokenMap.Infrastructure.Tokenization;
+using Clever.TokenMap.Infrastructure.Tokei;
 
 namespace Clever.TokenMap.App;
 
@@ -21,10 +28,18 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DisableAvaloniaDataAnnotationValidation();
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new MainWindowViewModel(),
-            };
+            var mainWindow = new MainWindow();
+            var analyzer = new ProjectAnalyzer(
+                new FileSystemProjectScanner(),
+                new HeuristicTextFileDetector(),
+                new MicrosoftMlTokenCounter(),
+                new ProcessTokeiRunner(),
+                new InMemoryCacheStore());
+
+            mainWindow.DataContext = new MainWindowViewModel(
+                analyzer,
+                new WindowFolderPickerService(mainWindow));
+            desktop.MainWindow = mainWindow;
         }
 
         base.OnFrameworkInitializationCompleted();

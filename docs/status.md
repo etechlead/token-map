@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 4 завершён**
-- Цель текущего цикла: **Этап 5 - Main window, ViewModels, layout**
+- Статус проекта: **Этап 5 завершён**
+- Цель текущего цикла: **Этап 6 - Treemap layout engine и TreemapControl**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -13,7 +13,7 @@
 - [x] Этап 2 - Ignore / exclude policy
 - [x] Этап 3 - Token counting и Tokei integration
 - [x] Этап 4 - Analyzer orchestration, progress, cancel, cache
-- [ ] Этап 5 - Main window, ViewModels, layout
+- [x] Этап 5 - Main window, ViewModels, layout
 - [ ] Этап 6 - Treemap layout engine и TreemapControl
 - [ ] Этап 7 - Hover tooltip, selection sync, details panel справа
 - [ ] Этап 8 - Polish MVP и Windows-first publish
@@ -146,12 +146,35 @@
   - UI пока не подключён к analyzer, progress и cancel-кнопкам; это остаётся на Этап 5;
   - предупреждение `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным и зафиксировано отдельно.
 
+### 2026-03-20
+- Этап: **Этап 5 - Main window, ViewModels, layout**
+- Что сделано:
+  - `MainWindowViewModel` больше не является shell-заглушкой и теперь оркестрирует folder pick, analyzer run, cancel и state transitions;
+  - добавлены отдельные ViewModel-слои `ToolbarViewModel`, `ProjectTreeViewModel`, `ProjectTreeNodeViewModel`, `DetailsPanelViewModel`, `SummaryViewModel`;
+  - `App.axaml.cs` теперь создаёт реальный `ProjectAnalyzer` с scanner/token/tokei/cache и прокидывает его в UI;
+  - добавлен app-level `IFolderPickerService` и concrete `WindowFolderPickerService` на базе Avalonia folder picker;
+  - `MainWindow.axaml` переведён с placeholder bindings на рабочие команды и данные: `Open Folder`, `Rescan`, `Cancel`, tree binding, details binding, summary/progress/status binding;
+  - в UI отражаются состояния `Idle / Scanning / Completed / Cancelled / Failed`;
+  - добавлены headless tests на open-folder flow и cancel flow поверх реального окна.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - folder picker оставлен в app-слое через сервис, чтобы UI не зависел от конкретного окна внутри ViewModel;
+  - после cancel/fail предыдущее дерево не очищается, чтобы UI не оставался в битом состоянии;
+  - tree selection уже синхронизирована с details panel, а treemap пока остаётся placeholder до следующего этапа.
+- Открытые вопросы / Отложено:
+  - treemap в центре всё ещё placeholder и будет заменён реальным control на Этапе 6;
+  - полноценная selection sync tree ↔ treemap ↔ details закрывается только после появления treemap;
+  - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
 - Cache пока только in-memory и живёт в пределах процесса.
 - `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
 - `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
-- UI пока не подключён к analyzer и остаётся shell-заглушкой.
+- Treemap пока остаётся placeholder, selection sync с ним ещё не реализована.
 - Linux support не доводится в MVP.
 - Installer/signing не входят в MVP.
 - Single-file publish не входит в MVP.

@@ -49,13 +49,13 @@
                             Spacing="8">
                     <Button Name="OpenFolderButton"
                             Content="Open Folder"
-                            IsEnabled="False" />
+                            Command="{Binding Toolbar.OpenFolderCommand}" />
                     <Button Name="RescanButton"
                             Content="Rescan"
-                            IsEnabled="False" />
+                            Command="{Binding Toolbar.RescanCommand}" />
                     <Button Name="CancelButton"
                             Content="Cancel"
-                            IsEnabled="False" />
+                            Command="{Binding Toolbar.CancelCommand}" />
                 </StackPanel>
 
                 <Border Grid.Column="1"
@@ -74,7 +74,7 @@
                                Text="Selected folder" />
                     <TextBlock FontSize="13"
                                FontWeight="Medium"
-                               Text="{Binding SelectedFolderDisplay}" />
+                               Text="{Binding Toolbar.SelectedFolderDisplay}" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="4"
@@ -86,9 +86,9 @@
                         <TextBlock Foreground="#8FA3B8"
                                    FontSize="11"
                                    Text="Treemap metric" />
-                        <ComboBox ItemsSource="{Binding MetricOptions}"
-                                  SelectedItem="{Binding SelectedMetric}"
-                                  IsEnabled="False" />
+                        <ComboBox ItemsSource="{Binding Toolbar.MetricOptions}"
+                                  SelectedItem="{Binding Toolbar.SelectedMetric}"
+                                  IsEnabled="{Binding Toolbar.CanChangeOptions}" />
                     </StackPanel>
 
                     <StackPanel Width="150"
@@ -96,9 +96,9 @@
                         <TextBlock Foreground="#8FA3B8"
                                    FontSize="11"
                                    Text="Tokenizer" />
-                        <ComboBox ItemsSource="{Binding TokenProfiles}"
-                                  SelectedItem="{Binding SelectedTokenProfile}"
-                                  IsEnabled="False" />
+                        <ComboBox ItemsSource="{Binding Toolbar.TokenProfiles}"
+                                  SelectedItem="{Binding Toolbar.SelectedTokenProfile}"
+                                  IsEnabled="{Binding Toolbar.CanChangeOptions}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -107,19 +107,19 @@
                             VerticalAlignment="Center"
                             Spacing="4">
                     <CheckBox Content="Respect .gitignore"
-                              IsChecked="{Binding RespectGitIgnore}"
-                              IsEnabled="False" />
+                              IsChecked="{Binding Toolbar.RespectGitIgnore}"
+                              IsEnabled="{Binding Toolbar.CanChangeOptions}" />
                     <CheckBox Content="Respect .ignore"
-                              IsChecked="{Binding RespectIgnore}"
-                              IsEnabled="False" />
+                              IsChecked="{Binding Toolbar.RespectIgnore}"
+                              IsEnabled="{Binding Toolbar.CanChangeOptions}" />
                 </StackPanel>
 
                 <CheckBox Grid.Column="6"
                           Margin="12,0,0,0"
                           VerticalAlignment="Center"
                           Content="Use default excludes"
-                          IsChecked="{Binding UseDefaultExcludes}"
-                          IsEnabled="False" />
+                          IsChecked="{Binding Toolbar.UseDefaultExcludes}"
+                          IsEnabled="{Binding Toolbar.CanChangeOptions}" />
             </Grid>
         </Border>
 
@@ -133,10 +133,23 @@
                       RowSpacing="12">
                     <TextBlock Classes="panel-title"
                                Text="Project Tree" />
-                    <TextBlock Grid.Row="1"
-                               Classes="panel-body"
-                               VerticalAlignment="Center"
-                               Text="The left pane will host the project tree with stable folder-first ordering and selection sync." />
+                    <TreeView Name="ProjectTreeControl"
+                              Grid.Row="1"
+                              ItemsSource="{Binding Tree.RootNodes}"
+                              SelectedItem="{Binding Tree.SelectedNode, Mode=TwoWay}">
+                        <TreeView.ItemTemplate>
+                            <TreeDataTemplate x:DataType="vm:ProjectTreeNodeViewModel"
+                                              ItemsSource="{Binding Children}">
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <TextBlock Text="{Binding Name}" />
+                                    <TextBlock Grid.Column="1"
+                                               Foreground="#8FA3B8"
+                                               Text="{Binding SecondaryText}" />
+                                </Grid>
+                            </TreeDataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
                 </Grid>
             </Border>
 
@@ -152,17 +165,29 @@
                     <TextBlock Classes="panel-title"
                                Text="Treemap" />
                     <TextBlock Classes="panel-body"
-                               Text="{Binding SummaryText}" />
+                               Text="{Binding Summary.SummaryText}" />
+                    <TextBlock Grid.Row="1"
+                               Classes="panel-body"
+                               Foreground="#8FA3B8"
+                               Text="{Binding Summary.TotalsText}" />
                     <Border Grid.Row="2"
                             Background="#0B1018"
                             BorderBrush="#233041"
                             BorderThickness="1"
                             CornerRadius="8"
                             Padding="24">
-                        <TextBlock Classes="panel-body"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Text="Treemap custom control will be added in a dedicated stage." />
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="10">
+                            <TextBlock Classes="panel-body"
+                                       HorizontalAlignment="Center"
+                                       Text="Treemap custom control will be added in a dedicated stage." />
+                            <TextBlock Name="ProgressTextBlock"
+                                       Classes="panel-body"
+                                       HorizontalAlignment="Center"
+                                       Foreground="#8FA3B8"
+                                       Text="{Binding Summary.ProgressText}" />
+                        </StackPanel>
                     </Border>
                 </Grid>
             </Border>
@@ -178,10 +203,28 @@
                       RowSpacing="12">
                     <TextBlock Classes="panel-title"
                                Text="Details" />
-                    <TextBlock Grid.Row="1"
-                               Classes="panel-body"
-                               VerticalAlignment="Center"
-                               Text="The details panel will show the selected node path, type, token totals and LOC breakdown." />
+                    <StackPanel Grid.Row="1"
+                                Spacing="8">
+                        <TextBlock Name="DetailsSelectionTitle"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding Details.SelectionTitle}" />
+                        <TextBlock Name="DetailsPathText"
+                                   Classes="panel-body"
+                                   Text="{Binding Details.PathText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.KindText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.TokensText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.LinesText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.LanguageText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.SizeText}" />
+                        <TextBlock Classes="panel-body"
+                                   Text="{Binding Details.DiagnosticsText}" />
+                    </StackPanel>
                 </Grid>
             </Border>
         </Grid>
@@ -194,10 +237,11 @@
                 <TextBlock Foreground="#8FA3B8"
                            FontSize="12"
                            Text="Status" />
-                <TextBlock Grid.Column="1"
+                <TextBlock Name="StatusValueText"
+                           Grid.Column="1"
                            Margin="10,0,0,0"
                            FontSize="12"
-                           Text="{Binding StatusText}" />
+                           Text="{Binding Summary.StatusText}" />
             </Grid>
         </Border>
     </Grid>
