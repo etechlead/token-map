@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 8 завершён**
-- Цель текущего цикла: **Этап 9 - MVP handoff**
+- Статус проекта: **MVP готов к handoff**
+- Цель текущего цикла: **Следующий цикл определяется post-MVP backlog или новым запросом**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -17,7 +17,7 @@
 - [x] Этап 6 - Treemap layout engine и TreemapControl
 - [x] Этап 7 - Hover tooltip, selection sync, details panel справа
 - [x] Этап 8 - Polish MVP и Windows-first publish
-- [ ] Этап 9 - MVP handoff
+- [x] Этап 9 - MVP handoff
 
 ## Зафиксированные решения
 - Стек MVP: `.NET 10 + Avalonia stable + CommunityToolkit.Mvvm`.
@@ -239,6 +239,24 @@
   - warning `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным;
   - полноценные installer/signing/notarization остаются post-MVP.
 
+### 2026-03-20
+- Этап: **Этап 9 - MVP handoff**
+- Что сделано:
+  - финально сверены `docs/status.md`, `docs/post-mvp.md`, `docs/plan.md` и фактическое состояние репозитория;
+  - в `docs/status.md` зафиксированы команды dev run / publish, пути размещения sidecar и текущие ограничения MVP;
+  - список post-MVP задач уточнён пунктами про автоматизацию обновления `tokei` sidecar, richer treemap tooltip и auto-expand пути в дереве;
+  - финальный статус переведён из stage-oriented состояния в handoff-ready формулировку.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - MVP считается завершённым на Windows-first baseline с framework-dependent publish и sidecar `tokei 12.1.2`;
+  - known issues и ограничения оставлены в `docs/status.md`, а более крупные улучшения вынесены в `docs/post-mvp.md`, чтобы следующий цикл не требовал устного контекста.
+- Открытые вопросы / Отложено:
+  - обновление Rust toolchain и переход на более свежий `tokei` остаются отдельной post-MVP инженерной задачей;
+  - `NU1903` по `Microsoft.Bcl.Memory 9.0.4` не устранён в пределах MVP и требует отдельного решения по цепочке зависимостей.
+
 ## Как запустить MVP
 - Dev run:
   - `dotnet run --project src/Clever.TokenMap.App/Clever.TokenMap.App.csproj`
@@ -262,9 +280,9 @@
 - Single-file publish не входит в MVP.
 - Native AOT не входит в MVP.
 
-## Напоминание агенту
-Перед началом следующего цикла:
-1. прочитать `AGENTS.md` и документы в `docs/`;
-2. выполнять только следующий незавершённый этап;
-3. после изменений прогонять build/tests;
-4. обновлять этот файл.
+## Handoff summary
+- Windows-first MVP собран, тесты зелёные, `win-x64` publish и launch smoke пройдены.
+- Для продолжения без устных пояснений достаточно опираться на:
+  - `docs/status.md` — текущее состояние, команды запуска, ограничения и handoff notes;
+  - `docs/post-mvp.md` — backlog следующей волны;
+  - `docs/spec.md` и `docs/architecture.md` — продуктовые и технические инварианты.

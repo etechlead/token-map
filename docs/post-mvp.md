@@ -19,6 +19,7 @@
 - single-file publish;
 - уменьшение размера артефактов;
 - улучшение структуры release artifacts;
+- обновление/автоматизация поставки `tokei` sidecar для macOS и более новых версий `tokei`;
 - автоматизация packaging.
 
 ### 1.4 Native AOT
@@ -74,6 +75,8 @@
 ### 3.3 Улучшение tree/details UX
 - multi-column tree;
 - richer details panel;
+- более богатый tooltip/popup для treemap;
+- автоматическое раскрытие пути к выбранному узлу в дереве;
 - открытие файла/папки в системном explorer;
 - quick copy path.
 
