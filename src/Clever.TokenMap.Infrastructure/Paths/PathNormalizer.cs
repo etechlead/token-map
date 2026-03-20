@@ -27,12 +27,31 @@ public sealed class PathNormalizer
         var normalizedPath = NormalizeFullPath(path);
         var relativePath = Path.GetRelativePath(normalizedRoot, normalizedPath);
 
-        if (relativePath == ".")
+        return NormalizeRelativePath(relativePath);
+    }
+
+    public string NormalizeRelativePath(string relativePath)
+    {
+        ArgumentNullException.ThrowIfNull(relativePath);
+
+        var normalized = relativePath.Trim();
+
+        if (normalized is "." or "./" or ".\\")
         {
             return string.Empty;
         }
 
-        return relativePath.Replace('\\', '/');
+        if (normalized.StartsWith(".\\", StringComparison.Ordinal) ||
+            normalized.StartsWith("./", StringComparison.Ordinal))
+        {
+            normalized = normalized[2..];
+        }
+
+        normalized = normalized.Replace('\\', '/').Trim('/');
+
+        return normalized == "."
+            ? string.Empty
+            : normalized;
     }
 
     public string GetNodeId(string normalizedRelativePath) =>

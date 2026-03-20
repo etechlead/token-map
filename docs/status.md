@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 2 завершён**
-- Цель текущего цикла: **Этап 3 - Token counting и Tokei integration**
+- Статус проекта: **Этап 3 завершён**
+- Цель текущего цикла: **Этап 4 - Analyzer orchestration, progress, cancel, cache**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -11,7 +11,7 @@
 - [x] Этап 0 - Bootstrap solution
 - [x] Этап 1 - Core contracts и scanner skeleton
 - [x] Этап 2 - Ignore / exclude policy
-- [ ] Этап 3 - Token counting и Tokei integration
+- [x] Этап 3 - Token counting и Tokei integration
 - [ ] Этап 4 - Analyzer orchestration, progress, cancel, cache
 - [ ] Этап 5 - Main window, ViewModels, layout
 - [ ] Этап 6 - Treemap layout engine и TreemapControl
@@ -100,10 +100,36 @@
   - полная gitignore-совместимость за пределами MVP-необходимого поднабора правил не добавлялась;
   - метрики токенов и LOC остаются на следующем этапе.
 
+### 2026-03-20
+- Этап: **Этап 3 - Token counting и Tokei integration**
+- Что сделано:
+  - подключён `Microsoft.ML.Tokenizers` и реализован `MicrosoftMlTokenCounter` с поддержкой профилей `o200k_base`, `cl100k_base`, `p50k_base`;
+  - реализован `HeuristicTextFileDetector`, который проверяет небольшой префикс файла и помечает binary-файлы без чтения всего содержимого в память;
+  - реализован `ProcessTokeiRunner` с поиском sidecar `third_party/tokei/<rid>/...`, fallback на `PATH`, запуском процесса без shell, корректным завершением по cancel и парсингом JSON через `TokeiJsonParser`;
+  - на базе реального sample output `tokei` добавлен merge scanner tree + token metrics + tokei stats в `ProjectSnapshotMetricsEnricher`;
+  - для text-файлов считается `Tokens`, при отсутствии статистики `tokei` локально считается `TotalLines`, а `CodeLines/CommentLines/BlankLines/Language` остаются частично заполненными;
+  - для папок добавлена bottom-up агрегация `Tokens`, LOC, размера и счётчиков включённых файлов/каталогов;
+  - добавлены тесты на token profiles, text/binary heuristic, `tokei` JSON parser, merge/aggregation и деградацию при исчезновении файла во время анализа;
+  - `.gitignore` дополнен правилом для `.idea/`, чтобы локальные IDE-артефакты не засоряли рабочее дерево.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - merge и агрегация вынесены в отдельный `ProjectSnapshotMetricsEnricher`, который можно напрямую переиспользовать в `IProjectAnalyzer` на следующем этапе;
+  - если `tokei` недоступен или падает, анализ не валится целиком: snapshot получает warning и остаётся с токенами и частичными LOC-метриками;
+  - binary-файлы сохраняются в дереве и участвуют в aggregate по размеру/счётчикам, но не получают токены и LOC.
+- Открытые вопросы / Отложено:
+  - sidecar-бинарники `tokei` ещё не добавлены в репозиторий; на текущем этапе реализован discovery, а поставка sidecar остаётся на publish/polish-этап;
+  - `Microsoft.ML.Tokenizers` тянет транзитивный `Microsoft.Bcl.Memory 9.0.4`, поэтому `restore/build` сейчас дают warning `NU1903`; это зафиксировано отдельно и не блокирует MVP-этап 3;
+  - orchestration через `IProjectAnalyzer`, progress batching, cancel и cache остаются на Этап 4.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
-- Метрики `Tokens` и LOC пока не рассчитываются, `NodeMetrics` остаются пустыми.
-- UI пока не подключён к scanner и остаётся shell-заглушкой.
+- `IProjectAnalyzer`, progress batching, cache и полноценная отмена orchestration ещё не реализованы.
+- `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
+- `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
+- UI пока не подключён к analyzer и остаётся shell-заглушкой.
 - Linux support не доводится в MVP.
 - Installer/signing не входят в MVP.
 - Single-file publish не входит в MVP.

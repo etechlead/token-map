@@ -16,9 +16,9 @@ public sealed class ProjectNode
 
     public NodeMetrics Metrics { get; set; } = NodeMetrics.Empty;
 
-    public SkippedReason? SkippedReason { get; init; }
+    public SkippedReason? SkippedReason { get; set; }
 
-    public string? DiagnosticMessage { get; init; }
+    public string? DiagnosticMessage { get; set; }
 
     public List<ProjectNode> Children { get; } = [];
 }
