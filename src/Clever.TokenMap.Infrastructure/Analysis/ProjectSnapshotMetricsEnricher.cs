@@ -7,6 +7,7 @@ namespace Clever.TokenMap.Infrastructure.Analysis;
 
 public sealed class ProjectSnapshotMetricsEnricher
 {
+    private readonly ICacheStore? _cacheStore;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
     private readonly ITokeiRunner _tokeiRunner;
@@ -16,19 +17,28 @@ public sealed class ProjectSnapshotMetricsEnricher
     public ProjectSnapshotMetricsEnricher(
         ITextFileDetector textFileDetector,
         ITokenCounter tokenCounter,
-        ITokeiRunner tokeiRunner)
+        ITokeiRunner tokeiRunner,
+        ICacheStore? cacheStore = null)
     {
+        _cacheStore = cacheStore;
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
         _tokeiRunner = tokeiRunner;
     }
 
-    public async Task<ProjectSnapshot> EnrichAsync(ProjectSnapshot snapshot, CancellationToken cancellationToken)
+    public Task<ProjectSnapshot> EnrichAsync(ProjectSnapshot snapshot, CancellationToken cancellationToken) =>
+        EnrichAsync(snapshot, progress: null, cancellationToken);
+
+    public async Task<ProjectSnapshot> EnrichAsync(
+        ProjectSnapshot snapshot,
+        IProgress<AnalysisProgress>? progress,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var warnings = new List<string>(snapshot.Warnings);
         var includedFilePaths = CollectIncludedFilePaths(snapshot.Root);
+        var totalFileCount = CountFileNodes(snapshot.Root);
         IReadOnlyDictionary<string, TokeiFileStats> tokeiStats;
 
         try
@@ -45,7 +55,16 @@ public sealed class ProjectSnapshotMetricsEnricher
             tokeiStats = new Dictionary<string, TokeiFileStats>(_pathComparer);
         }
 
-        await EnrichNodeAsync(snapshot.Root, snapshot.Options.TokenProfile, tokeiStats, warnings, cancellationToken);
+        var progressState = new ProgressState();
+        await EnrichNodeAsync(
+            snapshot.Root,
+            snapshot.Options.TokenProfile,
+            tokeiStats,
+            warnings,
+            progress,
+            totalFileCount,
+            progressState,
+            cancellationToken);
         AggregateNode(snapshot.Root);
 
         return new ProjectSnapshot
@@ -63,6 +82,9 @@ public sealed class ProjectSnapshotMetricsEnricher
         TokenProfile tokenProfile,
         IReadOnlyDictionary<string, TokeiFileStats> tokeiStats,
         List<string> warnings,
+        IProgress<AnalysisProgress>? progress,
+        int totalFileCount,
+        ProgressState progressState,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -70,12 +92,26 @@ public sealed class ProjectSnapshotMetricsEnricher
         if (node.Kind == ProjectNodeKind.File)
         {
             await EnrichFileNodeAsync(node, tokenProfile, tokeiStats, warnings, cancellationToken);
+            progressState.ProcessedFileCount++;
+            progress?.Report(new AnalysisProgress(
+                Phase: "AnalyzingFiles",
+                ProcessedNodeCount: progressState.ProcessedFileCount,
+                TotalNodeCount: totalFileCount,
+                CurrentPath: node.RelativePath));
             return;
         }
 
         foreach (var child in node.Children)
         {
-            await EnrichNodeAsync(child, tokenProfile, tokeiStats, warnings, cancellationToken);
+            await EnrichNodeAsync(
+                child,
+                tokenProfile,
+                tokeiStats,
+                warnings,
+                progress,
+                totalFileCount,
+                progressState,
+                cancellationToken);
         }
     }
 
@@ -86,11 +122,19 @@ public sealed class ProjectSnapshotMetricsEnricher
         List<string> warnings,
         CancellationToken cancellationToken)
     {
-        var fileSizeBytes = TryGetFileSize(node.FullPath);
+        var fileState = TryGetFileState(node.FullPath);
+        var fileSizeBytes = fileState.FileSizeBytes;
 
         if (node.SkippedReason is not null)
         {
             node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
+            return;
+        }
+
+        if (fileState.Exists &&
+            _cacheStore is not null &&
+            await TryRestoreCachedMetricsAsync(node, fileState, tokenProfile, cancellationToken))
+        {
             return;
         }
 
@@ -162,6 +206,17 @@ public sealed class ProjectSnapshotMetricsEnricher
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
+
+        if (fileState.Exists && _cacheStore is not null)
+        {
+            await _cacheStore.SetFileMetricsAsync(
+                node.FullPath,
+                fileState.FileSizeBytes,
+                fileState.LastWriteTimeUtc,
+                tokenProfile,
+                node.Metrics,
+                cancellationToken);
+        }
     }
 
     private static NodeMetrics AggregateNode(ProjectNode node)
@@ -237,6 +292,22 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
     }
 
+    private static int CountFileNodes(ProjectNode node)
+    {
+        if (node.Kind == ProjectNodeKind.File)
+        {
+            return 1;
+        }
+
+        var count = 0;
+        foreach (var child in node.Children)
+        {
+            count += CountFileNodes(child);
+        }
+
+        return count;
+    }
+
     private static NodeMetrics CreateSkippedFileMetrics(long fileSizeBytes) =>
         new(
             Tokens: 0,
@@ -298,16 +369,26 @@ public sealed class ProjectSnapshotMetricsEnricher
             or IOException
             or PathTooLongException;
 
-    private static long TryGetFileSize(string fullPath)
+    private async Task<bool> TryRestoreCachedMetricsAsync(
+        ProjectNode node,
+        FileState fileState,
+        TokenProfile tokenProfile,
+        CancellationToken cancellationToken)
     {
-        try
+        var cachedMetrics = await _cacheStore!.TryGetFileMetricsAsync(
+            node.FullPath,
+            fileState.FileSizeBytes,
+            fileState.LastWriteTimeUtc,
+            tokenProfile,
+            cancellationToken);
+
+        if (cachedMetrics is null)
         {
-            return new FileInfo(fullPath).Length;
+            return false;
         }
-        catch (Exception exception) when (IsRecoverableFileException(exception))
-        {
-            return 0;
-        }
+
+        node.Metrics = cachedMetrics;
+        return true;
     }
 
     private static void ApplyRecoverableFileError(
@@ -325,5 +406,36 @@ public sealed class ProjectSnapshotMetricsEnricher
         node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
 
         warnings.Add($"Unable to analyze '{node.FullPath}': {exception.Message}");
+    }
+
+    private static FileState TryGetFileState(string fullPath)
+    {
+        try
+        {
+            var fileInfo = new FileInfo(fullPath);
+            return new FileState(
+                Exists: fileInfo.Exists,
+                FileSizeBytes: fileInfo.Exists ? fileInfo.Length : 0,
+                LastWriteTimeUtc: fileInfo.Exists
+                    ? new DateTimeOffset(fileInfo.LastWriteTimeUtc, TimeSpan.Zero)
+                    : DateTimeOffset.MinValue);
+        }
+        catch (Exception exception) when (IsRecoverableFileException(exception))
+        {
+            return new FileState(
+                Exists: false,
+                FileSizeBytes: 0,
+                LastWriteTimeUtc: DateTimeOffset.MinValue);
+        }
+    }
+
+    private readonly record struct FileState(
+        bool Exists,
+        long FileSizeBytes,
+        DateTimeOffset LastWriteTimeUtc);
+
+    private sealed class ProgressState
+    {
+        public int ProcessedFileCount { get; set; }
     }
 }

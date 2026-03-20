@@ -1,8 +1,8 @@
 # TokenMap - Status
 
 ## Текущее состояние
-- Статус проекта: **Этап 3 завершён**
-- Цель текущего цикла: **Этап 4 - Analyzer orchestration, progress, cancel, cache**
+- Статус проекта: **Этап 4 завершён**
+- Цель текущего цикла: **Этап 5 - Main window, ViewModels, layout**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS**
 - Linux: **post-MVP / not blocking**
@@ -12,7 +12,7 @@
 - [x] Этап 1 - Core contracts и scanner skeleton
 - [x] Этап 2 - Ignore / exclude policy
 - [x] Этап 3 - Token counting и Tokei integration
-- [ ] Этап 4 - Analyzer orchestration, progress, cancel, cache
+- [x] Этап 4 - Analyzer orchestration, progress, cancel, cache
 - [ ] Этап 5 - Main window, ViewModels, layout
 - [ ] Этап 6 - Treemap layout engine и TreemapControl
 - [ ] Этап 7 - Hover tooltip, selection sync, details panel справа
@@ -124,9 +124,31 @@
   - `Microsoft.ML.Tokenizers` тянет транзитивный `Microsoft.Bcl.Memory 9.0.4`, поэтому `restore/build` сейчас дают warning `NU1903`; это зафиксировано отдельно и не блокирует MVP-этап 3;
   - orchestration через `IProjectAnalyzer`, progress batching, cancel и cache остаются на Этап 4.
 
+### 2026-03-20
+- Этап: **Этап 4 - Analyzer orchestration, progress, cancel, cache**
+- Что сделано:
+  - реализован `ProjectAnalyzer`, который оркестрирует scanner + metrics enrichment и предоставляет рабочую реализацию `IProjectAnalyzer`;
+  - добавлен `BufferedAnalysisProgress` для пакетной отправки progress вместо обновления UI на каждый узел;
+  - добавлен `InMemoryCacheStore` с ключом по `fullPath + fileSizeBytes + lastWriteTimeUtc + tokenProfile`;
+  - `ProjectSnapshotMetricsEnricher` интегрирован с cache: при cache hit повторно не читает файл и не вызывает token counter;
+  - cancel-path протянут через analyzer, scanner, enrichment и token/tokei layer без возврата битого partial snapshot;
+  - добавлены tests на cache hit, cache miss после изменения файла, batched progress и отмену во время metrics stage.
+- Что проверено:
+  - `dotnet restore`
+  - `dotnet build Clever.TokenMap.sln`
+  - `dotnet test Clever.TokenMap.sln --no-build`
+- Принятые решения:
+  - cache оставлен in-memory и process-local, без дискового формата, чтобы не раздувать MVP и не усложнять invalidation;
+  - progress batching реализован простым буфером по количеству событий с flush на смене phase и на terminal progress;
+  - analyzer остаётся в infrastructure-слое как concrete orchestration поверх core contracts, без DI-фреймворка и без раннего усложнения композиции.
+- Открытые вопросы / Отложено:
+  - persist cache на диск не добавлялся и остаётся вне scope MVP-необходимого этапа;
+  - UI пока не подключён к analyzer, progress и cancel-кнопкам; это остаётся на Этап 5;
+  - предупреждение `NU1903` по транзитивному `Microsoft.Bcl.Memory 9.0.4` остаётся актуальным и зафиксировано отдельно.
+
 ## Известные ограничения на текущем этапе
 - Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
-- `IProjectAnalyzer`, progress batching, cache и полноценная отмена orchestration ещё не реализованы.
+- Cache пока только in-memory и живёт в пределах процесса.
 - `tokei` sidecar discovery уже поддержан, но сами sidecar-бинарники ещё не лежат в `third_party/`.
 - `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из зависимости `Microsoft.ML.Tokenizers`.
 - UI пока не подключён к analyzer и остаётся shell-заглушкой.

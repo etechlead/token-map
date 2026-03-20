@@ -1,0 +1,158 @@
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Analysis;
+using Clever.TokenMap.Infrastructure.Caching;
+using Clever.TokenMap.Infrastructure.Scanning;
+
+namespace Clever.TokenMap.Core.Tests.Infrastructure;
+
+public sealed class ProjectAnalyzerTests : IDisposable
+{
+    private readonly string _rootPath = Path.Combine(Path.GetTempPath(), $"tokenmap-analyzer-{Guid.NewGuid():N}");
+
+    public ProjectAnalyzerTests()
+    {
+        Directory.CreateDirectory(_rootPath);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_UsesCacheOnRepeatedRun()
+    {
+        var filePath = Path.Combine(_rootPath, "Program.cs");
+        await File.WriteAllTextAsync(filePath, "alpha");
+
+        var tokenCounter = new RecordingTokenCounter();
+        var analyzer = CreateAnalyzer(tokenCounter, new InMemoryCacheStore());
+
+        var first = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var second = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+
+        Assert.Equal(1, tokenCounter.CallCount);
+        Assert.Equal(first.Root.Metrics.Tokens, second.Root.Metrics.Tokens);
+        Assert.Equal(5, second.Root.Metrics.Tokens);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_InvalidatesCacheWhenFileChanges()
+    {
+        var filePath = Path.Combine(_rootPath, "Program.cs");
+        await File.WriteAllTextAsync(filePath, "alpha");
+
+        var tokenCounter = new RecordingTokenCounter();
+        var analyzer = CreateAnalyzer(tokenCounter, new InMemoryCacheStore());
+
+        var first = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+
+        await File.WriteAllTextAsync(filePath, "alpha beta");
+        File.SetLastWriteTimeUtc(filePath, DateTime.UtcNow.AddSeconds(1));
+
+        var second = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+
+        Assert.Equal(2, tokenCounter.CallCount);
+        Assert.Equal(5, first.Root.Metrics.Tokens);
+        Assert.Equal(10, second.Root.Metrics.Tokens);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_ReportsProgressInBatches()
+    {
+        for (var index = 0; index < 7; index++)
+        {
+            await File.WriteAllTextAsync(Path.Combine(_rootPath, $"File{index}.txt"), $"content-{index}");
+        }
+
+        var progressEvents = new List<AnalysisProgress>();
+        var progress = new Progress<AnalysisProgress>(value => progressEvents.Add(value));
+        var analyzer = new ProjectAnalyzer(
+            new FileSystemProjectScanner(),
+            new AlwaysTextDetector(),
+            new RecordingTokenCounter(),
+            new EmptyTokeiRunner(),
+            cacheStore: new InMemoryCacheStore(),
+            progressBatchSize: 3);
+
+        var snapshot = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress, CancellationToken.None);
+
+        Assert.Equal(7, snapshot.Root.Metrics.DescendantFileCount);
+        Assert.Contains(progressEvents, value => value.Phase == "Initializing");
+        Assert.Contains(progressEvents, value => value.Phase == "ScanningTree");
+        Assert.Contains(progressEvents, value => value.Phase == "AnalyzingFiles");
+        Assert.Contains(progressEvents, value => value.Phase == "Completed");
+        Assert.True(progressEvents.Count < 16);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_HonorsCancellationDuringMetricsStage()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "Program.cs"), "alpha");
+
+        var analyzer = new ProjectAnalyzer(
+            new FileSystemProjectScanner(),
+            new AlwaysTextDetector(),
+            new BlockingTokenCounter(),
+            new EmptyTokeiRunner(),
+            cacheStore: null,
+            progressBatchSize: 2);
+
+        using var cancellationTokenSource = new CancellationTokenSource();
+        var analyzeTask = analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, cancellationTokenSource.Token);
+
+        cancellationTokenSource.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await analyzeTask);
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_rootPath))
+        {
+            Directory.Delete(_rootPath, recursive: true);
+        }
+    }
+
+    private ProjectAnalyzer CreateAnalyzer(ITokenCounter tokenCounter, ICacheStore cacheStore) =>
+        new(
+            new FileSystemProjectScanner(),
+            new AlwaysTextDetector(),
+            tokenCounter,
+            new EmptyTokeiRunner(),
+            cacheStore,
+            progressBatchSize: 2);
+
+    private sealed class AlwaysTextDetector : ITextFileDetector
+    {
+        public ValueTask<bool> IsTextAsync(string fullPath, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(true);
+    }
+
+    private sealed class RecordingTokenCounter : ITokenCounter
+    {
+        public int CallCount { get; private set; }
+
+        public ValueTask<int> CountTokensAsync(string content, TokenProfile tokenProfile, CancellationToken cancellationToken)
+        {
+            CallCount++;
+            return ValueTask.FromResult(content.Length);
+        }
+    }
+
+    private sealed class BlockingTokenCounter : ITokenCounter
+    {
+        public async ValueTask<int> CountTokensAsync(string content, TokenProfile tokenProfile, CancellationToken cancellationToken)
+        {
+            await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+            return content.Length;
+        }
+    }
+
+    private sealed class EmptyTokeiRunner : ITokeiRunner
+    {
+        public Task<IReadOnlyDictionary<string, TokeiFileStats>> CollectAsync(
+            string rootPath,
+            IReadOnlyCollection<string> includedRelativePaths,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyDictionary<string, TokeiFileStats>>(
+                new Dictionary<string, TokeiFileStats>(StringComparer.OrdinalIgnoreCase));
+    }
+}
