@@ -1,5 +1,4 @@
 using System;
-using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Models;
@@ -34,12 +33,10 @@ public partial class MainWindowViewModel : ViewModelBase
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
         Tree = new ProjectTreeViewModel();
-        Details = new DetailsPanelViewModel();
         Summary = new SummaryViewModel();
 
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
-        Toolbar.PropertyChanged += HandleToolbarPropertyChanged;
-        Toolbar.RefreshAvailability(hasSelectedFolder: false, isBusy: false);
+        Toolbar.RefreshAvailability(hasSelectedFolder: false, isBusy: false, hasSnapshot: false);
     }
 
     public string WindowTitle => "TokenMap";
@@ -47,8 +44,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public ToolbarViewModel Toolbar { get; }
 
     public ProjectTreeViewModel Tree { get; }
-
-    public DetailsPanelViewModel Details { get; }
 
     public SummaryViewModel Summary { get; }
 
@@ -78,7 +73,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _selectedFolderPath = selectedFolder;
         Toolbar.UpdateFolder(selectedFolder);
-        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: false);
+        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: false, hasSnapshot: _currentSnapshot is not null);
 
         await AnalyzeCurrentFolderAsync();
     }
@@ -96,7 +91,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _analysisCancellationTokenSource = new CancellationTokenSource();
 
         SetState(AnalysisState.Scanning, $"Analyzing {_selectedFolderPath}");
-        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: true);
+        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: true, hasSnapshot: _currentSnapshot is not null);
 
         var progress = new Progress<AnalysisProgress>(value => Summary.UpdateProgress(value));
 
@@ -123,7 +118,10 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _analysisCancellationTokenSource.Dispose();
             _analysisCancellationTokenSource = null;
-            Toolbar.RefreshAvailability(hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath), isBusy: false);
+            Toolbar.RefreshAvailability(
+                hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath),
+                isBusy: false,
+                hasSnapshot: _currentSnapshot is not null);
         }
     }
 
@@ -136,6 +134,10 @@ public partial class MainWindowViewModel : ViewModelBase
         Summary.SetCompleted(snapshot);
         SelectedNode = snapshot.Root;
         OnPropertyChanged(nameof(TreemapRootNode));
+        Toolbar.RefreshAvailability(
+            hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath),
+            isBusy: false,
+            hasSnapshot: true);
     }
 
     private void CancelAnalysis()
@@ -154,16 +156,6 @@ public partial class MainWindowViewModel : ViewModelBase
         if (value is not null)
         {
             Tree.SelectNodeById(value.Id);
-        }
-
-        Details.ShowNode(value, _currentSnapshot?.Root, Toolbar.SelectedMetric);
-    }
-
-    private void HandleToolbarPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(ToolbarViewModel.SelectedMetric))
-        {
-            Details.ShowNode(SelectedNode, _currentSnapshot?.Root, Toolbar.SelectedMetric);
         }
     }
 

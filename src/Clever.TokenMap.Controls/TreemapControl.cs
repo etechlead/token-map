@@ -104,20 +104,42 @@ public sealed class TreemapControl : Control
 
         foreach (var visual in _nodeVisuals)
         {
-            var fill = new SolidColorBrush(CreateColor(visual.Node.Id, visual.Depth));
-            context.FillRectangle(fill, visual.Bounds);
+            var isLeaf = IsLeafNode(visual.Node);
+            if (isLeaf)
+            {
+                var fill = new SolidColorBrush(TreemapColorRules.GetLeafColor(visual.Node));
+                context.FillRectangle(fill, visual.Bounds);
+            }
+            else if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
+            {
+                context.FillRectangle(
+                    new SolidColorBrush(Color.FromArgb(12, 255, 255, 255)),
+                    visual.Bounds);
+
+                var headerBounds = TreemapVisualRules.GetHeaderBounds(visual.Node, visual.Bounds);
+                if (headerBounds.Height > 0)
+                {
+                    context.FillRectangle(
+                        new SolidColorBrush(Color.FromArgb(76, 255, 255, 255)),
+                        headerBounds);
+                }
+            }
+
             context.DrawRectangle(CreateBorderPen(visual.Node), visual.Bounds);
 
-            if (visual.Bounds.Width >= 56 && visual.Bounds.Height >= 22)
+            if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
+                var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
                 var formattedText = new FormattedText(
                     visual.Node.Name,
                     culture: System.Globalization.CultureInfo.InvariantCulture,
                     flowDirection: FlowDirection.LeftToRight,
                     typeface: Typeface.Default,
-                    emSize: 12,
+                    emSize: TreemapVisualRules.GetLabelFontSize(visual.Node),
                     foreground: Brushes.White);
-                context.DrawText(formattedText, new Point(visual.Bounds.X + 4, visual.Bounds.Y + 4));
+
+                using var clip = context.PushClip(labelBounds);
+                context.DrawText(formattedText, new Point(labelBounds.X, labelBounds.Y));
             }
         }
     }
@@ -220,6 +242,7 @@ public sealed class TreemapControl : Control
     {
         var isSelected = SelectedNode?.Id == node.Id;
         var isHovered = HoveredNode?.Id == node.Id;
+        var isLeaf = IsLeafNode(node);
 
         if (isSelected)
         {
@@ -231,7 +254,9 @@ public sealed class TreemapControl : Control
             return new Pen(new SolidColorBrush(Color.Parse("#B7D7FF")), 2);
         }
 
-        return new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1);
+        return isLeaf
+            ? new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1)
+            : new Pen(new SolidColorBrush(Color.Parse("#314459")), 1);
     }
 
     private string BuildTooltip(ProjectNode node)
@@ -270,36 +295,7 @@ public sealed class TreemapControl : Control
             _ => "File",
         };
 
-    private static Color CreateColor(string seed, int depth)
-    {
-        var hash = seed.Aggregate(17, (current, character) => current * 31 + character);
-        var hue = Math.Abs(hash % 360);
-        var saturation = Math.Clamp(0.55 + depth * 0.05, 0.55, 0.8);
-        var value = Math.Clamp(0.70 - depth * 0.05, 0.40, 0.75);
+    private static bool IsLeafNode(ProjectNode node) =>
+        node.Kind == Core.Enums.ProjectNodeKind.File || node.Children.Count == 0;
 
-        return ColorFromHsv(hue, saturation, value);
-    }
-
-    private static Color ColorFromHsv(double hue, double saturation, double value)
-    {
-        var chroma = value * saturation;
-        var section = hue / 60d;
-        var x = chroma * (1 - Math.Abs(section % 2 - 1));
-        var m = value - chroma;
-
-        (double r, double g, double b) = section switch
-        {
-            >= 0 and < 1 => (chroma, x, 0d),
-            >= 1 and < 2 => (x, chroma, 0d),
-            >= 2 and < 3 => (0d, chroma, x),
-            >= 3 and < 4 => (0d, x, chroma),
-            >= 4 and < 5 => (x, 0d, chroma),
-            _ => (chroma, 0d, x),
-        };
-
-        return Color.FromRgb(
-            (byte)Math.Round((r + m) * 255),
-            (byte)Math.Round((g + m) * 255),
-            (byte)Math.Round((b + m) * 255));
-    }
 }

@@ -62,8 +62,7 @@ public sealed class ProjectAnalyzerTests : IDisposable
             await File.WriteAllTextAsync(Path.Combine(_rootPath, $"File{index}.txt"), $"content-{index}");
         }
 
-        var progressEvents = new List<AnalysisProgress>();
-        var progress = new Progress<AnalysisProgress>(value => progressEvents.Add(value));
+        var progress = new CapturingProgress();
         var analyzer = new ProjectAnalyzer(
             new FileSystemProjectScanner(),
             new AlwaysTextDetector(),
@@ -73,6 +72,8 @@ public sealed class ProjectAnalyzerTests : IDisposable
             progressBatchSize: 3);
 
         var snapshot = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress, CancellationToken.None);
+
+        var progressEvents = progress.GetSnapshot();
 
         Assert.Equal(7, snapshot.Root.Metrics.DescendantFileCount);
         Assert.Contains(progressEvents, value => value.Phase == "Initializing");
@@ -154,5 +155,27 @@ public sealed class ProjectAnalyzerTests : IDisposable
             CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyDictionary<string, TokeiFileStats>>(
                 new Dictionary<string, TokeiFileStats>(StringComparer.OrdinalIgnoreCase));
+    }
+
+    private sealed class CapturingProgress : IProgress<AnalysisProgress>
+    {
+        private readonly object _gate = new();
+        private readonly List<AnalysisProgress> _events = [];
+
+        public void Report(AnalysisProgress value)
+        {
+            lock (_gate)
+            {
+                _events.Add(value);
+            }
+        }
+
+        public IReadOnlyList<AnalysisProgress> GetSnapshot()
+        {
+            lock (_gate)
+            {
+                return _events.ToArray();
+            }
+        }
     }
 }

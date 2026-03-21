@@ -1,4 +1,5 @@
 using Avalonia;
+using Clever.TokenMap.Controls;
 using Clever.TokenMap.Controls.Models;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
@@ -39,8 +40,18 @@ public sealed class SquarifiedTreemapLayout
             return;
         }
 
+        var boundsArea = bounds.Width * bounds.Height;
+        var totalWeight = items.Sum(item => item.Weight);
+        if (boundsArea <= 0 || totalWeight <= 0)
+        {
+            return;
+        }
+
+        items = items
+            .Select(item => item with { Area = boundsArea * (item.Weight / totalWeight) })
+            .ToList();
+
         var remainingBounds = bounds;
-        var remainingWeight = items.Sum(item => item.Weight);
         var row = new List<WeightedNode>();
 
         while (items.Count > 0)
@@ -53,85 +64,76 @@ public sealed class SquarifiedTreemapLayout
                 continue;
             }
 
-            remainingBounds = LayoutRow(row, remainingBounds, remainingWeight, visuals, metric, depth);
-            remainingWeight -= row.Sum(item => item.Weight);
+            remainingBounds = LayoutRow(row, remainingBounds, visuals, metric, depth);
             row.Clear();
         }
 
         if (row.Count > 0)
         {
-            LayoutRow(row, remainingBounds, remainingWeight, visuals, metric, depth);
+            LayoutRow(row, remainingBounds, visuals, metric, depth);
         }
     }
 
     private Rect LayoutRow(
         IReadOnlyList<WeightedNode> row,
         Rect bounds,
-        double totalWeight,
         List<TreemapNodeVisual> visuals,
         string metric,
         int depth)
     {
-        var rowWeight = row.Sum(item => item.Weight);
-        if (rowWeight <= 0 || totalWeight <= 0)
+        var rowArea = row.Sum(item => item.Area);
+        if (rowArea <= 0)
         {
             return bounds;
         }
 
         var isHorizontal = bounds.Width >= bounds.Height;
-        var boundsArea = bounds.Width * bounds.Height;
-        var rowArea = boundsArea * (rowWeight / totalWeight);
 
         if (isHorizontal)
         {
-            var rowHeight = rowArea / bounds.Width;
-            var x = bounds.X;
+            var rowWidth = rowArea / bounds.Height;
+            var y = bounds.Y;
 
             foreach (var item in row)
             {
-                var itemWidth = rowHeight <= 0
+                var itemHeight = rowWidth <= 0
                     ? 0
-                    : rowArea * (item.Weight / rowWeight) / rowHeight;
-                var itemBounds = new Rect(x, bounds.Y, itemWidth, rowHeight);
+                    : item.Area / rowWidth;
+                var itemBounds = new Rect(bounds.X, y, rowWidth, itemHeight);
                 visuals.Add(new TreemapNodeVisual(item.Node, itemBounds, depth));
 
                 if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
                 {
-                    LayoutNode(item.Node, Inset(itemBounds, 1), metric, visuals, depth + 1);
+                    LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
                 }
 
-                x += itemWidth;
+                y += itemHeight;
             }
 
-            return new Rect(bounds.X, bounds.Y + rowHeight, bounds.Width, Math.Max(0, bounds.Height - rowHeight));
+            return new Rect(bounds.X + rowWidth, bounds.Y, Math.Max(0, bounds.Width - rowWidth), bounds.Height);
         }
 
-        var rowWidth = rowArea / bounds.Height;
-        var y = bounds.Y;
+        var rowHeight = rowArea / bounds.Width;
+        var x = bounds.X;
 
         foreach (var item in row)
         {
-            var itemHeight = rowWidth <= 0
+            var itemWidth = rowHeight <= 0
                 ? 0
-                : rowArea * (item.Weight / rowWeight) / rowWidth;
-            var itemBounds = new Rect(bounds.X, y, rowWidth, itemHeight);
+                : item.Area / rowHeight;
+            var itemBounds = new Rect(x, bounds.Y, itemWidth, rowHeight);
             visuals.Add(new TreemapNodeVisual(item.Node, itemBounds, depth));
 
             if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
             {
-                LayoutNode(item.Node, Inset(itemBounds, 1), metric, visuals, depth + 1);
+                LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
             }
 
-            y += itemHeight;
+            x += itemWidth;
         }
 
-        return new Rect(bounds.X + rowWidth, bounds.Y, Math.Max(0, bounds.Width - rowWidth), bounds.Height);
+        return new Rect(bounds.X, bounds.Y + rowHeight, bounds.Width, Math.Max(0, bounds.Height - rowHeight));
     }
-
-    private static Rect Inset(Rect rect, double inset) =>
-        rect.Width <= inset * 2 || rect.Height <= inset * 2
-            ? rect
-            : new Rect(rect.X + inset, rect.Y + inset, rect.Width - inset * 2, rect.Height - inset * 2);
 
     private static bool ImprovesAspectRatio(IReadOnlyList<WeightedNode> row, WeightedNode candidate, Rect bounds)
     {
@@ -153,9 +155,9 @@ public sealed class SquarifiedTreemapLayout
             return double.PositiveInfinity;
         }
 
-        var sum = row.Sum(item => item.Weight);
-        var max = row.Max(item => item.Weight);
-        var min = row.Min(item => item.Weight);
+        var sum = row.Sum(item => item.Area);
+        var max = row.Max(item => item.Area);
+        var min = row.Min(item => item.Area);
 
         if (sum <= 0 || min <= 0)
         {
@@ -178,5 +180,8 @@ public sealed class SquarifiedTreemapLayout
             _ => node.Metrics.Tokens,
         };
 
-    private sealed record WeightedNode(ProjectNode Node, double Weight);
+    private sealed record WeightedNode(ProjectNode Node, double Weight)
+    {
+        public double Area { get; init; }
+    }
 }

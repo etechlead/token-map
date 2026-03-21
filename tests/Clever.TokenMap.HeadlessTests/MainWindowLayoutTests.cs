@@ -23,15 +23,90 @@ public sealed class MainWindowLayoutTests
         window.Show();
 
         Assert.NotNull(window.FindControl<Control>("ToolbarHost"));
+        Assert.NotNull(window.FindControl<Grid>("WorkspaceHost"));
         Assert.NotNull(window.FindControl<Control>("ProjectTreePane"));
         Assert.NotNull(window.FindControl<Control>("TreemapPane"));
-        Assert.NotNull(window.FindControl<Control>("DetailsPane"));
         Assert.NotNull(window.FindControl<Control>("StatusStrip"));
         Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
+        Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
+        Assert.Null(window.FindControl<Control>("DetailsPane"));
+        Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
     }
 
     [AvaloniaFact]
-    public async Task MainWindow_OpenFolderFlow_PopulatesTreeAndDetails()
+    public void MainWindow_WorkspaceHost_UsesFortySixtySplit()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var workspaceHost = window.FindControl<Grid>("WorkspaceHost");
+
+        Assert.NotNull(workspaceHost);
+        Assert.Equal(3, workspaceHost.ColumnDefinitions.Count);
+        Assert.Equal(2, workspaceHost.ColumnDefinitions[0].Width.Value);
+        Assert.Equal(GridUnitType.Star, workspaceHost.ColumnDefinitions[0].Width.GridUnitType);
+        Assert.Equal(10, workspaceHost.ColumnDefinitions[1].Width.Value);
+        Assert.Equal(GridUnitType.Pixel, workspaceHost.ColumnDefinitions[1].Width.GridUnitType);
+        Assert.Equal(3, workspaceHost.ColumnDefinitions[2].Width.Value);
+        Assert.Equal(GridUnitType.Star, workspaceHost.ColumnDefinitions[2].Width.GridUnitType);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ProjectTreeTable_UsesRequestedColumns()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var treeTable = window.FindControl<DataGrid>("ProjectTreeTable");
+
+        Assert.NotNull(treeTable);
+        Assert.Collection(
+            treeTable.Columns.Select(column => column.Header?.ToString()),
+            header => Assert.Equal("Name", header),
+            header => Assert.Equal("Size v", header),
+            header => Assert.Equal("Lines", header),
+            header => Assert.Equal("Tokens", header),
+            header => Assert.Equal("Files", header));
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_InitialToolbarAvailability_EnablesScanSettingsButDisablesMetric()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var metricComboBox = window.FindControl<ComboBox>("MetricComboBox");
+        var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
+        var gitIgnoreCheckBox = window.FindControl<CheckBox>("RespectGitIgnoreCheckBox");
+        var ignoreCheckBox = window.FindControl<CheckBox>("RespectIgnoreCheckBox");
+        var defaultExcludesCheckBox = window.FindControl<CheckBox>("UseDefaultExcludesCheckBox");
+
+        Assert.NotNull(metricComboBox);
+        Assert.NotNull(tokenizerComboBox);
+        Assert.NotNull(gitIgnoreCheckBox);
+        Assert.NotNull(ignoreCheckBox);
+        Assert.NotNull(defaultExcludesCheckBox);
+        Assert.False(metricComboBox.IsEnabled);
+        Assert.True(tokenizerComboBox.IsEnabled);
+        Assert.True(gitIgnoreCheckBox.IsEnabled);
+        Assert.True(ignoreCheckBox.IsEnabled);
+        Assert.True(defaultExcludesCheckBox.IsEnabled);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_OpenFolderFlow_PopulatesTreeAndSummary()
     {
         var window = new MainWindow();
         var viewModel = new MainWindowViewModel(
@@ -42,18 +117,161 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var treeView = window.FindControl<TreeView>("ProjectTreeControl");
+        var treeTable = window.FindControl<DataGrid>("ProjectTreeTable");
         var statusText = window.FindControl<TextBlock>("StatusValueText");
-        var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
         var tokenSummaryText = window.FindControl<TextBlock>("TokenSummaryValueText");
+        var lineSummaryText = window.FindControl<TextBlock>("LineSummaryValueText");
+        var fileSummaryText = window.FindControl<TextBlock>("FileSummaryValueText");
         var warningSummaryText = window.FindControl<TextBlock>("WarningSummaryValueText");
+        var metricComboBox = window.FindControl<ComboBox>("MetricComboBox");
+        var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
 
-        Assert.NotNull(treeView);
+        Assert.NotNull(treeTable);
         Assert.Single(viewModel.Tree.RootNodes);
+        Assert.Equal(2, viewModel.Tree.VisibleNodes.Count);
         Assert.Equal("Completed", statusText?.Text);
-        Assert.Equal("Path: (root)", detailsPathText?.Text);
         Assert.Equal("42", tokenSummaryText?.Text);
-        Assert.Equal("0", warningSummaryText?.Text);
+        Assert.Equal("12", lineSummaryText?.Text);
+        Assert.Equal("1", fileSummaryText?.Text);
+        Assert.Null(warningSummaryText);
+        Assert.True(metricComboBox?.IsEnabled);
+        Assert.True(tokenizerComboBox?.IsEnabled);
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_LoadRoot_DefaultsToSizeDescendingSort()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        var root = CreateRootWithChildren(
+            ("Small.cs", 10, 1, 1),
+            ("Large.cs", 20, 2, 1));
+
+        viewModel.LoadRoot(root);
+
+        Assert.Equal(ProjectTreeSortColumn.Size, viewModel.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Large.cs", name),
+            name => Assert.Equal("Small.cs", name));
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_LoadRoot_PreservesActiveSortAcrossReloads()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 10, 10, 1),
+            ("Beta.cs", 20, 20, 1)));
+
+        viewModel.SortBy(ProjectTreeSortColumn.Tokens, System.ComponentModel.ListSortDirection.Ascending);
+        viewModel.LoadRoot(CreateRootWithChildren(
+            ("Gamma.cs", 30, 30, 1),
+            ("Delta.cs", 5, 5, 1)));
+
+        Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Delta.cs", name),
+            name => Assert.Equal("Gamma.cs", name));
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_SortBy_ReordersVisibleRows()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        var root = new ProjectTreeNodeViewModel(
+            new ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Metrics = new NodeMetrics(
+                    Tokens: 30,
+                    TotalLines: 3,
+                    CodeLines: 3,
+                    CommentLines: 0,
+                    BlankLines: 0,
+                    Language: null,
+                    FileSizeBytes: 30,
+                    DescendantFileCount: 2,
+                    DescendantDirectoryCount: 0),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "A.cs",
+                        Name = "A.cs",
+                        FullPath = "C:\\Demo\\A.cs",
+                        RelativePath = "A.cs",
+                        Kind = ProjectNodeKind.File,
+                        Metrics = new NodeMetrics(
+                            Tokens: 10,
+                            TotalLines: 1,
+                            CodeLines: 1,
+                            CommentLines: 0,
+                            BlankLines: 0,
+                            Language: "C#",
+                            FileSizeBytes: 10,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                    new ProjectNode
+                    {
+                        Id = "B.cs",
+                        Name = "B.cs",
+                        FullPath = "C:\\Demo\\B.cs",
+                        RelativePath = "B.cs",
+                        Kind = ProjectNodeKind.File,
+                        Metrics = new NodeMetrics(
+                            Tokens: 20,
+                            TotalLines: 2,
+                            CodeLines: 2,
+                            CommentLines: 0,
+                            BlankLines: 0,
+                            Language: "C#",
+                            FileSizeBytes: 20,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                },
+            });
+
+        viewModel.LoadRoot(root);
+        viewModel.SortBy(ProjectTreeSortColumn.Tokens, System.ComponentModel.ListSortDirection.Descending);
+
+        Assert.Collection(
+            viewModel.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("B.cs", name),
+            name => Assert.Equal("A.cs", name));
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_ToggleNodeCommand_ShowsAndHidesChildrenInVisibleRows()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        var root = new ProjectTreeNodeViewModel(CreateNestedSnapshot().Root);
+        viewModel.LoadRoot(root);
+
+        var directoryNode = Assert.Single(root.Children);
+
+        Assert.Equal(2, viewModel.VisibleNodes.Count);
+
+        viewModel.ToggleNodeCommand.Execute(directoryNode);
+
+        Assert.Equal(3, viewModel.VisibleNodes.Count);
+        Assert.Contains(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        viewModel.ToggleNodeCommand.Execute(directoryNode);
+
+        Assert.Equal(2, viewModel.VisibleNodes.Count);
+        Assert.DoesNotContain(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
     }
 
     [AvaloniaFact]
@@ -129,7 +347,7 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public async Task MainWindow_TreemapSelection_SynchronizesTreeAndDetails()
+    public async Task MainWindow_TreemapSelection_SynchronizesTree()
     {
         var window = new MainWindow();
         var viewModel = new MainWindowViewModel(
@@ -150,15 +368,44 @@ public sealed class MainWindowLayoutTests
 
         control.SelectNodeAt(point);
 
-        var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
-
         Assert.Equal("Program.cs", viewModel.Tree.SelectedNode?.Node.RelativePath);
         Assert.Equal("Program.cs", viewModel.SelectedNode?.RelativePath);
-        Assert.Equal("Path: Program.cs", detailsPathText?.Text);
     }
 
     [AvaloniaFact]
-    public async Task MainWindow_TreeSelection_SynchronizesTreemapAndDetails()
+    public async Task MainWindow_TreemapSelection_ExpandsAncestorChainInProjectTree()
+    {
+        var window = new MainWindow();
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(CreateNestedSnapshot()),
+            new StubFolderPickerService("C:\\Demo"));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        Assert.NotNull(control);
+
+        var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src/Program.cs");
+        var point = new Avalonia.Point(
+            visual.Bounds.X + (visual.Bounds.Width / 2),
+            visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+        control.SelectNodeAt(point);
+
+        var rootNode = Assert.Single(viewModel.Tree.RootNodes);
+        var directoryNode = Assert.Single(rootNode.Children);
+        var fileNode = Assert.Single(directoryNode.Children);
+
+        Assert.True(rootNode.IsExpanded);
+        Assert.True(directoryNode.IsExpanded);
+        Assert.Equal(fileNode, viewModel.Tree.SelectedNode);
+        Assert.Equal("src/Program.cs", viewModel.SelectedNode?.RelativePath);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreeSelection_SynchronizesTreemap()
     {
         var window = new MainWindow();
         var viewModel = new MainWindowViewModel(
@@ -173,11 +420,9 @@ public sealed class MainWindowLayoutTests
         viewModel.Tree.SelectedNode = childNode;
 
         var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
-        var detailsPathText = window.FindControl<TextBlock>("DetailsPathText");
 
         Assert.NotNull(control);
         Assert.Equal("Program.cs", control.SelectedNode?.RelativePath);
-        Assert.Equal("Path: Program.cs", detailsPathText?.Text);
     }
 
     [AvaloniaFact]
@@ -258,6 +503,120 @@ public sealed class MainWindowLayoutTests
                             FileSizeBytes: 128,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
+                    },
+                },
+            },
+        };
+
+    private static ProjectTreeNodeViewModel CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
+    {
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: children.Sum(item => item.Tokens),
+                TotalLines: children.Sum(item => item.TotalLines),
+                CodeLines: children.Sum(item => item.TotalLines),
+                CommentLines: 0,
+                BlankLines: 0,
+                Language: null,
+                FileSizeBytes: children.Sum(item => item.FileSizeBytes),
+                DescendantFileCount: children.Length,
+                DescendantDirectoryCount: 0),
+        };
+
+        foreach (var item in children)
+        {
+            root.Children.Add(new ProjectNode
+            {
+                Id = item.Name,
+                Name = item.Name,
+                FullPath = Path.Combine("C:\\Demo", item.Name),
+                RelativePath = item.Name,
+                Kind = ProjectNodeKind.File,
+                Metrics = new NodeMetrics(
+                    Tokens: item.Tokens,
+                    TotalLines: item.TotalLines,
+                    CodeLines: item.TotalLines,
+                    CommentLines: 0,
+                    BlankLines: 0,
+                    Language: "C#",
+                    FileSizeBytes: item.FileSizeBytes,
+                    DescendantFileCount: 1,
+                    DescendantDirectoryCount: 0),
+            });
+        }
+
+        return new ProjectTreeNodeViewModel(root);
+    }
+
+    private static ProjectSnapshot CreateNestedSnapshot() =>
+        new()
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Metrics = new NodeMetrics(
+                    Tokens: 42,
+                    TotalLines: 12,
+                    CodeLines: 10,
+                    CommentLines: 1,
+                    BlankLines: 1,
+                    Language: null,
+                    FileSizeBytes: 128,
+                    DescendantFileCount: 1,
+                    DescendantDirectoryCount: 1),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "src",
+                        Name = "src",
+                        FullPath = "C:\\Demo\\src",
+                        RelativePath = "src",
+                        Kind = ProjectNodeKind.Directory,
+                        Metrics = new NodeMetrics(
+                            Tokens: 42,
+                            TotalLines: 12,
+                            CodeLines: 10,
+                            CommentLines: 1,
+                            BlankLines: 1,
+                            Language: null,
+                            FileSizeBytes: 128,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                        Children =
+                        {
+                            new ProjectNode
+                            {
+                                Id = "src/Program.cs",
+                                Name = "Program.cs",
+                                FullPath = "C:\\Demo\\src\\Program.cs",
+                                RelativePath = "src/Program.cs",
+                                Kind = ProjectNodeKind.File,
+                                Metrics = new NodeMetrics(
+                                    Tokens: 42,
+                                    TotalLines: 12,
+                                    CodeLines: 10,
+                                    CommentLines: 1,
+                                    BlankLines: 1,
+                                    Language: "C#",
+                                    FileSizeBytes: 128,
+                                    DescendantFileCount: 1,
+                                    DescendantDirectoryCount: 0),
+                            },
+                        },
                     },
                 },
             },

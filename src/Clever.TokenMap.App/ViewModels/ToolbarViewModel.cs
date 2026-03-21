@@ -39,7 +39,10 @@ public partial class ToolbarViewModel : ViewModelBase
     ];
 
     [ObservableProperty]
-    private bool canChangeOptions;
+    private bool canConfigureScanOptions = true;
+
+    [ObservableProperty]
+    private bool canChangeMetric;
 
     [ObservableProperty]
     private string selectedFolderDisplay = "No folder selected";
@@ -66,9 +69,10 @@ public partial class ToolbarViewModel : ViewModelBase
             : folderPath;
     }
 
-    public void RefreshAvailability(bool hasSelectedFolder, bool isBusy)
+    public void RefreshAvailability(bool hasSelectedFolder, bool isBusy, bool hasSnapshot)
     {
-        CanChangeOptions = hasSelectedFolder && !isBusy;
+        CanConfigureScanOptions = !isBusy;
+        CanChangeMetric = hasSnapshot && !isBusy;
         OpenFolderCommand.NotifyCanExecuteChanged();
         RescanCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();

@@ -62,6 +62,80 @@ public sealed class SquarifiedTreemapLayoutTests
         Assert.Equal("docs", codeLargest.Node.RelativePath);
     }
 
+    [Fact]
+    public void Calculate_DoesNotDegenerateEqualWeightsIntoFullWidthStripes()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            600,
+            60,
+            CreateNode("a.cs", ProjectNodeKind.File, 100, 10),
+            CreateNode("b.cs", ProjectNodeKind.File, 100, 10),
+            CreateNode("c.cs", ProjectNodeKind.File, 100, 10),
+            CreateNode("d.cs", ProjectNodeKind.File, 100, 10),
+            CreateNode("e.cs", ProjectNodeKind.File, 100, 10),
+            CreateNode("f.cs", ProjectNodeKind.File, 100, 10));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), "Tokens");
+
+        var topLevelVisuals = visuals
+            .Where(visual => visual.Depth == 0)
+            .ToList();
+
+        Assert.Contains(
+            topLevelVisuals,
+            visual => visual.Bounds.Width < 270 && visual.Bounds.Height < 162);
+    }
+
+    [Fact]
+    public void Calculate_LandscapeBounds_StartsWithColumnInsteadOfHorizontalStripe()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            1_068,
+            0,
+            CreateNode("a", ProjectNodeKind.File, 500, 0),
+            CreateNode("b", ProjectNodeKind.File, 433, 0),
+            CreateNode("c", ProjectNodeKind.File, 78, 0),
+            CreateNode("d", ProjectNodeKind.File, 25, 0),
+            CreateNode("e", ProjectNodeKind.File, 25, 0),
+            CreateNode("f", ProjectNodeKind.File, 7, 0));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), "Tokens");
+
+        var first = visuals
+            .Where(visual => visual.Depth == 0)
+            .OrderByDescending(visual => visual.Node.Metrics.Tokens)
+            .First();
+
+        Assert.True(first.Bounds.Height > 400, $"Expected a full-height leading column, got {first.Bounds}.");
+        Assert.True(first.Bounds.Width < 433, $"Expected the leading item to be a column, got {first.Bounds}.");
+    }
+
+    [Fact]
+    public void Calculate_DirectoryChildren_ArePlacedBelowDirectoryHeaderWhenSpaceAllows()
+    {
+        var directory = CreateNode(
+            "src",
+            ProjectNodeKind.Directory,
+            100,
+            10,
+            CreateNode("src/file.cs", ProjectNodeKind.File, 100, 10));
+        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 100, 10, directory);
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), "Tokens");
+
+        var directoryVisual = visuals.Single(visual => visual.Node.RelativePath == "src");
+        var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");
+
+        Assert.True(fileVisual.Bounds.Y >= directoryVisual.Bounds.Y + 14, $"Expected child bounds below directory header, got dir {directoryVisual.Bounds} and file {fileVisual.Bounds}.");
+    }
+
     private static ProjectNode CreateTree()
     {
         var src = CreateNode(
