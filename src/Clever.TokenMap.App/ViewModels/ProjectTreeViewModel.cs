@@ -65,8 +65,12 @@ public partial class ProjectTreeViewModel : ViewModelBase
 
         if (_nodesById.TryGetValue(nodeId, out var node))
         {
-            ExpandToNode(node);
-            RebuildVisibleNodes();
+            var expanded = ExpandToNode(node);
+            if (expanded)
+            {
+                RebuildVisibleNodes();
+            }
+
             if (!ReferenceEquals(SelectedNode, node))
             {
                 SelectedNode = node;
@@ -105,12 +109,19 @@ public partial class ProjectTreeViewModel : ViewModelBase
         }
     }
 
-    private static void ExpandToNode(ProjectTreeNodeViewModel node)
+    private static bool ExpandToNode(ProjectTreeNodeViewModel node)
     {
+        var expanded = false;
         for (var current = node.Parent; current is not null; current = current.Parent)
         {
-            current.IsExpanded = true;
+            if (!current.IsExpanded)
+            {
+                current.IsExpanded = true;
+                expanded = true;
+            }
         }
+
+        return expanded;
     }
 
     private void ToggleNode(ProjectTreeNodeViewModel? node)

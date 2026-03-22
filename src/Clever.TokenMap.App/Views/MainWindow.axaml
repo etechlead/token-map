@@ -71,18 +71,21 @@
             <Setter Property="Width" Value="14" />
             <Setter Property="Height" Value="14" />
             <Setter Property="Padding" Value="0" />
-            <Setter Property="Background" Value="#162131" />
-            <Setter Property="BorderBrush" Value="#233041" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
         </Style>
-        <Style Selector="Button.tree-expander:pointerover">
-            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
-        </Style>
-        <Style Selector="Button.tree-expander:pressed">
-            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+        <Style Selector="Path.tree-expander-chevron">
+            <Setter Property="Width" Value="8" />
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Stroke" Value="#C3D0DD" />
+            <Setter Property="StrokeThickness" Value="1.6" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
         <Style Selector="Button.action-button">
             <Setter Property="Background" Value="#162131" />
@@ -306,13 +309,10 @@
                                                     Classes="tree-expander"
                                                     HorizontalAlignment="Center"
                                                     VerticalAlignment="Center"
-                                                        Click="ProjectTreeExpandCollapseButton_OnClick"
-                                                        IsVisible="{Binding HasChildren}">
-                                                    <TextBlock HorizontalAlignment="Center"
-                                                               VerticalAlignment="Center"
-                                                               FontSize="10"
-                                                           Foreground="#D6E3F0"
-                                                           Text="{Binding ExpanderGlyph}" />
+                                                    Click="ProjectTreeExpandCollapseButton_OnClick"
+                                                    IsVisible="{Binding HasChildren}">
+                                                <Path Classes="tree-expander-chevron"
+                                                      Data="{Binding ExpanderPathData}" />
                                             </Button>
                                             <svg:Svg Grid.Column="1"
                                                      Classes="tree-file-icon"

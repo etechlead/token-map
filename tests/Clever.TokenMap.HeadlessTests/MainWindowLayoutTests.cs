@@ -8,6 +8,7 @@ using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using System.Collections.Specialized;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -364,6 +365,53 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void ProjectTreeViewModel_SelectNodeById_DoesNotRebuildVisibleRowsWhenTargetIsAlreadyVisible()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        var root = CreateRootWithChildren(
+            ("Alpha.cs", 10, 10, 1),
+            ("Beta.cs", 20, 20, 1));
+        viewModel.LoadRoot(root);
+
+        var resetCount = 0;
+        viewModel.VisibleNodes.CollectionChanged += (_, args) =>
+        {
+            if (args.Action == NotifyCollectionChangedAction.Reset)
+            {
+                resetCount++;
+            }
+        };
+
+        viewModel.SelectNodeById("Beta.cs");
+
+        Assert.Equal(0, resetCount);
+        Assert.Equal("Beta.cs", viewModel.SelectedNode?.Node.Id);
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_SelectNodeById_RebuildsVisibleRowsWhenAncestorExpansionIsNeeded()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        var root = new ProjectTreeNodeViewModel(CreateNestedSnapshot().Root);
+        viewModel.LoadRoot(root);
+
+        var resetCount = 0;
+        viewModel.VisibleNodes.CollectionChanged += (_, args) =>
+        {
+            if (args.Action == NotifyCollectionChangedAction.Reset)
+            {
+                resetCount++;
+            }
+        };
+
+        viewModel.SelectNodeById("src/Program.cs");
+
+        Assert.True(resetCount > 0);
+        Assert.Equal("src/Program.cs", viewModel.SelectedNode?.Node.Id);
+        Assert.Contains(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
     public void ProjectTreeNodeViewModel_MapsBaselineIconsForFoldersAndFiles()
     {
         var folderNode = new ProjectTreeNodeViewModel(new ProjectNode
@@ -389,9 +437,11 @@ public sealed class MainWindowLayoutTests
         });
 
         Assert.EndsWith("/Assets/FileIcons/folder-src.svg", folderNode.IconPath, StringComparison.Ordinal);
+        Assert.Equal("M 3 2 L 6.5 5 L 3 8", folderNode.ExpanderPathData);
 
         folderNode.IsExpanded = true;
         Assert.EndsWith("/Assets/FileIcons/folder-src-open.svg", folderNode.IconPath, StringComparison.Ordinal);
+        Assert.Equal("M 2 3 L 5 6.5 L 8 3", folderNode.ExpanderPathData);
 
         var csharpFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
@@ -403,6 +453,7 @@ public sealed class MainWindowLayoutTests
             Metrics = NodeMetrics.Empty,
         });
         Assert.EndsWith("/Assets/FileIcons/csharp.svg", csharpFileNode.IconPath, StringComparison.Ordinal);
+        Assert.Equal(string.Empty, csharpFileNode.ExpanderPathData);
 
         var tsxFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
@@ -414,6 +465,17 @@ public sealed class MainWindowLayoutTests
             Metrics = NodeMetrics.Empty,
         });
         Assert.EndsWith("/Assets/FileIcons/react_ts.svg", tsxFileNode.IconPath, StringComparison.Ordinal);
+
+        var jsonFileNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "package-lock.json",
+            Name = "package-lock.json",
+            FullPath = "C:\\Demo\\package-lock.json",
+            RelativePath = "package-lock.json",
+            Kind = ProjectNodeKind.File,
+            Metrics = NodeMetrics.Empty,
+        });
+        Assert.EndsWith("/Assets/FileIcons/json.svg", jsonFileNode.IconPath, StringComparison.Ordinal);
 
         var fallbackFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
