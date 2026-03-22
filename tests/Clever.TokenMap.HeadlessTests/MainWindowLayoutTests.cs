@@ -34,10 +34,14 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
         Assert.NotNull(window.FindControl<TextBlock>("TreemapScopeText"));
         Assert.Null(window.FindControl<Control>("DetailsPane"));
+        Assert.NotNull(window.FindControl<Button>("SettingsButton"));
+        var settingsDrawer = window.FindControl<Control>("SettingsDrawer");
         Assert.NotNull(window.FindControl<ProgressBar>("StatusProgressBar"));
         Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
         Assert.Null(window.FindControl<TextBlock>("StatusValueText"));
         Assert.False(statusStrip.IsVisible);
+        Assert.NotNull(settingsDrawer);
+        Assert.False(settingsDrawer.IsVisible);
     }
 
     [AvaloniaFact]
@@ -110,6 +114,29 @@ public sealed class MainWindowLayoutTests
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(ignoreCheckBox.IsEnabled);
         Assert.True(defaultExcludesCheckBox.IsEnabled);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_SettingsDrawer_IsHiddenByDefaultAndTogglesFromViewModel()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var drawer = window.FindControl<Control>("SettingsDrawer");
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+
+        Assert.NotNull(drawer);
+        Assert.False(drawer.IsVisible);
+
+        viewModel.ToggleSettingsCommand.Execute(null);
+        Assert.True(drawer.IsVisible);
+
+        viewModel.ToggleSettingsCommand.Execute(null);
+        Assert.False(drawer.IsVisible);
     }
 
     [AvaloniaFact]

@@ -21,7 +21,7 @@ This file tracks the current ordered work. Check off a stage only after code, do
   - Align tree selection, treemap selection/hover, and actionable controls to the same accent.
   - Preserve the current thin progress-bar-only analysis feedback.
 
-- [ ] Stage 2. Toolbar simplification and settings drawer
+- [x] Stage 2. Toolbar simplification and settings drawer
   - Replace the current in-toolbar settings groups with one `Settings` action.
   - Add a right-side settings drawer/overlay that opens on demand.
   - Ensure the drawer does not consume horizontal workspace width while closed.

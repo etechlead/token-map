@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IFolderPickerService _folderPickerService;
     private readonly IProjectAnalyzer _projectAnalyzer;
     private readonly RelayCommand _resetTreemapRootCommand;
+    private readonly RelayCommand _toggleSettingsCommand;
     private CancellationTokenSource? _analysisCancellationTokenSource;
     private ProjectSnapshot? _currentSnapshot;
     private string? _selectedFolderPath;
@@ -35,6 +36,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
         _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
+        _toggleSettingsCommand = new RelayCommand(ToggleSettings);
         Tree = new ProjectTreeViewModel();
         Summary = new SummaryViewModel();
 
@@ -66,6 +68,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IRelayCommand ResetTreemapRootCommand => _resetTreemapRootCommand;
 
+    public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
+
     public bool CanResetTreemapRoot =>
         _currentSnapshot is not null &&
         TreemapRootNode is not null &&
@@ -85,6 +89,9 @@ public partial class MainWindowViewModel : ViewModelBase
 
     [ObservableProperty]
     private AnalysisState analysisState = AnalysisState.Idle;
+
+    [ObservableProperty]
+    private bool isSettingsOpen;
 
     private bool CanOpenFolder() => AnalysisState != AnalysisState.Scanning;
 
@@ -208,6 +215,11 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         TreemapRootNode = _currentSnapshot.Root;
+    }
+
+    private void ToggleSettings()
+    {
+        IsSettingsOpen = !IsSettingsOpen;
     }
 
     private static bool CanDrillIntoTreemap(ProjectNode? node) =>

@@ -116,6 +116,10 @@
             <Setter Property="TextWrapping" Value="NoWrap" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
+        <Style Selector="Border.settings-drawer">
+            <Setter Property="Width" Value="340" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto"
@@ -195,36 +199,168 @@
                     </Border>
                 </Grid>
 
-                <StackPanel HorizontalAlignment="Right"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Spacing="16">
-                    <Border Classes="toolbar-group">
-                        <StackPanel Spacing="6">
-                            <TextBlock Classes="toolbar-group-title"
-                                       Text="View settings" />
-                            <StackPanel Width="120"
-                                        Spacing="4">
-                                <TextBlock Foreground="#8FA3B8"
-                                           FontSize="11"
-                                           Text="Treemap metric" />
-                                <ComboBox Name="MetricComboBox"
-                                          ItemsSource="{Binding Toolbar.MetricOptions}"
-                                          SelectedItem="{Binding Toolbar.SelectedMetric}"
-                                          IsEnabled="{Binding Toolbar.CanChangeMetric}" />
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
+                <Button Name="SettingsButton"
+                        Classes="action-button"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Content="Settings"
+                        Command="{Binding ToggleSettingsCommand}" />
+            </Grid>
+        </Border>
 
-                    <Border Classes="toolbar-group">
-                        <StackPanel Spacing="6">
-                            <TextBlock Classes="toolbar-group-title"
-                                       Text="Scan settings" />
-                            <StackPanel Orientation="Horizontal"
-                                        VerticalAlignment="Center"
-                                        Spacing="14">
-                                <StackPanel Width="120"
-                                            Spacing="4">
+        <Grid Grid.Row="1">
+            <Grid Name="WorkspaceHost"
+                  Margin="0,16,0,16"
+                  ColumnDefinitions="2*,10,3*">
+                <Border Name="ProjectTreePane"
+                        Grid.Column="0"
+                        Classes="panel">
+                    <Grid RowDefinitions="Auto,*"
+                          RowSpacing="12">
+                        <TextBlock Classes="panel-title"
+                                   Text="Project Tree" />
+                        <DataGrid Name="ProjectTreeTable"
+                                  Grid.Row="1"
+                                  AutoGenerateColumns="False"
+                                  CanUserReorderColumns="False"
+                                  CanUserResizeColumns="True"
+                                  CanUserSortColumns="False"
+                                  GridLinesVisibility="Horizontal"
+                                  HeadersVisibility="Column"
+                                  IsReadOnly="True"
+                                  ItemsSource="{Binding Tree.VisibleNodes}"
+                                  SelectedItem="{Binding Tree.SelectedNode, Mode=TwoWay}"
+                                  DoubleTapped="ProjectTreeTable_OnDoubleTapped"
+                                  PointerPressed="ProjectTreeTable_OnPointerPressed">
+                            <DataGrid.Columns>
+                                <DataGridTemplateColumn Header="Name"
+                                                        SortMemberPath="Name"
+                                                        Width="3*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                            <Grid Margin="{Binding IndentMargin}"
+                                                  ColumnDefinitions="18,*"
+                                                  ColumnSpacing="6">
+                                                <Button Grid.Column="0"
+                                                        Classes="tree-expander"
+                                                        HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Click="ProjectTreeExpandCollapseButton_OnClick"
+                                                        IsVisible="{Binding HasChildren}">
+                                                    <TextBlock HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center"
+                                                               FontSize="10"
+                                                               Foreground="#D6E3F0"
+                                                               Text="{Binding ExpanderGlyph}" />
+                                                </Button>
+                                                <TextBlock Grid.Column="1"
+                                                           Classes="tree-table-name"
+                                                           VerticalAlignment="Center"
+                                                           Text="{Binding Name}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Size"
+                                                    SortMemberPath="Size"
+                                                    Binding="{Binding SizeText}"
+                                                    Width="110" />
+                                <DataGridTextColumn Header="Lines"
+                                                    SortMemberPath="Lines"
+                                                    Binding="{Binding TotalLinesText}"
+                                                    Width="90" />
+                                <DataGridTextColumn Header="Tokens"
+                                                    SortMemberPath="Tokens"
+                                                    Binding="{Binding TokensText}"
+                                                    Width="110" />
+                                <DataGridTextColumn Header="Files"
+                                                    SortMemberPath="Files"
+                                                    Binding="{Binding FilesText}"
+                                                    Width="80" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+
+                <GridSplitter Grid.Column="1"
+                              ResizeDirection="Columns"
+                              Background="#2E3A46" />
+
+                <Border Name="TreemapPane"
+                        Grid.Column="2"
+                        Classes="panel">
+                    <Grid RowDefinitions="Auto,*"
+                          RowSpacing="12">
+                        <Grid ColumnDefinitions="*,Auto,Auto"
+                              ColumnSpacing="12">
+                            <TextBlock Classes="panel-title"
+                                       VerticalAlignment="Center"
+                                       Text="Treemap" />
+                            <TextBlock Name="TreemapScopeText"
+                                       Grid.Column="1"
+                                       IsVisible="{Binding CanShowTreemapScope}"
+                                       VerticalAlignment="Center"
+                                       Foreground="#8FA3B8"
+                                       FontSize="11"
+                                       Text="{Binding TreemapScopeDisplay}" />
+                            <Button Name="TreemapBackToOverviewButton"
+                                    Grid.Column="2"
+                                    Classes="action-button"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Center"
+                                    Content="Back to Root"
+                                    Command="{Binding ResetTreemapRootCommand}"
+                                    IsVisible="{Binding CanResetTreemapRoot}" />
+                        </Grid>
+                        <Border Grid.Row="1"
+                                Background="#0B1018"
+                                BorderBrush="#233041"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="8">
+                            <controls:TreemapControl Name="ProjectTreemapControl"
+                                                     RootNode="{Binding TreemapRootNode}"
+                                                     Metric="{Binding Toolbar.SelectedMetric}"
+                                                     SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Name="SettingsDrawer"
+                    ZIndex="1"
+                    Classes="panel settings-drawer"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Stretch"
+                    Margin="0,16,0,16"
+                    IsVisible="{Binding IsSettingsOpen}">
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="16">
+                        <TextBlock Classes="panel-title"
+                                   Text="Settings" />
+
+                        <Border Classes="toolbar-group">
+                            <StackPanel Spacing="8">
+                                <TextBlock Classes="toolbar-group-title"
+                                           Text="View" />
+                                <StackPanel Spacing="4">
+                                    <TextBlock Foreground="#8FA3B8"
+                                               FontSize="11"
+                                               Text="Treemap metric" />
+                                    <ComboBox Name="MetricComboBox"
+                                              ItemsSource="{Binding Toolbar.MetricOptions}"
+                                              SelectedItem="{Binding Toolbar.SelectedMetric}"
+                                              IsEnabled="{Binding Toolbar.CanChangeMetric}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Classes="toolbar-group">
+                            <StackPanel Spacing="10">
+                                <TextBlock Classes="toolbar-group-title"
+                                           Text="Scan" />
+                                <StackPanel Spacing="4">
                                     <TextBlock Foreground="#8FA3B8"
                                                FontSize="11"
                                                Text="Tokenizer" />
@@ -235,143 +371,21 @@
                                 </StackPanel>
 
                                 <CheckBox Name="RespectGitIgnoreCheckBox"
-                                          VerticalAlignment="Center"
                                           Content="Respect .gitignore"
                                           IsChecked="{Binding Toolbar.RespectGitIgnore}"
                                           IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 <CheckBox Name="RespectIgnoreCheckBox"
-                                          VerticalAlignment="Center"
                                           Content="Respect .ignore"
                                           IsChecked="{Binding Toolbar.RespectIgnore}"
                                           IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 <CheckBox Name="UseDefaultExcludesCheckBox"
-                                          VerticalAlignment="Center"
                                           Content="Use default excludes"
                                           IsChecked="{Binding Toolbar.UseDefaultExcludes}"
                                           IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                             </StackPanel>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <Grid Name="WorkspaceHost"
-              Grid.Row="1"
-              Margin="0,16,0,16"
-              ColumnDefinitions="2*,10,3*">
-            <Border Name="ProjectTreePane"
-                    Grid.Column="0"
-                    Classes="panel">
-                <Grid RowDefinitions="Auto,*"
-                      RowSpacing="12">
-                    <TextBlock Classes="panel-title"
-                               Text="Project Tree" />
-                    <DataGrid Name="ProjectTreeTable"
-                              Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserReorderColumns="False"
-                              CanUserResizeColumns="True"
-                              CanUserSortColumns="False"
-                              GridLinesVisibility="Horizontal"
-                              HeadersVisibility="Column"
-                              IsReadOnly="True"
-                              ItemsSource="{Binding Tree.VisibleNodes}"
-                              SelectedItem="{Binding Tree.SelectedNode, Mode=TwoWay}"
-                              DoubleTapped="ProjectTreeTable_OnDoubleTapped"
-                              PointerPressed="ProjectTreeTable_OnPointerPressed">
-                        <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Name"
-                                                    SortMemberPath="Name"
-                                                    Width="3*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                        <Grid Margin="{Binding IndentMargin}"
-                                              ColumnDefinitions="18,*"
-                                              ColumnSpacing="6">
-                                            <Button Grid.Column="0"
-                                                    Classes="tree-expander"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Center"
-                                                    Click="ProjectTreeExpandCollapseButton_OnClick"
-                                                    IsVisible="{Binding HasChildren}">
-                                                <TextBlock HorizontalAlignment="Center"
-                                                           VerticalAlignment="Center"
-                                                           FontSize="10"
-                                                           Foreground="#D6E3F0"
-                                                           Text="{Binding ExpanderGlyph}" />
-                                            </Button>
-                                            <TextBlock Grid.Column="1"
-                                                       Classes="tree-table-name"
-                                                       VerticalAlignment="Center"
-                                                       Text="{Binding Name}" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Size"
-                                                SortMemberPath="Size"
-                                                Binding="{Binding SizeText}"
-                                                Width="110" />
-                            <DataGridTextColumn Header="Lines"
-                                                SortMemberPath="Lines"
-                                                Binding="{Binding TotalLinesText}"
-                                                Width="90" />
-                            <DataGridTextColumn Header="Tokens"
-                                                SortMemberPath="Tokens"
-                                                Binding="{Binding TokensText}"
-                                                Width="110" />
-                            <DataGridTextColumn Header="Files"
-                                                SortMemberPath="Files"
-                                                Binding="{Binding FilesText}"
-                                                Width="80" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
-            </Border>
-
-            <GridSplitter Grid.Column="1"
-                          ResizeDirection="Columns"
-                          Background="#2E3A46" />
-
-            <Border Name="TreemapPane"
-                    Grid.Column="2"
-                    Classes="panel">
-                <Grid RowDefinitions="Auto,*"
-                      RowSpacing="12">
-                    <Grid ColumnDefinitions="*,Auto,Auto"
-                          ColumnSpacing="12">
-                        <TextBlock Classes="panel-title"
-                                   VerticalAlignment="Center"
-                                   Text="Treemap" />
-                        <TextBlock Name="TreemapScopeText"
-                                   Grid.Column="1"
-                                   IsVisible="{Binding CanShowTreemapScope}"
-                                   VerticalAlignment="Center"
-                                   Foreground="#8FA3B8"
-                                   FontSize="11"
-                                   Text="{Binding TreemapScopeDisplay}" />
-                        <Button Name="TreemapBackToOverviewButton"
-                                Grid.Column="2"
-                                Classes="action-button"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Content="Back to Root"
-                                Command="{Binding ResetTreemapRootCommand}"
-                                IsVisible="{Binding CanResetTreemapRoot}" />
-                    </Grid>
-                    <Border Grid.Row="1"
-                            Background="#0B1018"
-                            BorderBrush="#233041"
-                            BorderThickness="1"
-                            CornerRadius="8"
-                            Padding="8">
-                        <controls:TreemapControl Name="ProjectTreemapControl"
-                                                 RootNode="{Binding TreemapRootNode}"
-                                                 Metric="{Binding Toolbar.SelectedMetric}"
-                                                 SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
-                    </Border>
-                </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </Border>
         </Grid>
 
