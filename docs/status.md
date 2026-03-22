@@ -4,7 +4,6 @@
 - Статус проекта: **MVP завершён**
 - Основная платформа MVP: **Windows**
 - Вторичная платформа MVP: **macOS smoke/publish baseline**
-- Следующий цикл работы: **maintenance по запросу или post-MVP backlog**
 
 ## Что уже есть в MVP
 - Выбор папки, повторный анализ, отмена, progress/state messages.
@@ -26,32 +25,16 @@
 - Основной publish-target: `win-x64`.
 - `single-file`, `Native AOT`, installer/signing и Linux polish вынесены в post-MVP.
 
-## Последние обновления
+## Документация
+- Документация синхронизирована с кодом по состоянию на 2026-03-22.
+- Политика документации зафиксирована в [AGENTS.md](/Z:/Projects/My/tokenmap/src/AGENTS.md): документы отражают только текущее состояние или запланированную работу; историчность остаётся в git.
 
-### 2026-03-22
-- Что сделано:
-  - документы сверены с фактическим состоянием кода;
-  - из [docs/plan.md](/Z:/Projects/My/tokenmap/src/docs/plan.md) удалён полный список уже завершённых MVP-задач и оставлен только актуальный статус;
-  - из [docs/status.md](/Z:/Projects/My/tokenmap/src/docs/status.md) убраны старые stage-by-stage "отложено", которые уже закрыты последующими этапами;
-  - из [docs/post-mvp.md](/Z:/Projects/My/tokenmap/src/docs/post-mvp.md) убран пункт про auto-expand пути в дереве, потому что поведение уже реализовано и покрыто headless test;
-  - [docs/implement.md](/Z:/Projects/My/tokenmap/src/docs/implement.md) и [docs/architecture.md](/Z:/Projects/My/tokenmap/src/docs/architecture.md) приведены к текущему состоянию после завершения MVP.
+## Последняя проверка
+- Дата: 2026-03-22
 - Что проверено:
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
-
-### 2026-03-20
-- Что было завершено:
-  - MVP-этапы 0-9 закрыты;
-  - `win-x64` publish и launch smoke пройдены;
-  - handoff-документация собрана.
-- Что было проверено:
-  - `dotnet restore`
-  - `dotnet build Clever.TokenMap.sln`
-  - `dotnet test Clever.TokenMap.sln --no-build`
-  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/publish/win-x64`
-  - launch smoke для `artifacts/publish/win-x64/Clever.TokenMap.App.exe`
-  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r osx-arm64 --self-contained false -o artifacts/publish/osx-arm64`
 
 ## Как запустить
 - Dev run:
