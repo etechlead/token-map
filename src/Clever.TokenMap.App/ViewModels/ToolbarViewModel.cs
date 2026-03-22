@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -91,4 +94,35 @@ public partial class ToolbarViewModel : ViewModelBase
             RespectDotIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
         };
+
+    public AnalysisSettings BuildAnalysisSettings() =>
+        new()
+        {
+            SelectedMetric = SelectedMetric,
+            SelectedTokenProfile = SelectedTokenProfile,
+            RespectGitIgnore = RespectGitIgnore,
+            RespectIgnore = RespectIgnore,
+            UseDefaultExcludes = UseDefaultExcludes,
+        };
+
+    public void ApplyAnalysisSettings(AnalysisSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        SelectedMetric = IsKnownMetric(settings.SelectedMetric)
+            ? settings.SelectedMetric
+            : "Tokens";
+        SelectedTokenProfile = IsKnownTokenProfile(settings.SelectedTokenProfile)
+            ? settings.SelectedTokenProfile
+            : "o200k_base";
+        RespectGitIgnore = settings.RespectGitIgnore;
+        RespectIgnore = settings.RespectIgnore;
+        UseDefaultExcludes = settings.UseDefaultExcludes;
+    }
+
+    private bool IsKnownMetric(string value) =>
+        MetricOptions.Contains(value, StringComparer.Ordinal);
+
+    private bool IsKnownTokenProfile(string value) =>
+        TokenProfiles.Contains(value, StringComparer.Ordinal);
 }

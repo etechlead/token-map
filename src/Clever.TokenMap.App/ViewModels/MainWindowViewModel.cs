@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Models;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Logging;
+using Clever.TokenMap.Infrastructure.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -14,24 +17,40 @@ namespace Clever.TokenMap.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IFolderPickerService _folderPickerService;
+    private readonly IAppSettingsStore _appSettingsStore;
+    private readonly IAppLogger _logger;
     private readonly IProjectAnalyzer _projectAnalyzer;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
     private CancellationTokenSource? _analysisCancellationTokenSource;
+    private AppSettings _currentSettings;
     private ProjectSnapshot? _currentSnapshot;
+    private bool _isApplyingSettings;
     private string? _selectedFolderPath;
     private ProjectNode? _treemapRootNode;
 
     public MainWindowViewModel()
-        : this(new NullProjectAnalyzer(), new NullFolderPickerService())
+        : this(new NullProjectAnalyzer(), new NullFolderPickerService(), new NullAppSettingsStore(), NullAppLogger.Instance)
     {
     }
 
     public MainWindowViewModel(IProjectAnalyzer projectAnalyzer, IFolderPickerService folderPickerService)
+        : this(projectAnalyzer, folderPickerService, new NullAppSettingsStore(), NullAppLogger.Instance)
+    {
+    }
+
+    public MainWindowViewModel(
+        IProjectAnalyzer projectAnalyzer,
+        IFolderPickerService folderPickerService,
+        IAppSettingsStore appSettingsStore,
+        IAppLogger? logger = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
+        _appSettingsStore = appSettingsStore;
+        _logger = logger ?? NullAppLogger.Instance;
+        _currentSettings = AppSettings.CreateDefault();
 
         Toolbar = new ToolbarViewModel(
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
@@ -44,6 +63,8 @@ public partial class MainWindowViewModel : ViewModelBase
         Summary = new SummaryViewModel();
 
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
+        Toolbar.PropertyChanged += ToolbarOnPropertyChanged;
+        LoadSettings();
         Toolbar.RefreshAvailability(hasSelectedFolder: false, isBusy: false, hasSnapshot: false);
     }
 
@@ -119,6 +140,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
 
         _selectedFolderPath = selectedFolder;
+        _logger.LogInformation($"Folder selected for analysis: '{selectedFolder}'.");
         Toolbar.UpdateFolder(selectedFolder);
         Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: false, hasSnapshot: _currentSnapshot is not null);
 
@@ -155,10 +177,12 @@ public partial class MainWindowViewModel : ViewModelBase
         }
         catch (OperationCanceledException) when (_analysisCancellationTokenSource.IsCancellationRequested)
         {
+            _logger.LogInformation($"Analysis cancelled from UI for '{_selectedFolderPath}'.");
             SetState(AnalysisState.Cancelled, "Analysis cancelled.");
         }
         catch (Exception exception)
         {
+            _logger.LogError(exception, $"Analysis failed in UI flow for '{_selectedFolderPath}'.");
             SetState(AnalysisState.Failed, exception.Message);
         }
         finally
@@ -199,6 +223,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void CancelAnalysis()
     {
+        _logger.LogInformation($"Cancellation requested for '{_selectedFolderPath}'.");
         _analysisCancellationTokenSource?.Cancel();
     }
 
@@ -295,6 +320,40 @@ public partial class MainWindowViewModel : ViewModelBase
         node.Kind != Core.Enums.ProjectNodeKind.File &&
         node.Children.Count > 0;
 
+    private void LoadSettings()
+    {
+        _currentSettings = _appSettingsStore.Load();
+        _isApplyingSettings = true;
+
+        try
+        {
+            Toolbar.ApplyAnalysisSettings(_currentSettings.Analysis);
+        }
+        finally
+        {
+            _isApplyingSettings = false;
+        }
+    }
+
+    private void ToolbarOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isApplyingSettings)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(ToolbarViewModel.SelectedMetric) or
+            nameof(ToolbarViewModel.SelectedTokenProfile) or
+            nameof(ToolbarViewModel.RespectGitIgnore) or
+            nameof(ToolbarViewModel.RespectIgnore) or
+            nameof(ToolbarViewModel.UseDefaultExcludes))
+        {
+            _currentSettings.Analysis = Toolbar.BuildAnalysisSettings();
+            _appSettingsStore.Save(_currentSettings);
+            _logger.LogDebug("Persisted updated analysis settings to settings.json.");
+        }
+    }
+
     private sealed class NullFolderPickerService : IFolderPickerService
     {
         public Task<string?> PickFolderAsync(CancellationToken cancellationToken) =>
@@ -309,5 +368,14 @@ public partial class MainWindowViewModel : ViewModelBase
             IProgress<AnalysisProgress>? progress,
             CancellationToken cancellationToken) =>
             throw new InvalidOperationException("Project analyzer is not configured.");
+    }
+
+    private sealed class NullAppSettingsStore : IAppSettingsStore
+    {
+        public AppSettings Load() => AppSettings.CreateDefault();
+
+        public void Save(AppSettings settings)
+        {
+        }
     }
 }

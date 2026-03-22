@@ -3,6 +3,7 @@ using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Filtering;
 using Clever.TokenMap.Infrastructure.Filtering.Ignore;
+using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Scanning;
@@ -14,13 +15,18 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private readonly DefaultExcludeMatcher _defaultExcludeMatcher = new();
     private readonly IgnoreFileEvaluator _ignoreFileEvaluator = new();
     private readonly IgnoreFileParser _ignoreFileParser = new();
+    private readonly IAppLogger _logger;
     private readonly IPathFilter _pathFilter;
     private readonly PathNormalizer _pathNormalizer;
     private readonly UserExcludeMatcher _userExcludeMatcher = new();
     private int _processedNodeCount;
 
-    public FileSystemProjectScanner(IPathFilter? pathFilter = null, PathNormalizer? pathNormalizer = null)
+    public FileSystemProjectScanner(
+        IPathFilter? pathFilter = null,
+        PathNormalizer? pathNormalizer = null,
+        IAppLogger? logger = null)
     {
+        _logger = logger ?? NullAppLogger.Instance;
         _pathFilter = pathFilter ?? new AllowAllPathFilter();
         _pathNormalizer = pathNormalizer ?? new PathNormalizer();
     }
@@ -109,6 +115,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         catch (Exception exception) when (IsRecoverableDirectoryException(exception))
         {
             warnings.Add($"Unable to enumerate '{directoryInfo.FullName}': {exception.Message}");
+            _logger.LogWarning(exception, $"Unable to enumerate '{directoryInfo.FullName}'.");
             return CreateNode(
                 fullPath: directoryInfo.FullName,
                 normalizedRelativePath,
@@ -170,6 +177,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 catch (Exception exception) when (IsRecoverableDirectoryException(exception))
                 {
                     warnings.Add($"Unable to scan '{entry.FullName}': {exception.Message}");
+                    _logger.LogWarning(exception, $"Unable to scan '{entry.FullName}'.");
                     node.Children.Add(CreateNode(
                         fullPath: entry.FullName,
                         normalizedRelativePath: entryRelativePath,
@@ -282,6 +290,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
                 warnings.Add($"Unable to read '{ignoreFilePath}': {exception.Message}");
+                _logger.LogWarning(exception, $"Unable to read ignore file '{ignoreFilePath}'.");
             }
         }
 

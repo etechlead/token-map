@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Tokei;
@@ -10,12 +11,17 @@ namespace Clever.TokenMap.Infrastructure.Tokei;
 public sealed class ProcessTokeiRunner : ITokeiRunner
 {
     private readonly string? _executablePath;
+    private readonly IAppLogger _logger;
     private readonly PathNormalizer _pathNormalizer;
     private readonly TokeiJsonParser _parser;
 
-    public ProcessTokeiRunner(string? executablePath = null, PathNormalizer? pathNormalizer = null)
+    public ProcessTokeiRunner(
+        string? executablePath = null,
+        PathNormalizer? pathNormalizer = null,
+        IAppLogger? logger = null)
     {
         _executablePath = executablePath;
+        _logger = logger ?? NullAppLogger.Instance;
         _pathNormalizer = pathNormalizer ?? new PathNormalizer();
         _parser = new TokeiJsonParser(_pathNormalizer);
     }
@@ -37,6 +43,8 @@ public sealed class ProcessTokeiRunner : ITokeiRunner
 
         var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
         var executablePath = ResolveExecutablePath();
+        _logger.LogDebug(
+            $"Running tokei for '{normalizedRootPath}' with {includedRelativePaths.Count:N0} included files via '{executablePath}'.");
         using var process = new Process
         {
             StartInfo = CreateStartInfo(executablePath, normalizedRootPath),
@@ -51,6 +59,7 @@ public sealed class ProcessTokeiRunner : ITokeiRunner
         }
         catch (Exception exception) when (exception is Win32Exception or FileNotFoundException)
         {
+            _logger.LogError(exception, $"Unable to start tokei from '{executablePath}'.");
             throw new FileNotFoundException("Unable to locate the 'tokei' executable.", executablePath, exception);
         }
 
@@ -65,6 +74,7 @@ public sealed class ProcessTokeiRunner : ITokeiRunner
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             TryTerminate(process);
+            _logger.LogInformation($"tokei execution cancelled for '{normalizedRootPath}'.");
             throw;
         }
 
@@ -73,9 +83,13 @@ public sealed class ProcessTokeiRunner : ITokeiRunner
 
         if (process.ExitCode != 0)
         {
+            _logger.LogError(
+                $"tokei exited with code {process.ExitCode} for '{normalizedRootPath}'. stderr='{stderr.Trim()}'.");
             throw new InvalidOperationException(
                 $"tokei exited with code {process.ExitCode}: {stderr.Trim()}");
         }
+
+        _logger.LogDebug($"tokei completed successfully for '{normalizedRootPath}' with exitCode=0.");
 
         return _parser.Parse(stdout, includedRelativePaths);
     }

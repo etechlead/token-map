@@ -2,12 +2,14 @@ using System.Text;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Logging;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 
 public sealed class ProjectSnapshotMetricsEnricher
 {
     private readonly ICacheStore? _cacheStore;
+    private readonly IAppLogger _logger;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
     private readonly ITokeiRunner _tokeiRunner;
@@ -18,9 +20,11 @@ public sealed class ProjectSnapshotMetricsEnricher
         ITextFileDetector textFileDetector,
         ITokenCounter tokenCounter,
         ITokeiRunner tokeiRunner,
-        ICacheStore? cacheStore = null)
+        ICacheStore? cacheStore = null,
+        IAppLogger? logger = null)
     {
         _cacheStore = cacheStore;
+        _logger = logger ?? NullAppLogger.Instance;
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
         _tokeiRunner = tokeiRunner;
@@ -52,6 +56,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         catch (Exception exception)
         {
             warnings.Add($"Unable to collect tokei metrics: {exception.Message}");
+            _logger.LogWarning(exception, $"Unable to collect tokei metrics for '{snapshot.RootPath}'.");
             tokeiStats = new Dictionary<string, TokeiFileStats>(_pathComparer);
         }
 
@@ -135,6 +140,7 @@ public sealed class ProjectSnapshotMetricsEnricher
             _cacheStore is not null &&
             await TryRestoreCachedMetricsAsync(node, fileState, tokenProfile, cancellationToken))
         {
+            _logger.LogTrace($"Restored cached metrics for '{node.FullPath}' using {tokenProfile}.");
             return;
         }
 
@@ -145,7 +151,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes);
+            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
             return;
         }
 
@@ -164,7 +170,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes);
+            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
             return;
         }
         catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
@@ -172,6 +178,7 @@ public sealed class ProjectSnapshotMetricsEnricher
             node.SkippedReason = SkippedReason.Unsupported;
             node.DiagnosticMessage = exception.Message;
             warnings.Add($"Unable to decode '{node.FullPath}': {exception.Message}");
+            _logger.LogWarning(exception, $"Unable to decode '{node.FullPath}'.");
             node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
             return;
         }
@@ -192,6 +199,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         {
             warnings.Add($"Unable to count tokens for '{node.FullPath}': {exception.Message}");
             node.DiagnosticMessage = $"Token counting failed: {exception.Message}";
+            _logger.LogWarning(exception, $"Token counting failed for '{node.FullPath}'.");
         }
 
         tokeiStats.TryGetValue(node.RelativePath, out var tokeiFileStats);
@@ -395,7 +403,8 @@ public sealed class ProjectSnapshotMetricsEnricher
         ProjectNode node,
         Exception exception,
         List<string> warnings,
-        long fileSizeBytes)
+        long fileSizeBytes,
+        IAppLogger logger)
     {
         node.SkippedReason = exception is FileNotFoundException or DirectoryNotFoundException
             ? SkippedReason.MissingDuringScan
@@ -406,6 +415,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
 
         warnings.Add($"Unable to analyze '{node.FullPath}': {exception.Message}");
+        logger.LogWarning(exception, $"Unable to analyze '{node.FullPath}'.");
     }
 
     private static FileState TryGetFileState(string fullPath)
