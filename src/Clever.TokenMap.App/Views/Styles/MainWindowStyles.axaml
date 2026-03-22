@@ -1,5 +1,6 @@
 <Styles xmlns="https://github.com/avaloniaui"
-        xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia">
+        xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style Selector="Border.panel">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -283,10 +284,39 @@
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapDividerBrush}" />
         <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="HeaderBorder"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    <Grid Name="PART_ColumnHeaderRoot"
+                          ClipToBounds="True">
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Margin="{TemplateBinding Padding}"
+                                          HorizontalAlignment="Stretch"
+                                          VerticalAlignment="Center"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}" />
+                        <Rectangle Name="VerticalSeparator"
+                                   Width="1"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Stretch"
+                                   Fill="{TemplateBinding BorderBrush}" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader:pointerover">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader Path.sort-icon">
+        <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridCell">
         <Setter Property="Background" Value="Transparent" />

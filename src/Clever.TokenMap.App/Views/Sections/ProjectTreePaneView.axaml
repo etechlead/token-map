@@ -61,7 +61,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Tokens"
                                             SortMemberPath="Tokens"
-                                            Width="110">
+                                            Width="92">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
@@ -72,7 +72,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Lines"
                                             SortMemberPath="Lines"
-                                            Width="90">
+                                            Width="72">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
@@ -83,7 +83,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Size"
                                             SortMemberPath="Size"
-                                            Width="110">
+                                            Width="88">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
@@ -94,7 +94,7 @@
                     </DataGridTemplateColumn>
                     <DataGridTemplateColumn Header="Files"
                                             SortMemberPath="Files"
-                                            Width="80">
+                                            Width="60">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"

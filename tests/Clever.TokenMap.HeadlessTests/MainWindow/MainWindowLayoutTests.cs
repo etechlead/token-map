@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
@@ -15,6 +16,7 @@ using Clever.TokenMap.Core.Models;
 using System.Collections.Specialized;
 using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
+using ShapePath = Avalonia.Controls.Shapes.Path;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -290,7 +292,7 @@ public sealed class MainWindowLayoutTests
         Assert.Collection(
             treeTable.Columns.Select(column => column.Header?.ToString()),
             header => Assert.Equal("Name", header),
-            header => Assert.Equal("Tokens v", header),
+            header => Assert.Equal("Tokens", header),
             header => Assert.Equal("Lines", header),
             header => Assert.Equal("Size", header),
             header => Assert.Equal("Files", header));
@@ -334,8 +336,21 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("Demo", name),
             name => Assert.Equal("Large.cs", name),
             name => Assert.Equal("Small.cs", name));
-        Assert.Equal("Lines v", linesColumn.Header?.ToString());
+        window.UpdateLayout();
+        var linesHeader = FindProjectTreeHeader(window, "Lines");
+        var tokensHeader = FindProjectTreeHeader(window, "Tokens");
+        var linesDescendingIcon = FindHeaderElement<ShapePath>(linesHeader, "SortIconDescending");
+        var linesAscendingIcon = FindHeaderElement<ShapePath>(linesHeader, "SortIconAscending");
+        var tokensDescendingIcon = FindHeaderElement<ShapePath>(tokensHeader, "SortIconDescending");
+
+        Assert.Equal("Lines", linesColumn.Header?.ToString());
         Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
+        Assert.NotNull(linesHeader);
+        Assert.NotNull(tokensHeader);
+        Assert.NotNull(linesDescendingIcon);
+        Assert.True(linesDescendingIcon.IsVisible);
+        Assert.Null(linesAscendingIcon);
+        Assert.Null(tokensDescendingIcon);
     }
 
     [AvaloniaFact]
@@ -370,8 +385,54 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("Demo", name),
             name => Assert.Equal("Alpha.cs", name),
             name => Assert.Equal("Zulu.cs", name));
-        Assert.Equal("Name ^", nameColumn.Header?.ToString());
+        window.UpdateLayout();
+        var nameHeader = FindProjectTreeHeader(window, "Name");
+        var tokensHeader = FindProjectTreeHeader(window, "Tokens");
+        var nameAscendingIcon = FindHeaderElement<ShapePath>(nameHeader, "SortIconAscending");
+        var nameDescendingIcon = FindHeaderElement<ShapePath>(nameHeader, "SortIconDescending");
+        var tokensDescendingIcon = FindHeaderElement<ShapePath>(tokensHeader, "SortIconDescending");
+
+        Assert.Equal("Name", nameColumn.Header?.ToString());
         Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
+        Assert.NotNull(nameHeader);
+        Assert.NotNull(tokensHeader);
+        Assert.NotNull(nameAscendingIcon);
+        Assert.True(nameAscendingIcon.IsVisible);
+        Assert.Null(nameDescendingIcon);
+        Assert.Null(tokensDescendingIcon);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ProjectTreeHeaders_DoNotReserveHiddenSortIconWidth()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+        window.UpdateLayout();
+
+        var headers = window.GetVisualDescendants()
+            .OfType<DataGridColumnHeader>()
+            .ToList();
+
+        var sizeHeader = headers.First(header => string.Equals(header.Content?.ToString(), "Size", StringComparison.Ordinal));
+        var filesHeader = headers.First(header => string.Equals(header.Content?.ToString(), "Files", StringComparison.Ordinal));
+
+        var sizeContentPresenter = sizeHeader.GetVisualDescendants()
+            .OfType<ContentPresenter>()
+            .First(control => string.Equals(control.Name, "PART_ContentPresenter", StringComparison.Ordinal));
+        var filesContentPresenter = filesHeader.GetVisualDescendants()
+            .OfType<ContentPresenter>()
+            .First(control => string.Equals(control.Name, "PART_ContentPresenter", StringComparison.Ordinal));
+
+        Assert.True(
+            sizeContentPresenter.Bounds.Width >= 70,
+            $"Size header content width should use the available column width. Actual={sizeContentPresenter.Bounds.Width}.");
+        Assert.True(
+            filesContentPresenter.Bounds.Width >= 44,
+            $"Files header content width should use the available column width. Actual={filesContentPresenter.Bounds.Width}.");
     }
 
     [AvaloniaFact]
@@ -831,6 +892,21 @@ public sealed class MainWindowLayoutTests
     {
         return window.GetLogicalDescendants().OfType<T>().FirstOrDefault()
             ?? window.GetVisualDescendants().OfType<T>().FirstOrDefault();
+    }
+
+    private static DataGridColumnHeader? FindProjectTreeHeader(Window window, string headerText)
+    {
+        return window.GetVisualDescendants()
+            .OfType<DataGridColumnHeader>()
+            .FirstOrDefault(header => string.Equals(header.Content?.ToString(), headerText, StringComparison.Ordinal));
+    }
+
+    private static T? FindHeaderElement<T>(DataGridColumnHeader? header, string name)
+        where T : Control
+    {
+        return header?.GetVisualDescendants()
+            .OfType<T>()
+            .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
     }
 
     private static void InvokeProjectTreeSort(
