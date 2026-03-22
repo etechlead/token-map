@@ -60,18 +60,33 @@ public sealed class TreemapControlHeadlessTests
         Assert.Contains("Program.cs", control.TooltipText);
         Assert.Contains("Non-empty/Blank: 11/1", control.TooltipText);
         Assert.Contains("Ext: .cs", control.TooltipText);
-        var tooltipContent = Assert.IsType<Border>(ToolTip.GetTip(control));
-        var tooltipStack = Assert.IsType<StackPanel>(tooltipContent.Child);
-        var pathText = Assert.IsType<TextBlock>(tooltipStack.Children[0]);
-        Assert.Contains("Program.cs", pathText.Text);
-        Assert.True(ToolTip.GetIsOpen(control));
+        Assert.Equal(point, control.TooltipAnchorPoint);
 
         control.ClearHover();
 
         Assert.Null(control.HoveredNode);
         Assert.Null(control.TooltipText);
-        Assert.False(ToolTip.GetIsOpen(control));
-        Assert.Null(ToolTip.GetTip(control));
+        Assert.Null(control.TooltipAnchorPoint);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_HoverWithinSameVisual_UpdatesTooltipAnchor()
+    {
+        var control = CreateControl();
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        var firstPoint = GetCenter(visual);
+        var secondPoint = new Point(visual.Bounds.X + 2, visual.Bounds.Y + 2);
+
+        control.UpdateHover(firstPoint);
+
+        control.UpdateHover(secondPoint);
+
+        Assert.Equal(secondPoint, control.TooltipAnchorPoint);
+        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
     }
 
     [AvaloniaFact]
@@ -150,8 +165,7 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Null(control.HoveredNode);
         Assert.Null(control.TooltipText);
-        Assert.False(ToolTip.GetIsOpen(control));
-        Assert.Null(ToolTip.GetTip(control));
+        Assert.Null(control.TooltipAnchorPoint);
     }
 
     [AvaloniaFact]

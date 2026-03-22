@@ -12,6 +12,14 @@ namespace Clever.TokenMap.Treemap;
 
 public sealed class TreemapControl : Control
 {
+    private const double TooltipMargin = 12;
+    private const double TooltipPaddingX = 14;
+    private const double TooltipPaddingY = 12;
+    private const double TooltipHeaderSpacing = 10;
+    private const double TooltipRowSpacing = 6;
+    private const double TooltipColumnSpacing = 12;
+    private const double TooltipMaxWidth = 360;
+
     public static readonly StyledProperty<AnalysisMetric> MetricProperty =
         AvaloniaProperty.Register<TreemapControl, AnalysisMetric>(nameof(Metric), AnalysisMetric.Tokens);
 
@@ -24,11 +32,9 @@ public sealed class TreemapControl : Control
     private readonly SquarifiedTreemapLayout _layout = new();
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
     private Size _layoutSize;
+    private Point? _tooltipAnchorPoint;
     private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
     private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
-    private static readonly IBrush TooltipBorderFallbackBrush = new SolidColorBrush(Color.Parse("#D7DCE2"));
-    private static readonly IBrush TooltipBackgroundFallbackBrush = new SolidColorBrush(Color.Parse("#FFFFFF"));
-
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
     static TreemapControl()
@@ -64,6 +70,8 @@ public sealed class TreemapControl : Control
     internal ProjectNode? PressedNode { get; private set; }
 
     internal string? TooltipText { get; private set; }
+
+    internal Point? TooltipAnchorPoint => _tooltipAnchorPoint;
 
     internal IReadOnlyList<TreemapNodeVisual> NodeVisuals => _nodeVisuals;
 
@@ -165,6 +173,8 @@ public sealed class TreemapControl : Control
                 context.DrawText(formattedText, new Point(labelBounds.X, labelBounds.Y));
             }
         }
+
+        DrawTooltipOverlay(context);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
@@ -239,16 +249,19 @@ public sealed class TreemapControl : Control
     internal void UpdateHover(Point point)
     {
         var hoveredNode = HitTestNode(point);
-        if (ReferenceEquals(HoveredNode, hoveredNode))
+        if (hoveredNode is null)
         {
+            ClearHover();
             return;
         }
 
+        var hoveredNodeChanged = !ReferenceEquals(HoveredNode, hoveredNode);
         HoveredNode = hoveredNode;
-        TooltipText = hoveredNode is null ? null : BuildTooltip(hoveredNode);
-        ToolTip.SetTip(this, hoveredNode is null ? null : BuildTooltipContent(hoveredNode));
-        ToolTip.SetShowDelay(this, 0);
-        ToolTip.SetIsOpen(this, hoveredNode is not null);
+        _tooltipAnchorPoint = point;
+        if (hoveredNodeChanged || TooltipText is null)
+        {
+            TooltipText = BuildTooltip(hoveredNode);
+        }
         InvalidateVisual();
     }
 
@@ -261,8 +274,7 @@ public sealed class TreemapControl : Control
 
         HoveredNode = null;
         TooltipText = null;
-        ToolTip.SetIsOpen(this, false);
-        ToolTip.SetTip(this, null);
+        _tooltipAnchorPoint = null;
         InvalidateVisual();
     }
 
@@ -338,10 +350,132 @@ public sealed class TreemapControl : Control
         return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nNon-empty/Blank: {breakdown}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
-    private Border BuildTooltipContent(ProjectNode node)
+    private void DrawTooltipOverlay(DrawingContext context)
     {
+        if (_tooltipAnchorPoint is null || HoveredNode is null || string.IsNullOrWhiteSpace(TooltipText))
+        {
+            return;
+        }
+
         var isDarkTheme = IsDarkTheme();
-        var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
+        var pathText = string.IsNullOrWhiteSpace(HoveredNode.RelativePath) ? "(root)" : HoveredNode.RelativePath;
+        var rows = BuildTooltipRows(HoveredNode);
+        var labelBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#AAB4C0"))
+            : new SolidColorBrush(Color.Parse("#667085"));
+        var valueBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#F3F4F6"))
+            : new SolidColorBrush(Color.Parse("#1F2933"));
+        var backgroundBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#1C2128"))
+            : new SolidColorBrush(Color.Parse("#FFFFFF"));
+        var borderBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#3A4350"))
+            : new SolidColorBrush(Color.Parse("#D7DCE2"));
+
+        var labelTexts = new List<FormattedText>(rows.Length);
+        var valueTexts = new List<FormattedText>(rows.Length);
+        var labelColumnWidth = 0d;
+        var valueColumnWidth = 0d;
+        var rowsHeight = 0d;
+
+        foreach (var row in rows)
+        {
+            var labelText = new FormattedText(
+                row.Label,
+                culture: CultureInfo.CurrentCulture,
+                flowDirection: FlowDirection.LeftToRight,
+                typeface: Typeface.Default,
+                emSize: 11,
+                foreground: labelBrush);
+            var valueText = new FormattedText(
+                row.Value,
+                culture: CultureInfo.CurrentCulture,
+                flowDirection: FlowDirection.LeftToRight,
+                typeface: Typeface.Default,
+                emSize: 12,
+                foreground: valueBrush);
+
+            labelTexts.Add(labelText);
+            valueTexts.Add(valueText);
+            labelColumnWidth = Math.Max(labelColumnWidth, labelText.Width);
+            valueColumnWidth = Math.Max(valueColumnWidth, valueText.Width);
+            rowsHeight += Math.Max(labelText.Height, valueText.Height);
+        }
+
+        if (rows.Length > 1)
+        {
+            rowsHeight += TooltipRowSpacing * (rows.Length - 1);
+        }
+
+        var tooltipContentMaxWidth = TooltipMaxWidth - (TooltipPaddingX * 2);
+        var minimumContentWidth = Math.Min(
+            tooltipContentMaxWidth,
+            Math.Max(220, labelColumnWidth + TooltipColumnSpacing + valueColumnWidth));
+        var wrappedPathLines = WrapTooltipText(pathText, minimumContentWidth, 13, valueBrush, true);
+        var wrappedPathWidth = 0d;
+        var wrappedPathHeight = 0d;
+
+        foreach (var line in wrappedPathLines)
+        {
+            wrappedPathWidth = Math.Max(wrappedPathWidth, line.Width);
+            wrappedPathHeight += line.Height;
+        }
+
+        if (wrappedPathLines.Count > 1)
+        {
+            wrappedPathHeight += TooltipRowSpacing * (wrappedPathLines.Count - 1);
+        }
+
+        var contentWidth = Math.Min(
+            tooltipContentMaxWidth,
+            Math.Max(wrappedPathWidth, labelColumnWidth + TooltipColumnSpacing + valueColumnWidth));
+        var tooltipWidth = contentWidth + (TooltipPaddingX * 2);
+        var tooltipHeight = wrappedPathHeight + TooltipHeaderSpacing + rowsHeight + (TooltipPaddingY * 2);
+        var tooltipX = _tooltipAnchorPoint.Value.X + TooltipMargin;
+        var tooltipY = _tooltipAnchorPoint.Value.Y + TooltipMargin;
+
+        if (tooltipX + tooltipWidth > Bounds.Width - 6)
+        {
+            tooltipX = _tooltipAnchorPoint.Value.X - tooltipWidth - TooltipMargin;
+        }
+
+        if (tooltipY + tooltipHeight > Bounds.Height - 6)
+        {
+            tooltipY = _tooltipAnchorPoint.Value.Y - tooltipHeight - TooltipMargin;
+        }
+
+        tooltipX = Math.Clamp(tooltipX, 6, Math.Max(6, Bounds.Width - tooltipWidth - 6));
+        tooltipY = Math.Clamp(tooltipY, 6, Math.Max(6, Bounds.Height - tooltipHeight - 6));
+
+        var tooltipBounds = new Rect(tooltipX, tooltipY, tooltipWidth, tooltipHeight);
+        var tooltipPen = new Pen(borderBrush, 1);
+        context.DrawRectangle(backgroundBrush, tooltipPen, tooltipBounds);
+
+        var contentBounds = tooltipBounds.Deflate(new Thickness(TooltipPaddingX, TooltipPaddingY));
+        var textY = contentBounds.Y;
+        using var clip = context.PushClip(contentBounds);
+
+        foreach (var pathLine in wrappedPathLines)
+        {
+            context.DrawText(pathLine, new Point(contentBounds.X, textY));
+            textY += pathLine.Height + TooltipRowSpacing;
+        }
+
+        textY += TooltipHeaderSpacing - TooltipRowSpacing;
+
+        for (var index = 0; index < rows.Length; index++)
+        {
+            var rowHeight = Math.Max(labelTexts[index].Height, valueTexts[index].Height);
+            var valueX = contentBounds.X + labelColumnWidth + TooltipColumnSpacing;
+            context.DrawText(labelTexts[index], new Point(contentBounds.X, textY));
+            context.DrawText(valueTexts[index], new Point(valueX, textY));
+            textY += rowHeight + TooltipRowSpacing;
+        }
+    }
+
+    private (string Label, string Value)[] BuildTooltipRows(ProjectNode node)
+    {
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
@@ -350,86 +484,122 @@ public sealed class TreemapControl : Control
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
-        var labelBrush = isDarkTheme
-            ? new SolidColorBrush(Color.Parse("#AAB4C0"))
-            : new SolidColorBrush(Color.Parse("#667085"));
-        var valueBrush = isDarkTheme
-            ? new SolidColorBrush(Color.Parse("#F3F4F6"))
-            : new SolidColorBrush(Color.Parse("#1F2933"));
+        return
+        [
+            ("Type", GetKindText(node)),
+            ("Tokens", node.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture)),
+            ("Share", share),
+            ("Lines", node.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture)),
+            ("Non-empty/Blank", breakdown),
+            ("Ext", extension),
+            ("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
+        ];
+    }
 
-        var content = new StackPanel
+    private static List<FormattedText> WrapTooltipText(
+        string text,
+        double maxWidth,
+        double fontSize,
+        IBrush foreground,
+        bool preferPathBreaks)
+    {
+        var lines = new List<FormattedText>();
+        if (string.IsNullOrEmpty(text))
         {
-            Spacing = 8,
-        };
-        content.Children.Add(new TextBlock
-        {
-            Text = relativePath,
-            Foreground = valueBrush,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-            MaxWidth = 320,
-        });
-        content.Children.Add(new TextBlock
-        {
-            Text = GetKindText(node),
-            Foreground = labelBrush,
-            FontSize = 11,
-        });
-        content.Children.Add(CreateTooltipRow("Tokens", node.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Share", share, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Lines", node.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Non-empty/Blank", breakdown, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Ext", extension, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
+            return lines;
+        }
 
-        return new Border
+        if (!preferPathBreaks)
         {
-            Background = isDarkTheme
-                ? new SolidColorBrush(Color.Parse("#1C2128"))
-                : TooltipBackgroundFallbackBrush,
-            BorderBrush = isDarkTheme
-                ? new SolidColorBrush(Color.Parse("#3A4350"))
-                : TooltipBorderFallbackBrush,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(12),
-            Child = content,
-            MaxWidth = 360,
-        };
+            lines.Add(CreateTooltipText(text, fontSize, foreground));
+            return lines;
+        }
+
+        var tokens = TokenizePath(text);
+        var current = string.Empty;
+
+        foreach (var token in tokens)
+        {
+            var candidate = string.Concat(current, token);
+            if (current.Length == 0 || CreateTooltipText(candidate, fontSize, foreground).Width <= maxWidth)
+            {
+                current = candidate;
+                continue;
+            }
+
+            AppendWrappedToken(lines, current, maxWidth, fontSize, foreground);
+            current = token;
+        }
+
+        if (current.Length > 0)
+        {
+            AppendWrappedToken(lines, current, maxWidth, fontSize, foreground);
+        }
+
+        return lines;
+    }
+
+    private static void AppendWrappedToken(
+        List<FormattedText> lines,
+        string text,
+        double maxWidth,
+        double fontSize,
+        IBrush foreground)
+    {
+        var remaining = text;
+        while (remaining.Length > 0)
+        {
+            var splitLength = remaining.Length;
+            while (splitLength > 1 &&
+                   CreateTooltipText(remaining[..splitLength], fontSize, foreground).Width > maxWidth)
+            {
+                splitLength--;
+            }
+
+            lines.Add(CreateTooltipText(remaining[..splitLength], fontSize, foreground));
+            remaining = remaining[splitLength..];
+        }
+    }
+
+    private static List<string> TokenizePath(string text)
+    {
+        var tokens = new List<string>();
+        var segmentStart = 0;
+
+        for (var index = 0; index < text.Length; index++)
+        {
+            if (text[index] != '/' && text[index] != '\\')
+            {
+                continue;
+            }
+
+            tokens.Add(text[segmentStart..(index + 1)]);
+            segmentStart = index + 1;
+        }
+
+        if (segmentStart < text.Length)
+        {
+            tokens.Add(text[segmentStart..]);
+        }
+
+        return tokens;
+    }
+
+    private static FormattedText CreateTooltipText(string text, double fontSize, IBrush foreground)
+    {
+        return new FormattedText(
+            text,
+            culture: CultureInfo.CurrentCulture,
+            flowDirection: FlowDirection.LeftToRight,
+            typeface: Typeface.Default,
+            emSize: fontSize,
+            foreground: foreground);
     }
 
     private bool IsDarkTheme()
     {
         var variant = Application.Current?.ActualThemeVariant ?? ActualThemeVariant;
         return variant == ThemeVariant.Dark;
-    }
-
-    private static Grid CreateTooltipRow(string label, string value, IBrush labelBrush, IBrush valueBrush)
-    {
-        var grid = new Grid
-        {
-            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
-            ColumnSpacing = 10,
-        };
-        grid.Children.Add(new TextBlock
-        {
-            Text = label,
-            Foreground = labelBrush,
-            FontSize = 11,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
-        });
-
-        var valueText = new TextBlock
-        {
-            Text = value,
-            Foreground = valueBrush,
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = 12,
-        };
-        Grid.SetColumn(valueText, 1);
-        grid.Children.Add(valueText);
-
-        return grid;
     }
 
     private double GetMetricValue(ProjectNode node) =>
@@ -460,4 +630,3 @@ public sealed class TreemapControl : Control
         node.Children.Count > 0;
 
 }
-
