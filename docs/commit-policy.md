@@ -23,5 +23,3 @@
 ## Repo Notes
 
 - Include matching docs updates when a change affects lasting repo truth or known limitations.
-- Before committing, make sure verification is green and follows the standard repo flow from `AGENTS.md`.
-- For docs-, tests-, or tooling-only changes, use judgment and run the smallest meaningful verification subset.
