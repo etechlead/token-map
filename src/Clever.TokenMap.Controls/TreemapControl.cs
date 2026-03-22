@@ -26,9 +26,10 @@ public sealed class TreemapControl : Control
     private Size _layoutSize;
     private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
     private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
-    private static readonly IBrush TooltipBorderFallbackBrush = new SolidColorBrush(Color.Parse("#2F6FD6"));
-    private static readonly IBrush TooltipBackgroundFallbackBrush = new SolidColorBrush(Color.Parse("#0F1621"));
-    private static readonly IBrush TooltipLabelFallbackBrush = new SolidColorBrush(Color.Parse("#8FA3B8"));
+    private static readonly IBrush TooltipBorderFallbackBrush = new SolidColorBrush(Color.Parse("#D7DCE2"));
+    private static readonly IBrush TooltipBackgroundFallbackBrush = new SolidColorBrush(Color.Parse("#FFFFFF"));
+    private static readonly IBrush TooltipLabelFallbackBrush = new SolidColorBrush(Color.Parse("#667085"));
+    private static readonly IBrush TooltipValueFallbackBrush = new SolidColorBrush(Color.Parse("#1F2933"));
 
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
@@ -91,7 +92,12 @@ public sealed class TreemapControl : Control
         base.Render(context);
 
         var drawingBounds = new Rect(Bounds.Size).Deflate(6);
-        context.FillRectangle(new SolidColorBrush(Color.Parse("#0B1018")), new Rect(Bounds.Size));
+        var canvasBrush = GetThemeBrush("TokenMapSurfaceSubtleBrush", new SolidColorBrush(Color.Parse("#F7F8FA")));
+        var directoryFillBrush = GetThemeBrush("TokenMapSurfaceMutedBrush", new SolidColorBrush(Color.Parse("#F1F3F5")));
+        var directoryHeaderBrush = GetThemeBrush("TokenMapDividerBrush", new SolidColorBrush(Color.Parse("#E7EBF0")));
+        var directoryLabelBrush = GetThemeBrush("TokenMapTextBrush", new SolidColorBrush(Color.Parse("#1F2933")));
+
+        context.FillRectangle(canvasBrush, new Rect(Bounds.Size));
 
         if (_layoutSize != Bounds.Size)
         {
@@ -120,16 +126,12 @@ public sealed class TreemapControl : Control
             }
             else if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
             {
-                context.FillRectangle(
-                    new SolidColorBrush(Color.FromArgb(12, 255, 255, 255)),
-                    visual.Bounds);
+                context.FillRectangle(directoryFillBrush, visual.Bounds);
 
                 var headerBounds = TreemapVisualRules.GetHeaderBounds(visual.Node, visual.Bounds);
                 if (headerBounds.Height > 0)
                 {
-                    context.FillRectangle(
-                        new SolidColorBrush(Color.FromArgb(76, 255, 255, 255)),
-                        headerBounds);
+                    context.FillRectangle(directoryHeaderBrush, headerBounds);
                 }
             }
 
@@ -138,13 +140,14 @@ public sealed class TreemapControl : Control
             if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
                 var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
+                var labelBrush = isLeaf ? Brushes.White : directoryLabelBrush;
                 var formattedText = new FormattedText(
                     visual.Node.Name,
                     culture: System.Globalization.CultureInfo.InvariantCulture,
                     flowDirection: FlowDirection.LeftToRight,
                     typeface: Typeface.Default,
                     emSize: TreemapVisualRules.GetLabelFontSize(visual.Node),
-                    foreground: Brushes.White);
+                    foreground: labelBrush);
 
                 using var clip = context.PushClip(labelBounds);
                 context.DrawText(formattedText, new Point(labelBounds.X, labelBounds.Y));
@@ -287,8 +290,8 @@ public sealed class TreemapControl : Control
         }
 
         return isLeaf
-            ? new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1)
-            : new Pen(new SolidColorBrush(Color.Parse("#314459")), 1);
+            ? new Pen(new SolidColorBrush(Color.FromArgb(166, 255, 255, 255)), 1)
+            : new Pen(GetThemeBrush("TokenMapBorderBrush", TooltipBorderFallbackBrush), 1);
     }
 
     private IBrush GetThemeBrush(string resourceKey, IBrush fallbackBrush)
@@ -329,8 +332,8 @@ public sealed class TreemapControl : Control
                 ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
                 : "n/a");
 
-        var labelBrush = GetThemeBrush("TokenMapAccentHoverBrush", TooltipLabelFallbackBrush);
-        var valueBrush = Brushes.White;
+        var labelBrush = GetThemeBrush("TokenMapMutedTextBrush", TooltipLabelFallbackBrush);
+        var valueBrush = GetThemeBrush("TokenMapTextBrush", TooltipValueFallbackBrush);
 
         var content = new StackPanel
         {
@@ -359,10 +362,10 @@ public sealed class TreemapControl : Control
 
         return new Border
         {
-            Background = GetThemeBrush("TokenMapAccentSurfaceBrush", TooltipBackgroundFallbackBrush),
-            BorderBrush = GetThemeBrush("TokenMapAccentPressedBrush", TooltipBorderFallbackBrush),
+            Background = GetThemeBrush("TokenMapSurfaceBrush", TooltipBackgroundFallbackBrush),
+            BorderBrush = GetThemeBrush("TokenMapBorderBrush", TooltipBorderFallbackBrush),
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(8),
+            CornerRadius = new CornerRadius(4),
             Padding = new Thickness(12),
             Child = content,
             MaxWidth = 360,

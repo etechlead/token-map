@@ -2,26 +2,42 @@
              xmlns:fluent="clr-namespace:Avalonia.Themes.Fluent;assembly=Avalonia.Themes.Fluent"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Clever.TokenMap.App.App"
-             RequestedThemeVariant="Default">
+             RequestedThemeVariant="Light">
     <Application.Resources>
+        <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"
+                         Color="#F3F4F6" />
+        <SolidColorBrush x:Key="TokenMapSurfaceBrush"
+                         Color="#FFFFFF" />
+        <SolidColorBrush x:Key="TokenMapSurfaceSubtleBrush"
+                         Color="#F7F8FA" />
+        <SolidColorBrush x:Key="TokenMapSurfaceMutedBrush"
+                         Color="#F1F3F5" />
+        <SolidColorBrush x:Key="TokenMapBorderBrush"
+                         Color="#D7DCE2" />
+        <SolidColorBrush x:Key="TokenMapDividerBrush"
+                         Color="#E7EBF0" />
+        <SolidColorBrush x:Key="TokenMapTextBrush"
+                         Color="#1F2933" />
+        <SolidColorBrush x:Key="TokenMapMutedTextBrush"
+                         Color="#667085" />
         <SolidColorBrush x:Key="TokenMapAccentBrush"
-                         Color="#4C9FFF" />
+                         Color="#0F6CBD" />
         <SolidColorBrush x:Key="TokenMapAccentHoverBrush"
-                         Color="#8BC3FF" />
+                         Color="#2B7DE9" />
         <SolidColorBrush x:Key="TokenMapAccentPressedBrush"
-                         Color="#2F6FD6" />
+                         Color="#0A5FC2" />
         <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
-                         Color="#E7F2FF" />
+                         Color="#0A5FC2" />
         <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
-                         Color="#17273A" />
+                         Color="#DCEBFF" />
     </Application.Resources>
     <Application.Styles>
         <FluentTheme>
             <FluentTheme.Palettes>
                 <fluent:ColorPaletteResources x:Key="Light"
-                                              Accent="#4C9FFF" />
+                                              Accent="#0F6CBD" />
                 <fluent:ColorPaletteResources x:Key="Dark"
-                                              Accent="#4C9FFF" />
+                                              Accent="#0F6CBD" />
             </FluentTheme.Palettes>
         </FluentTheme>
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />

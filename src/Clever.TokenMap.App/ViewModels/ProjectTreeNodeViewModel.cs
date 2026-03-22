@@ -48,7 +48,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public bool HasChildren => Children.Count > 0;
 
-    public Thickness IndentMargin => new(Depth * 16, 0, 0, 0);
+    public Thickness IndentMargin => new(Depth * 14, 0, 0, 0);
 
     public string IconPath => $"avares://Clever.TokenMap.App/Assets/FileIcons/{GetIconFileName()}";
 
