@@ -1,83 +1,84 @@
 # AGENTS.md
 
-## Цель
-Собрать MVP локального desktop-приложения **TokenMap**: анализ исходного кода в выбранной папке, подсчёт токенов и LOC, визуализация структуры проекта через treemap, дерево каталогов слева и details panel справа.
+## Goal
+Build the MVP of the local desktop application **TokenMap**: analyze source code in a selected folder, count tokens and LOC, visualize the project structure with a treemap, show the directory tree on the left, and a details panel on the right.
 
-## Ключевые решения
-- Стек MVP: **.NET 10 + Avalonia (stable, non-preview)**.
-- UI: top toolbar, дерево слева, treemap по центру, details panel справа.
-- Для токенов используется локальный `Microsoft.ML.Tokenizers` через адаптер `ITokenCounter`.
-- Для language / code / comments / blanks используется локальный **Tokei** через `ITokeiRunner`.
-- Источник truth для структуры дерева и набора включённых файлов - наш .NET-сканер.
-- `Tokei` используется как источник truth для language / code / comments / blanks там, где статистика доступна.
-- Treemap рисуется **одним custom control**, без создания visual/control на каждый прямоугольник.
+## Key Decisions
+- MVP stack: **.NET 10 + Avalonia (stable, non-preview)**.
+- UI: top toolbar, tree on the left, treemap in the center, details panel on the right.
+- Tokens are counted locally with `Microsoft.ML.Tokenizers` through the `ITokenCounter` adapter.
+- Language / code / comments / blanks metrics use local **Tokei** through `ITokeiRunner`.
+- The source of truth for tree structure and the set of included files is our .NET scanner.
+- `Tokei` is the source of truth for language / code / comments / blanks where statistics are available.
+- The treemap is rendered by **one custom control**, without creating a visual/control per rectangle.
 
-## Приоритеты MVP
-1. **Windows** - основная среда разработки и первая целевая платформа.
-2. **macOS** - вторичная проверка после рабочего Windows MVP.
-3. **Linux** - не блокирует MVP; переносимость не ломаем, но отдельно не шлифуем.
+## MVP Priorities
+1. **Windows** is the main development environment and the first target platform.
+2. **macOS** is the secondary validation target after the Windows MVP works.
+3. **Linux** is not an MVP blocker; do not break portability, but do not polish it separately.
 
-## Обязательные архитектурные правила
-- `Clever.TokenMap.Core` не зависит от Avalonia.
-- `Clever.TokenMap.App` не читает файловую систему напрямую; только через сервисы/контракты.
-- Не использовать WebView, browser embedding и JS charting.
-- Не использовать облачные сервисы, сетевые API и удалённые токенайзеры.
-- Не тащить тяжёлые зависимости без явной необходимости.
-- Не строить treemap из тысячи дочерних контролов.
-- Любая новая функциональность должна заканчиваться проверкой сборки и тестов.
+## Mandatory Architecture Rules
+- `Clever.TokenMap.Core` must not depend on Avalonia.
+- `Clever.TokenMap.App` must not read the file system directly; only through services/contracts.
+- Do not use WebView, browser embedding, or JS charting.
+- Do not use cloud services, network APIs, or remote tokenizers.
+- Do not pull in heavy dependencies without explicit need.
+- Do not build the treemap out of thousands of child controls.
+- Every new functionality must end with build and test verification.
 
-## Границы MVP
-В MVP обязательно:
-- выбор папки;
-- сканирование структуры проекта;
-- уважение `.gitignore`, `.ignore`, дефолтных excludes и пользовательских excludes;
-- токены по файлам и папкам;
-- LOC и breakdown `code/comments/blanks`, если `tokei` умеет распознать язык;
-- treemap по выбранной метрике;
-- hover tooltip для узла treemap;
-- click selection + persistent highlight;
-- синхронизация `TreeView` <-> treemap <-> details panel;
-- прогресс и отмена анализа.
+## MVP Scope
+Required in MVP:
+- folder selection;
+- project structure scanning;
+- support for `.gitignore`, `.ignore`, default excludes, and user excludes;
+- tokens for files and folders;
+- LOC and `code/comments/blanks` breakdown when `tokei` recognizes the language;
+- treemap by the selected metric;
+- hover tooltip for a treemap node;
+- click selection with persistent highlight;
+- synchronization between `TreeView`, treemap, and details panel;
+- analysis progress and cancellation.
 
-В MVP не обязательно:
+Not required in MVP:
 - live watch;
-- diff двух snapshot;
+- diff of two snapshots;
 - single-file publish;
 - Native AOT;
 - installer/signing/notarization;
 - Linux polish;
 - search/filter UI;
-- экспорт snapshot.
+- snapshot export.
 
-## Правила внесения изменений
-- Работай по текущему активному плану из `docs/plan.md`; если активного этапа или отдельного плана нет, работай только по явному запросу пользователя.
-- Не делай несвязанных рефакторингов.
-- Не меняй архитектурные решения без веской причины и записи в `docs/status.md`.
-- Если возникает локальная неоднозначность - выбирай самый простой вариант, совместимый со `docs/spec.md`.
-- Если для изменения не хватает тестов - добавь их в рамках этого изменения.
-- Для стратегии коммитов, формата сообщений и git safety следуй `docs/COMMIT_POLICY.md`.
+## Change Rules
+- Work against the current active plan in `docs/plan.md`; if there is no active stage or separate plan, work only on an explicit user request.
+- Do not make unrelated refactors.
+- Do not change architecture decisions without a strong reason and a note in `docs/status.md`.
+- If there is local ambiguity, choose the simplest option that stays compatible with `docs/spec.md`.
+- If the change needs tests, add them as part of the same change.
+- In PowerShell, do not use `&&`; separate commands with compatible syntax such as `;`.
+- Follow `docs/COMMIT_POLICY.md` for commit strategy, message format, and git safety.
 
-## Политика документации
-- Документация должна отражать либо **текущее состояние**, либо **запланированную работу**.
-- Не хранить в документах исторические списки уже выполненных этапов, задач и временных переходных формулировок.
-- История изменений поддерживается историей git, а не дублируется в рабочих документах.
+## Documentation Policy
+- Documentation must reflect either the **current state** or **planned work**.
+- Do not keep historical lists of completed stages, tasks, or temporary transition notes in working documents.
+- Change history belongs in git history, not duplicated in working documentation.
 
-## Проверка после каждого изменения
-Минимум:
+## Verification After Each Change
+Minimum:
 - `dotnet restore`
 - `dotnet build Clever.TokenMap.sln`
 - `dotnet test Clever.TokenMap.sln --no-build`
 
-Если в изменении появились headless/UI-тесты - запускать и их тоже.
+If the change adds headless/UI tests, run them too.
 
-## Обновление документации
-После каждого заметного изменения:
-- обнови `docs/status.md`;
-- кратко зафиксируй, что сделано, что проверено и какие решения приняты;
-- если после изменения остаются реальные открытые ограничения - зафиксируй их в актуальном виде, без исторических логов.
+## Documentation Updates
+After each notable change:
+- update `docs/status.md`;
+- briefly record what was done, what was verified, and what decisions were made;
+- if the change leaves real open limitations, record them in their current form without historical logs.
 
-## Что делать при блокере
-Если упёрся в проблему:
-1. Зафиксируй её в `docs/status.md`.
-2. Выбери минимальный обходной путь, который не ломает архитектуру.
-3. Не расширяй scope без необходимости.
+## What To Do When Blocked
+If you hit a problem:
+1. Record it in `docs/status.md`.
+2. Choose the smallest workaround that does not break the architecture.
+3. Do not expand scope unless necessary.

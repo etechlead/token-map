@@ -1,79 +1,79 @@
-# TokenMap — Product Spec (MVP)
+# TokenMap - Product Spec (MVP)
 
-## 1. Назначение
+## 1. Purpose
 
-**TokenMap** — локальное desktop-приложение для анализа исходного кода в выбранной папке проекта.
+**TokenMap** is a local desktop application for analyzing source code in a selected project folder.
 
-Приложение должно:
-- построить дерево каталогов и файлов;
-- посчитать **токены** по файлам и папкам локально, без облака;
-- показать **LOC** и breakdown `code/comments/blanks`;
-- визуализировать распределение метрики через **treemap** в стиле WinDirStat/WizTree;
-- учитывать `.gitignore`, `.ignore`, дефолтные excludes и пользовательские excludes.
+The application must:
+- build a directory/file tree;
+- count **tokens** for files and folders locally, without the cloud;
+- show **LOC** and `code/comments/blanks` breakdown;
+- visualize metric distribution with a **treemap** in the style of WinDirStat/WizTree;
+- respect `.gitignore`, `.ignore`, default excludes, and user excludes.
 
-## 2. Статус MVP
+## 2. MVP Status
 
-MVP ориентирован на:
-- **разработку на Windows**;
-- **первичный рабочий билд под Windows**;
-- **вторичную проверку на macOS** после готового Windows MVP.
+MVP is aimed at:
+- **development on Windows**;
+- **the first working build for Windows**;
+- **secondary verification on macOS** after the Windows MVP is ready.
 
-Linux не является блокирующей целью MVP, но архитектура не должна мешать его добавлению после MVP.
+Linux is not a blocking MVP target, but the architecture must not make it harder to add after MVP.
 
-## 3. Технологический стек MVP
+## 3. MVP Technology Stack
 
 - **.NET 10**
 - **Avalonia (stable, non-preview)**
-- **CommunityToolkit.Mvvm** для MVVM
-- **Microsoft.ML.Tokenizers** для локального подсчёта токенов
-- **Tokei** как локальный sidecar для statistics по language / code / comments / blanks
-- **System.Text.Json** для сериализации и парсинга JSON
+- **CommunityToolkit.Mvvm** for MVVM
+- **Microsoft.ML.Tokenizers** for local token counting
+- **Tokei** as a local sidecar for language / code / comments / blanks statistics
+- **System.Text.Json** for JSON serialization and parsing
 
-## 4. Основной пользовательский сценарий
+## 4. Main User Scenario
 
-1. Пользователь запускает приложение.
-2. Выбирает корневую папку проекта.
-3. Приложение сканирует структуру, применяет ignore-правила и excludes.
-4. Приложение локально считает метрики.
-5. Пользователь видит:
-   - дерево проекта слева;
-   - treemap по центру;
-   - details panel справа;
-   - summary и progress/status сверху/снизу.
-6. Пользователь может:
-   - навести курсор на прямоугольник treemap и увидеть tooltip;
-   - кликнуть по прямоугольнику и выбрать узел;
-   - выбрать узел в дереве слева;
-   - переключить метрику treemap;
-   - изменить tokenizer profile;
-   - перезапустить анализ;
-   - отменить анализ.
+1. The user launches the application.
+2. The user selects the project root folder.
+3. The application scans the structure and applies ignore rules and excludes.
+4. The application calculates metrics locally.
+5. The user sees:
+   - the project tree on the left;
+   - the treemap in the center;
+   - the details panel on the right;
+   - summary and progress/status at the top/bottom.
+6. The user can:
+   - hover a treemap rectangle and see a tooltip;
+   - click a rectangle and select a node;
+   - select a node in the tree on the left;
+   - switch the treemap metric;
+   - change the tokenizer profile;
+   - restart analysis;
+   - cancel analysis.
 
-## 5. Обязательные функциональные требования MVP
+## 5. Mandatory MVP Functional Requirements
 
-### 5.1 Выбор папки
-- Пользователь может выбрать корневую папку проекта через стандартный folder picker.
-- Повторный выбор папки запускает новый анализ.
+### 5.1 Folder Selection
+- The user can select the project root folder through a standard folder picker.
+- Selecting a folder again starts a new analysis.
 
-### 5.2 Сканирование структуры проекта
-- Приложение рекурсивно обходит каталог.
-- По умолчанию сканируются только **включённые** файлы и папки.
-- Приложение должно устойчиво переживать:
+### 5.2 Project Structure Scanning
+- The application recursively traverses the directory.
+- By default, only **included** files and folders are scanned.
+- The application must handle the following robustly:
   - `UnauthorizedAccessException`;
-  - отсутствующие/удалённые во время анализа файлы;
-  - слишком длинные/некорректные пути;
-  - ошибки чтения отдельных файлов.
-- Ошибки по отдельным путям не должны валить весь анализ.
+  - files that disappear or are removed during analysis;
+  - overly long/invalid paths;
+  - read errors on individual files.
+- Errors on individual paths must not crash the whole analysis.
 
-### 5.3 Ignore и excludes
-Нужно учитывать:
+### 5.3 Ignore And Excludes
+The application must respect:
 - `.gitignore`;
 - `.ignore`;
-- встроенные дефолтные excludes;
-- пользовательские excludes, введённые в настройках/поле ввода.
+- built-in default excludes;
+- user excludes entered in settings/input.
 
-#### Дефолтные excludes MVP
-По умолчанию исключать:
+#### MVP Default Excludes
+Exclude by default:
 - `.git`
 - `.vs`
 - `.idea`
@@ -89,90 +89,90 @@ Linux не является блокирующей целью MVP, но архи
 - `Debug`
 - `Release`
 
-#### Правила применения
-- Ignore-правила применяются рекурсивно.
-- Вложенные `.gitignore` и `.ignore` должны влиять на своё поддерево.
-- Пользовательские excludes применяются относительно root.
-- Если путь исключён — он не участвует в дереве, токенах и LOC.
+#### Application Rules
+- Ignore rules are applied recursively.
+- Nested `.gitignore` and `.ignore` files must affect their own subtree.
+- User excludes are applied relative to the root.
+- If a path is excluded, it must not participate in the tree, tokens, or LOC.
 
-### 5.4 Симлинки и reparse points
-Для MVP:
-- симлинки / junctions / reparse points **не разворачивать**;
-- такие узлы помечать как skipped;
-- не допускать циклов обхода.
+### 5.4 Symlinks And Reparse Points
+For MVP:
+- do **not** follow symlinks / junctions / reparse points;
+- mark such nodes as skipped;
+- avoid traversal cycles.
 
-### 5.5 Определение текстовых файлов
-- Токены считаются только для файлов, определённых как текстовые.
-- Бинарные файлы показываются в дереве только если не исключены, но:
-  - токены для них не считаются;
-  - LOC для них не считается;
-  - узел помечается как skipped/binary.
-- Допустима простая надёжная эвристика определения text/binary.
+### 5.5 Text File Detection
+- Tokens are counted only for files detected as text.
+- Binary files are shown in the tree only if they are not excluded, but:
+  - tokens are not counted for them;
+  - LOC is not counted for them;
+  - the node is marked as skipped/binary.
+- A simple, reliable text/binary heuristic is acceptable.
 
-### 5.6 Подсчёт токенов
-- Подсчёт токенов выполняется **локально**.
-- Должны поддерживаться как минимум профили:
+### 5.6 Token Counting
+- Token counting must happen **locally**.
+- At minimum, these profiles must be supported:
   - `o200k_base`
   - `cl100k_base`
   - `p50k_base`
-- Должен быть выбран один активный tokenizer profile.
-- Токены считаются по **содержимому файла**, без облака.
-- Перед токенизацией содержимое нормализуется по переводам строк к `\n`, чтобы результаты были стабильнее между ОС.
-- Для папки токены = сумма токенов всех включённых потомков.
+- One active tokenizer profile must be selected.
+- Tokens are counted from the **file contents**, without the cloud.
+- Before tokenization, content is normalized to `\n` line endings so results are more stable across operating systems.
+- For a folder, tokens equal the sum of tokens across all included descendants.
 
-### 5.7 LOC и language stats
-- Для известного Tokei языка должны быть доступны:
+### 5.7 LOC And Language Stats
+- For a known Tokei language, the following must be available:
   - `TotalLines`
   - `CodeLines`
   - `CommentLines`
   - `BlankLines`
   - `Language`
-- Если `tokei` не дал статистику по файлу, допускается частичное заполнение:
-  - `TotalLines` можно посчитать самостоятельно;
-  - `CodeLines/CommentLines/BlankLines/Language` могут быть `null`.
-- Для папки метрики агрегируются по потомкам.
-- Должна быть доступна суммарная статистика по языкам и расширениям.
+- If `tokei` does not provide stats for a file, partial filling is allowed:
+  - `TotalLines` may be calculated independently;
+  - `CodeLines/CommentLines/BlankLines/Language` may be `null`.
+- For folders, metrics are aggregated from descendants.
+- Aggregate statistics by language and extension must be available.
 
 ### 5.8 Treemap
-Treemap — центральный визуальный элемент интерфейса.
+The treemap is the central visual element of the UI.
 
-Обязательные требования:
-- один custom control;
-- layout на основе treemap-алгоритма (предпочтительно squarified);
-- вес прямоугольника зависит от выбранной метрики;
-- поддерживаемые метрики MVP:
+Mandatory requirements:
+- one custom control;
+- layout based on a treemap algorithm, preferably squarified;
+- rectangle size depends on the selected metric;
+- supported MVP metrics:
   - `Tokens`
   - `TotalLines`
   - `CodeLines`
 
-#### Взаимодействия
-- hover по прямоугольнику:
-  - визуально подсвечивает узел;
-  - показывает tooltip с краткой статистикой.
-- click по прямоугольнику:
-  - выбирает узел;
-  - даёт persistent highlight;
-  - обновляет details panel;
-  - синхронизирует выбор с деревом слева.
-- выбор в дереве слева:
-  - синхронизирует treemap;
-  - обновляет details panel.
+#### Interactions
+- hover over a rectangle:
+  - visually highlights the node;
+  - shows a tooltip with short statistics.
+- click on a rectangle:
+  - selects the node;
+  - gives it a persistent highlight;
+  - updates the details panel;
+  - syncs selection with the tree on the left.
+- selection in the tree on the left:
+  - syncs the treemap;
+  - updates the details panel.
 
-### 5.9 Tooltip по hover
-Tooltip для узла treemap должен показывать:
+### 5.9 Hover Tooltip
+The tooltip for a treemap node must show:
 - relative path;
-- тип узла (file/folder);
+- node type (`file`/`folder`);
 - tokens;
-- долю от total root;
+- share of the total root;
 - total lines;
-- code/comments/blanks, если доступны;
-- language и/или extension;
-- для папок — количество включённых файлов в поддереве.
+- code/comments/blanks when available;
+- language and/or extension;
+- for folders, the number of included files in the subtree.
 
-### 5.10 Details panel справа
-Правая панель показывает информацию по **выбранному** узлу.
+### 5.10 Details Panel On The Right
+The right panel shows information for the **selected** node.
 
-Минимальный состав:
+Minimum content:
 - path;
 - file/folder;
 - tokens;
@@ -180,118 +180,118 @@ Tooltip для узла treemap должен показывать:
 - code/comments/blanks;
 - language;
 - extension;
-- размер поддерева;
-- количество включённых файлов и папок;
-- доля от проекта;
-- список top children по текущей метрике.
+- subtree size;
+- count of included files and folders;
+- share of the project;
+- top children by the current metric.
 
-### 5.11 Дерево слева
-Слева отображается дерево включённых каталогов/файлов.
+### 5.11 Tree On The Left
+The left side shows a tree of included folders/files.
 
-Требования:
+Requirements:
 - folders before files;
-- стабильная сортировка;
-- выбор узла мышью;
-- раскрытие пути к выбранному узлу treemap;
-- дерево не должно тормозить на больших проектах.
+- stable sorting;
+- mouse selection;
+- expansion of the path to the selected treemap node;
+- the tree must not lag on large projects.
 
 ### 5.12 Toolbar / Summary / Progress
-На верхней панели должны быть:
+The top panel must contain:
 - `Open Folder`
 - `Rescan`
 - `Cancel`
-- выбор метрики treemap
-- выбор tokenizer profile
+- treemap metric selector
+- tokenizer profile selector
 - toggles:
   - `Respect .gitignore`
   - `Respect .ignore`
   - `Use default excludes`
 
-Также нужны:
-- summary cards/summary strip с ключевыми totals;
+Also required:
+- summary cards/summary strip with key totals;
 - progress indicator;
-- текстовый статус текущего анализа.
+- textual status of the current analysis.
 
-### 5.13 Отмена и прогресс
-- Анализ должен поддерживать `CancellationToken`.
-- Кнопка `Cancel` реально прерывает активный анализ.
-- UI должен получать прогресс батчами, а не на каждый файл.
-- При отмене приложение остаётся в консистентном состоянии.
+### 5.13 Cancellation And Progress
+- Analysis must support `CancellationToken`.
+- The `Cancel` button must actually interrupt the active analysis.
+- The UI must receive progress in batches, not per file.
+- After cancellation, the application must stay in a consistent state.
 
-## 6. Нефункциональные требования MVP
+## 6. MVP Non-Functional Requirements
 
-### 6.1 Производительность
-- UI не должен зависать на типовых проектах.
-- Анализ должен выполняться в фоне.
-- Нельзя обновлять UI на каждый файл.
-- Нельзя создавать visual/control на каждый прямоугольник treemap.
+### 6.1 Performance
+- The UI must not freeze on typical projects.
+- Analysis must run in the background.
+- The UI must not update for every single file.
+- The treemap must not create a visual/control for every rectangle.
 
-### 6.2 Надёжность
-- Падение чтения одного файла не должно валить весь scan.
-- Ошибки должны логироваться и отображаться мягко.
-- Приложение должно корректно переживать повторные scan/cancel/rescan.
+### 6.2 Reliability
+- A failure while reading one file must not crash the whole scan.
+- Errors must be logged and surfaced softly.
+- The application must correctly survive repeated scan/cancel/rescan cycles.
 
-### 6.3 Локальность
-- Всё работает локально.
-- Не используется облако.
-- Не требуется интернет.
-- Не отправляются данные проекта наружу.
+### 6.3 Locality
+- Everything works locally.
+- No cloud is used.
+- No internet connection is required.
+- Project data is not sent outside the machine.
 
 ### 6.4 UX
-- Интерфейс должен быть аккуратным и чистым.
-- Основной layout:
-  - toolbar сверху;
-  - tree слева;
-  - treemap по центру;
-  - details panel справа.
-- Tooltip должен работать без клика.
-- Selected node должен быть отчётливо виден.
+- The interface must be clean and tidy.
+- Main layout:
+  - toolbar on top;
+  - tree on the left;
+  - treemap in the center;
+  - details panel on the right.
+- The tooltip must work without a click.
+- The selected node must be clearly visible.
 
-## 7. Архитектурные требования MVP
+## 7. MVP Architecture Requirements
 
-## 7.1 Слои
-Решение должно быть разделено минимум на:
-- `Clever.TokenMap.App` — Avalonia shell, views, viewmodels;
-- `Clever.TokenMap.Controls` — custom controls, включая treemap;
-- `Clever.TokenMap.Core` — модели, интерфейсы, агрегация, orchestration;
-- `Clever.TokenMap.Infrastructure` — файловая система, ignore parser, tokei runner, token counter, cache.
+## 7.1 Layers
+The solution must be split at minimum into:
+- `Clever.TokenMap.App` - Avalonia shell, views, viewmodels;
+- `Clever.TokenMap.Controls` - custom controls, including the treemap;
+- `Clever.TokenMap.Core` - models, interfaces, aggregation, orchestration;
+- `Clever.TokenMap.Infrastructure` - file system, ignore parser, tokei runner, token counter, cache.
 
-## 7.2 Источники truth
-- Структура дерева и набор включённых путей — наш scanner.
-- `Tokei` — источник truth для language / code / comments / blanks, если статистика доступна.
-- Токены — наш token counter.
+## 7.2 Sources Of Truth
+- Tree structure and the set of included paths come from our scanner.
+- `Tokei` is the source of truth for language / code / comments / blanks when statistics are available.
+- Tokens come from our token counter.
 
-## 7.3 Кэш
-В MVP допустим простой локальный кэш по ключу:
+## 7.3 Cache
+In MVP, a simple local cache keyed by the following is acceptable:
 - path
 - size
 - last write time UTC
 - tokenizer profile
 
-Кэш должен быть полезным, но не усложнять архитектуру.
+The cache should be useful, but must not complicate the architecture.
 
-## 8. Что не входит в MVP
-Не делать в рамках MVP:
+## 8. What Is Not In MVP
+Do not build the following as part of MVP:
 - live file watching;
-- diff/compare snapshot;
-- экспорт/import snapshot;
+- snapshot diff/compare;
+- snapshot export/import;
 - search/filter UI;
-- zoom/pan treemap;
-- installers и signing/notarization;
+- treemap zoom/pan;
+- installers and signing/notarization;
 - single-file publish;
 - Native AOT;
 - Linux polish;
-- сложную систему настроек;
-- плагины или расширяемость.
+- a complex settings system;
+- plugins or extensibility.
 
-## 9. Критерии готовности MVP
-MVP считается готовым, если:
-- приложение запускается и работает на Windows;
-- пользователь может выбрать папку и получить результат анализа;
-- `.gitignore`, `.ignore` и excludes реально влияют на результат;
-- токены считаются локально;
-- treemap работает, реагирует на hover и click;
-- details panel справа синхронизирована с treemap и деревом;
-- выбор метрики и tokenizer profile работает;
-- отмена и повторный scan работают стабильно;
-- решение собрано и тесты зелёные.
+## 9. MVP Done Criteria
+MVP is done if:
+- the application launches and works on Windows;
+- the user can select a folder and get an analysis result;
+- `.gitignore`, `.ignore`, and excludes actually affect the result;
+- tokens are counted locally;
+- the treemap works and reacts to hover and click;
+- the details panel on the right is synchronized with the treemap and the tree;
+- metric selection and tokenizer profile selection work;
+- cancellation and repeated scan are stable;
+- the solution builds and tests are green.

@@ -1,28 +1,28 @@
 # TokenMap - Implementation Plan
 
-MVP завершён. Этот файл фиксирует только текущий статус и правила следующего цикла работы.
+MVP is complete. This file now captures only the current state and the rules for the next work cycle.
 
-## Что уже закрыто в MVP
-- Bootstrap solution и базовый Avalonia shell.
-- Core contracts, scanner и path normalization.
-- `.gitignore` / `.ignore`, default excludes и user excludes.
-- Подсчёт токенов через `Microsoft.ML.Tokenizers`.
-- Интеграция `tokei`, merge метрик и агрегация по дереву.
-- Analyzer orchestration, progress batching, cancel и in-memory cache.
-- Рабочий main window с folder picker, tree, summary и details panel.
-- Custom-rendered treemap без дочерних контролов на каждый tile.
-- Hover tooltip, selection sync и persistent highlight.
-- Windows-first publish и MVP handoff.
+## What Is Already Complete In MVP
+- Bootstrap solution and the base Avalonia shell.
+- Core contracts, scanner, and path normalization.
+- `.gitignore` / `.ignore`, default excludes, and user excludes.
+- Token counting through `Microsoft.ML.Tokenizers`.
+- `tokei` integration, metric merge, and tree aggregation.
+- Analyzer orchestration, progress batching, cancellation, and in-memory cache.
+- A working main window with folder picker, tree, summary, and details panel.
+- Custom-rendered treemap without child controls for each tile.
+- Hover tooltip, selection sync, and persistent highlight.
+- Windows-first publish and MVP handoff.
 
-## Правила для следующего цикла
-- Новая работа выполняется только по явному запросу пользователя или по отдельно согласованному пункту из [docs/post-mvp.md](/Z:/Projects/My/tokenmap/src/docs/post-mvp.md).
-- Не возвращать в план уже завершённые MVP-пункты.
-- Не расширять scope без явной необходимости.
-- Для новых продуктовых задач использовать [docs/post-mvp.md](/Z:/Projects/My/tokenmap/src/docs/post-mvp.md) как backlog, а [docs/status.md](/Z:/Projects/My/tokenmap/src/docs/status.md) как источник текущего состояния.
-- После каждого заметного изменения обновлять [docs/status.md](/Z:/Projects/My/tokenmap/src/docs/status.md).
+## Rules For The Next Cycle
+- New work happens only on explicit user request or for a separately agreed item from [post-mvp.md](post-mvp.md).
+- Do not bring completed MVP items back into the plan.
+- Do not expand scope unless there is a clear need.
+- For new product work, use [post-mvp.md](post-mvp.md) as the backlog and [status.md](status.md) as the source of current state.
+- Update [status.md](status.md) after each notable change.
 
-## Базовые команды проверки
-После каждого изменения запускать минимум:
+## Basic Verification Commands
+Run at minimum after each change:
 
 ```bash
 dotnet restore
@@ -30,4 +30,4 @@ dotnet build Clever.TokenMap.sln
 dotnet test Clever.TokenMap.sln --no-build
 ```
 
-Если изменение затрагивает publish или headless/UI-сценарии, запускать и соответствующие дополнительные проверки.
+If the change affects publish flows or headless/UI scenarios, run the relevant extra checks as well.

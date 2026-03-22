@@ -1,6 +1,6 @@
-# TokenMap — Architecture (MVP)
+# TokenMap - Architecture (MVP)
 
-## 1. Solution layout
+## 1. Solution Layout
 
 ```text
 Clever.TokenMap.sln
@@ -34,50 +34,50 @@ third_party/
       README.md
 ```
 
-## 2. Responsibility split
+## 2. Responsibility Split
 
 ### `Clever.TokenMap.Core`
-Содержит:
-- доменные модели;
-- интерфейсы;
-- orchestration анализа;
-- агрегацию метрик;
+Contains:
+- domain models;
+- interfaces;
+- analysis orchestration;
+- metric aggregation;
 - progress model;
 - cache contracts.
 
-Не содержит:
+Does not contain:
 - Avalonia;
-- конкретные UI-типы;
-- прямую работу с `Process`, `FileSystemWatcher`, `Window` и т.д.
+- concrete UI types;
+- direct work with `Process`, `FileSystemWatcher`, `Window`, and so on.
 
 ### `Clever.TokenMap.Infrastructure`
-Содержит:
-- реализацию обхода файловой системы;
-- применение ignore/exclude правил;
-- определение text/binary;
-- адаптер токенизатора;
+Contains:
+- file system traversal implementation;
+- ignore/exclude rule application;
+- text/binary detection;
+- tokenizer adapter;
 - `TokeiRunner`;
-- кэш;
-- нормализацию путей.
+- cache;
+- path normalization.
 
 ### `Clever.TokenMap.Controls`
-Содержит:
+Contains:
 - `TreemapControl`;
-- layout engine treemap;
-- вспомогательные render/hit-test модели.
+- treemap layout engine;
+- helper render/hit-test models.
 
 ### `Clever.TokenMap.App`
-Содержит:
-- окна, viewmodels, команды;
-- orchestration пользовательских сценариев;
-- binding к `Clever.TokenMap.Core`;
+Contains:
+- windows, view models, commands;
+- user-scenario orchestration;
+- binding to `Clever.TokenMap.Core`;
 - summary/data presentation;
-- взаимодействие tree ↔ treemap ↔ details.
+- tree <-> treemap <-> details interaction.
 
-## 3. Recommended project-level contracts
+## 3. Recommended Project-Level Contracts
 
-### Core models
-Минимальный набор моделей:
+### Core Models
+Minimum model set:
 
 - `ProjectSnapshot`
 - `ProjectNode`
@@ -89,8 +89,8 @@ third_party/
 - `LanguageSummary`
 - `ExtensionSummary`
 
-### Core interfaces
-Минимальный набор интерфейсов:
+### Core Interfaces
+Minimum interface set:
 
 - `IProjectAnalyzer`
 - `IProjectScanner`
@@ -99,108 +99,108 @@ third_party/
 - `ITokenCounter`
 - `ITokeiRunner`
 - `ICacheStore`
-- `IClock` (опционально, если нужен удобный тестируемый cache timestamping)
+- `IClock` (optional, if convenient testable cache timestamping is needed)
 
-## 4. Main data flow
+## 4. Main Data Flow
 
-1. UI вызывает `IProjectAnalyzer.AnalyzeAsync(root, options, progress, cancellationToken)`.
-2. Scanner строит дерево включённых путей.
-3. Для каждого включённого файла:
-   - определяется text/binary;
-   - для text-файлов читается содержимое;
-   - считаются токены;
-   - готовится запись для merge.
-4. Параллельно или следом вызывается `TokeiRunner`.
-5. Результаты `tokei` маппятся к тем же относительным путям.
-6. На уровне `ProjectAnalyzer` идёт merge:
-   - структура дерева;
-   - токены;
+1. The UI calls `IProjectAnalyzer.AnalyzeAsync(root, options, progress, cancellationToken)`.
+2. The scanner builds a tree of included paths.
+3. For each included file:
+   - detect text/binary;
+   - for text files, read contents;
+   - count tokens;
+   - prepare a record for merge.
+4. In parallel or afterward, call `TokeiRunner`.
+5. Map `tokei` results to the same relative paths.
+6. Inside `ProjectAnalyzer`, merge:
+   - tree structure;
+   - tokens;
    - LOC/language breakdown;
    - skipped/errors.
-7. Выполняется агрегация снизу вверх.
-8. На выходе получается `ProjectSnapshot`.
-9. UI обновляет tree, treemap, details и summary.
+7. Aggregate from leaves to root.
+8. Produce a `ProjectSnapshot`.
+9. The UI updates the tree, treemap, details, and summary.
 
-## 5. Truth boundaries
+## 5. Truth Boundaries
 
-Чтобы избежать расхождений, обязательно соблюдать:
+To avoid divergence, always follow these rules:
 
-- Структура дерева определяется **только** нашим scanner.
-- Исключённые файлы не должны внезапно появляться из `tokei`.
-- `tokei` не управляет деревом; он только обогащает уже включённые узлы статистикой.
-- Если `tokei` не знает файл, узел всё равно остаётся в дереве.
-- Для unknown file допустимы частично заполненные LOC-метрики.
+- Tree structure is defined **only** by our scanner.
+- Excluded files must not suddenly appear because of `tokei`.
+- `tokei` does not control the tree; it only enriches already included nodes with statistics.
+- If `tokei` does not know a file, the node still stays in the tree.
+- For unknown files, partially populated LOC metrics are allowed.
 
-## 6. Path normalization rules
+## 6. Path Normalization Rules
 
-Нужно единообразно нормализовать пути:
+Paths must be normalized consistently:
 
-- хранить `FullPath`;
-- хранить `RelativePath` относительно root;
-- для внутреннего ключа использовать `RelativePath` в унифицированной форме с `/`;
-- сравнение путей должно учитывать Windows case-insensitive поведение там, где это нужно;
-- merge с `tokei` делать по нормализованному относительному пути.
+- store `FullPath`;
+- store `RelativePath` relative to the root;
+- use `RelativePath` in unified `/` form for internal keys;
+- path comparison must respect Windows case-insensitive behavior where needed;
+- merge with `tokei` by normalized relative path.
 
-## 7. Text vs binary policy
+## 7. Text Vs Binary Policy
 
-MVP не требует идеального language-aware определения бинарности.
+MVP does not require perfect language-aware binary detection.
 
-Достаточно:
-- быстро проверить небольшой префикс файла;
-- если файл похож на бинарный — пометить skipped/binary;
-- не читать весь бинарный файл в память ради проверки.
+Sufficient approach:
+- quickly inspect a small file prefix;
+- if the file looks binary, mark it as skipped/binary;
+- do not read the full binary file into memory just for detection.
 
-## 8. Token counting policy
+## 8. Token Counting Policy
 
-- Токены считаются только для text-файлов.
-- Содержимое перед токенизацией нормализуется по newline к `\n`.
-- Токенизатор завернуть за `ITokenCounter`.
-- Экземпляры tokenizer кэшировать по `TokenProfile`.
-- Ошибка токенизации отдельного файла не должна валить весь анализ.
+- Count tokens only for text files.
+- Normalize content to `\n` before tokenization.
+- Wrap the tokenizer behind `ITokenCounter`.
+- Cache tokenizer instances by `TokenProfile`.
+- A tokenization error for one file must not fail the whole analysis.
 
-## 9. Tokei integration policy
+## 9. Tokei Integration Policy
 
-- `TokeiRunner` должен уметь:
-  - найти sidecar `tokei` рядом с приложением;
-  - либо использовать `PATH`, если sidecar не найден;
-  - запускать процесс без shell;
-  - читать stdout/stderr;
-  - корректно завершать процесс при отмене.
-- Парсер `tokei` должен опираться на реальный sample JSON, а не на догадки.
+- `TokeiRunner` must be able to:
+  - find the sidecar `tokei` next to the application;
+  - or use `PATH` if the sidecar is not found;
+  - start the process without a shell;
+  - read stdout/stderr;
+  - terminate the process correctly on cancellation.
+- The `tokei` parser must rely on real sample JSON, not guesses.
 
-## 10. UI interaction model
+## 10. UI Interaction Model
 
 ### Selection
-`SelectedNodeId`/`SelectedPath` — единый источник выбранного узла для:
+`SelectedNodeId`/`SelectedPath` is the single source of truth for the selected node for:
 - tree;
 - treemap;
 - details panel.
 
 ### Hover
-`HoveredNodeId` существует только для treemap hover-состояния и tooltip.
+`HoveredNodeId` exists only for treemap hover state and tooltip.
 
-### Sync rules
-- click в treemap обновляет selected node;
-- выбор в дереве обновляет treemap;
-- details panel всегда показывает selected node;
-- hover не меняет selected node.
+### Sync Rules
+- click in the treemap updates the selected node;
+- selection in the tree updates the treemap;
+- the details panel always shows the selected node;
+- hover does not change the selected node.
 
-## 11. Treemap rendering requirements
+## 11. Treemap Rendering Requirements
 
-Treemap должен:
-- хранить плоский список рассчитанных прямоугольников;
-- делать hit testing по собственным данным;
-- рендериться одним control;
-- не создавать child control на каждый узел;
-- уметь пересчитываться при:
-  - смене snapshot;
-  - смене metric;
+The treemap must:
+- keep a flat list of computed rectangles;
+- do hit testing on its own data;
+- render as a single control;
+- not create a child control per node;
+- be able to recalculate on:
+  - snapshot change;
+  - metric change;
   - resize;
-  - смене selected/hovered node.
+  - selected/hovered node change.
 
-## 12. UI composition
+## 12. UI Composition
 
-Рекомендуемый root layout:
+Recommended root layout:
 - `Grid`:
   - row 0: toolbar + summary
   - row 1: main content
@@ -210,39 +210,39 @@ Treemap должен:
   - column 1: treemap
   - column 2: details
 
-Важно:
-- не помещать virtualized items в бесконечную высоту;
-- не класть основные панели в `StackPanel`, если нужна виртуализация.
+Important:
+- do not place virtualized items into infinite height;
+- do not put main panels into a `StackPanel` if virtualization is needed.
 
-## 13. Testing strategy
+## 13. Testing Strategy
 
-### Unit tests
-Покрыть:
+### Unit Tests
+Cover:
 - ignore/exclude;
 - path normalization;
 - aggregation;
 - cache key generation;
-- merge logic scanner + tokei;
-- text/binary detection (минимально).
+- merge logic for scanner + tokei;
+- text/binary detection at least minimally.
 
-### Headless UI tests
-Покрыть:
-- открытие/привязку snapshot;
+### Headless UI Tests
+Cover:
+- snapshot opening/binding;
 - selection sync;
-- hover/click в treemap;
-- details panel update.
+- hover/click in the treemap;
+- details panel updates.
 
-## 14. Logging / diagnostics
-MVP не требует сложной telemetry-системы.
+## 14. Logging / Diagnostics
+MVP does not require a complex telemetry system.
 
-Достаточно:
-- аккуратных внутренних логов;
-- отображения человеческого статуса анализа;
-- накопления списка warnings/errors для debug.
+Sufficient:
+- neat internal logs;
+- human-readable analysis status in the UI;
+- accumulation of warnings/errors for debugging.
 
-## 15. Publish policy for MVP
+## 15. Publish Policy For MVP
 
-- Основной publish-target: `win-x64`.
-- Secondary target после рабочего Windows MVP: `osx-arm64`.
-- `tokei` поставляется как sidecar файл.
-- Single-file и Native AOT не входят в MVP.
+- Primary publish target: `win-x64`.
+- Secondary target after a working Windows MVP: `osx-arm64`.
+- `tokei` is shipped as a sidecar file.
+- Single-file and Native AOT are not part of MVP.

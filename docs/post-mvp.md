@@ -1,95 +1,95 @@
-# TokenMap — Post-MVP Plan
+# TokenMap - Post-MVP Plan
 
-Этот документ описывает задачи, которые **не входят в MVP**, но заранее запланированы после завершения рабочего MVP.
+This document describes work that is **not part of MVP**, but is planned after a working MVP is complete.
 
-## 1. Ближайший post-MVP
+## 1. Nearest Post-MVP
 
 ### 1.1 macOS polish
-- регулярная ручная проверка на macOS;
-- улучшение упаковки и запуска;
-- исправление platform-specific UI/FS шероховатостей.
+- regular manual validation on macOS;
+- improved packaging and launch experience;
+- fixes for platform-specific UI/file-system rough edges.
 
 ### 1.2 Linux support
-- целевая проверка на Linux;
-- шлифовка X11/XWayland поведения;
-- packaging strategy для Linux;
-- проверка работы `tokei` sidecar и зависимостей в Linux-среде.
+- targeted validation on Linux;
+- polish for X11/XWayland behavior;
+- packaging strategy for Linux;
+- verification of the `tokei` sidecar and dependencies in Linux environments.
 
 ### 1.3 Publish improvements
 - single-file publish;
-- уменьшение размера артефактов;
-- улучшение структуры release artifacts;
-- обновление/автоматизация поставки `tokei` sidecar для macOS и более новых версий `tokei`;
-- автоматизация packaging.
+- smaller artifacts;
+- better release artifact structure;
+- updated/automated delivery of the `tokei` sidecar for macOS and newer `tokei` versions;
+- packaging automation.
 
 ### 1.4 Native AOT
-- исследование применимости Native AOT;
+- investigation of Native AOT viability;
 - trimming/AOT-safe corrections;
-- профилирование startup и memory footprint;
-- включение AOT только после стабильного non-AOT baseline.
+- startup and memory-footprint profiling;
+- enabling AOT only after a stable non-AOT baseline exists.
 
-## 2. Следующая продуктовая волна
+## 2. Next Product Wave
 
 ### 2.1 Snapshot export / import
-- сохранение результатов анализа в JSON;
-- повторное открытие snapshot без пересканирования;
-- воспроизводимые сравнения между машинами/ветками.
+- save analysis results to JSON;
+- reopen a snapshot without rescanning;
+- reproducible comparisons across machines/branches.
 
 ### 2.2 Compare / Diff
-- сравнение двух snapshot;
-- изменения по tokens / LOC;
-- добавленные/удалённые/изменённые области treemap.
+- compare two snapshots;
+- changes in tokens / LOC;
+- added/removed/changed treemap areas.
 
 ### 2.3 Search / filter UI
-- фильтр по path;
-- фильтр по extension;
-- фильтр по language;
-- quick search по дереву.
+- filter by path;
+- filter by extension;
+- filter by language;
+- quick search in the tree.
 
 ### 2.4 Treemap navigation improvements
 - zoom into folder;
 - breadcrumb navigation;
 - pan/zoom;
-- back/forward по истории выбора.
+- back/forward through selection history.
 
 ### 2.5 Live watch mode
-- перескан по изменениям файлов;
-- debounce/coalescing событий;
-- инкрементальное обновление snapshot.
+- rescan on file changes;
+- event debounce/coalescing;
+- incremental snapshot updates.
 
-## 3. Более продвинутые функции
+## 3. More Advanced Features
 
-### 3.1 Дополнительные режимы анализа
-- метрика по bytes;
-- количество файлов как отдельная метрика;
-- top-N отчёты;
-- пер-расширение/пер-язык breakdown views.
+### 3.1 Additional analysis modes
+- bytes as a metric;
+- file count as a separate metric;
+- top-N reports;
+- per-extension/per-language breakdown views.
 
-### 3.2 Настройки
-- сохранение последних проектов;
-- сохранение пользовательских excludes;
-- пользовательские пресеты tokenizer profile;
-- ограничение по максимальному размеру файла;
-- тонкая настройка text/binary detection.
+### 3.2 Settings
+- recent-project persistence;
+- saved user excludes;
+- custom tokenizer profile presets;
+- maximum file size limit;
+- fine-tuning for text/binary detection.
 
-### 3.3 Улучшение tree/details UX
+### 3.3 Tree/details UX improvements
 - multi-column tree;
 - richer details panel;
-- более богатый tooltip/popup для treemap;
-- открытие файла/папки в системном explorer;
-- quick copy path.
+- richer tooltip/popup for the treemap;
+- open file/folder in the system explorer;
+- quick path copy.
 
-### 3.4 Экспорт и отчёты
-- CSV/JSON экспорт summary;
+### 3.4 Export and reporting
+- CSV/JSON summary export;
 - markdown report;
 - shareable snapshot bundle.
 
-## 4. Engineering backlog
+## 4. Engineering Backlog
 
 ### 4.1 CI/CD
-- полноценная матрица publish под несколько ОС;
-- артефакты для релизов;
-- smoke tests на нескольких runtime.
+- a full publish matrix for multiple operating systems;
+- release artifacts;
+- smoke tests across multiple runtimes.
 
 ### 4.2 Installer / signing
 - Windows installer;
@@ -97,22 +97,22 @@
 - Linux packaging strategy.
 
 ### 4.3 Diagnostics
-- более удобный debug log;
+- more convenient debug logging;
 - performance trace mode;
-- внутренние dev overlays для treemap/layout profiling.
+- internal dev overlays for treemap/layout profiling.
 
-## 5. Что сознательно не тянуть в MVP
-Ниже перечислено то, что не должно "просачиваться" в MVP без отдельного решения:
+## 5. What Must Not Leak Into MVP
+The items below must not "creep" into MVP without a separate decision:
 - Linux polish;
 - single-file;
 - Native AOT;
 - export/import;
 - diff;
 - live watch;
-- zoom/pan treemap;
+- treemap zoom/pan;
 - installers;
 - signing/notarization;
-- сложная система настроек.
+- complex settings system.
 
-## 6. Правило для агента
-Если фича относится к этому документу, а не к `docs/spec.md`, она **не является обязательной частью текущего MVP** и не должна добавляться без явного запроса.
+## 6. Rule For The Agent
+If a feature belongs to this document rather than to `docs/spec.md`, it is **not a mandatory part of the current MVP** and must not be added without an explicit request.

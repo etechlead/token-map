@@ -1,145 +1,146 @@
-# TokenMap — Agent Implementation Instructions
+# TokenMap - Agent Implementation Instructions
 
-## 1. Как работать
+## 1. How To Work
 
-Перед началом каждого цикла:
-1. Прочитай:
+Before starting each cycle:
+1. Read:
    - `AGENTS.md`
    - `docs/spec.md`
    - `docs/architecture.md`
    - `docs/plan.md`
    - `docs/status.md`
-2. Проверь актуальный план и текущий статус в `docs/plan.md` и `docs/status.md`.
-3. Если отдельного активного плана нет, работай только по явному запросу пользователя или по отдельно согласованному пункту из `docs/post-mvp.md`.
-4. После изменений запусти сборку и тесты.
-5. Обнови `docs/status.md`.
+2. Check the current plan and status in `docs/plan.md` and `docs/status.md`.
+3. If there is no separate active plan, work only on an explicit user request or on a separately agreed item from `docs/post-mvp.md`.
+4. After changes, run the build and tests.
+5. Update `docs/status.md`.
 
-## 2. Главные правила
-- Делай MVP, не platform vision.
-- Не добавляй фичи из `docs/post-mvp.md` в текущую задачу без явного запроса.
-- Не делай unrelated refactors.
-- Не меняй стек.
-- Не тащи WebView, JS chart libraries или браузерный runtime.
-- Не заменяй собственный treemap готовым heavy chart control.
-- Не вводи плагины, DI-фреймворки, event bus и прочую инфраструктуру без необходимости.
-- Не коммить без явного запроса пользователя.
+## 2. Main Rules
+- Build the MVP, not a platform vision.
+- Do not add features from `docs/post-mvp.md` to the current task without an explicit request.
+- Do not make unrelated refactors.
+- Do not change the stack.
+- Do not pull in WebView, JS chart libraries, or a browser runtime.
+- Do not replace the custom treemap with a heavy ready-made chart control.
+- Do not introduce plugins, DI frameworks, event buses, or similar infrastructure without clear need.
+- Do not commit without an explicit user request.
 
-## 3. Обязательные технические решения
+## 3. Mandatory Technical Decisions
 
 ### 3.1 UI
 - Avalonia stable, non-preview.
-- MVVM через `CommunityToolkit.Mvvm`.
+- MVVM via `CommunityToolkit.Mvvm`.
 - Layout:
-  - toolbar сверху;
-  - дерево слева;
-  - treemap по центру;
-  - details panel справа;
-  - progress/status снизу или в верхней summary area.
+  - toolbar on top;
+  - tree on the left;
+  - treemap in the center;
+  - details panel on the right;
+  - progress/status at the bottom or in the top summary area.
 
 ### 3.2 Treemap
-- Собственный `TreemapControl`.
-- Один custom-rendered control.
-- Hover и click обрабатываются внутри него.
-- Выбранный элемент должен иметь persistent highlight.
-- Hover tooltip должен работать без клика.
+- Use a custom `TreemapControl`.
+- One custom-rendered control.
+- Hover and click are handled inside it.
+- The selected item must have a persistent highlight.
+- The hover tooltip must work without a click.
 
-### 3.3 Метрики
-- Tokens: локально через `Microsoft.ML.Tokenizers`.
-- LOC/language breakdown: через `tokei`.
-- Tree structure: только через наш scanner.
+### 3.3 Metrics
+- Tokens: local via `Microsoft.ML.Tokenizers`.
+- LOC/language breakdown: via `tokei`.
+- Tree structure: only through our scanner.
 
 ### 3.4 Ignore logic
-- Поддержать `.gitignore`, `.ignore`, default excludes, user excludes`.
-- Исключённые пути полностью отсутствуют в модели результата.
+- Support `.gitignore`, `.ignore`, default excludes, and user excludes.
+- Excluded paths must be completely absent from the result model.
 
-## 4. Tokei: как интегрировать
-- Не угадывать JSON-схему по памяти.
-- Сначала получить **реальный sample output** `tokei --files --output json` на фикстуре.
-- Только после этого написать типы/парсер.
+## 4. Tokei: How To Integrate
+- Do not guess the JSON schema from memory.
+- First obtain a **real sample output** of `tokei --files --output json` on a fixture.
+- Only after that, write the types/parser.
 - Sidecar discovery:
-  1. рядом с приложением в `third_party/tokei/<rid>/...`;
-  2. fallback на `PATH`.
-- При отмене анализа корректно завершать процесс `tokei`.
+  1. next to the application in `third_party/tokei/<rid>/...`;
+  2. fallback to `PATH`.
+- On analysis cancellation, terminate the `tokei` process correctly.
 
-## 5. Tokenizer: как интегрировать
-- Спрятать concrete tokenizer за `ITokenCounter`.
-- Экземпляры tokenizer кэшировать по `TokenProfile`.
-- Ошибка на одном файле не должна ломать весь анализ.
-- Перед токенизацией нормализовать newlines к `\n`.
+## 5. Tokenizer: How To Integrate
+- Hide the concrete tokenizer behind `ITokenCounter`.
+- Cache tokenizer instances by `TokenProfile`.
+- A failure on one file must not break the whole analysis.
+- Normalize newlines to `\n` before tokenization.
 
-## 6. File scanning policy
-- Не читать сразу все файлы в память.
-- Не использовать `GetFiles()` для всего дерева разом.
-- Строить потоковый/поштучный scan.
-- Обход должен быть устойчивым к ошибкам доступа и race conditions.
-- Симлинки/reparse points не разворачивать.
+## 6. File Scanning Policy
+- Do not read all files into memory at once.
+- Do not use `GetFiles()` for the entire tree in one shot.
+- Build a streaming/per-item scan.
+- Traversal must be resilient to access errors and race conditions.
+- Do not follow symlinks/reparse points.
 
-## 7. UI sync policy
-Должен существовать единый источник текущего выбранного узла.
-Минимально:
+## 7. UI Sync Policy
+There must be a single source of truth for the currently selected node.
+At minimum:
 - `SelectedNode`
 - `HoveredNode` (treemap only)
 
-Правила:
-- hover не меняет selected;
-- click в treemap меняет selected;
-- click/select в tree меняет selected;
-- details panel всегда следует за selected.
+Rules:
+- hover does not change selected;
+- click in the treemap changes selected;
+- click/select in the tree changes selected;
+- the details panel always follows selected.
 
-## 8. Проверка качества после каждого изменения
-Обязательно:
+## 8. Quality Verification After Each Change
+Required:
+
 ```bash
 dotnet restore
 dotnet build Clever.TokenMap.sln
 dotnet test Clever.TokenMap.sln --no-build
 ```
 
-Если добавлены UI/headless tests — запускать и их.
+If UI/headless tests are added, run them too.
 
-Если проверки падают:
-- исправить;
-- не завершать изменение с красной сборкой.
+If checks fail:
+- fix them;
+- do not finish the change with a red build.
 
-## 9. Что обновлять в docs/status.md
-После каждого заметного изменения обязательно добавить:
-- дату/контекст;
-- что реализовано или изменено;
-- что проверено;
-- какие решения приняты;
-- что реально остаётся открытым.
+## 9. What To Update In docs/status.md
+After each notable change, always add:
+- date/context;
+- what was implemented or changed;
+- what was verified;
+- what decisions were made;
+- what actually remains open.
 
-## 10. Что делать, если есть неоднозначность
-Если неоднозначность локальная и не меняет продуктовую цель:
-- выбрать самый простой и прямой вариант;
-- зафиксировать решение в `docs/status.md`.
+## 10. What To Do If There Is Ambiguity
+If the ambiguity is local and does not change the product goal:
+- choose the simplest and most direct option;
+- record the decision in `docs/status.md`.
 
-Если неоднозначность меняет scope или архитектуру:
-- не придумывать новую большую систему;
-- выбрать минимальное решение, совместимое со spec.
+If the ambiguity changes scope or architecture:
+- do not invent a new large system;
+- choose the smallest solution compatible with the spec.
 
-## 11. Рекомендуемая форма отчёта по завершении изменения
-В конце каждого цикла кратко дай:
-1. что изменено;
-2. какие команды проверки запущены;
-3. какие файлы/модули затронуты;
-4. что осталось открытым после изменения.
+## 11. Recommended End-Of-Change Report Format
+At the end of each cycle, briefly state:
+1. what changed;
+2. which verification commands were run;
+3. which files/modules were touched;
+4. what remains open after the change.
 
-## 12. Локальные приоритеты платформ
-Для MVP:
-- в первую очередь Windows;
-- затем macOS;
-- Linux не шлифовать и не делать блокером.
+## 12. Local Platform Priorities
+For MVP:
+- Windows first;
+- macOS second;
+- do not polish Linux or make it a blocker.
 
-Не тратить время текущих задач на:
+Do not spend the current task on:
 - Linux-specific polish;
 - single-file publish;
 - Native AOT;
 - signing/notarization.
 
-## 13. Запрещённые анти-паттерны
-- giant god service без интерфейсов и ответственности;
-- tree ↔ treemap sync через случайные глобальные состояния;
-- один control на каждый treemap tile;
-- прямой вызов `tokei` из UI-кода;
-- смешивание file scanning, token counting и Avalonia views в одном классе;
-- silent swallowing всех ошибок без trace/debug info.
+## 13. Forbidden Anti-Patterns
+- a giant god service without interfaces and responsibilities;
+- tree <-> treemap sync through random global state;
+- one control per treemap tile;
+- direct `tokei` calls from UI code;
+- mixing file scanning, token counting, and Avalonia views in one class;
+- silently swallowing all errors without trace/debug information.

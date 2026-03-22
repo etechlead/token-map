@@ -1,67 +1,67 @@
-# TokenMap - Status
+# TokenMap - Current Status
 
-## Текущее состояние
-- Статус проекта: **MVP завершён**
-- Основная платформа MVP: **Windows**
-- Вторичная платформа MVP: **macOS smoke/publish baseline**
+## Current State
+- Project status: **MVP complete**
+- Primary MVP platform: **Windows**
+- Secondary MVP platform: **macOS smoke/publish baseline**
 
-## Что уже есть в MVP
-- Выбор папки, повторный анализ, отмена, progress/state messages.
-- Scanner структуры проекта с `.gitignore`, `.ignore`, default excludes и user excludes.
-- Локальный подсчёт токенов через `Microsoft.ML.Tokenizers` с профилями `o200k_base`, `cl100k_base`, `p50k_base`.
-- Интеграция `tokei` с merge language/code/comments/blanks и fallback на частичные LOC-метрики.
-- In-memory cache, batched progress reporting и устойчивость к частичным FS/tool errors.
-- Tree view, summary strip, details panel и treemap в одном окне.
-- Hover tooltip, persistent selection highlight и sync `Tree ↔ Treemap ↔ Details`.
-- Автоматическое раскрытие пути в дереве при выборе узла из treemap.
-- Drill down в treemap по double-click на директории с локальным scope и возвратом через `Back to overview`.
-- Проверенный `win-x64` publish и настроенный secondary target `osx-arm64`.
+## What Already Exists In MVP
+- Folder selection, re-analysis, cancellation, and progress/state messages.
+- Project structure scanning with `.gitignore`, `.ignore`, default excludes, and user excludes.
+- Local token counting through `Microsoft.ML.Tokenizers` with `o200k_base`, `cl100k_base`, and `p50k_base` profiles.
+- `tokei` integration with merged language/code/comments/blanks metrics and fallback partial LOC metrics.
+- In-memory cache, batched progress reporting, and resilience to partial file system/tool errors.
+- Tree view, summary strip, details panel, and treemap in one window.
+- Hover tooltip, persistent selection highlight, and `Tree <-> Treemap <-> Details` synchronization.
+- Automatic path expansion in the tree when a node is selected from the treemap.
+- Treemap drill-down on directory double-click with local scope and return through `Back to overview`.
+- Verified `win-x64` publish and configured secondary target `osx-arm64`.
 
-## Зафиксированные решения
-- Стек MVP: `.NET 10 + Avalonia stable + CommunityToolkit.Mvvm`.
-- `Clever.TokenMap.Core` не зависит от Avalonia.
-- `Clever.TokenMap.App` работает с файловой системой только через сервисы/контракты.
-- Treemap реализован одним custom control без visual/control на каждый прямоугольник.
-- `tokei` используется как local sidecar и источник truth для language / code / comments / blanks, если статистика доступна.
-- Основной publish-target: `win-x64`.
-- `single-file`, `Native AOT`, installer/signing и Linux polish вынесены в post-MVP.
+## Fixed Decisions
+- MVP stack: `.NET 10 + Avalonia stable + CommunityToolkit.Mvvm`.
+- `Clever.TokenMap.Core` does not depend on Avalonia.
+- `Clever.TokenMap.App` works with the file system only through services/contracts.
+- The treemap is implemented as one custom control with no visual/control per rectangle.
+- `tokei` is used as a local sidecar and source of truth for language / code / comments / blanks when statistics are available.
+- Primary publish target: `win-x64`.
+- `single-file`, `Native AOT`, installer/signing, and Linux polish are post-MVP.
 
-## Документация
-- Документация синхронизирована с кодом по состоянию на 2026-03-22.
-- Политика документации зафиксирована в [AGENTS.md](/Z:/Projects/My/tokenmap/src/AGENTS.md): документы отражают только текущее состояние или запланированную работу; историчность остаётся в git.
-- Для treemap navigation текущий минимальный UX: `Scope` + `Back to overview`; breadcrumb/history остаются post-MVP улучшением.
+## Documentation
+- Documentation is synchronized with the code as of 2026-03-22.
+- The documentation policy is defined in [../AGENTS.md](../AGENTS.md): documents reflect only the current state or planned work; history stays in git.
+- For treemap navigation, the current minimal UX is `Scope` + `Back to overview`; breadcrumb/history remains a post-MVP improvement.
 
-## Последняя проверка
-- Дата: 2026-03-22
-- Что проверено:
+## Last Verification
+- Date: 2026-03-22
+- Verified:
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
-  - headless-сценарии `treemap drill down` и возврата к глобальному overview
+  - headless scenarios for treemap drill-down and return to the global overview
 
-## Как запустить
-- Dev run:
+## How To Run
+- Development run:
   - `dotnet run --project src/Clever.TokenMap.App/Clever.TokenMap.App.csproj`
 - Windows publish:
-  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/publish/win-x64`
-  - запускать `artifacts/publish/win-x64/Clever.TokenMap.App.exe`
-- Sidecar paths:
-  - Windows: `third_party/tokei/win-x64/tokei.exe`
+  - `dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj -c Release -r win-x64 --self-contained false`
+- Published app:
+  - run `artifacts/publish/win-x64/Clever.TokenMap.App.exe`
+- Sidecar locations:
+  - Windows executable: `third_party/tokei/win-x64/tokei.exe`
   - macOS ARM64 slot: `third_party/tokei/osx-arm64/`
-- Sidecar deployment note:
-  - publish output уже копирует `third_party/` рядом с приложением, поэтому `ProcessTokeiRunner` на Windows подхватывает sidecar без настройки `PATH`.
+  - publish output already copies `third_party/` next to the app, so `ProcessTokeiRunner` on Windows picks up the sidecar without `PATH` changes.
 
-## Актуальные ограничения
-- Ignore parser покрывает MVP-поднабор правил, а не всю специфику Git ignore edge-cases.
-- Cache пока только in-memory и живёт в пределах процесса.
-- `tokei` sidecar физически добавлен только для `win-x64`; для `osx-arm64` подготовлен слот размещения.
-- Tooltip у treemap пока минималистичный и без отдельного кастомного popup layout.
-- `restore/build` сейчас предупреждают о транзитивной уязвимости `Microsoft.Bcl.Memory 9.0.4` из цепочки `Microsoft.ML.Tokenizers` (`NU1903`).
-- Linux support, installer/signing, single-file publish и Native AOT не входят в MVP.
+## Current Limitations
+- The ignore parser covers the MVP subset of rules, not the full range of Git ignore edge cases.
+- The cache is still in-memory only and lives within a single process.
+- The `tokei` sidecar is physically included only for `win-x64`; `osx-arm64` has only a prepared placement slot.
+- The treemap tooltip is still minimal and has no separate custom popup layout.
+- `restore/build` currently warn about a transitive vulnerability in `Microsoft.Bcl.Memory 9.0.4` coming from `Microsoft.ML.Tokenizers` (`NU1903`).
+- Linux support, installer/signing, single-file publish, and Native AOT are outside MVP.
 
-## Handoff summary
-- Windows-first MVP собран, тесты зелёные, `win-x64` publish и launch smoke пройдены.
-- Для продолжения разработки достаточно опираться на:
-  - [docs/status.md](/Z:/Projects/My/tokenmap/src/docs/status.md) - текущее состояние, команды запуска и реальные ограничения;
-  - [docs/post-mvp.md](/Z:/Projects/My/tokenmap/src/docs/post-mvp.md) - backlog следующей волны;
-  - [docs/spec.md](/Z:/Projects/My/tokenmap/src/docs/spec.md) и [docs/architecture.md](/Z:/Projects/My/tokenmap/src/docs/architecture.md) - продуктовые и технические инварианты.
+## Handoff Summary
+- The Windows-first MVP is built, tests are green, and `win-x64` publish plus launch smoke have passed.
+- Continue development using:
+  - [status.md](status.md) for the current state, run commands, and real limitations;
+  - [post-mvp.md](post-mvp.md) for the next-wave backlog;
+  - [spec.md](spec.md) and [architecture.md](architecture.md) for product and technical invariants.
