@@ -18,7 +18,7 @@ TBD: replace this section with a real application screenshot after the current U
 
 - `src/Clever.TokenMap.Core`: domain models, enums, contracts, scan options, and aggregation rules.
 - `src/Clever.TokenMap.Infrastructure`: scanner, ignore handling, local token counting, local line metrics, cache, settings storage, and logging.
-- `src/Clever.TokenMap.Controls`: treemap control, layout, color rules, and hit testing.
+- `src/Clever.TokenMap.Treemap`: treemap control, layout, color rules, and hit testing.
 - `src/Clever.TokenMap.App`: desktop shell, section views, view models, analysis session coordination, treemap navigation state, and settings coordination.
 
 The current technical boundaries are documented in [docs/architecture.md](docs/architecture.md).
@@ -59,3 +59,4 @@ dotnet run --project .\src\Clever.TokenMap.App\Clever.TokenMap.App.csproj
 ## License
 
 TokenMap is available under the [MIT License](LICENSE).
+

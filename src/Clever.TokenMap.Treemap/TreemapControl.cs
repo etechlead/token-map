@@ -4,13 +4,13 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Clever.TokenMap.Controls.Layout;
-using Clever.TokenMap.Controls.Models;
+using Clever.TokenMap.Treemap.Layout;
+using Clever.TokenMap.Treemap.Models;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using System.IO;
 
-namespace Clever.TokenMap.Controls;
+namespace Clever.TokenMap.Treemap;
 
 public sealed class TreemapControl : Control
 {
@@ -464,3 +464,4 @@ public sealed class TreemapControl : Control
         node.Children.Count > 0;
 
 }
+

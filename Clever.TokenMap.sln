@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clever.TokenMap.App", "src\Clever.TokenMap.App\Clever.TokenMap.App.csproj", "{2658CBF2-9311-4CEA-8493-DA83141F611A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clever.TokenMap.Controls", "src\Clever.TokenMap.Controls\Clever.TokenMap.Controls.csproj", "{C5EBB2F3-B371-49B8-9EA6-5BA58F37FA43}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clever.TokenMap.Treemap", "src\Clever.TokenMap.Treemap\Clever.TokenMap.Treemap.csproj", "{C5EBB2F3-B371-49B8-9EA6-5BA58F37FA43}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Clever.TokenMap.Core", "src\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj", "{995017A0-4EFF-4D42-B9E0-F2B69DA3830D}"
 EndProject
@@ -114,3 +114,4 @@ Global
 		{F592D27E-A6EF-48E1-A36A-5369EBCF8105} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 EndGlobal
+

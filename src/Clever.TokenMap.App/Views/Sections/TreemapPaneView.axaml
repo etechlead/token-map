@@ -1,5 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:controls="using:Clever.TokenMap.Controls"
+             xmlns:controls="using:Clever.TokenMap.Treemap"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.TreemapPaneView"
@@ -56,3 +56,4 @@
         </Grid>
     </Border>
 </UserControl>
+

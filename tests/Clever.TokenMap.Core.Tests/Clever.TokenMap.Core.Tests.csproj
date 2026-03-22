@@ -19,7 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj" />
-    <ProjectReference Include="..\..\src\Clever.TokenMap.Controls\Clever.TokenMap.Controls.csproj" />
+    <ProjectReference Include="..\..\src\Clever.TokenMap.Treemap\Clever.TokenMap.Treemap.csproj" />
     <ProjectReference Include="..\..\src\Clever.TokenMap.Infrastructure\Clever.TokenMap.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
+

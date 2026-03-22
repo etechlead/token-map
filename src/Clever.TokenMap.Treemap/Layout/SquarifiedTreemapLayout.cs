@@ -1,10 +1,10 @@
 using Avalonia;
-using Clever.TokenMap.Controls;
+using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
-using Clever.TokenMap.Controls.Models;
+using Clever.TokenMap.Treemap.Models;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Controls.Layout;
+namespace Clever.TokenMap.Treemap.Layout;
 
 public sealed class SquarifiedTreemapLayout
 {
@@ -185,3 +185,4 @@ public sealed class SquarifiedTreemapLayout
         public double Area { get; init; }
     }
 }
+

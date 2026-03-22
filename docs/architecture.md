@@ -4,7 +4,7 @@
 
 - `Clever.TokenMap.Core` holds domain models, shared contracts, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
 - `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local line counting, cache, settings storage, logging, and path normalization.
-- `Clever.TokenMap.Controls` holds the treemap control and its rendering/layout logic.
+- `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
 
 ## App-Layer State
@@ -44,3 +44,4 @@
 - Missing, unreadable, or malformed settings files must not block startup.
 - `Clever.TokenMap.App` uses a settings service/store rather than reading the settings file directly.
 - Logs and future cache data live next to that settings file in separate files/directories rather than inside the settings document.
+

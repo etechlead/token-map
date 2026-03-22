@@ -1,6 +1,6 @@
 using Avalonia.Controls;
 using Clever.TokenMap.App.ViewModels;
-using Clever.TokenMap.Controls;
+using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.App.Views.Sections;
 
@@ -27,3 +27,4 @@ public partial class TreemapPaneView : UserControl
         viewModel.DrillIntoTreemap(e.Node);
     }
 }
+

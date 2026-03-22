@@ -1,5 +1,5 @@
 using Avalonia;
-using Clever.TokenMap.Controls;
+using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
@@ -68,3 +68,4 @@ public sealed class TreemapVisualRulesTests
                 DescendantDirectoryCount: kind == ProjectNodeKind.Directory ? 1 : 0),
         };
 }
+

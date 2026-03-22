@@ -1,5 +1,5 @@
 using Avalonia;
-using Clever.TokenMap.Controls.Layout;
+using Clever.TokenMap.Treemap.Layout;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
@@ -188,3 +188,4 @@ public sealed class SquarifiedTreemapLayoutTests
         return node;
     }
 }
+

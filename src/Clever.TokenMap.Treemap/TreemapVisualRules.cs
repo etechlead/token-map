@@ -2,7 +2,7 @@ using Avalonia;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Controls;
+namespace Clever.TokenMap.Treemap;
 
 internal static class TreemapVisualRules
 {
@@ -100,3 +100,4 @@ internal static class TreemapVisualRules
             ? rect
             : new Rect(rect.X + inset, rect.Y + inset, rect.Width - inset * 2, rect.Height - inset * 2);
 }
+

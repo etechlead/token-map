@@ -4,7 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App.Models;
-using Clever.TokenMap.Controls;
+using Clever.TokenMap.Treemap;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
@@ -989,3 +989,4 @@ public sealed class MainWindowLayoutTests
         }
     }
 }
+

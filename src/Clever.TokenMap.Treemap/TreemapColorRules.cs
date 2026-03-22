@@ -1,7 +1,7 @@
 using Avalonia.Media;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Controls;
+namespace Clever.TokenMap.Treemap;
 
 internal static class TreemapColorRules
 {
@@ -54,3 +54,4 @@ internal static class TreemapColorRules
             (byte)Math.Round((b + m) * 255));
     }
 }
+
