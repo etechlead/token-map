@@ -3,7 +3,7 @@ using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Core.Tests.Infrastructure;
+namespace Clever.TokenMap.Core.Tests.Treemap;
 
 public sealed class SquarifiedTreemapLayoutTests
 {
@@ -134,6 +134,69 @@ public sealed class SquarifiedTreemapLayoutTests
         var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");
 
         Assert.True(fileVisual.Bounds.Y >= directoryVisual.Bounds.Y + 14, $"Expected child bounds below directory header, got dir {directoryVisual.Bounds} and file {fileVisual.Bounds}.");
+    }
+
+    [Fact]
+    public void Calculate_Throws_ForNullRoot()
+    {
+        var layout = new SquarifiedTreemapLayout();
+
+        Assert.Throws<ArgumentNullException>(() => layout.Calculate(null!, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens));
+    }
+
+    [Fact]
+    public void Calculate_ReturnsEmpty_ForNonPositiveBounds()
+    {
+        var root = CreateTree();
+        var layout = new SquarifiedTreemapLayout();
+
+        Assert.Empty(layout.Calculate(root, new Rect(0, 0, 0, 180), AnalysisMetric.Tokens));
+        Assert.Empty(layout.Calculate(root, new Rect(0, 0, 300, 0), AnalysisMetric.Tokens));
+    }
+
+    [Fact]
+    public void Calculate_IgnoresZeroWeightChildren()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            100,
+            100,
+            CreateNode("zero.cs", ProjectNodeKind.File, 0, 0),
+            CreateNode("keep.cs", ProjectNodeKind.File, 100, 100));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
+
+        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "zero.cs");
+        Assert.Contains(visuals, visual => visual.Node.RelativePath == "keep.cs");
+    }
+
+    [Fact]
+    public void Calculate_PortraitBounds_StartsWithRowInsteadOfVerticalStripe()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            1_068,
+            0,
+            CreateNode("a", ProjectNodeKind.File, 500, 0),
+            CreateNode("b", ProjectNodeKind.File, 433, 0),
+            CreateNode("c", ProjectNodeKind.File, 78, 0),
+            CreateNode("d", ProjectNodeKind.File, 25, 0),
+            CreateNode("e", ProjectNodeKind.File, 25, 0),
+            CreateNode("f", ProjectNodeKind.File, 7, 0));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 433, 700), AnalysisMetric.Tokens);
+
+        var first = visuals
+            .Where(visual => visual.Depth == 0)
+            .OrderByDescending(visual => visual.Node.Metrics.Tokens)
+            .First();
+
+        Assert.True(first.Bounds.Width > 400, $"Expected a full-width leading row, got {first.Bounds}.");
+        Assert.True(first.Bounds.Height < 433, $"Expected the leading item to be a row, got {first.Bounds}.");
     }
 
     private static ProjectNode CreateTree()

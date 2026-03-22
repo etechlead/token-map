@@ -2,7 +2,7 @@ using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Core.Tests.Infrastructure;
+namespace Clever.TokenMap.Core.Tests.Treemap;
 
 public sealed class TreemapColorRulesTests
 {
@@ -40,6 +40,28 @@ public sealed class TreemapColorRulesTests
 
         Assert.NotEqual(TreemapColorRules.GetParentDirectorySeed(first), TreemapColorRules.GetParentDirectorySeed(second));
         Assert.NotEqual(firstColor, secondColor);
+    }
+
+    [Fact]
+    public void GetParentDirectorySeed_NormalizesWindowsSeparators_AndTrimsSlashes()
+    {
+        var node = CreateFile("\\src\\app\\a.cs\\");
+
+        var seed = TreemapColorRules.GetParentDirectorySeed(node);
+
+        Assert.Equal("src/app", seed);
+    }
+
+    [Fact]
+    public void GetLeafColor_ReturnsSameColor_ForEquivalentSlashStyles()
+    {
+        var first = CreateFile("src/app/a.cs");
+        var second = CreateFile("src\\app\\b.cs");
+
+        var firstColor = TreemapColorRules.GetLeafColor(first);
+        var secondColor = TreemapColorRules.GetLeafColor(second);
+
+        Assert.Equal(firstColor, secondColor);
     }
 
     private static ProjectNode CreateFile(string relativePath) =>

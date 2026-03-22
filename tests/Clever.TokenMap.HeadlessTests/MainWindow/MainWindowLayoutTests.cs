@@ -8,10 +8,13 @@ using Clever.TokenMap.Treemap;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
+using Clever.TokenMap.App.Views.Sections;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using System.Collections.Specialized;
+using System.Reflection;
+using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -126,6 +129,78 @@ public sealed class MainWindowLayoutTests
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[2]);
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[3]);
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[4]);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ProjectTreeTable_FirstNumericSort_UsesDescendingOrder()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(
+            ("Small.cs", 10, 1, 10),
+            ("Large.cs", 20, 2, 20)));
+
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
+
+        Assert.NotNull(treeTable);
+        Assert.NotNull(projectTreePane);
+
+        var linesColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "Lines");
+
+        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, linesColumn, ProjectTreeSortColumn.Lines);
+
+        Assert.Equal(ProjectTreeSortColumn.Lines, viewModel.Tree.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.Tree.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Large.cs", name),
+            name => Assert.Equal("Small.cs", name));
+        Assert.Equal("Lines v", linesColumn.Header?.ToString());
+        Assert.Equal("Size", treeTable.Columns[1].Header?.ToString());
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ProjectTreeTable_FirstNameSort_UsesAscendingOrder()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 10, 1, 1),
+            ("Zulu.cs", 20, 2, 2)));
+
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
+
+        Assert.NotNull(treeTable);
+        Assert.NotNull(projectTreePane);
+
+        var nameColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "Name");
+
+        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, nameColumn, ProjectTreeSortColumn.Name);
+
+        Assert.Equal(ProjectTreeSortColumn.Name, viewModel.Tree.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.Tree.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.Tree.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Alpha.cs", name),
+            name => Assert.Equal("Zulu.cs", name));
+        Assert.Equal("Name ^", nameColumn.Header?.ToString());
+        Assert.Equal("Size", treeTable.Columns[1].Header?.ToString());
     }
 
     [AvaloniaFact]
@@ -552,302 +627,26 @@ public sealed class MainWindowLayoutTests
         Assert.False(stopButton.IsVisible);
     }
 
-    [AvaloniaFact]
-    public void TreemapControl_RendersSnapshotWithoutChildControls()
+    private static T? FindDescendant<T>(Window window)
+        where T : class
     {
-        var control = new TreemapControl
-        {
-            Width = 320,
-            Height = 180,
-            RootNode = CreateSnapshot().Root,
-            Metric = AnalysisMetric.Tokens,
-        };
-        var window = new Window
-        {
-            Content = control,
-            Width = 360,
-            Height = 240,
-        };
-
-        window.Show();
-
-        Assert.NotEmpty(control.NodeVisuals);
+        return window.GetLogicalDescendants().OfType<T>().FirstOrDefault()
+            ?? window.GetVisualDescendants().OfType<T>().FirstOrDefault();
     }
 
-    [AvaloniaFact]
-    public void TreemapControl_HitTest_ReturnsRenderedNode()
+    private static void InvokeProjectTreeSort(
+        ProjectTreePaneView projectTreePane,
+        MainWindowViewModel viewModel,
+        DataGrid treeTable,
+        DataGridColumn clickedColumn,
+        ProjectTreeSortColumn sortColumn)
     {
-        var control = new TreemapControl
-        {
-            Width = 320,
-            Height = 180,
-            RootNode = CreateSnapshot().Root,
-            Metric = AnalysisMetric.Tokens,
-        };
-        var window = new Window
-        {
-            Content = control,
-            Width = 360,
-            Height = 240,
-        };
+        var method = typeof(ProjectTreePaneView).GetMethod(
+            "ApplyProjectTreeSort",
+            BindingFlags.Instance | BindingFlags.NonPublic);
 
-        window.Show();
-
-        var visual = Assert.Single(control.NodeVisuals);
-        var point = new Avalonia.Point(
-            visual.Bounds.X + (visual.Bounds.Width / 2),
-            visual.Bounds.Y + (visual.Bounds.Height / 2));
-
-        var hitNode = control.HitTestNode(point);
-
-        Assert.NotNull(hitNode);
-        Assert.Equal(visual.Node.RelativePath, hitNode.RelativePath);
-        Assert.Null(control.HitTestNode(new Avalonia.Point(-10, -10)));
-    }
-
-    [AvaloniaFact]
-    public async Task MainWindow_TreemapSelection_SynchronizesTree()
-    {
-        var window = new MainWindow();
-        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
-        window.DataContext = viewModel;
-
-        window.Show();
-        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
-
-        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
-        Assert.NotNull(control);
-
-        var visual = Assert.Single(control.NodeVisuals);
-        var point = new Avalonia.Point(
-            visual.Bounds.X + (visual.Bounds.Width / 2),
-            visual.Bounds.Y + (visual.Bounds.Height / 2));
-
-        control.SelectNodeAt(point);
-
-        Assert.Equal("Program.cs", viewModel.Tree.SelectedNode?.Node.RelativePath);
-        Assert.Equal("Program.cs", viewModel.SelectedNode?.RelativePath);
-    }
-
-    [AvaloniaFact]
-    public async Task MainWindow_TreemapSelection_ExpandsAncestorChainInProjectTree()
-    {
-        var window = new MainWindow();
-        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
-        window.DataContext = viewModel;
-
-        window.Show();
-        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
-
-        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
-        Assert.NotNull(control);
-
-        var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src/Program.cs");
-        var point = new Avalonia.Point(
-            visual.Bounds.X + (visual.Bounds.Width / 2),
-            visual.Bounds.Y + (visual.Bounds.Height / 2));
-
-        control.SelectNodeAt(point);
-
-        var rootNode = Assert.Single(viewModel.Tree.RootNodes);
-        var directoryNode = Assert.Single(rootNode.Children);
-        var fileNode = Assert.Single(directoryNode.Children);
-
-        Assert.True(rootNode.IsExpanded);
-        Assert.True(directoryNode.IsExpanded);
-        Assert.Equal(fileNode, viewModel.Tree.SelectedNode);
-        Assert.Equal("src/Program.cs", viewModel.SelectedNode?.RelativePath);
-    }
-
-    [AvaloniaFact]
-    public async Task MainWindow_TreemapDirectoryDrillDown_ScopesTreemapAndSynchronizesTree()
-    {
-        var window = new MainWindow();
-        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
-        window.DataContext = viewModel;
-
-        window.Show();
-        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
-
-        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
-        var breadcrumbs = FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl");
-
-        Assert.NotNull(control);
-        Assert.NotNull(breadcrumbs);
-        Assert.Single(viewModel.TreemapBreadcrumbs);
-
-        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
-        var handled = control.RequestDrillDownAt(new Avalonia.Point(
-            directoryVisual.Bounds.X + 6,
-            directoryVisual.Bounds.Y + 6));
-
-        Assert.True(handled);
-        Assert.Equal("src", viewModel.TreemapRootNode?.RelativePath);
-        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
-        Assert.Equal("src", viewModel.SelectedNode?.RelativePath);
-        Assert.Equal(2, viewModel.TreemapBreadcrumbs.Count);
-        Assert.Equal("Demo", viewModel.TreemapBreadcrumbs[0].Label);
-        Assert.Equal("/ src", viewModel.TreemapBreadcrumbs[1].Label);
-        Assert.All(control.NodeVisuals, item => Assert.StartsWith("src", item.Node.RelativePath));
-    }
-
-    [AvaloniaFact]
-    public async Task MainWindow_TreemapBreadcrumbNavigation_RestoresGlobalTreemap()
-    {
-        var window = new MainWindow();
-        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
-        window.DataContext = viewModel;
-
-        window.Show();
-        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
-
-        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
-        var breadcrumbs = FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl");
-
-        Assert.NotNull(control);
-        Assert.NotNull(breadcrumbs);
-        Assert.Single(viewModel.TreemapBreadcrumbs);
-
-        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
-        control.RequestDrillDownAt(new Avalonia.Point(
-            directoryVisual.Bounds.X + 6,
-            directoryVisual.Bounds.Y + 6));
-
-        viewModel.NavigateToTreemapBreadcrumbCommand.Execute(viewModel.TreemapBreadcrumbs[0].Node);
-
-        Assert.Equal("/", viewModel.TreemapRootNode?.Id);
-        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
-        Assert.Single(viewModel.TreemapBreadcrumbs);
-        Assert.Equal("Demo", viewModel.TreemapBreadcrumbs[0].Label);
-        Assert.Contains(control.NodeVisuals, item => item.Node.RelativePath == "src");
-    }
-
-    [AvaloniaFact]
-    public async Task MainWindow_TreeSelection_SynchronizesTreemap()
-    {
-        var window = new MainWindow();
-        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
-        window.DataContext = viewModel;
-
-        window.Show();
-        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
-
-        var childNode = Assert.Single(viewModel.Tree.RootNodes[0].Children);
-        viewModel.Tree.SelectedNode = childNode;
-
-        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
-
-        Assert.NotNull(control);
-        Assert.Equal("Program.cs", control.SelectedNode?.RelativePath);
-    }
-
-    [AvaloniaFact]
-    public void TreemapControl_Hover_UpdatesTooltipStateWithoutChangingSelection()
-    {
-        var control = new TreemapControl
-        {
-            Width = 320,
-            Height = 180,
-            RootNode = CreateSnapshot().Root,
-            Metric = AnalysisMetric.Tokens,
-        };
-        var window = new Window
-        {
-            Content = control,
-            Width = 360,
-            Height = 240,
-        };
-
-        window.Show();
-
-        var visual = Assert.Single(control.NodeVisuals);
-        var point = new Avalonia.Point(
-            visual.Bounds.X + (visual.Bounds.Width / 2),
-            visual.Bounds.Y + (visual.Bounds.Height / 2));
-
-        control.UpdateHover(point);
-
-        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
-        Assert.Null(control.SelectedNode);
-        Assert.Contains("Program.cs", control.TooltipText);
-        Assert.Contains("Non-empty/Blank: 11/1", control.TooltipText);
-        Assert.Contains("Ext: .cs", control.TooltipText);
-        var tooltipContent = Assert.IsType<Border>(ToolTip.GetTip(control));
-        var tooltipStack = Assert.IsType<StackPanel>(tooltipContent.Child);
-        var pathText = Assert.IsType<TextBlock>(tooltipStack.Children[0]);
-        Assert.Contains("Program.cs", pathText.Text);
-        Assert.True(ToolTip.GetIsOpen(control));
-
-        control.ClearHover();
-
-        Assert.Null(control.HoveredNode);
-        Assert.Null(control.TooltipText);
-        Assert.False(ToolTip.GetIsOpen(control));
-        Assert.Null(ToolTip.GetTip(control));
-    }
-
-    private static ProjectSnapshot CreateSnapshot() =>
-        new()
-        {
-            RootPath = "C:\\Demo",
-            CapturedAtUtc = DateTimeOffset.UtcNow,
-            Options = ScanOptions.Default,
-            Root = new ProjectNode
-            {
-                Id = "/",
-                Name = "Demo",
-                FullPath = "C:\\Demo",
-                RelativePath = string.Empty,
-                Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 42,
-                    TotalLines: 12,
-                    NonEmptyLines: 11,
-                    BlankLines: 1,
-                    FileSizeBytes: 128,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
-                Children =
-                {
-                    new ProjectNode
-                    {
-                        Id = "Program.cs",
-                        Name = "Program.cs",
-                        FullPath = "C:\\Demo\\Program.cs",
-                        RelativePath = "Program.cs",
-                        Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 42,
-                            TotalLines: 12,
-                            NonEmptyLines: 11,
-                            BlankLines: 1,
-                            FileSizeBytes: 128,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
-                    },
-                },
-            },
-        };
-
-    private static MainWindowViewModel CreateMainWindowViewModel(
-        IProjectAnalyzer projectAnalyzer,
-        string? selectedFolderPath = "C:\\Demo") =>
-        new(
-            new AnalysisSessionController(
-                projectAnalyzer,
-                new StubFolderPickerService(selectedFolderPath)),
-            new TreemapNavigationState(),
-            new StubSettingsCoordinator());
-
-    private static T? FindNamedDescendant<T>(Window window, string name)
-        where T : Control
-    {
-        return window.GetLogicalDescendants()
-            .OfType<T>()
-            .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal))
-            ?? window.GetVisualDescendants()
-            .OfType<T>()
-            .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
+        Assert.NotNull(method);
+        method.Invoke(projectTreePane, [viewModel, treeTable, clickedColumn, sortColumn]);
     }
 
     private static ProjectTreeNodeViewModel CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
@@ -890,91 +689,6 @@ public sealed class MainWindowLayoutTests
         }
 
         return new ProjectTreeNodeViewModel(root);
-    }
-
-    private static ProjectSnapshot CreateNestedSnapshot() =>
-        new()
-        {
-            RootPath = "C:\\Demo",
-            CapturedAtUtc = DateTimeOffset.UtcNow,
-            Options = ScanOptions.Default,
-            Root = new ProjectNode
-            {
-                Id = "/",
-                Name = "Demo",
-                FullPath = "C:\\Demo",
-                RelativePath = string.Empty,
-                Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 42,
-                    TotalLines: 12,
-                    NonEmptyLines: 11,
-                    BlankLines: 1,
-                    FileSizeBytes: 128,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 1),
-                Children =
-                {
-                    new ProjectNode
-                    {
-                        Id = "src",
-                        Name = "src",
-                        FullPath = "C:\\Demo\\src",
-                        RelativePath = "src",
-                        Kind = ProjectNodeKind.Directory,
-                        Metrics = new NodeMetrics(
-                            Tokens: 42,
-                            TotalLines: 12,
-                            NonEmptyLines: 11,
-                            BlankLines: 1,
-                            FileSizeBytes: 128,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
-                        Children =
-                        {
-                            new ProjectNode
-                            {
-                                Id = "src/Program.cs",
-                                Name = "Program.cs",
-                                FullPath = "C:\\Demo\\src\\Program.cs",
-                                RelativePath = "src/Program.cs",
-                                Kind = ProjectNodeKind.File,
-                                Metrics = new NodeMetrics(
-                                    Tokens: 42,
-                                    TotalLines: 12,
-                                    NonEmptyLines: 11,
-                                    BlankLines: 1,
-                                    FileSizeBytes: 128,
-                                    DescendantFileCount: 1,
-                                    DescendantDirectoryCount: 0),
-                            },
-                        },
-                    },
-                },
-            },
-        };
-
-    private sealed class StubFolderPickerService(string? path) : IFolderPickerService
-    {
-        public Task<string?> PickFolderAsync(CancellationToken cancellationToken) =>
-            Task.FromResult(path);
-    }
-
-    private sealed class StubProjectAnalyzer(ProjectSnapshot snapshot) : IProjectAnalyzer
-    {
-        public Task<ProjectSnapshot> AnalyzeAsync(
-            string rootPath,
-            ScanOptions options,
-            IProgress<AnalysisProgress>? progress,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(snapshot);
-    }
-
-    private sealed class StubSettingsCoordinator : ISettingsCoordinator
-    {
-        public void Attach(ToolbarViewModel toolbar)
-        {
-        }
     }
 
     private sealed class CancelAwareProjectAnalyzer : IProjectAnalyzer
