@@ -6,13 +6,14 @@
 - Secondary MVP platform: **macOS smoke/publish baseline**
 
 ## What Already Exists In MVP
-- Folder selection, re-analysis, cancellation, and progress/state messages.
+- Folder selection, re-analysis, cancellation, and progress feedback.
 - Project structure scanning with `.gitignore`, `.ignore`, default excludes, and user excludes.
 - Local token counting through `Microsoft.ML.Tokenizers` with `o200k_base`, `cl100k_base`, and `p50k_base` profiles.
 - `tokei` integration with merged language/code/comments/blanks metrics and fallback partial LOC metrics.
 - In-memory cache, batched progress reporting, and resilience to partial file system/tool errors.
-- Tree view, summary strip, details panel, and treemap in one window.
-- Hover tooltip, persistent selection highlight, and `Tree <-> Treemap <-> Details` synchronization.
+- Tree view, summary strip, and treemap in one window.
+- Tooltip is the current detailed inspection surface for nodes.
+- Hover tooltip, persistent selection highlight, and `Tree <-> Treemap` synchronization.
 - Automatic path expansion in the tree when a node is selected from the treemap.
 - Treemap drill-down on directory double-click with local scope and return through `Back to overview`.
 - Verified `win-x64` publish and configured secondary target `osx-arm64`.
@@ -29,7 +30,7 @@
 ## Documentation
 - Documentation is synchronized with the code as of 2026-03-22.
 - The documentation policy is defined in [../AGENTS.md](../AGENTS.md): documents reflect only the current state or planned work; history stays in git.
-- For treemap navigation, the current minimal UX is `Scope` + `Back to overview`; breadcrumb/history remains a post-MVP improvement.
+- The active ordered UX/UI follow-up plan is tracked in [plan.md](plan.md).
 
 ## Last Verification
 - Date: 2026-03-22
@@ -55,7 +56,10 @@
 - The ignore parser covers the MVP subset of rules, not the full range of Git ignore edge cases.
 - The cache is still in-memory only and lives within a single process.
 - The `tokei` sidecar is physically included only for `win-x64`; `osx-arm64` has only a prepared placement slot.
-- The treemap tooltip is still minimal and has no separate custom popup layout.
+- The treemap tooltip is still minimal and has no custom popup layout yet.
+- The current toolbar still keeps scan/view settings inline instead of using an on-demand settings drawer.
+- Treemap scope navigation still uses `Scope` + `Back to overview` instead of breadcrumbs.
+- The tree table does not yet expose developer-oriented file-type icons.
 - `restore/build` currently warn about a transitive vulnerability in `Microsoft.Bcl.Memory 9.0.4` coming from `Microsoft.ML.Tokenizers` (`NU1903`).
 - Linux support, installer/signing, single-file publish, and Native AOT are outside MVP.
 
@@ -63,5 +67,6 @@
 - The Windows-first MVP is built, tests are green, and `win-x64` publish plus launch smoke have passed.
 - Continue development using:
   - [status.md](status.md) for the current state, run commands, and real limitations;
-  - [post-mvp.md](post-mvp.md) for the next-wave backlog;
+  - [plan.md](plan.md) for the active ordered UX/UI checklist;
+  - [post-mvp.md](post-mvp.md) for the broader backlog;
   - [spec.md](spec.md) and [architecture.md](architecture.md) for product and technical invariants.

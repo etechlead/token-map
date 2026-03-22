@@ -38,8 +38,8 @@ Linux is not a blocking MVP target, but the architecture must not make it harder
 5. The user sees:
    - the project tree on the left;
    - the treemap in the center;
-   - the details panel on the right;
-   - summary and progress/status at the top/bottom.
+   - summary at the top;
+   - a progress indicator while analysis is active.
 6. The user can:
    - hover a treemap rectangle and see a tooltip;
    - click a rectangle and select a node;
@@ -152,13 +152,13 @@ Mandatory requirements:
 - click on a rectangle:
   - selects the node;
   - gives it a persistent highlight;
-  - updates the details panel;
   - syncs selection with the tree on the left.
 - selection in the tree on the left:
-  - syncs the treemap;
-  - updates the details panel.
+  - syncs the treemap.
 
 ### 5.9 Hover Tooltip
+The tooltip is the primary detail surface for treemap node inspection in MVP.
+
 The tooltip for a treemap node must show:
 - relative path;
 - node type (`file`/`folder`);
@@ -169,21 +169,10 @@ The tooltip for a treemap node must show:
 - language and/or extension;
 - for folders, the number of included files in the subtree.
 
-### 5.10 Details Panel On The Right
-The right panel shows information for the **selected** node.
-
-Minimum content:
-- path;
-- file/folder;
-- tokens;
-- total lines;
-- code/comments/blanks;
-- language;
-- extension;
-- subtree size;
-- count of included files and folders;
-- share of the project;
-- top children by the current metric.
+### 5.10 Treemap Scope Navigation
+- The current treemap scope must be visible in the treemap header.
+- The user must be able to return from a scoped treemap view back to the root.
+- The exact control may evolve from a scope label/button pair to breadcrumb navigation without changing the underlying drill-down model.
 
 ### 5.11 Tree On The Left
 The left side shows a tree of included folders/files.
@@ -209,8 +198,7 @@ The top panel must contain:
 
 Also required:
 - summary cards/summary strip with key totals;
-- progress indicator;
-- textual status of the current analysis.
+- progress indicator.
 
 ### 5.13 Cancellation And Progress
 - Analysis must support `CancellationToken`.
@@ -242,8 +230,7 @@ Also required:
 - Main layout:
   - toolbar on top;
   - tree on the left;
-  - treemap in the center;
-  - details panel on the right.
+  - treemap in the center.
 - The tooltip must work without a click.
 - The selected node must be clearly visible.
 
@@ -291,7 +278,7 @@ MVP is done if:
 - `.gitignore`, `.ignore`, and excludes actually affect the result;
 - tokens are counted locally;
 - the treemap works and reacts to hover and click;
-- the details panel on the right is synchronized with the treemap and the tree;
+- the hover tooltip provides the required node details;
 - metric selection and tokenizer profile selection work;
 - cancellation and repeated scan are stable;
 - the solution builds and tests are green.

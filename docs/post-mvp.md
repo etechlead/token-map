@@ -72,10 +72,10 @@ This document describes work that is **not part of MVP**, but is planned after a
 - maximum file size limit;
 - fine-tuning for text/binary detection.
 
-### 3.3 Tree/details UX improvements
+### 3.3 Tree/tooltip UX improvements
 - multi-column tree;
-- richer details panel;
 - richer tooltip/popup for the treemap;
+- developer-oriented file/folder icons;
 - open file/folder in the system explorer;
 - quick path copy.
 

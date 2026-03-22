@@ -33,8 +33,8 @@ Before starting each cycle:
   - toolbar on top;
   - tree on the left;
   - treemap in the center;
-  - details panel on the right;
-  - progress/status at the bottom or in the top summary area.
+  - progress at the bottom or in the top summary area.
+  - settings may stay in the toolbar or move into a temporary drawer.
 
 ### 3.2 Treemap
 - Use a custom `TreemapControl`.
@@ -84,7 +84,7 @@ Rules:
 - hover does not change selected;
 - click in the treemap changes selected;
 - click/select in the tree changes selected;
-- the details panel always follows selected.
+- tooltip handles hover-time detail inspection.
 
 ## 8. Quality Verification After Each Change
 Required:

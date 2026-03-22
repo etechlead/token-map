@@ -1,28 +1,50 @@
-# TokenMap - Implementation Plan
+# TokenMap - Active UX/UI Plan
 
-MVP is complete. This file now captures only the current state and the rules for the next work cycle.
+This file tracks the current ordered work. Check off a stage only after code, docs, and the required verification for that stage are complete.
 
-## What Is Already Complete In MVP
-- Bootstrap solution and the base Avalonia shell.
-- Core contracts, scanner, and path normalization.
-- `.gitignore` / `.ignore`, default excludes, and user excludes.
-- Token counting through `Microsoft.ML.Tokenizers`.
-- `tokei` integration, metric merge, and tree aggregation.
-- Analyzer orchestration, progress batching, cancellation, and in-memory cache.
-- A working main window with folder picker, tree, summary, and details panel.
-- Custom-rendered treemap without child controls for each tile.
-- Hover tooltip, selection sync, and persistent highlight.
-- Windows-first publish and MVP handoff.
+## Ordering Rules
 
-## Rules For The Next Cycle
-- New work happens only on explicit user request or for a separately agreed item from [post-mvp.md](post-mvp.md).
-- Do not bring completed MVP items back into the plan.
-- Do not expand scope unless there is a clear need.
-- For new product work, use [post-mvp.md](post-mvp.md) as the backlog and [status.md](status.md) as the source of current state.
-- Update [status.md](status.md) after each notable change.
+1. Start with shared UI changes that affect multiple surfaces.
+2. Move settings out of the top toolbar before treemap and tree polish, because the shell composition changes first.
+3. Replace the treemap tooltip before lower-priority table polish, because the tooltip is the only detailed inspection surface.
+4. Keep the following product constraints unchanged throughout the plan:
+   - tooltip is the only detailed inspection surface;
+   - no textual analysis status;
+   - no reduction of tree-pane priority/width;
+   - no change to the existing treemap palette;
+   - no extra metric text inside treemap tiles.
 
-## Basic Verification Commands
-Run at minimum after each change:
+## Ordered Stages
+
+- [ ] Stage 1. Shared UI foundation and accent alignment
+  - Introduce one shared accent color/token set for selection, focus, and progress.
+  - Align tree selection, treemap selection/hover, and actionable controls to the same accent.
+  - Preserve the current thin progress-bar-only analysis feedback.
+
+- [ ] Stage 2. Toolbar simplification and settings drawer
+  - Replace the current in-toolbar settings groups with one `Settings` action.
+  - Add a right-side settings drawer/overlay that opens on demand.
+  - Ensure the drawer does not consume horizontal workspace width while closed.
+  - Move treemap metric, tokenizer, and ignore-related settings into the drawer without losing functionality.
+
+- [ ] Stage 3. Treemap tooltip overhaul
+  - Replace the current raw multiline tooltip text with a custom tooltip/popup layout.
+  - Keep the tooltip as the only detailed inspection surface for nodes.
+  - Show: path, node kind, tokens, total lines, code/comments/blanks, language/ext, share, and subtree file count.
+
+- [ ] Stage 4. Treemap scope navigation
+  - Replace `Scope` + `Back to Root` with breadcrumb navigation in the treemap header.
+  - Preserve the current drill-down behavior and root reset behavior.
+  - Do not add extra metric text into treemap tiles.
+
+- [ ] Stage 5. Tree table polish
+  - Add explicit sort-state visibility.
+  - Improve numeric alignment and row emphasis.
+  - Add developer-oriented icons for folders and common source-file types.
+
+## Verification
+
+Run at minimum after each completed stage:
 
 ```bash
 dotnet restore
@@ -30,4 +52,4 @@ dotnet build Clever.TokenMap.sln
 dotnet test Clever.TokenMap.sln --no-build
 ```
 
-If the change affects publish flows or headless/UI scenarios, run the relevant extra checks as well.
+If a stage affects headless/UI scenarios, run the relevant extra checks as well.

@@ -173,8 +173,7 @@ Sufficient approach:
 ### Selection
 `SelectedNodeId`/`SelectedPath` is the single source of truth for the selected node for:
 - tree;
-- treemap;
-- details panel.
+- treemap.
 
 ### Hover
 `HoveredNodeId` exists only for treemap hover state and tooltip.
@@ -182,7 +181,7 @@ Sufficient approach:
 ### Sync Rules
 - click in the treemap updates the selected node;
 - selection in the tree updates the treemap;
-- the details panel always shows the selected node;
+- the tooltip reflects hover only and does not replace selection;
 - hover does not change the selected node.
 
 ## 11. Treemap Rendering Requirements
@@ -208,7 +207,7 @@ Recommended root layout:
 - main content:
   - column 0: tree
   - column 1: treemap
-  - column 2: details
+- settings may live in the toolbar or in a temporary right-side drawer/overlay, but the main shell stays focused on tree + treemap.
 
 Important:
 - do not place virtualized items into infinite height;
@@ -230,7 +229,7 @@ Cover:
 - snapshot opening/binding;
 - selection sync;
 - hover/click in the treemap;
-- details panel updates.
+- treemap scope navigation updates.
 
 ## 14. Logging / Diagnostics
 MVP does not require a complex telemetry system.
