@@ -176,7 +176,7 @@ public sealed class SquarifiedTreemapLayout
         metric switch
         {
             "Total lines" => node.Metrics.TotalLines,
-            "Code lines" => node.Metrics.CodeLines ?? 0,
+            "Non-empty lines" => node.Metrics.NonEmptyLines,
             _ => node.Metrics.Tokens,
         };
 

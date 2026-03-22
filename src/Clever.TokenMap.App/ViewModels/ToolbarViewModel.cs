@@ -36,7 +36,7 @@ public partial class ToolbarViewModel : ViewModelBase
     [
         "Tokens",
         "Total lines",
-        "Code lines",
+        "Non-empty lines",
     ];
 
     public IReadOnlyList<string> TokenProfiles { get; } =
@@ -143,8 +143,9 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        SelectedMetric = IsKnownMetric(settings.SelectedMetric)
-            ? settings.SelectedMetric
+        var selectedMetric = NormalizeMetric(settings.SelectedMetric);
+        SelectedMetric = IsKnownMetric(selectedMetric)
+            ? selectedMetric
             : "Tokens";
         SelectedTokenProfile = IsKnownTokenProfile(settings.SelectedTokenProfile)
             ? settings.SelectedTokenProfile
@@ -170,6 +171,11 @@ public partial class ToolbarViewModel : ViewModelBase
             SelectedThemePreference = value;
         }
     }
+
+    private static string NormalizeMetric(string value) =>
+        string.Equals(value, "Code lines", StringComparison.Ordinal)
+            ? "Non-empty lines"
+            : value;
 
     private bool IsKnownMetric(string value) =>
         MetricOptions.Contains(value, StringComparer.Ordinal);

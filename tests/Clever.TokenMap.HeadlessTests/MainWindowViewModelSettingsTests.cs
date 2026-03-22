@@ -12,7 +12,7 @@ public sealed class MainWindowViewModelSettingsTests
     public void Constructor_AppliesPersistedAnalysisSettings()
     {
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = "Code lines";
+        settings.Analysis.SelectedMetric = "Non-empty lines";
         settings.Analysis.SelectedTokenProfile = "p50k_base";
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.RespectIgnore = false;
@@ -28,7 +28,7 @@ public sealed class MainWindowViewModelSettingsTests
             store,
             themeService);
 
-        Assert.Equal("Code lines", viewModel.Toolbar.SelectedMetric);
+        Assert.Equal("Non-empty lines", viewModel.Toolbar.SelectedMetric);
         Assert.Equal("p50k_base", viewModel.Toolbar.SelectedTokenProfile);
         Assert.False(viewModel.Toolbar.RespectGitIgnore);
         Assert.False(viewModel.Toolbar.RespectIgnore);
@@ -60,6 +60,21 @@ public sealed class MainWindowViewModelSettingsTests
         Assert.Equal(ThemePreferences.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal("Error", store.LastSavedSettings.Logging.MinLevel);
         Assert.Equal(ThemePreferences.Dark, themeService.LastAppliedThemePreference);
+    }
+
+    [Fact]
+    public void Constructor_MapsLegacyCodeLinesMetricToNonEmptyLines()
+    {
+        var settings = AppSettings.CreateDefault();
+        settings.Analysis.SelectedMetric = "Code lines";
+
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(),
+            new StubFolderPickerService(),
+            new RecordingAppSettingsStore(settings),
+            new RecordingThemeService());
+
+        Assert.Equal("Non-empty lines", viewModel.Toolbar.SelectedMetric);
     }
 
     private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore

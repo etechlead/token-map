@@ -332,15 +332,12 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var breakdown = node.Metrics.CodeLines is null && node.Metrics.CommentLines is null && node.Metrics.BlankLines is null
-            ? "n/a"
-            : $"{node.Metrics.CodeLines ?? 0:N0}/{node.Metrics.CommentLines ?? 0:N0}/{node.Metrics.BlankLines ?? 0:N0}";
-        var languageOrExtension = node.Metrics.Language
-            ?? (node.Kind == Core.Enums.ProjectNodeKind.File
-                ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
-                : "n/a");
+        var breakdown = $"{node.Metrics.NonEmptyLines:N0}/{node.Metrics.BlankLines:N0}";
+        var extension = node.Kind == Core.Enums.ProjectNodeKind.File
+            ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
+            : "n/a";
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nCode/Comments/Blanks: {breakdown}\nLanguage/Ext: {languageOrExtension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nNon-empty/Blank: {breakdown}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
     private Control BuildTooltipContent(ProjectNode node)
@@ -350,13 +347,10 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var breakdown = node.Metrics.CodeLines is null && node.Metrics.CommentLines is null && node.Metrics.BlankLines is null
-            ? "n/a"
-            : $"{node.Metrics.CodeLines ?? 0:N0}/{node.Metrics.CommentLines ?? 0:N0}/{node.Metrics.BlankLines ?? 0:N0}";
-        var languageOrExtension = node.Metrics.Language
-            ?? (node.Kind == Core.Enums.ProjectNodeKind.File
-                ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
-                : "n/a");
+        var breakdown = $"{node.Metrics.NonEmptyLines:N0}/{node.Metrics.BlankLines:N0}";
+        var extension = node.Kind == Core.Enums.ProjectNodeKind.File
+            ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
+            : "n/a";
 
         var labelBrush = isDarkTheme
             ? new SolidColorBrush(Color.Parse("#AAB4C0"))
@@ -386,8 +380,8 @@ public sealed class TreemapControl : Control
         content.Children.Add(CreateTooltipRow("Tokens", node.Metrics.Tokens.ToString("N0"), labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Share", share, labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Lines", node.Metrics.TotalLines.ToString("N0"), labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Code/Comments/Blanks", breakdown, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Language/Ext", languageOrExtension, labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Non-empty/Blank", breakdown, labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Ext", extension, labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0"), labelBrush, valueBrush));
 
         return new Border
@@ -444,7 +438,7 @@ public sealed class TreemapControl : Control
         Metric switch
         {
             "Total lines" => node.Metrics.TotalLines,
-            "Code lines" => node.Metrics.CodeLines ?? 0,
+            "Non-empty lines" => node.Metrics.NonEmptyLines,
             _ => node.Metrics.Tokens,
         };
 

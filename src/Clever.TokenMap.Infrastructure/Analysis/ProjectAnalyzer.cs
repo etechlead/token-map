@@ -15,7 +15,6 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
         IProjectScanner projectScanner,
         ITextFileDetector textFileDetector,
         ITokenCounter tokenCounter,
-        ITokeiRunner tokeiRunner,
         ICacheStore? cacheStore = null,
         int progressBatchSize = 64,
         IAppLoggerFactory? loggerFactory = null)
@@ -27,7 +26,6 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
         _metricsEnricher = new ProjectSnapshotMetricsEnricher(
             textFileDetector,
             tokenCounter,
-            tokeiRunner,
             cacheStore,
             effectiveLoggerFactory.CreateLogger<ProjectSnapshotMetricsEnricher>());
     }

@@ -47,7 +47,7 @@ public sealed class SquarifiedTreemapLayoutTests
         var layout = new SquarifiedTreemapLayout();
 
         var tokenVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), "Tokens");
-        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), "Code lines");
+        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), "Non-empty lines");
 
         var tokensLargest = tokenVisuals
             .Where(visual => visual.Node.RelativePath is "src" or "docs")
@@ -173,10 +173,8 @@ public sealed class SquarifiedTreemapLayoutTests
             Metrics = new NodeMetrics(
                 Tokens: tokens,
                 TotalLines: codeLines,
-                CodeLines: codeLines,
-                CommentLines: 0,
+                NonEmptyLines: codeLines,
                 BlankLines: 0,
-                Language: null,
                 FileSizeBytes: tokens,
                 DescendantFileCount: kind == ProjectNodeKind.File ? 1 : children.Sum(child => child.Metrics.DescendantFileCount),
                 DescendantDirectoryCount: kind == ProjectNodeKind.File ? 0 : children.Count(child => child.Kind != ProjectNodeKind.File)),

@@ -67,7 +67,6 @@ public sealed class ProjectAnalyzerTests : IDisposable
             new FileSystemProjectScanner(),
             new AlwaysTextDetector(),
             new RecordingTokenCounter(),
-            new EmptyTokeiRunner(),
             cacheStore: new InMemoryCacheStore(),
             progressBatchSize: 3);
 
@@ -92,7 +91,6 @@ public sealed class ProjectAnalyzerTests : IDisposable
             new FileSystemProjectScanner(),
             new AlwaysTextDetector(),
             new BlockingTokenCounter(),
-            new EmptyTokeiRunner(),
             cacheStore: null,
             progressBatchSize: 2);
 
@@ -117,7 +115,6 @@ public sealed class ProjectAnalyzerTests : IDisposable
             new FileSystemProjectScanner(),
             new AlwaysTextDetector(),
             tokenCounter,
-            new EmptyTokeiRunner(),
             cacheStore,
             progressBatchSize: 2);
 
@@ -145,16 +142,6 @@ public sealed class ProjectAnalyzerTests : IDisposable
             await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             return content.Length;
         }
-    }
-
-    private sealed class EmptyTokeiRunner : ITokeiRunner
-    {
-        public Task<IReadOnlyDictionary<string, TokeiFileStats>> CollectAsync(
-            string rootPath,
-            IReadOnlyCollection<string> includedRelativePaths,
-            CancellationToken cancellationToken) =>
-            Task.FromResult<IReadOnlyDictionary<string, TokeiFileStats>>(
-                new Dictionary<string, TokeiFileStats>(StringComparer.OrdinalIgnoreCase));
     }
 
     private sealed class CapturingProgress : IProgress<AnalysisProgress>

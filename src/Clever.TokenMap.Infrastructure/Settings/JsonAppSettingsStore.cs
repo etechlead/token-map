@@ -91,7 +91,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         {
             if (TryGetString(analysis, "selectedMetric", out var selectedMetric))
             {
-                settings.Analysis.SelectedMetric = selectedMetric;
+                settings.Analysis.SelectedMetric = NormalizeSelectedMetric(selectedMetric);
             }
 
             if (TryGetString(analysis, "selectedTokenProfile", out var selectedTokenProfile))
@@ -234,6 +234,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         normalized = string.Empty;
         return false;
     }
+
+    private static string NormalizeSelectedMetric(string value) =>
+        string.Equals(value, "Code lines", StringComparison.Ordinal)
+            ? "Non-empty lines"
+            : value;
 
     private static string GetDefaultSettingsFilePath()
         => TokenMapAppDataPaths.GetSettingsFilePath();

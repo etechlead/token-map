@@ -325,10 +325,8 @@ public sealed class MainWindowLayoutTests
                 Metrics = new NodeMetrics(
                     Tokens: 30,
                     TotalLines: 3,
-                    CodeLines: 3,
-                    CommentLines: 0,
+                    NonEmptyLines: 3,
                     BlankLines: 0,
-                    Language: null,
                     FileSizeBytes: 30,
                     DescendantFileCount: 2,
                     DescendantDirectoryCount: 0),
@@ -344,10 +342,8 @@ public sealed class MainWindowLayoutTests
                         Metrics = new NodeMetrics(
                             Tokens: 10,
                             TotalLines: 1,
-                            CodeLines: 1,
-                            CommentLines: 0,
+                            NonEmptyLines: 1,
                             BlankLines: 0,
-                            Language: "C#",
                             FileSizeBytes: 10,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -362,10 +358,8 @@ public sealed class MainWindowLayoutTests
                         Metrics = new NodeMetrics(
                             Tokens: 20,
                             TotalLines: 2,
-                            CodeLines: 2,
-                            CommentLines: 0,
+                            NonEmptyLines: 2,
                             BlankLines: 0,
-                            Language: "C#",
                             FileSizeBytes: 20,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -788,6 +782,8 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
         Assert.Null(control.SelectedNode);
         Assert.Contains("Program.cs", control.TooltipText);
+        Assert.Contains("Non-empty/Blank: 11/1", control.TooltipText);
+        Assert.Contains("Ext: .cs", control.TooltipText);
         var tooltipContent = Assert.IsType<Border>(ToolTip.GetTip(control));
         var tooltipStack = Assert.IsType<StackPanel>(tooltipContent.Child);
         var pathText = Assert.IsType<TextBlock>(tooltipStack.Children[0]);
@@ -818,10 +814,8 @@ public sealed class MainWindowLayoutTests
                 Metrics = new NodeMetrics(
                     Tokens: 42,
                     TotalLines: 12,
-                    CodeLines: 10,
-                    CommentLines: 1,
+                    NonEmptyLines: 11,
                     BlankLines: 1,
-                    Language: null,
                     FileSizeBytes: 128,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),
@@ -837,10 +831,8 @@ public sealed class MainWindowLayoutTests
                         Metrics = new NodeMetrics(
                             Tokens: 42,
                             TotalLines: 12,
-                            CodeLines: 10,
-                            CommentLines: 1,
+                            NonEmptyLines: 11,
                             BlankLines: 1,
-                            Language: "C#",
                             FileSizeBytes: 128,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -861,10 +853,8 @@ public sealed class MainWindowLayoutTests
             Metrics = new NodeMetrics(
                 Tokens: children.Sum(item => item.Tokens),
                 TotalLines: children.Sum(item => item.TotalLines),
-                CodeLines: children.Sum(item => item.TotalLines),
-                CommentLines: 0,
+                NonEmptyLines: children.Sum(item => item.TotalLines),
                 BlankLines: 0,
-                Language: null,
                 FileSizeBytes: children.Sum(item => item.FileSizeBytes),
                 DescendantFileCount: children.Length,
                 DescendantDirectoryCount: 0),
@@ -882,10 +872,8 @@ public sealed class MainWindowLayoutTests
                 Metrics = new NodeMetrics(
                     Tokens: item.Tokens,
                     TotalLines: item.TotalLines,
-                    CodeLines: item.TotalLines,
-                    CommentLines: 0,
+                    NonEmptyLines: item.TotalLines,
                     BlankLines: 0,
-                    Language: "C#",
                     FileSizeBytes: item.FileSizeBytes,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),
@@ -911,10 +899,8 @@ public sealed class MainWindowLayoutTests
                 Metrics = new NodeMetrics(
                     Tokens: 42,
                     TotalLines: 12,
-                    CodeLines: 10,
-                    CommentLines: 1,
+                    NonEmptyLines: 11,
                     BlankLines: 1,
-                    Language: null,
                     FileSizeBytes: 128,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 1),
@@ -930,10 +916,8 @@ public sealed class MainWindowLayoutTests
                         Metrics = new NodeMetrics(
                             Tokens: 42,
                             TotalLines: 12,
-                            CodeLines: 10,
-                            CommentLines: 1,
+                            NonEmptyLines: 11,
                             BlankLines: 1,
-                            Language: null,
                             FileSizeBytes: 128,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -949,10 +933,8 @@ public sealed class MainWindowLayoutTests
                                 Metrics = new NodeMetrics(
                                     Tokens: 42,
                                     TotalLines: 12,
-                                    CodeLines: 10,
-                                    CommentLines: 1,
+                                    NonEmptyLines: 11,
                                     BlankLines: 1,
-                                    Language: "C#",
                                     FileSizeBytes: 128,
                                     DescendantFileCount: 1,
                                     DescendantDirectoryCount: 0),

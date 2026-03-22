@@ -4,8 +4,8 @@ This file is a candidate backlog for work that is outside the current MVP scope.
 
 ## Platform Follow-Up
 - macOS validation and packaging polish.
-- Linux validation, packaging strategy, and `tokei` sidecar verification.
-- Publish improvements such as smaller artifacts, single-file investigation, and sidecar delivery automation.
+- Linux validation and packaging strategy.
+- Publish improvements such as smaller artifacts, single-file investigation, and artifact delivery automation.
 - Native AOT investigation after the non-AOT baseline stays stable.
 
 ## Product Follow-Up

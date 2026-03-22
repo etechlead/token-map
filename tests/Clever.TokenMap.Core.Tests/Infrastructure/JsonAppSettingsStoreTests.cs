@@ -52,7 +52,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal("Code lines", settings.Analysis.SelectedMetric);
+        Assert.Equal("Non-empty lines", settings.Analysis.SelectedMetric);
         Assert.Equal("o200k_base", settings.Analysis.SelectedTokenProfile);
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.RespectIgnore);

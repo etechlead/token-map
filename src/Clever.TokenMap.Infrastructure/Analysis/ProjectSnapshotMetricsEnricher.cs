@@ -12,14 +12,10 @@ public sealed class ProjectSnapshotMetricsEnricher
     private readonly IAppLogger _logger;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
-    private readonly ITokeiRunner _tokeiRunner;
-    private readonly StringComparer _pathComparer =
-        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 
     public ProjectSnapshotMetricsEnricher(
         ITextFileDetector textFileDetector,
         ITokenCounter tokenCounter,
-        ITokeiRunner tokeiRunner,
         ICacheStore? cacheStore = null,
         IAppLogger? logger = null)
     {
@@ -27,7 +23,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         _logger = logger ?? NullAppLogger.Instance;
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
-        _tokeiRunner = tokeiRunner;
     }
 
     public Task<ProjectSnapshot> EnrichAsync(ProjectSnapshot snapshot, CancellationToken cancellationToken) =>
@@ -41,30 +36,11 @@ public sealed class ProjectSnapshotMetricsEnricher
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var warnings = new List<string>(snapshot.Warnings);
-        var includedFilePaths = CollectIncludedFilePaths(snapshot.Root);
         var totalFileCount = CountFileNodes(snapshot.Root);
-        IReadOnlyDictionary<string, TokeiFileStats> tokeiStats;
-
-        try
-        {
-            tokeiStats = await _tokeiRunner.CollectAsync(snapshot.RootPath, includedFilePaths, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            warnings.Add($"Unable to collect tokei metrics: {exception.Message}");
-            _logger.LogWarning(exception, $"Unable to collect tokei metrics for '{snapshot.RootPath}'.");
-            tokeiStats = new Dictionary<string, TokeiFileStats>(_pathComparer);
-        }
-
         var progressState = new ProgressState();
         await EnrichNodeAsync(
             snapshot.Root,
             snapshot.Options.TokenProfile,
-            tokeiStats,
             warnings,
             progress,
             totalFileCount,
@@ -85,7 +61,6 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task EnrichNodeAsync(
         ProjectNode node,
         TokenProfile tokenProfile,
-        IReadOnlyDictionary<string, TokeiFileStats> tokeiStats,
         List<string> warnings,
         IProgress<AnalysisProgress>? progress,
         int totalFileCount,
@@ -96,7 +71,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.Kind == ProjectNodeKind.File)
         {
-            await EnrichFileNodeAsync(node, tokenProfile, tokeiStats, warnings, cancellationToken);
+            await EnrichFileNodeAsync(node, tokenProfile, warnings, cancellationToken);
             progressState.ProcessedFileCount++;
             progress?.Report(new AnalysisProgress(
                 Phase: "AnalyzingFiles",
@@ -111,7 +86,6 @@ public sealed class ProjectSnapshotMetricsEnricher
             await EnrichNodeAsync(
                 child,
                 tokenProfile,
-                tokeiStats,
                 warnings,
                 progress,
                 totalFileCount,
@@ -123,7 +97,6 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task EnrichFileNodeAsync(
         ProjectNode node,
         TokenProfile tokenProfile,
-        IReadOnlyDictionary<string, TokeiFileStats> tokeiStats,
         List<string> warnings,
         CancellationToken cancellationToken)
     {
@@ -184,7 +157,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
 
         var normalizedContent = NormalizeNewlines(content);
-        var totalLines = CountTotalLines(normalizedContent);
+        var lineMetrics = CountLineMetrics(normalizedContent);
         long tokens = 0;
 
         try
@@ -202,15 +175,11 @@ public sealed class ProjectSnapshotMetricsEnricher
             _logger.LogWarning(exception, $"Token counting failed for '{node.FullPath}'.");
         }
 
-        tokeiStats.TryGetValue(node.RelativePath, out var tokeiFileStats);
-
         node.Metrics = new NodeMetrics(
             Tokens: tokens,
-            TotalLines: tokeiFileStats?.TotalLines ?? totalLines,
-            CodeLines: tokeiFileStats?.CodeLines,
-            CommentLines: tokeiFileStats?.CommentLines,
-            BlankLines: tokeiFileStats?.BlankLines,
-            Language: tokeiFileStats?.Language,
+            TotalLines: lineMetrics.TotalLines,
+            NonEmptyLines: lineMetrics.NonEmptyLines,
+            BlankLines: lineMetrics.BlankLines,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
@@ -242,13 +211,11 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         long tokens = 0;
         var totalLines = 0;
+        var nonEmptyLines = 0;
+        var blankLines = 0;
         long fileSizeBytes = 0;
         var descendantFileCount = 0;
         var descendantDirectoryCount = 0;
-
-        var codeLines = SumNullableMetric(childMetrics.Select(metrics => metrics.CodeLines));
-        var commentLines = SumNullableMetric(childMetrics.Select(metrics => metrics.CommentLines));
-        var blankLines = SumNullableMetric(childMetrics.Select(metrics => metrics.BlankLines));
 
         for (var index = 0; index < node.Children.Count; index++)
         {
@@ -256,6 +223,8 @@ public sealed class ProjectSnapshotMetricsEnricher
             var metrics = childMetrics[index];
             tokens += metrics.Tokens;
             totalLines += metrics.TotalLines;
+            nonEmptyLines += metrics.NonEmptyLines;
+            blankLines += metrics.BlankLines;
             fileSizeBytes += metrics.FileSizeBytes;
             descendantFileCount += metrics.DescendantFileCount;
             descendantDirectoryCount += metrics.DescendantDirectoryCount;
@@ -269,35 +238,13 @@ public sealed class ProjectSnapshotMetricsEnricher
         node.Metrics = new NodeMetrics(
             Tokens: tokens,
             TotalLines: totalLines,
-            CodeLines: codeLines,
-            CommentLines: commentLines,
+            NonEmptyLines: nonEmptyLines,
             BlankLines: blankLines,
-            Language: null,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: descendantFileCount,
             DescendantDirectoryCount: descendantDirectoryCount);
 
         return node.Metrics;
-    }
-
-    private static IReadOnlyCollection<string> CollectIncludedFilePaths(ProjectNode root)
-    {
-        var includedFiles = new List<string>();
-        CollectIncludedFilePaths(root, includedFiles);
-        return includedFiles;
-    }
-
-    private static void CollectIncludedFilePaths(ProjectNode node, List<string> includedFiles)
-    {
-        if (node.Kind == ProjectNodeKind.File && node.SkippedReason is null)
-        {
-            includedFiles.Add(node.RelativePath);
-        }
-
-        foreach (var child in node.Children)
-        {
-            CollectIncludedFilePaths(child, includedFiles);
-        }
     }
 
     private static int CountFileNodes(ProjectNode node)
@@ -320,54 +267,57 @@ public sealed class ProjectSnapshotMetricsEnricher
         new(
             Tokens: 0,
             TotalLines: 0,
-            CodeLines: null,
-            CommentLines: null,
-            BlankLines: null,
-            Language: null,
+            NonEmptyLines: 0,
+            BlankLines: 0,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
-
-    private static int? SumNullableMetric(IEnumerable<int?> values)
-    {
-        var hasValue = false;
-        var sum = 0;
-
-        foreach (var value in values)
-        {
-            if (!value.HasValue)
-            {
-                continue;
-            }
-
-            hasValue = true;
-            sum += value.Value;
-        }
-
-        return hasValue ? sum : null;
-    }
 
     private static string NormalizeNewlines(string content) =>
         content.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
 
-    private static int CountTotalLines(string content)
+    private static LineMetrics CountLineMetrics(string content)
     {
         if (string.IsNullOrEmpty(content))
         {
-            return 0;
+            return new LineMetrics(0, 0, 0);
         }
 
-        var lines = 1;
+        var totalLines = 0;
+        var blankLines = 0;
+        var hasVisibleCharacters = false;
+
         foreach (var character in content)
         {
             if (character == '\n')
             {
-                lines++;
+                totalLines++;
+                if (!hasVisibleCharacters)
+                {
+                    blankLines++;
+                }
+
+                hasVisibleCharacters = false;
+                continue;
+            }
+
+            if (!char.IsWhiteSpace(character))
+            {
+                hasVisibleCharacters = true;
             }
         }
 
-        return lines;
+        totalLines++;
+        if (!hasVisibleCharacters)
+        {
+            blankLines++;
+        }
+
+        return new LineMetrics(
+            TotalLines: totalLines,
+            NonEmptyLines: totalLines - blankLines,
+            BlankLines: blankLines);
     }
 
     private static bool IsRecoverableFileException(Exception exception) =>
@@ -448,4 +398,9 @@ public sealed class ProjectSnapshotMetricsEnricher
     {
         public int ProcessedFileCount { get; set; }
     }
+
+    private readonly record struct LineMetrics(
+        int TotalLines,
+        int NonEmptyLines,
+        int BlankLines);
 }

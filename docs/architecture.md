@@ -3,7 +3,7 @@
 ## Responsibility Split
 
 - `Clever.TokenMap.Core` holds domain models, shared contracts, analysis orchestration, and aggregation. It stays free of Avalonia and UI types.
-- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, `tokei` integration, cache, and path normalization.
+- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local line counting, cache, and path normalization.
 - `Clever.TokenMap.Controls` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, view models, commands, and binding to core services.
 
@@ -11,15 +11,15 @@
 
 - The scanner defines the tree structure and the included path set.
 - Token counts come from the local tokenizer pipeline.
-- Language and line metrics come from `tokei` where it recognizes the file.
-- Files that have no `tokei` stats still remain in the tree and can carry partial metrics.
+- Line metrics come from local file analysis for included text files.
+- File details show extensions rather than inferred languages.
 
 ## Path Handling
 
 - Nodes carry both `FullPath` and `RelativePath`.
 - Internal merge keys use normalized relative paths in `/` form.
 - Windows-oriented comparisons use case-insensitive behavior where needed.
-- Scanner output and `tokei` output meet on the same normalized relative-path key space.
+- Scanner output, cache keys, and analysis results meet on the same normalized relative-path key space.
 
 ## Treemap Model
 

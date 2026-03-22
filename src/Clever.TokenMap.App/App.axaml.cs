@@ -15,7 +15,6 @@ using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Infrastructure.Text;
 using Clever.TokenMap.Infrastructure.Tokenization;
-using Clever.TokenMap.Infrastructure.Tokei;
 
 namespace Clever.TokenMap.App;
 
@@ -44,7 +43,6 @@ public partial class App : Application
                 new FileSystemProjectScanner(logger: loggerFactory.CreateLogger<FileSystemProjectScanner>()),
                 new HeuristicTextFileDetector(),
                 new MicrosoftMlTokenCounter(),
-                new ProcessTokeiRunner(logger: loggerFactory.CreateLogger<ProcessTokeiRunner>()),
                 new InMemoryCacheStore(),
                 loggerFactory: loggerFactory);
 
