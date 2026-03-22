@@ -388,8 +388,10 @@
                 Grid.Row="0"
                 Classes="panel"
                 Padding="10">
-            <Grid>
-                <StackPanel HorizontalAlignment="Left"
+            <Grid ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="16">
+                <StackPanel Name="ToolbarPrimaryGroup"
+                            Grid.Column="0"
                             Orientation="Horizontal"
                             VerticalAlignment="Center"
                             Spacing="12">
@@ -410,18 +412,23 @@
                                 Command="{Binding Toolbar.CancelCommand}" />
                     </StackPanel>
 
-                    <StackPanel VerticalAlignment="Center"
+                    <StackPanel MaxWidth="280"
+                                VerticalAlignment="Center"
                                 Spacing="2">
                         <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
                                    FontSize="11"
                                    Text="Selected folder" />
-                        <TextBlock FontSize="13"
-                                    FontWeight="Medium"
+                        <TextBlock Name="SelectedFolderValueText"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   TextTrimming="CharacterEllipsis"
                                    Text="{Binding Toolbar.SelectedFolderDisplay}" />
                     </StackPanel>
                 </StackPanel>
 
-                <Grid HorizontalAlignment="Center"
+                <Grid Name="ToolbarSummaryGroup"
+                      Grid.Column="1"
+                      HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       ColumnDefinitions="Auto,Auto,Auto"
                       ColumnSpacing="18">
@@ -460,8 +467,8 @@
                 </Grid>
 
                 <Button Name="SettingsButton"
+                        Grid.Column="2"
                         Classes="action-button"
-                        HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Content="Settings"
                         Command="{Binding ToggleSettingsCommand}" />

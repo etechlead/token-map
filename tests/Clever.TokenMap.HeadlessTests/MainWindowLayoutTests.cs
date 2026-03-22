@@ -71,6 +71,31 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_ToolbarGroups_DoNotOverlapAtMinimumWidth()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+            Width = 1100,
+        };
+
+        window.Show();
+
+        var primaryGroup = window.FindControl<Control>("ToolbarPrimaryGroup");
+        var summaryGroup = window.FindControl<Control>("ToolbarSummaryGroup");
+        var settingsButton = window.FindControl<Button>("SettingsButton");
+        var selectedFolderValue = window.FindControl<TextBlock>("SelectedFolderValueText");
+
+        Assert.NotNull(primaryGroup);
+        Assert.NotNull(summaryGroup);
+        Assert.NotNull(settingsButton);
+        Assert.NotNull(selectedFolderValue);
+        Assert.True(primaryGroup.Bounds.Right <= summaryGroup.Bounds.Left);
+        Assert.True(summaryGroup.Bounds.Right <= settingsButton.Bounds.Left);
+        Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, selectedFolderValue.TextTrimming);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_ProjectTreeTable_UsesRequestedColumns()
     {
         var window = new MainWindow
