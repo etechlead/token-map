@@ -2,15 +2,12 @@ namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 
 internal sealed class IgnoreRule(
     string baseRelativePath,
-    string pattern,
     System.Text.RegularExpressions.Regex regex,
     bool isNegated,
     bool directoryOnly,
     bool matchFileNameOnly)
 {
     public string BaseRelativePath { get; } = baseRelativePath;
-
-    public string Pattern { get; } = pattern;
 
     public System.Text.RegularExpressions.Regex Regex { get; } = regex;
 

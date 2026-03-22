@@ -89,8 +89,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             normalizedRelativePath,
             isDirectory: true,
             isRoot,
-            skippedReason: null,
-            diagnosticMessage: null);
+            skippedReason: null);
 
         ReportProgress(progress, normalizedRelativePath);
         var ignoreContext = LoadIgnoreContext(
@@ -119,8 +118,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 normalizedRelativePath,
                 isDirectory: true,
                 isRoot,
-                skippedReason: SkippedReason.Inaccessible,
-                diagnosticMessage: exception.Message);
+                skippedReason: SkippedReason.Inaccessible);
         }
 
         foreach (var entry in entries)
@@ -152,8 +150,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                     normalizedRelativePath: entryRelativePath,
                     isDirectory,
                     isRoot: false,
-                    skippedReason: SkippedReason.ReparsePoint,
-                    diagnosticMessage: "Reparse points are skipped in MVP."));
+                    skippedReason: SkippedReason.ReparsePoint));
                 ReportProgress(progress, entryRelativePath);
                 continue;
             }
@@ -181,8 +178,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         normalizedRelativePath: entryRelativePath,
                         isDirectory: true,
                         isRoot: false,
-                        skippedReason: SkippedReason.Inaccessible,
-                        diagnosticMessage: exception.Message));
+                        skippedReason: SkippedReason.Inaccessible));
                     ReportProgress(progress, entryRelativePath);
                 }
 
@@ -194,8 +190,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 normalizedRelativePath: entryRelativePath,
                 isDirectory: false,
                 isRoot: false,
-                skippedReason: null,
-                diagnosticMessage: null));
+                skippedReason: null));
             ReportProgress(progress, entryRelativePath);
         }
 
@@ -207,8 +202,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         string normalizedRelativePath,
         bool isDirectory,
         bool isRoot,
-        SkippedReason? skippedReason,
-        string? diagnosticMessage)
+        SkippedReason? skippedReason)
     {
         var normalizedFullPath = _pathNormalizer.NormalizeFullPath(fullPath);
         var name = isRoot
@@ -224,7 +218,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             Kind = PathNormalizer.GetNodeKind(isDirectory, isRoot),
             Metrics = NodeMetrics.Empty,
             SkippedReason = skippedReason,
-            DiagnosticMessage = diagnosticMessage,
         };
     }
 

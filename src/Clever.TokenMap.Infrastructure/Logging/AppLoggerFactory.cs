@@ -51,10 +51,7 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
     }
 
     public IAppLogger CreateLogger<TCategory>() =>
-        CreateLogger(typeof(TCategory).FullName ?? typeof(TCategory).Name);
-
-    public IAppLogger CreateLogger(string categoryName) =>
-        new AppLogger(_logger.ForContext("SourceContext", categoryName));
+        CreateLoggerCore(typeof(TCategory).FullName ?? typeof(TCategory).Name);
 
     public void Dispose()
     {
@@ -73,6 +70,9 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
             _ => LogEventLevel.Information,
         };
 
+    private AppLogger CreateLoggerCore(string categoryName) =>
+        new AppLogger(_logger.ForContext("SourceContext", categoryName));
+
     private sealed class AppLogger : IAppLogger
     {
         private readonly Serilog.ILogger _logger;
@@ -82,16 +82,14 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
             _logger = logger;
         }
 
-        public bool IsEnabled(AppLogLevel level) => _logger.IsEnabled(ToSerilogLevel(level));
-
         public void Log(AppLogLevel level, string message, Exception? exception = null)
         {
-            if (!IsEnabled(level))
+            var serilogLevel = ToSerilogLevel(level);
+            if (!_logger.IsEnabled(serilogLevel))
             {
                 return;
             }
 
-            var serilogLevel = ToSerilogLevel(level);
             if (exception is null)
             {
                 _logger.Write(serilogLevel, "{Text:l}", message);

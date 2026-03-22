@@ -17,14 +17,14 @@ public sealed class AppLoggerFactoryTests : IDisposable
 
         using (var factory = CreateFactory(AppLogLevel.Debug))
         {
-            factory.CreateLogger("Tests.Logging").LogInformation("Analysis started.");
+            factory.CreateLogger<TestsLoggingCategory>().LogInformation("Analysis started.");
         }
 
         var logFiles = Directory.GetFiles(_testRootPath, "tokenmap-*.log");
         logFilePath = Assert.Single(logFiles);
         var content = File.ReadAllText(logFilePath);
 
-        Assert.Contains("[INF] Tests.Logging: Analysis started.", content);
+        Assert.Contains("TestsLoggingCategory: Analysis started.", content);
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     {
         using var factory = CreateFactory(AppLogLevel.Warning);
 
-        factory.CreateLogger("Tests.Logging").LogInformation("This should be filtered.");
+        factory.CreateLogger<TestsLoggingCategory>().LogInformation("This should be filtered.");
 
         Assert.False(Directory.Exists(_testRootPath));
     }
@@ -44,7 +44,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
             AppLogLevel.Information,
             fileSizeLimitBytes: 512,
             retainedFileCountLimit: 10);
-        var logger = factory.CreateLogger("Tests.Logging");
+        var logger = factory.CreateLogger<TestsLoggingCategory>();
 
         for (var index = 0; index < 40; index++)
         {
@@ -61,7 +61,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
             AppLogLevel.Information,
             fileSizeLimitBytes: 256,
             retainedFileCountLimit: 2);
-        var logger = factory.CreateLogger("Tests.Logging");
+        var logger = factory.CreateLogger<TestsLoggingCategory>();
 
         for (var index = 0; index < 60; index++)
         {
@@ -82,7 +82,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
         try
         {
             using var factory = CreateFactory(AppLogLevel.Information, enableConsoleSinkInDebugMode: true);
-            factory.CreateLogger("Tests.Logging").LogInformation("console-check");
+            factory.CreateLogger<TestsLoggingCategory>().LogInformation("console-check");
         }
         finally
         {
@@ -115,4 +115,6 @@ public sealed class AppLoggerFactoryTests : IDisposable
             fileSizeLimitBytes: fileSizeLimitBytes,
             retainedFileCountLimit: retainedFileCountLimit,
             enableConsoleSinkInDebugMode: enableConsoleSinkInDebugMode);
+
+    private sealed class TestsLoggingCategory;
 }

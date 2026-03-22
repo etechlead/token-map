@@ -9,6 +9,4 @@ public sealed class NullAppLoggerFactory : IAppLoggerFactory
     }
 
     public IAppLogger CreateLogger<TCategory>() => NullAppLogger.Instance;
-
-    public IAppLogger CreateLogger(string categoryName) => NullAppLogger.Instance;
 }

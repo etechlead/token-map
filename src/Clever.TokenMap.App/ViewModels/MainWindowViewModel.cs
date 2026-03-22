@@ -31,52 +31,14 @@ public partial class MainWindowViewModel : ViewModelBase
         : this(
             CreateAnalysisSessionController(new NullProjectAnalyzer(), new NullFolderPickerService(), NullAppLogger.Instance),
             new TreemapNavigationState(),
-            new NullSettingsCoordinator(),
-            NullAppLogger.Instance)
-    {
-    }
-
-    public MainWindowViewModel(IProjectAnalyzer projectAnalyzer, IFolderPickerService folderPickerService)
-        : this(
-            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, NullAppLogger.Instance),
-            new TreemapNavigationState(),
-            new NullSettingsCoordinator(),
-            NullAppLogger.Instance)
-    {
-    }
-
-    public MainWindowViewModel(
-        IProjectAnalyzer projectAnalyzer,
-        IFolderPickerService folderPickerService,
-        IAppSettingsStore appSettingsStore,
-        IAppLogger? logger = null)
-        : this(
-            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, logger),
-            new TreemapNavigationState(),
-            new SettingsCoordinator(appSettingsStore, new NullThemeService(), logger),
-            logger)
-    {
-    }
-
-    public MainWindowViewModel(
-        IProjectAnalyzer projectAnalyzer,
-        IFolderPickerService folderPickerService,
-        IAppSettingsStore appSettingsStore,
-        IThemeService themeService,
-        IAppLogger? logger = null)
-        : this(
-            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, logger),
-            new TreemapNavigationState(),
-            new SettingsCoordinator(appSettingsStore, themeService, logger),
-            logger)
+            new NullSettingsCoordinator())
     {
     }
 
     public MainWindowViewModel(
         IAnalysisSessionController analysisSessionController,
         TreemapNavigationState treemapNavigationState,
-        ISettingsCoordinator settingsCoordinator,
-        IAppLogger? logger = null)
+        ISettingsCoordinator settingsCoordinator)
     {
         _analysisSessionController = analysisSessionController;
         _treemapNavigationState = treemapNavigationState;
@@ -106,7 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase
             ApplySnapshot(snapshot);
         }
 
-        Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+        Summary.SetState(_analysisSessionController.State);
         if (_analysisSessionController.CurrentProgress is { } progress)
         {
             Summary.UpdateProgress(progress);
@@ -138,8 +100,6 @@ public partial class MainWindowViewModel : ViewModelBase
     public bool CanShowTreemapScope => _treemapNavigationState.CanShowTreemapScope;
 
     public string TreemapScopeDisplay => _treemapNavigationState.TreemapScopeDisplay;
-
-    public IRelayCommand ResetTreemapRootCommand => _resetTreemapRootCommand;
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
@@ -209,7 +169,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 break;
             case nameof(IAnalysisSessionController.State):
                 OnPropertyChanged(nameof(AnalysisState));
-                Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+                Summary.SetState(_analysisSessionController.State);
                 if (_analysisSessionController.State == AnalysisState.Completed &&
                     _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
                 {
@@ -219,7 +179,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 RefreshToolbarAvailability();
                 break;
             case nameof(IAnalysisSessionController.StatusMessage):
-                Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+                Summary.SetState(_analysisSessionController.State);
                 break;
             case nameof(IAnalysisSessionController.CurrentProgress):
                 if (_analysisSessionController.CurrentProgress is { } progress)
@@ -262,7 +222,6 @@ public partial class MainWindowViewModel : ViewModelBase
     private void RefreshToolbarAvailability()
     {
         Toolbar.RefreshAvailability(
-            _analysisSessionController.HasSelectedFolder,
             _analysisSessionController.IsBusy,
             _analysisSessionController.HasSnapshot);
     }
@@ -294,22 +253,10 @@ public partial class MainWindowViewModel : ViewModelBase
             throw new InvalidOperationException("Project analyzer is not configured.");
     }
 
-    private sealed class NullThemeService : IThemeService
-    {
-        public ThemePreference CurrentSystemTheme => ThemePreference.Light;
-
-        public void ApplyThemePreference(ThemePreference themePreference)
-        {
-        }
-    }
-
     private sealed class NullSettingsCoordinator : ISettingsCoordinator
     {
         public void Attach(ToolbarViewModel toolbar)
         {
         }
-
-        public Task FlushAsync(CancellationToken cancellationToken = default) =>
-            Task.CompletedTask;
     }
 }

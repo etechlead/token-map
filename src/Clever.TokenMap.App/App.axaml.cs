@@ -60,8 +60,7 @@ public partial class App : Application
             mainWindow.DataContext = new MainWindowViewModel(
                 analysisSessionController,
                 new TreemapNavigationState(),
-                settingsCoordinator,
-                loggerFactory.CreateLogger<MainWindowViewModel>());
+                settingsCoordinator);
             desktop.MainWindow = mainWindow;
         }
 

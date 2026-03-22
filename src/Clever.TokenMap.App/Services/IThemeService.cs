@@ -4,7 +4,5 @@ namespace Clever.TokenMap.App.Services;
 
 public interface IThemeService
 {
-    ThemePreference CurrentSystemTheme { get; }
-
     void ApplyThemePreference(ThemePreference themePreference);
 }

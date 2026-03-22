@@ -8,8 +8,6 @@ public sealed class NullAppLogger : IAppLogger
     {
     }
 
-    public bool IsEnabled(AppLogLevel level) => false;
-
     public void Log(AppLogLevel level, string message, Exception? exception = null)
     {
     }

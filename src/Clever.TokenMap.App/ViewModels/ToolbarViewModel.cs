@@ -117,7 +117,7 @@ public partial class ToolbarViewModel : ViewModelBase
             : folderPath;
     }
 
-    public void RefreshAvailability(bool hasSelectedFolder, bool isBusy, bool hasSnapshot)
+    public void RefreshAvailability(bool isBusy, bool hasSnapshot)
     {
         CanConfigureScanOptions = !isBusy;
         CanChangeMetric = hasSnapshot && !isBusy;

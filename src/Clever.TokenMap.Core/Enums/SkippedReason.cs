@@ -2,11 +2,10 @@ namespace Clever.TokenMap.Core.Enums;
 
 public enum SkippedReason
 {
-    Excluded = 0,
-    ReparsePoint = 1,
-    Inaccessible = 2,
-    MissingDuringScan = 3,
-    Binary = 4,
-    Unsupported = 5,
-    Error = 6,
+    ReparsePoint = 0,
+    Inaccessible = 1,
+    MissingDuringScan = 2,
+    Binary = 3,
+    Unsupported = 4,
+    Error = 5,
 }

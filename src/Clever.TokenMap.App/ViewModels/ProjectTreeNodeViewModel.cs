@@ -17,15 +17,6 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         Depth = parent is null ? 0 : parent.Depth + 1;
         Name = node.Name;
         RelativePath = string.IsNullOrEmpty(node.RelativePath) ? "(root)" : node.RelativePath;
-        KindText = node.Kind switch
-        {
-            ProjectNodeKind.Root => "Root",
-            ProjectNodeKind.Directory => "Directory",
-            _ => "File",
-        };
-        SecondaryText = node.Kind == ProjectNodeKind.File
-            ? $"{node.Metrics.Tokens:N0} tok"
-            : $"{node.Metrics.DescendantFileCount:N0} files";
         Children = new ObservableCollection<ProjectTreeNodeViewModel>(
             node.Children.Select(child => new ProjectTreeNodeViewModel(child, this)));
     }
@@ -39,10 +30,6 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
     public string Name { get; }
 
     public string RelativePath { get; }
-
-    public string KindText { get; }
-
-    public string SecondaryText { get; }
 
     public ObservableCollection<ProjectTreeNodeViewModel> Children { get; }
 

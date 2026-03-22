@@ -195,9 +195,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_OpenFolderFlow_PopulatesTreeAndSummary()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -233,7 +231,7 @@ public sealed class MainWindowLayoutTests
 
         Assert.False(viewModel.IsProgressVisible);
 
-        viewModel.SetState(AnalysisState.Scanning, "Analyzing C:\\Demo");
+        viewModel.SetState(AnalysisState.Scanning);
         Assert.True(viewModel.IsProgressVisible);
         Assert.True(viewModel.IsProgressIndeterminate);
         Assert.Equal(0, viewModel.ProgressValue);
@@ -530,9 +528,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_CancelCommand_ShowsProgressOnlyWhileScanIsRunning()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new CancelAwareProjectAnalyzer(),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new CancelAwareProjectAnalyzer());
         window.DataContext = viewModel;
 
         window.Show();
@@ -613,9 +609,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_TreemapSelection_SynchronizesTree()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -639,9 +633,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_TreemapSelection_ExpandsAncestorChainInProjectTree()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateNestedSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -671,9 +663,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_TreemapDirectoryDrillDown_ScopesTreemapAndSynchronizesTree()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateNestedSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -705,9 +695,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_TreemapBreadcrumbNavigation_RestoresGlobalTreemap()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateNestedSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -738,9 +726,7 @@ public sealed class MainWindowLayoutTests
     public async Task MainWindow_TreeSelection_SynchronizesTreemap()
     {
         var window = new MainWindow();
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(CreateSnapshot()),
-            new StubFolderPickerService("C:\\Demo"));
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
         window.DataContext = viewModel;
 
         window.Show();
@@ -842,6 +828,16 @@ public sealed class MainWindowLayoutTests
                 },
             },
         };
+
+    private static MainWindowViewModel CreateMainWindowViewModel(
+        IProjectAnalyzer projectAnalyzer,
+        string? selectedFolderPath = "C:\\Demo") =>
+        new(
+            new AnalysisSessionController(
+                projectAnalyzer,
+                new StubFolderPickerService(selectedFolderPath)),
+            new TreemapNavigationState(),
+            new StubSettingsCoordinator());
 
     private static T? FindNamedDescendant<T>(Window window, string name)
         where T : Control
@@ -972,6 +968,13 @@ public sealed class MainWindowLayoutTests
             IProgress<AnalysisProgress>? progress,
             CancellationToken cancellationToken) =>
             Task.FromResult(snapshot);
+    }
+
+    private sealed class StubSettingsCoordinator : ISettingsCoordinator
+    {
+        public void Attach(ToolbarViewModel toolbar)
+        {
+        }
     }
 
     private sealed class CancelAwareProjectAnalyzer : IProjectAnalyzer

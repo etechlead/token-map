@@ -131,7 +131,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         if (!isText)
         {
             node.SkippedReason = SkippedReason.Binary;
-            node.DiagnosticMessage = "Binary file is excluded from token and LOC analysis.";
             node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
             return;
         }
@@ -149,7 +148,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
         {
             node.SkippedReason = SkippedReason.Unsupported;
-            node.DiagnosticMessage = exception.Message;
             warnings.Add($"Unable to decode '{node.FullPath}': {exception.Message}");
             _logger.LogWarning(exception, $"Unable to decode '{node.FullPath}'.");
             node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
@@ -171,7 +169,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         catch (Exception exception)
         {
             warnings.Add($"Unable to count tokens for '{node.FullPath}': {exception.Message}");
-            node.DiagnosticMessage = $"Token counting failed: {exception.Message}";
             _logger.LogWarning(exception, $"Token counting failed for '{node.FullPath}'.");
         }
 
@@ -361,7 +358,6 @@ public sealed class ProjectSnapshotMetricsEnricher
             : exception is UnauthorizedAccessException
                 ? SkippedReason.Inaccessible
                 : SkippedReason.Error;
-        node.DiagnosticMessage = exception.Message;
         node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
 
         warnings.Add($"Unable to analyze '{node.FullPath}': {exception.Message}");

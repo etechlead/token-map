@@ -18,7 +18,5 @@ public sealed class ProjectNode
 
     public SkippedReason? SkippedReason { get; set; }
 
-    public string? DiagnosticMessage { get; set; }
-
     public List<ProjectNode> Children { get; } = [];
 }

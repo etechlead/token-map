@@ -53,7 +53,6 @@ internal sealed class IgnoreFileParser
 
             rules.Add(new IgnoreRule(
                 baseRelativePath,
-                normalizedPattern,
                 regex,
                 isNegated,
                 directoryOnly,

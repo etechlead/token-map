@@ -10,7 +10,7 @@ public sealed class ApplicationThemeService(Application application) : IThemeSer
 {
     private readonly Application _application = application;
 
-    public ThemePreference CurrentSystemTheme => GetCurrentSystemTheme();
+    internal ThemePreference CurrentSystemTheme => GetCurrentSystemTheme();
 
     public void ApplyThemePreference(ThemePreference themePreference)
     {

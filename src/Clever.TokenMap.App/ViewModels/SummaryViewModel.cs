@@ -37,7 +37,7 @@ public partial class SummaryViewModel : ViewModelBase
     [ObservableProperty]
     private string warningSummaryValue = "0";
 
-    public void SetState(AnalysisState state, string? message = null)
+    public void SetState(AnalysisState state)
     {
         SummaryText = state switch
         {

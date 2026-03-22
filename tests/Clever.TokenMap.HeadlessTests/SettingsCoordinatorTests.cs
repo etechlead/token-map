@@ -105,8 +105,6 @@ public sealed class SettingsCoordinatorTests
 
     private sealed class RecordingThemeService : IThemeService
     {
-        public ThemePreference CurrentSystemTheme => ThemePreference.Light;
-
         public ThemePreference? LastAppliedThemePreference { get; private set; }
 
         public void ApplyThemePreference(ThemePreference themePreference)
