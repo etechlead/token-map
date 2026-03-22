@@ -32,6 +32,18 @@ Examples:
 - Describe the resulting change, not the implementation detail
 - Prefer English commit messages to stay consistent with existing history
 
+## When To Commit
+- Commit after each coherent, verified change block that leaves the repo in a shippable state
+- Do not batch unrelated work into one commit just because it was done in the same session
+- If a user-visible behavior needs coupled UI, viewmodel, test, and docs changes, commit them together
+- If a task is still half-done or verification is red, keep working until the block is complete instead of creating a checkpoint commit
+- When a follow-up fix is required for the block you just changed, fold it into the same final commit if it has not been committed yet
+
+## Git Safety
+- Do not rewrite published history unless the user explicitly asks for it
+- Prefer normal commits over amend/rebase for follow-up changes
+- Keep commits non-interactive and reproducible from the current worktree
+
 ## Repo-Specific Rules
 - Keep one coherent concern per commit
 - Group together tightly coupled tree/treemap/viewmodel/test changes when they ship one user-facing behavior
