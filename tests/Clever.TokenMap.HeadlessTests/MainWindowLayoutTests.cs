@@ -612,8 +612,11 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
         Assert.Null(control.SelectedNode);
         Assert.Contains("Program.cs", control.TooltipText);
+        var tooltipContent = Assert.IsType<Border>(ToolTip.GetTip(control));
+        var tooltipStack = Assert.IsType<StackPanel>(tooltipContent.Child);
+        var pathText = Assert.IsType<TextBlock>(tooltipStack.Children[0]);
+        Assert.Contains("Program.cs", pathText.Text);
         Assert.True(ToolTip.GetIsOpen(control));
-        Assert.Equal(control.TooltipText, ToolTip.GetTip(control));
 
         control.ClearHover();
 

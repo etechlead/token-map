@@ -26,6 +26,9 @@ public sealed class TreemapControl : Control
     private Size _layoutSize;
     private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
     private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
+    private static readonly IBrush TooltipBorderFallbackBrush = new SolidColorBrush(Color.Parse("#2F6FD6"));
+    private static readonly IBrush TooltipBackgroundFallbackBrush = new SolidColorBrush(Color.Parse("#0F1621"));
+    private static readonly IBrush TooltipLabelFallbackBrush = new SolidColorBrush(Color.Parse("#8FA3B8"));
 
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
@@ -226,7 +229,7 @@ public sealed class TreemapControl : Control
 
         HoveredNode = hoveredNode;
         TooltipText = hoveredNode is null ? null : BuildTooltip(hoveredNode);
-        ToolTip.SetTip(this, TooltipText);
+        ToolTip.SetTip(this, hoveredNode is null ? null : BuildTooltipContent(hoveredNode));
         ToolTip.SetShowDelay(this, 0);
         ToolTip.SetIsOpen(this, hoveredNode is not null);
         InvalidateVisual();
@@ -310,6 +313,88 @@ public sealed class TreemapControl : Control
                 : "n/a");
 
         return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nCode/Comments/Blanks: {breakdown}\nLanguage/Ext: {languageOrExtension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+    }
+
+    private Control BuildTooltipContent(ProjectNode node)
+    {
+        var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
+        var share = RootNode is null
+            ? "n/a"
+            : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
+        var breakdown = node.Metrics.CodeLines is null && node.Metrics.CommentLines is null && node.Metrics.BlankLines is null
+            ? "n/a"
+            : $"{node.Metrics.CodeLines ?? 0:N0}/{node.Metrics.CommentLines ?? 0:N0}/{node.Metrics.BlankLines ?? 0:N0}";
+        var languageOrExtension = node.Metrics.Language
+            ?? (node.Kind == Core.Enums.ProjectNodeKind.File
+                ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
+                : "n/a");
+
+        var labelBrush = GetThemeBrush("TokenMapAccentHoverBrush", TooltipLabelFallbackBrush);
+        var valueBrush = Brushes.White;
+
+        var content = new StackPanel
+        {
+            Spacing = 8,
+        };
+        content.Children.Add(new TextBlock
+        {
+            Text = relativePath,
+            Foreground = valueBrush,
+            FontWeight = FontWeight.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+            MaxWidth = 320,
+        });
+        content.Children.Add(new TextBlock
+        {
+            Text = GetKindText(node),
+            Foreground = labelBrush,
+            FontSize = 11,
+        });
+        content.Children.Add(CreateTooltipRow("Tokens", node.Metrics.Tokens.ToString("N0"), labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Share", share, labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Lines", node.Metrics.TotalLines.ToString("N0"), labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Code/Comments/Blanks", breakdown, labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Language/Ext", languageOrExtension, labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0"), labelBrush, valueBrush));
+
+        return new Border
+        {
+            Background = GetThemeBrush("TokenMapAccentSurfaceBrush", TooltipBackgroundFallbackBrush),
+            BorderBrush = GetThemeBrush("TokenMapAccentPressedBrush", TooltipBorderFallbackBrush),
+            BorderThickness = new Thickness(1),
+            CornerRadius = new CornerRadius(8),
+            Padding = new Thickness(12),
+            Child = content,
+            MaxWidth = 360,
+        };
+    }
+
+    private static Control CreateTooltipRow(string label, string value, IBrush labelBrush, IBrush valueBrush)
+    {
+        var grid = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("Auto,*"),
+            ColumnSpacing = 10,
+        };
+        grid.Children.Add(new TextBlock
+        {
+            Text = label,
+            Foreground = labelBrush,
+            FontSize = 11,
+            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Top,
+        });
+
+        var valueText = new TextBlock
+        {
+            Text = value,
+            Foreground = valueBrush,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 12,
+        };
+        Grid.SetColumn(valueText, 1);
+        grid.Children.Add(valueText);
+
+        return grid;
     }
 
     private double GetMetricValue(ProjectNode node) =>

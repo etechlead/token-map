@@ -27,7 +27,7 @@ This file tracks the current ordered work. Check off a stage only after code, do
   - Ensure the drawer does not consume horizontal workspace width while closed.
   - Move treemap metric, tokenizer, and ignore-related settings into the drawer without losing functionality.
 
-- [ ] Stage 3. Treemap tooltip overhaul
+- [x] Stage 3. Treemap tooltip overhaul
   - Replace the current raw multiline tooltip text with a custom tooltip/popup layout.
   - Keep the tooltip as the only detailed inspection surface for nodes.
   - Show: path, node kind, tokens, total lines, code/comments/blanks, language/ext, share, and subtree file count.
