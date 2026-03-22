@@ -17,8 +17,9 @@
 - Shared accent alignment is in place for selection, focus, progress, and action emphasis without changing treemap fill colors.
 - Toolbar settings are collapsed behind an on-demand right-side settings drawer that does not consume workspace width while closed.
 - Treemap hover now uses a custom structured tooltip layout instead of a raw multiline text tooltip.
+- Treemap scope navigation now uses breadcrumbs instead of the old `Scope + Back to overview` pair.
 - Automatic path expansion in the tree when a node is selected from the treemap.
-- Treemap drill-down on directory double-click with local scope and return through `Back to overview`.
+- Treemap drill-down on directory double-click now pairs with breadcrumb-based scope return.
 - Verified `win-x64` publish and configured secondary target `osx-arm64`.
 
 ## Fixed Decisions
@@ -30,6 +31,7 @@
 - Stage 1 of the active UX/UI plan is complete: one shared accent family now drives selection, focus, progress, and action emphasis.
 - Stage 2 of the active UX/UI plan is complete: toolbar settings moved into a toggleable right-side drawer overlay.
 - Stage 3 of the active UX/UI plan is complete: treemap hover details render through a custom tooltip layout.
+- Stage 4 of the active UX/UI plan is complete: breadcrumb navigation replaced `Scope + Back to overview` for treemap scope changes.
 - Primary publish target: `win-x64`.
 - `single-file`, `Native AOT`, installer/signing, and Linux polish are post-MVP.
 
@@ -62,7 +64,6 @@
 - The ignore parser covers the MVP subset of rules, not the full range of Git ignore edge cases.
 - The cache is still in-memory only and lives within a single process.
 - The `tokei` sidecar is physically included only for `win-x64`; `osx-arm64` has only a prepared placement slot.
-- Treemap scope navigation still uses `Scope` + `Back to overview` instead of breadcrumbs.
 - The tree table does not yet expose developer-oriented file-type icons.
 - `restore/build` currently warn about a transitive vulnerability in `Microsoft.Bcl.Memory 9.0.4` coming from `Microsoft.ML.Tokenizers` (`NU1903`).
 - Linux support, installer/signing, single-file publish, and Native AOT are outside MVP.

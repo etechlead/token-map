@@ -32,7 +32,7 @@ This file tracks the current ordered work. Check off a stage only after code, do
   - Keep the tooltip as the only detailed inspection surface for nodes.
   - Show: path, node kind, tokens, total lines, code/comments/blanks, language/ext, share, and subtree file count.
 
-- [ ] Stage 4. Treemap scope navigation
+- [x] Stage 4. Treemap scope navigation
   - Replace `Scope` + `Back to Root` with breadcrumb navigation in the treemap header.
   - Preserve the current drill-down behavior and root reset behavior.
   - Do not add extra metric text into treemap tiles.

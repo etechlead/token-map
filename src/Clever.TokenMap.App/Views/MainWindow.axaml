@@ -6,6 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         x:Class="Clever.TokenMap.App.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
+        x:Name="RootWindow"
         Width="1440"
         Height="860"
         MinWidth="1100"
@@ -119,6 +120,20 @@
         <Style Selector="Border.settings-drawer">
             <Setter Property="Width" Value="340" />
             <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style Selector="Button.breadcrumb-link">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+        </Style>
+        <Style Selector="Button.breadcrumb-link:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
+        </Style>
+        <Style Selector="TextBlock.breadcrumb-current">
+            <Setter Property="Foreground" Value="#F5F7FA" />
+            <Setter Property="FontWeight" Value="Medium" />
         </Style>
     </Window.Styles>
 
@@ -291,26 +306,38 @@
                         Classes="panel">
                     <Grid RowDefinitions="Auto,*"
                           RowSpacing="12">
-                        <Grid ColumnDefinitions="*,Auto,Auto"
+                        <Grid ColumnDefinitions="Auto,*"
                               ColumnSpacing="12">
                             <TextBlock Classes="panel-title"
                                        VerticalAlignment="Center"
                                        Text="Treemap" />
-                            <TextBlock Name="TreemapScopeText"
-                                       Grid.Column="1"
-                                       IsVisible="{Binding CanShowTreemapScope}"
-                                       VerticalAlignment="Center"
-                                       Foreground="#8FA3B8"
-                                       FontSize="11"
-                                       Text="{Binding TreemapScopeDisplay}" />
-                            <Button Name="TreemapBackToOverviewButton"
-                                    Grid.Column="2"
-                                    Classes="action-button"
-                                    HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
-                                    Content="Back to Root"
-                                    Command="{Binding ResetTreemapRootCommand}"
-                                    IsVisible="{Binding CanResetTreemapRoot}" />
+                            <ItemsControl Name="TreemapBreadcrumbsItemsControl"
+                                          Grid.Column="1"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center"
+                                          ItemsSource="{Binding TreemapBreadcrumbs}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="6" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:TreemapBreadcrumbItemViewModel">
+                                        <StackPanel Orientation="Horizontal"
+                                                    Spacing="0">
+                                            <Button Classes="breadcrumb-link"
+                                                    IsVisible="{Binding CanNavigate}"
+                                                    Content="{Binding Label}"
+                                                    Command="{Binding #RootWindow.DataContext.NavigateToTreemapBreadcrumbCommand}"
+                                                    CommandParameter="{Binding Node}" />
+                                            <TextBlock Classes="breadcrumb-current"
+                                                       IsVisible="{Binding IsCurrent}"
+                                                       Text="{Binding Label}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Grid>
                         <Border Grid.Row="1"
                                 Background="#0B1018"

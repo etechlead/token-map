@@ -32,10 +32,12 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(statusStrip);
         Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
         Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
-        Assert.NotNull(window.FindControl<TextBlock>("TreemapScopeText"));
+        Assert.NotNull(window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl"));
         Assert.Null(window.FindControl<Control>("DetailsPane"));
         Assert.NotNull(window.FindControl<Button>("SettingsButton"));
         var settingsDrawer = window.FindControl<Control>("SettingsDrawer");
+        Assert.Null(window.FindControl<TextBlock>("TreemapScopeText"));
+        Assert.Null(window.FindControl<Button>("TreemapBackToOverviewButton"));
         Assert.NotNull(window.FindControl<ProgressBar>("StatusProgressBar"));
         Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
         Assert.Null(window.FindControl<TextBlock>("StatusValueText"));
@@ -504,13 +506,11 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
-        var backButton = window.FindControl<Button>("TreemapBackToOverviewButton");
-        var scopeText = window.FindControl<TextBlock>("TreemapScopeText");
+        var breadcrumbs = window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl");
 
         Assert.NotNull(control);
-        Assert.NotNull(backButton);
-        Assert.NotNull(scopeText);
-        Assert.False(scopeText.IsVisible);
+        Assert.NotNull(breadcrumbs);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
 
         var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
         var handled = control.RequestDrillDownAt(new Avalonia.Point(
@@ -521,13 +521,14 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("src", viewModel.TreemapRootNode?.RelativePath);
         Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
         Assert.Equal("src", viewModel.SelectedNode?.RelativePath);
-        Assert.Equal("src", scopeText.Text);
-        Assert.True(backButton.IsVisible);
+        Assert.Equal(2, viewModel.TreemapBreadcrumbs.Count);
+        Assert.Equal("Demo", viewModel.TreemapBreadcrumbs[0].Label);
+        Assert.Equal("/ src", viewModel.TreemapBreadcrumbs[1].Label);
         Assert.All(control.NodeVisuals, item => Assert.StartsWith("src", item.Node.RelativePath));
     }
 
     [AvaloniaFact]
-    public async Task MainWindow_TreemapBackToOverview_RestoresGlobalTreemap()
+    public async Task MainWindow_TreemapBreadcrumbNavigation_RestoresGlobalTreemap()
     {
         var window = new MainWindow();
         var viewModel = new MainWindowViewModel(
@@ -539,26 +540,23 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
-        var backButton = window.FindControl<Button>("TreemapBackToOverviewButton");
-        var scopeText = window.FindControl<TextBlock>("TreemapScopeText");
+        var breadcrumbs = window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl");
 
         Assert.NotNull(control);
-        Assert.NotNull(backButton);
-        Assert.NotNull(scopeText);
-        Assert.False(scopeText.IsVisible);
+        Assert.NotNull(breadcrumbs);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
 
         var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
         control.RequestDrillDownAt(new Avalonia.Point(
             directoryVisual.Bounds.X + 6,
             directoryVisual.Bounds.Y + 6));
 
-        viewModel.ResetTreemapRootCommand.Execute(null);
+        viewModel.NavigateToTreemapBreadcrumbCommand.Execute(viewModel.TreemapBreadcrumbs[0].Node);
 
         Assert.Equal("/", viewModel.TreemapRootNode?.Id);
         Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
-        Assert.Equal(string.Empty, scopeText.Text);
-        Assert.False(scopeText.IsVisible);
-        Assert.False(backButton.IsVisible);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
+        Assert.Equal("Demo", viewModel.TreemapBreadcrumbs[0].Label);
         Assert.Contains(control.NodeVisuals, item => item.Node.RelativePath == "src");
     }
 

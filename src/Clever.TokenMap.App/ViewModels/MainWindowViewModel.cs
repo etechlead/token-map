@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Models;
@@ -14,6 +15,7 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IFolderPickerService _folderPickerService;
     private readonly IProjectAnalyzer _projectAnalyzer;
+    private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
     private CancellationTokenSource? _analysisCancellationTokenSource;
@@ -35,6 +37,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
+        _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
         _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
         Tree = new ProjectTreeViewModel();
@@ -61,6 +64,7 @@ public partial class MainWindowViewModel : ViewModelBase
             {
                 OnPropertyChanged(nameof(CanResetTreemapRoot));
                 OnPropertyChanged(nameof(TreemapScopeDisplay));
+                TreemapBreadcrumbs = BuildTreemapBreadcrumbs(value);
                 _resetTreemapRootCommand.NotifyCanExecuteChanged();
             }
         }
@@ -69,6 +73,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public IRelayCommand ResetTreemapRootCommand => _resetTreemapRootCommand;
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
+
+    public IRelayCommand<ProjectNode?> NavigateToTreemapBreadcrumbCommand => _navigateToTreemapBreadcrumbCommand;
 
     public bool CanResetTreemapRoot =>
         _currentSnapshot is not null &&
@@ -83,6 +89,9 @@ public partial class MainWindowViewModel : ViewModelBase
             : CanResetTreemapRoot
                 ? TreemapRootNode.RelativePath
                 : string.Empty;
+
+    [ObservableProperty]
+    private IReadOnlyList<TreemapBreadcrumbItemViewModel> treemapBreadcrumbs = [];
 
     [ObservableProperty]
     private ProjectNode? selectedNode;
@@ -220,6 +229,65 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
+    }
+
+    private void NavigateToTreemapBreadcrumb(ProjectNode? node)
+    {
+        if (node is null)
+        {
+            return;
+        }
+
+        TreemapRootNode = node;
+    }
+
+    private IReadOnlyList<TreemapBreadcrumbItemViewModel> BuildTreemapBreadcrumbs(ProjectNode? node)
+    {
+        if (_currentSnapshot is null || node is null)
+        {
+            return [];
+        }
+
+        var path = new List<ProjectNode>();
+        if (!TryBuildNodePath(_currentSnapshot.Root, node.Id, path))
+        {
+            return [];
+        }
+
+        var items = new List<TreemapBreadcrumbItemViewModel>(path.Count);
+        for (var index = 0; index < path.Count; index++)
+        {
+            var pathNode = path[index];
+            var label = index == 0
+                ? pathNode.Name
+                : $"/ {pathNode.Name}";
+            items.Add(new TreemapBreadcrumbItemViewModel(
+                label,
+                pathNode,
+                canNavigate: index < path.Count - 1));
+        }
+
+        return items;
+    }
+
+    private static bool TryBuildNodePath(ProjectNode current, string targetId, List<ProjectNode> path)
+    {
+        path.Add(current);
+        if (string.Equals(current.Id, targetId, StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        foreach (var child in current.Children)
+        {
+            if (TryBuildNodePath(child, targetId, path))
+            {
+                return true;
+            }
+        }
+
+        path.RemoveAt(path.Count - 1);
+        return false;
     }
 
     private static bool CanDrillIntoTreemap(ProjectNode? node) =>
