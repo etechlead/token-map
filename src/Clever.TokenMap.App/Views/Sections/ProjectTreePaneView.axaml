@@ -59,14 +59,14 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Size"
-                                            SortMemberPath="Size"
+                    <DataGridTemplateColumn Header="Tokens"
+                                            SortMemberPath="Tokens"
                                             Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
                                            VerticalAlignment="Center"
-                                           Text="{Binding SizeText}" />
+                                           Text="{Binding TokensText}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -81,14 +81,14 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Tokens"
-                                            SortMemberPath="Tokens"
+                    <DataGridTemplateColumn Header="Size"
+                                            SortMemberPath="Size"
                                             Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
                                            VerticalAlignment="Center"
-                                           Text="{Binding TokensText}" />
+                                           Text="{Binding SizeText}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

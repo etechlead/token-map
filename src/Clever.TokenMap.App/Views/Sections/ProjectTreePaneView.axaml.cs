@@ -59,12 +59,7 @@ public partial class ProjectTreePaneView : UserControl
             return;
         }
 
-        var direction = clickedColumn.Tag is ListSortDirection.Ascending
-            ? ListSortDirection.Descending
-            : ListSortDirection.Ascending;
-
-        viewModel.Tree.SortBy(sortColumn, direction);
-        UpdateProjectTreeTableHeaderState(grid, clickedColumn, direction);
+        ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn);
         e.Handled = true;
     }
 
@@ -152,6 +147,36 @@ public partial class ProjectTreePaneView : UserControl
             }
         }
     }
+
+    private void ApplyProjectTreeSort(
+        MainWindowViewModel viewModel,
+        DataGrid grid,
+        DataGridColumn clickedColumn,
+        ProjectTreeSortColumn sortColumn)
+    {
+        var direction = GetNextSortDirection(clickedColumn, sortColumn);
+        viewModel.Tree.SortBy(sortColumn, direction);
+        UpdateProjectTreeTableHeaderState(grid, clickedColumn, direction);
+    }
+
+    private static ListSortDirection GetNextSortDirection(
+        DataGridColumn clickedColumn,
+        ProjectTreeSortColumn sortColumn)
+    {
+        if (clickedColumn.Tag is ListSortDirection currentDirection)
+        {
+            return currentDirection == ListSortDirection.Ascending
+                ? ListSortDirection.Descending
+                : ListSortDirection.Ascending;
+        }
+
+        return GetDefaultSortDirection(sortColumn);
+    }
+
+    private static ListSortDirection GetDefaultSortDirection(ProjectTreeSortColumn sortColumn) =>
+        sortColumn == ProjectTreeSortColumn.Name
+            ? ListSortDirection.Ascending
+            : ListSortDirection.Descending;
 
     private static T? FindAncestor<T>(StyledElement? element)
         where T : StyledElement

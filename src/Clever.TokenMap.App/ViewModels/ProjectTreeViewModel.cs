@@ -11,7 +11,7 @@ namespace Clever.TokenMap.App.ViewModels;
 public partial class ProjectTreeViewModel : ViewModelBase
 {
     private readonly Dictionary<string, ProjectTreeNodeViewModel> _nodesById = new(StringComparer.Ordinal);
-    private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Size;
+    private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Tokens;
     private ListSortDirection _currentSortDirection = ListSortDirection.Descending;
 
     public ProjectTreeViewModel()

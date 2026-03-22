@@ -119,9 +119,9 @@ public sealed class MainWindowLayoutTests
         Assert.Collection(
             treeTable.Columns.Select(column => column.Header?.ToString()),
             header => Assert.Equal("Name", header),
-            header => Assert.Equal("Size v", header),
+            header => Assert.Equal("Tokens v", header),
             header => Assert.Equal("Lines", header),
-            header => Assert.Equal("Tokens", header),
+            header => Assert.Equal("Size", header),
             header => Assert.Equal("Files", header));
 
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[0]);
@@ -136,8 +136,8 @@ public sealed class MainWindowLayoutTests
     {
         var viewModel = new MainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Small.cs", 10, 1, 10),
-            ("Large.cs", 20, 2, 20)));
+            ("Small.cs", 10, 20, 10),
+            ("Large.cs", 20, 10, 20)));
 
         var window = new MainWindow
         {
@@ -164,7 +164,7 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("Large.cs", name),
             name => Assert.Equal("Small.cs", name));
         Assert.Equal("Lines v", linesColumn.Header?.ToString());
-        Assert.Equal("Size", treeTable.Columns[1].Header?.ToString());
+        Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
     }
 
     [AvaloniaFact]
@@ -200,7 +200,7 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("Alpha.cs", name),
             name => Assert.Equal("Zulu.cs", name));
         Assert.Equal("Name ^", nameColumn.Header?.ToString());
-        Assert.Equal("Size", treeTable.Columns[1].Header?.ToString());
+        Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
     }
 
     [AvaloniaFact]
@@ -345,22 +345,22 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void ProjectTreeViewModel_LoadRoot_DefaultsToSizeDescendingSort()
+    public void ProjectTreeViewModel_LoadRoot_DefaultsToTokensDescendingSort()
     {
         var viewModel = new ProjectTreeViewModel();
         var root = CreateRootWithChildren(
-            ("Small.cs", 10, 1, 1),
-            ("Large.cs", 20, 2, 1));
+            ("Small.cs", 10, 20, 1),
+            ("Large.cs", 20, 10, 1));
 
         viewModel.LoadRoot(root);
 
-        Assert.Equal(ProjectTreeSortColumn.Size, viewModel.CurrentSortColumn);
+        Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
         Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
             name => Assert.Equal("Demo", name),
-            name => Assert.Equal("Large.cs", name),
-            name => Assert.Equal("Small.cs", name));
+            name => Assert.Equal("Small.cs", name),
+            name => Assert.Equal("Large.cs", name));
     }
 
     [AvaloniaFact]
