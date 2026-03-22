@@ -9,7 +9,7 @@ Use this skill to produce a high-signal dead-code report from `jb inspectcode` o
 
 ## Preconditions
 
-- Require `jb` on `PATH`.
+- Require `jb` on `PATH`; verify it with a command lookup, not `jb --version`. On PowerShell use `Get-Command jb -ErrorAction SilentlyContinue`; on other shells use `where jb` or `command -v jb`.
 - Do not install ReSharper CLI tools yourself unless the user explicitly asks.
 - If `jb` is missing, stop and tell the user that JetBrains ReSharper Command Line Tools are required. Suggest:
   - `dotnet tool install -g JetBrains.ReSharper.GlobalTools`
