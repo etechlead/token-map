@@ -33,7 +33,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             """
             {
               "analysis": {
-                "selectedMetric": "Code lines",
+                "selectedMetric": "Non-empty lines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
                 "respectIgnore": false,

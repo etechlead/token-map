@@ -143,9 +143,8 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        var selectedMetric = NormalizeMetric(settings.SelectedMetric);
-        SelectedMetric = IsKnownMetric(selectedMetric)
-            ? selectedMetric
+        SelectedMetric = IsKnownMetric(settings.SelectedMetric)
+            ? settings.SelectedMetric
             : "Tokens";
         SelectedTokenProfile = IsKnownTokenProfile(settings.SelectedTokenProfile)
             ? settings.SelectedTokenProfile
@@ -171,11 +170,6 @@ public partial class ToolbarViewModel : ViewModelBase
             SelectedThemePreference = value;
         }
     }
-
-    private static string NormalizeMetric(string value) =>
-        string.Equals(value, "Code lines", StringComparison.Ordinal)
-            ? "Non-empty lines"
-            : value;
 
     private bool IsKnownMetric(string value) =>
         MetricOptions.Contains(value, StringComparer.Ordinal);

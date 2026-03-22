@@ -62,21 +62,6 @@ public sealed class MainWindowViewModelSettingsTests
         Assert.Equal(ThemePreferences.Dark, themeService.LastAppliedThemePreference);
     }
 
-    [Fact]
-    public void Constructor_MapsLegacyCodeLinesMetricToNonEmptyLines()
-    {
-        var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = "Code lines";
-
-        var viewModel = new MainWindowViewModel(
-            new StubProjectAnalyzer(),
-            new StubFolderPickerService(),
-            new RecordingAppSettingsStore(settings),
-            new RecordingThemeService());
-
-        Assert.Equal("Non-empty lines", viewModel.Toolbar.SelectedMetric);
-    }
-
     private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore
     {
         public int SaveCallCount { get; private set; }
