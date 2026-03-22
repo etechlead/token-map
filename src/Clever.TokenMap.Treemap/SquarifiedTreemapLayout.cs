@@ -9,6 +9,7 @@ public sealed class SquarifiedTreemapLayout
     private const int BalancedSplitMinChildCount = 3;
     private const double BalancedSplitMaxShareThreshold = 0.45d;
     private const double BalancedSplitSkewRatioThreshold = 6d;
+    private const double MinChildLayoutShortSide = 12d;
 
     public IReadOnlyList<TreemapNodeVisual> Calculate(ProjectNode rootNode, Rect bounds, AnalysisMetric metric)
     {
@@ -212,9 +213,17 @@ public sealed class SquarifiedTreemapLayout
 
         if (node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
         {
-            LayoutNode(node, TreemapVisualRules.GetContentBounds(node, bounds), metric, visuals, depth + 1);
+            var childBounds = TreemapVisualRules.GetContentBounds(node, bounds);
+            if (CanLayoutChildren(childBounds))
+            {
+                LayoutNode(node, childBounds, metric, visuals, depth + 1);
+            }
         }
     }
+
+    private static bool CanLayoutChildren(Rect childBounds) =>
+        childBounds.Width >= MinChildLayoutShortSide &&
+        childBounds.Height >= MinChildLayoutShortSide;
 
     private static bool ShouldUseBalancedSplit(IReadOnlyList<WeightedNode> items, double totalWeight)
     {

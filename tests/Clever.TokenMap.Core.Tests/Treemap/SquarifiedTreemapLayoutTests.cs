@@ -183,6 +183,34 @@ public sealed class SquarifiedTreemapLayoutTests
     }
 
     [Fact]
+    public void Calculate_DoesNotRenderChildren_ForDirectoryWithTooNarrowContentBounds()
+    {
+        var fixtures = CreateNode(
+            "tests/Fixtures",
+            ProjectNodeKind.Directory,
+            2,
+            0,
+            CreateNode("tests/Fixtures/a.txt", ProjectNodeKind.File, 1, 0),
+            CreateNode("tests/Fixtures/b.txt", ProjectNodeKind.File, 1, 0));
+        var tests = CreateNode(
+            "tests",
+            ProjectNodeKind.Directory,
+            2002,
+            0,
+            CreateNode("tests/Clever.TokenMap.Core.Tests", ProjectNodeKind.Directory, 1000, 0),
+            CreateNode("tests/Clever.TokenMap.HeadlessTests", ProjectNodeKind.Directory, 1000, 0),
+            fixtures);
+        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 2002, 0, tests);
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 600, 400), AnalysisMetric.Tokens);
+
+        Assert.Contains(visuals, visual => visual.Node.RelativePath == "tests/Fixtures");
+        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tests/Fixtures/a.txt");
+        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tests/Fixtures/b.txt");
+    }
+
+    [Fact]
     public void Calculate_Throws_ForNullRoot()
     {
         var layout = new SquarifiedTreemapLayout();
