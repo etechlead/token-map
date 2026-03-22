@@ -1,6 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App;
@@ -18,9 +21,15 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly string _windowTitle = "TokenMap";
     private readonly IAnalysisSessionController _analysisSessionController;
+    private readonly IFolderPathService _folderPathService;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly TreemapNavigationState _treemapNavigationState;
+    private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolders = [];
+    private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolderFlyoutItems = [];
+    private readonly RelayCommand _clearRecentFoldersCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
+    private readonly AsyncRelayCommand<RecentFolderItemViewModel?> _openRecentFolderCommand;
+    private readonly RelayCommand<RecentFolderItemViewModel?> _removeRecentFolderCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
 
@@ -29,36 +38,50 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
         : this(
-            CreateAnalysisSessionController(new NullProjectAnalyzer(), new NullFolderPickerService(), NullAppLogger.Instance),
+            CreateAnalysisSessionController(
+                new NullProjectAnalyzer(),
+                new NullFolderPickerService(),
+                new NullFolderPathService(),
+                NullAppLogger.Instance),
             new TreemapNavigationState(),
-            new NullSettingsCoordinator())
+            new NullSettingsCoordinator(),
+            new NullFolderPathService())
     {
     }
 
     public MainWindowViewModel(
         IAnalysisSessionController analysisSessionController,
         TreemapNavigationState treemapNavigationState,
-        ISettingsCoordinator settingsCoordinator)
+        ISettingsCoordinator settingsCoordinator,
+        IFolderPathService folderPathService)
     {
         _analysisSessionController = analysisSessionController;
         _treemapNavigationState = treemapNavigationState;
         _settingsCoordinator = settingsCoordinator;
+        _folderPathService = folderPathService;
 
         Toolbar = new ToolbarViewModel(
             _settingsCoordinator.State,
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
+        RecentFolders = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_recentFolders);
+        RecentFolderFlyoutItems = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_recentFolderFlyoutItems);
         Tree = new ProjectTreeViewModel();
         Summary = new SummaryViewModel();
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
+        _clearRecentFoldersCommand = new RelayCommand(ClearRecentFolders);
+        _openRecentFolderCommand = new AsyncRelayCommand<RecentFolderItemViewModel?>(OpenRecentFolderAsync);
+        _removeRecentFolderCommand = new RelayCommand<RecentFolderItemViewModel?>(RemoveRecentFolder);
         _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
 
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
+        _settingsCoordinator.State.RecentFolderPathsChanged += RecentFolderPathsOnCollectionChanged;
         _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
+        RefreshRecentFolders();
 
         Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
         RefreshToolbarAvailability();
@@ -83,7 +106,19 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public SummaryViewModel Summary { get; }
 
+    public ReadOnlyObservableCollection<RecentFolderItemViewModel> RecentFolders { get; }
+
+    public ReadOnlyObservableCollection<RecentFolderItemViewModel> RecentFolderFlyoutItems { get; }
+
     public ProjectNode? TreemapRootNode => _treemapNavigationState.TreemapRootNode;
+
+    public bool HasRecentFolders => RecentFolders.Count > 0;
+
+    public bool HasSnapshot => _analysisSessionController.HasSnapshot;
+
+    public bool ShowRecentStartSurface => !HasSnapshot;
+
+    public bool ShowRecentFoldersEmptyState => !HasRecentFolders;
 
     public ProjectNode? SelectedNode
     {
@@ -103,7 +138,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
+    public IRelayCommand ClearRecentFoldersCommand => _clearRecentFoldersCommand;
+
     public IRelayCommand<ProjectNode?> NavigateToTreemapBreadcrumbCommand => _navigateToTreemapBreadcrumbCommand;
+
+    public IAsyncRelayCommand<RecentFolderItemViewModel?> OpenRecentFolderCommand => _openRecentFolderCommand;
+
+    public IRelayCommand<RecentFolderItemViewModel?> RemoveRecentFolderCommand => _removeRecentFolderCommand;
 
     private bool CanOpenFolder() => !_analysisSessionController.IsBusy;
 
@@ -131,6 +172,36 @@ public partial class MainWindowViewModel : ViewModelBase
         _analysisSessionController.Cancel();
     }
 
+    private async Task OpenRecentFolderAsync(RecentFolderItemViewModel? folder)
+    {
+        if (folder is null)
+        {
+            return;
+        }
+
+        if (!folder.CanOpen)
+        {
+            return;
+        }
+
+        await _analysisSessionController.OpenFolderAsync(folder.FullPath, Toolbar.BuildScanOptions());
+    }
+
+    private void RemoveRecentFolder(RecentFolderItemViewModel? folder)
+    {
+        if (folder is null)
+        {
+            return;
+        }
+
+        _settingsCoordinator.State.RemoveRecentFolder(folder.FullPath);
+    }
+
+    private void ClearRecentFolders()
+    {
+        _settingsCoordinator.State.ClearRecentFolders();
+    }
+
     private void ResetTreemapRoot()
     {
         _treemapNavigationState.ResetTreemapRoot();
@@ -155,6 +226,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 RefreshToolbarAvailability();
                 break;
             case nameof(IAnalysisSessionController.CurrentSnapshot):
+                OnPropertyChanged(nameof(HasSnapshot));
+                OnPropertyChanged(nameof(ShowRecentStartSurface));
                 if (_analysisSessionController.CurrentSnapshot is { } snapshot)
                 {
                     ApplySnapshot(snapshot);
@@ -174,6 +247,7 @@ public partial class MainWindowViewModel : ViewModelBase
                     _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
                 {
                     Summary.SetCompleted(completedSnapshot);
+                    _settingsCoordinator.State.RecordRecentFolder(completedSnapshot.RootPath);
                 }
 
                 RefreshToolbarAvailability();
@@ -189,6 +263,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
                 break;
         }
+    }
+
+    private void RecentFolderPathsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        RefreshRecentFolders();
+        OnPropertyChanged(nameof(HasRecentFolders));
+        OnPropertyChanged(nameof(ShowRecentStartSurface));
+        OnPropertyChanged(nameof(ShowRecentFoldersEmptyState));
     }
 
     private void TreemapNavigationStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -226,15 +308,60 @@ public partial class MainWindowViewModel : ViewModelBase
             _analysisSessionController.HasSnapshot);
     }
 
+    private void RefreshRecentFolders()
+    {
+        _recentFolders.Clear();
+        _recentFolderFlyoutItems.Clear();
+
+        foreach (var folderPath in _settingsCoordinator.State.RecentFolderPaths)
+        {
+            var item = CreateRecentFolderItem(folderPath);
+            _recentFolders.Add(item);
+            _recentFolderFlyoutItems.Add(item);
+        }
+
+        if (_recentFolderFlyoutItems.Count == 0)
+        {
+            _recentFolderFlyoutItems.Add(CreateEmptyFlyoutItem());
+        }
+    }
+
+    private RecentFolderItemViewModel CreateRecentFolderItem(string folderPath)
+    {
+        var trimmedPath = folderPath.Trim();
+        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = trimmedPath;
+        }
+
+        return new RecentFolderItemViewModel(
+            displayName,
+            trimmedPath,
+            isMissing: !_folderPathService.Exists(trimmedPath));
+    }
+
+    private static RecentFolderItemViewModel CreateEmptyFlyoutItem()
+    {
+        return new RecentFolderItemViewModel(
+            "No previous folders yet",
+            string.Empty,
+            secondaryText: "Analyze a folder once and it will appear here.",
+            canOpen: false,
+            showFolderIcon: false);
+    }
+
     private static AnalysisSessionController CreateAnalysisSessionController(
         IProjectAnalyzer projectAnalyzer,
         IFolderPickerService folderPickerService,
+        IFolderPathService folderPathService,
         IAppLogger? logger)
     {
         ArgumentNullException.ThrowIfNull(projectAnalyzer);
         ArgumentNullException.ThrowIfNull(folderPickerService);
+        ArgumentNullException.ThrowIfNull(folderPathService);
 
-        return new AnalysisSessionController(projectAnalyzer, folderPickerService, logger);
+        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger);
     }
 
     private sealed class NullFolderPickerService : IFolderPickerService
@@ -251,6 +378,11 @@ public partial class MainWindowViewModel : ViewModelBase
             IProgress<AnalysisProgress>? progress,
             CancellationToken cancellationToken) =>
             throw new InvalidOperationException("Project analyzer is not configured.");
+    }
+
+    private sealed class NullFolderPathService : IFolderPathService
+    {
+        public bool Exists(string folderPath) => true;
     }
 
     private sealed class NullSettingsCoordinator : ISettingsCoordinator

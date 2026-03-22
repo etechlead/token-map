@@ -42,6 +42,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl"));
         Assert.Null(FindNamedDescendant<Control>(window, "DetailsPane"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
+        Assert.NotNull(FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton"));
         var stopButton = FindNamedDescendant<Button>(window, "StopButton");
         var settingsDrawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
         Assert.Null(FindNamedDescendant<TextBlock>(window, "TreemapScopeText"));
@@ -79,15 +80,18 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void MainWindow_ToolbarGroups_DoNotOverlapAtMinimumWidth()
+    public async Task MainWindow_ToolbarGroups_DoNotOverlapAtMinimumWidth_AfterSnapshotIsLoaded()
     {
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = viewModel,
             Width = 1100,
         };
 
         window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        window.UpdateLayout();
 
         var primaryGroup = FindNamedDescendant<Control>(window, "ToolbarPrimaryGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
@@ -98,9 +102,176 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(summaryGroup);
         Assert.NotNull(settingsButton);
         Assert.NotNull(selectedFolderValue);
-        Assert.True(primaryGroup.Bounds.Right <= summaryGroup.Bounds.Left);
-        Assert.True(summaryGroup.Bounds.Right <= settingsButton.Bounds.Left);
+        Assert.True(
+            primaryGroup.Bounds.Right <= summaryGroup.Bounds.Left,
+            $"PrimaryGroup.Right={primaryGroup.Bounds.Right}, SummaryGroup.Left={summaryGroup.Bounds.Left}");
+        Assert.True(
+            summaryGroup.Bounds.Right <= settingsButton.Bounds.Left,
+            $"SummaryGroup.Right={summaryGroup.Bounds.Right}, SettingsButton.Left={settingsButton.Bounds.Left}");
         Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, selectedFolderValue.TextTrimming);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ShowsRecentFoldersEmptyState_WhenNoRecentFoldersAreLoaded()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
+        var emptyState = FindNamedDescendant<Control>(window, "RecentFoldersEmptyState");
+        var emptyStateOpenButton = FindNamedDescendant<Button>(window, "RecentFoldersEmptyStateOpenButton");
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
+        var recentFoldersItems = FindNamedDescendant<ItemsControl>(window, "RecentFoldersItemsControl");
+
+        Assert.NotNull(startSurface);
+        Assert.NotNull(emptyState);
+        Assert.NotNull(emptyStateOpenButton);
+        Assert.NotNull(workspaceHost);
+        Assert.NotNull(recentFoldersItems);
+        Assert.True(startSurface.IsVisible);
+        Assert.True(emptyState.IsVisible);
+        Assert.True(workspaceHost.IsVisible);
+        Assert.Equal(0, recentFoldersItems.ItemCount);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ShowsRecentFoldersStartSurface_WhenRecentFoldersAreLoaded()
+    {
+        var window = new MainWindow
+        {
+            DataContext = CreateMainWindowViewModel(
+                new StubProjectAnalyzer(CreateSnapshot()),
+                selectedFolderPath: "C:\\Demo",
+                recentFolderPaths:
+                [
+                    "C:\\RepoA",
+                    "C:\\RepoB",
+                ]),
+        };
+
+        window.Show();
+
+        var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
+        var emptyState = FindNamedDescendant<Control>(window, "RecentFoldersEmptyState");
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
+        var clearButton = FindNamedDescendant<Button>(window, "ClearRecentFoldersButton");
+        var recentFoldersItems = FindNamedDescendant<ItemsControl>(window, "RecentFoldersItemsControl");
+
+        Assert.NotNull(startSurface);
+        Assert.NotNull(emptyState);
+        Assert.NotNull(workspaceHost);
+        Assert.NotNull(clearButton);
+        Assert.NotNull(recentFoldersItems);
+        Assert.True(startSurface.IsVisible);
+        Assert.False(emptyState.IsVisible);
+        Assert.True(clearButton.IsVisible);
+        Assert.True(workspaceHost.IsVisible);
+        Assert.Equal(2, recentFoldersItems.ItemCount);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_RecentFolderTile_DoesNotLeaveDeadGap_BetweenOpenAndRemoveActions()
+    {
+        var window = new MainWindow
+        {
+            DataContext = CreateMainWindowViewModel(
+                new StubProjectAnalyzer(CreateSnapshot()),
+                selectedFolderPath: "C:\\Demo",
+                recentFolderPaths:
+                [
+                    "C:\\RepoA",
+                ]),
+        };
+
+        window.Show();
+        window.UpdateLayout();
+
+        var tile = window.GetVisualDescendants()
+            .OfType<Grid>()
+            .FirstOrDefault(control => control.Classes.Contains("recent-folder-tile"));
+        var openButton = window.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(control => control.Classes.Contains("recent-folder-button"));
+        var removeButton = window.GetVisualDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(control => control.Classes.Contains("recent-folder-remove-button"));
+
+        Assert.NotNull(tile);
+        Assert.NotNull(openButton);
+        Assert.NotNull(removeButton);
+        Assert.True(
+            openButton.Bounds.Right >= removeButton.Bounds.Left,
+            $"OpenButton.Right={openButton.Bounds.Right}, RemoveButton.Left={removeButton.Bounds.Left}");
+        Assert.True(
+            openButton.Bounds.Width >= tile.Bounds.Width - 1,
+            $"OpenButton.Width={openButton.Bounds.Width}, Tile.Width={tile.Bounds.Width}");
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_OpenFolderSplitButton_HasRecentFoldersFlyout()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var splitButton = FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton");
+
+        Assert.NotNull(splitButton);
+        Assert.NotNull(splitButton.Flyout);
+    }
+
+    [Fact]
+    public void MainWindowViewModel_ProvidesFlyoutPlaceholder_WhenNoRecentFoldersExist()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        Assert.Single(viewModel.RecentFolderFlyoutItems);
+        Assert.False(viewModel.RecentFolderFlyoutItems[0].CanOpen);
+        Assert.Equal("No previous folders yet", viewModel.RecentFolderFlyoutItems[0].DisplayName);
+    }
+
+    [Fact]
+    public void MainWindowViewModel_RemoveRecentFolderCommand_RemovesOneEntry()
+    {
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            recentFolderPaths:
+            [
+                "C:\\RepoA",
+                "C:\\RepoB",
+            ]);
+
+        var folderToRemove = Assert.Single(viewModel.RecentFolders, folder => folder.DisplayName == "RepoB");
+
+        viewModel.RemoveRecentFolderCommand.Execute(folderToRemove);
+
+        Assert.Single(viewModel.RecentFolders);
+        Assert.Equal("RepoA", viewModel.RecentFolders[0].DisplayName);
+    }
+
+    [Fact]
+    public void MainWindowViewModel_ClearRecentFoldersCommand_ClearsListAndRestoresFlyoutPlaceholder()
+    {
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            recentFolderPaths:
+            [
+                "C:\\RepoA",
+                "C:\\RepoB",
+            ]);
+
+        viewModel.ClearRecentFoldersCommand.Execute(null);
+
+        Assert.Empty(viewModel.RecentFolders);
+        Assert.Single(viewModel.RecentFolderFlyoutItems);
+        Assert.Equal("No previous folders yet", viewModel.RecentFolderFlyoutItems[0].DisplayName);
     }
 
     [AvaloniaFact]
@@ -221,6 +392,9 @@ public sealed class MainWindowLayoutTests
         var gitIgnoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectGitIgnoreCheckBox");
         var ignoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectIgnoreCheckBox");
         var defaultExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseDefaultExcludesCheckBox");
+        var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
+        var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
+        var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
 
         Assert.NotNull(metricComboBox);
         Assert.NotNull(themeSystemButton);
@@ -230,6 +404,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(gitIgnoreCheckBox);
         Assert.NotNull(ignoreCheckBox);
         Assert.NotNull(defaultExcludesCheckBox);
+        Assert.NotNull(rescanButton);
+        Assert.NotNull(selectedFolderGroup);
+        Assert.NotNull(summaryGroup);
         Assert.False(metricComboBox.IsEnabled);
         Assert.True(themeSystemButton.IsEnabled);
         Assert.True(themeLightButton.IsEnabled);
@@ -241,6 +418,9 @@ public sealed class MainWindowLayoutTests
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(ignoreCheckBox.IsEnabled);
         Assert.True(defaultExcludesCheckBox.IsEnabled);
+        Assert.False(rescanButton.IsVisible);
+        Assert.False(selectedFolderGroup.IsVisible);
+        Assert.False(summaryGroup.IsVisible);
     }
 
     [AvaloniaFact]
@@ -254,10 +434,15 @@ public sealed class MainWindowLayoutTests
         window.Show();
 
         var drawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
+        var drawerHost = FindNamedDescendant<Control>(window, "SettingsDrawerHost");
+        var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
 
         Assert.NotNull(drawer);
+        Assert.NotNull(drawerHost);
+        Assert.NotNull(startSurface);
         Assert.False(drawer.IsVisible);
+        Assert.True(drawerHost.ZIndex > startSurface.ZIndex);
 
         viewModel.ToggleSettingsCommand.Execute(null);
         Assert.True(drawer.IsVisible);
@@ -284,9 +469,19 @@ public sealed class MainWindowLayoutTests
         var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
         var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
         var tokenizerComboBox = FindNamedDescendant<ComboBox>(window, "TokenizerComboBox");
+        var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
+        var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
+        var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
+        var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
 
         Assert.NotNull(treeTable);
         Assert.NotNull(statusStrip);
+        Assert.NotNull(startSurface);
+        Assert.NotNull(workspaceHost);
+        Assert.NotNull(rescanButton);
+        Assert.NotNull(selectedFolderGroup);
+        Assert.NotNull(summaryGroup);
         Assert.Single(viewModel.Tree.RootNodes);
         Assert.Equal(2, viewModel.Tree.VisibleNodes.Count);
         Assert.Equal(AnalysisState.Completed, viewModel.AnalysisState);
@@ -297,6 +492,11 @@ public sealed class MainWindowLayoutTests
         Assert.True(metricComboBox?.IsEnabled);
         Assert.True(tokenizerComboBox?.IsEnabled);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(startSurface.IsVisible);
+        Assert.True(workspaceHost.IsVisible);
+        Assert.True(rescanButton.IsVisible);
+        Assert.True(selectedFolderGroup.IsVisible);
+        Assert.True(summaryGroup.IsVisible);
     }
 
     [AvaloniaFact]

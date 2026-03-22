@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
@@ -39,6 +41,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         _debounceDelay = debounceDelay ?? DefaultDebounceDelay;
         State = new SettingsState();
         State.PropertyChanged += StateOnPropertyChanged;
+        State.RecentFolderPathsChanged += StateRecentFolderPathsOnCollectionChanged;
 
         LoadSettings(initialSettings ?? _appSettingsStore.Load());
     }
@@ -96,6 +99,22 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         }
 
         _themeService.ApplyThemePreference(State.SelectedThemePreference);
+        ScheduleSave();
+    }
+
+    private void StateRecentFolderPathsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (_isApplyingSettings)
+        {
+            return;
+        }
+
+        lock (_syncLock)
+        {
+            _currentSettings.RecentFolderPaths = State.RecentFolderPaths.ToList();
+            _settingsVersion++;
+        }
+
         ScheduleSave();
     }
 
@@ -164,6 +183,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             State.RespectIgnore = _currentSettings.Analysis.RespectIgnore;
             State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
             State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
+            State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
             _themeService.ApplyThemePreference(State.SelectedThemePreference);
         }
         finally

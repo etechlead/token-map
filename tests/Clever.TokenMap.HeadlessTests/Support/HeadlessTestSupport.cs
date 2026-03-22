@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
+using System.Collections.Generic;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
@@ -119,13 +120,16 @@ internal static class HeadlessTestSupport
 
     internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
-        string? selectedFolderPath = "C:\\Demo") =>
+        string? selectedFolderPath = "C:\\Demo",
+        IEnumerable<string>? recentFolderPaths = null) =>
         new(
             new AnalysisSessionController(
                 projectAnalyzer,
-                new StubFolderPickerService(selectedFolderPath)),
+                new StubFolderPickerService(selectedFolderPath),
+                new StubFolderPathService()),
             new TreemapNavigationState(),
-            new StubSettingsCoordinator());
+            new StubSettingsCoordinator(recentFolderPaths),
+            new StubFolderPathService());
 
     internal static T? FindNamedDescendant<T>(Window window, string name)
         where T : Control
@@ -144,9 +148,30 @@ internal static class HeadlessTestSupport
             Task.FromResult(path);
     }
 
-    private sealed class StubSettingsCoordinator : ISettingsCoordinator
+    private sealed class StubFolderPathService : IFolderPathService
     {
-        public SettingsState State { get; } = new();
+        public bool Exists(string folderPath) => true;
+    }
+
+    private sealed class StubSettingsCoordinator(IEnumerable<string>? recentFolderPaths = null) : ISettingsCoordinator
+    {
+        public SettingsState State { get; } = CreateState(recentFolderPaths);
+
+        private static SettingsState CreateState(IEnumerable<string>? recentFolderPaths)
+        {
+            var state = new SettingsState();
+            if (recentFolderPaths is null)
+            {
+                return state;
+            }
+
+            foreach (var folderPath in recentFolderPaths)
+            {
+                state.RecordRecentFolder(folderPath);
+            }
+
+            return state;
+        }
     }
 }
 

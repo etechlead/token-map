@@ -40,7 +40,7 @@
 
 - Per-user settings are stored in one lightweight `settings.json` file under the user data directory.
 - The app starts from defaults first, then best-effort applies values from `settings.json`.
-- Analysis preferences and appearance preferences, including theme mode, are stored in that settings file.
+- Analysis preferences, appearance preferences including theme mode, and recent folder history are stored in that settings file.
 - `Clever.TokenMap.App` works against app-layer settings state and services; infrastructure settings types remain persistence details behind the settings store/coordinator boundary.
 - Settings use typed enum-backed values and persist as JSON strings.
 - Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.

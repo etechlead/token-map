@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
 
@@ -11,6 +12,8 @@ public sealed class AppSettings
 
     public LoggingSettings Logging { get; set; } = new();
 
+    public List<string> RecentFolderPaths { get; set; } = [];
+
     public static AppSettings CreateDefault() => new();
 
     public AppSettings Clone() =>
@@ -19,6 +22,7 @@ public sealed class AppSettings
             Analysis = Analysis.Clone(),
             Appearance = Appearance.Clone(),
             Logging = Logging.Clone(),
+            RecentFolderPaths = [.. RecentFolderPaths],
         };
 }
 

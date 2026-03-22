@@ -41,7 +41,120 @@
                 <sections:TreemapPaneView Grid.Column="2" />
             </Grid>
 
-            <sections:SettingsDrawerView />
+            <Border Name="RecentFoldersStartSurface"
+                    Classes="panel"
+                    Margin="0,10,0,8"
+                    Padding="24"
+                    ZIndex="1"
+                    IsVisible="{Binding ShowRecentStartSurface}">
+                <Grid RowDefinitions="Auto,*"
+                      RowSpacing="18">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="12">
+                        <TextBlock Classes="panel-title"
+                                   VerticalAlignment="Center"
+                                   Text="Previous folders" />
+                        <Button Name="ClearRecentFoldersButton"
+                                Grid.Column="1"
+                                Classes="recent-clear-button"
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding HasRecentFolders}"
+                                Command="{Binding ClearRecentFoldersCommand}"
+                                Content="Clear" />
+                    </Grid>
+
+                    <StackPanel Name="RecentFoldersEmptyState"
+                                Grid.Row="1"
+                                MaxWidth="360"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                Spacing="8"
+                                IsVisible="{Binding ShowRecentFoldersEmptyState}">
+                        <TextBlock Classes="panel-title"
+                                   HorizontalAlignment="Center"
+                                   Text="No previous folders yet" />
+                        <Button Name="RecentFoldersEmptyStateOpenButton"
+                                Classes="action-button primary"
+                                HorizontalAlignment="Center"
+                                Command="{Binding Toolbar.OpenFolderCommand}">
+                            <StackPanel Classes="action-button-content">
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Open Folder" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  IsVisible="{Binding HasRecentFolders}">
+                        <ItemsControl Name="RecentFoldersItemsControl"
+                                      ItemsSource="{Binding RecentFolders}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"
+                                               ItemWidth="360" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:RecentFolderItemViewModel">
+                                    <Grid Classes="recent-folder-tile"
+                                          HorizontalAlignment="Stretch"
+                                          Margin="0,0,10,10">
+                                        <Button Classes="recent-folder-button"
+                                                HorizontalAlignment="Stretch"
+                                                Margin="0"
+                                                Padding="14,13,40,13"
+                                                Command="{Binding DataContext.OpenRecentFolderCommand, ElementName=RootWindow}"
+                                                CommandParameter="{Binding}">
+                                            <Grid RowDefinitions="Auto,Auto"
+                                                  ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="16"
+                                                  RowSpacing="6">
+                                                <Border Grid.RowSpan="2"
+                                                        Classes="recent-folder-icon-host">
+                                                    <Path Classes="recent-folder-icon"
+                                                          Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1"
+                                                            Orientation="Horizontal"
+                                                            Spacing="8">
+                                                    <TextBlock Classes="recent-folder-title"
+                                                               Text="{Binding DisplayName}" />
+                                                    <Border Classes="recent-folder-status-badge"
+                                                            IsVisible="{Binding IsMissing}">
+                                                        <TextBlock Classes="recent-folder-status-text"
+                                                                   Text="Missing" />
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Row="1"
+                                                           Grid.Column="1"
+                                                           Classes="recent-folder-path"
+                                                           Text="{Binding SecondaryText}" />
+                                            </Grid>
+                                        </Button>
+                                        <Button Classes="close-button recent-folder-remove-button"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Top"
+                                                Command="{Binding DataContext.RemoveRecentFolderCommand, ElementName=RootWindow}"
+                                                CommandParameter="{Binding}"
+                                                ToolTip.Tip="Remove from recent folders">
+                                            <Path Classes="close-button-icon"
+                                                  Data="{StaticResource FluentDismiss20Geometry}" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <sections:SettingsDrawerView Name="SettingsDrawerHost"
+                                         ZIndex="2" />
         </Grid>
 
         <Border Name="StatusStrip"

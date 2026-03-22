@@ -6,113 +6,176 @@
     <Border Name="ToolbarHost"
             Classes="panel"
             Padding="10">
-        <Grid ColumnDefinitions="Auto,*,Auto"
-              ColumnSpacing="16">
-            <StackPanel Name="ToolbarPrimaryGroup"
-                        Grid.Column="0"
-                        Orientation="Horizontal"
+        <Grid>
+            <Grid ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="16">
+                <StackPanel Name="ToolbarPrimaryGroup"
+                            Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="12">
+                    <StackPanel Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Spacing="8">
+                        <SplitButton Name="OpenFolderSplitButton"
+                                     Classes="action-split-button"
+                                     Command="{Binding Toolbar.OpenFolderCommand}"
+                                     IsEnabled="{Binding Toolbar.CanConfigureScanOptions}"
+                                     ToolTip.Tip="Open a folder for analysis">
+                            <SplitButton.Content>
+                                <StackPanel Classes="action-button-content">
+                                    <Path Classes="action-button-icon"
+                                          Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                    <TextBlock VerticalAlignment="Center"
+                                               Text="Open Folder" />
+                                </StackPanel>
+                            </SplitButton.Content>
+                            <SplitButton.Flyout>
+                                <MenuFlyout ItemsSource="{Binding RecentFolderFlyoutItems}"
+                                            Placement="BottomEdgeAlignedLeft">
+                                    <MenuFlyout.ItemContainerTheme>
+                                        <ControlTheme TargetType="MenuItem"
+                                                      BasedOn="{StaticResource {x:Type MenuItem}}"
+                                                      x:DataType="vm:RecentFolderItemViewModel">
+                                            <Setter Property="IsEnabled"
+                                                    Value="{Binding CanOpen}" />
+                                            <Setter Property="Command"
+                                                    Value="{Binding DataContext.OpenRecentFolderCommand, ElementName=ToolbarHost}" />
+                                            <Setter Property="CommandParameter"
+                                                    Value="{Binding}" />
+                                            <Setter Property="Header"
+                                                    Value="{Binding}" />
+                                            <Setter Property="Padding"
+                                                    Value="12,8,12,8" />
+                                            <Setter Property="HeaderTemplate">
+                                                <Setter.Value>
+                                                    <DataTemplate x:DataType="vm:RecentFolderItemViewModel">
+                                                        <Grid ColumnDefinitions="Auto,*"
+                                                              ColumnSpacing="12"
+                                                              HorizontalAlignment="Left">
+                                                            <Border Classes="recent-folder-icon-host menu-item"
+                                                                    IsVisible="{Binding ShowFolderIcon}">
+                                                                <Path Classes="recent-folder-icon"
+                                                                      Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                                            </Border>
+
+                                                            <StackPanel Grid.Column="1"
+                                                                        HorizontalAlignment="Left"
+                                                                        Spacing="2">
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            Spacing="8">
+                                                                    <TextBlock Classes="recent-folder-title"
+                                                                               Text="{Binding DisplayName}" />
+                                                                    <Border Classes="recent-folder-status-badge"
+                                                                            IsVisible="{Binding IsMissing}">
+                                                                        <TextBlock Classes="recent-folder-status-text"
+                                                                                   Text="Missing" />
+                                                                    </Border>
+                                                                </StackPanel>
+                                                                <TextBlock Classes="recent-folder-path"
+                                                                           MaxWidth="320"
+                                                                           Text="{Binding SecondaryText}" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </ControlTheme>
+                                    </MenuFlyout.ItemContainerTheme>
+                                </MenuFlyout>
+                            </SplitButton.Flyout>
+                        </SplitButton>
+                        <Button Name="RescanButton"
+                                Classes="action-button"
+                                Command="{Binding Toolbar.RescanCommand}"
+                                IsVisible="{Binding HasSnapshot}"
+                                ToolTip.Tip="Run the scan again for the selected folder">
+                            <StackPanel Classes="action-button-content">
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentArrowClockwise20Geometry}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Rescan" />
+                            </StackPanel>
+                        </Button>
+                        <Button Name="StopButton"
+                                Classes="action-button"
+                                Content="Stop"
+                                Command="{Binding Toolbar.CancelCommand}"
+                                IsVisible="{Binding Toolbar.IsStopVisible}"
+                                ToolTip.Tip="Stop the current scan" />
+                    </StackPanel>
+
+                    <StackPanel Name="SelectedFolderGroup"
+                                MaxWidth="220"
+                                VerticalAlignment="Center"
+                                Spacing="2"
+                                IsVisible="{Binding HasSnapshot}">
+                        <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                   FontSize="11"
+                                   Text="Selected folder" />
+                        <TextBlock Name="SelectedFolderValueText"
+                                   FontSize="13"
+                                   FontWeight="Medium"
+                                   TextTrimming="CharacterEllipsis"
+                                   Text="{Binding Toolbar.SelectedFolderDisplay}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid Name="ToolbarSummaryGroup"
+                      Grid.Column="1"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      ColumnDefinitions="Auto,Auto,Auto"
+                      ColumnSpacing="18"
+                      IsVisible="{Binding HasSnapshot}">
+                    <Border Classes="summary-card"
+                            MinWidth="120">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="summary-label"
+                                       Text="Tokens" />
+                            <TextBlock Name="TokenSummaryValueText"
+                                       Classes="summary-value"
+                                       Text="{Binding Summary.TokenSummaryValue}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="1"
+                            Classes="summary-card"
+                            MinWidth="120">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="summary-label"
+                                       Text="Lines" />
+                            <TextBlock Name="LineSummaryValueText"
+                                       Classes="summary-value"
+                                       Text="{Binding Summary.LineSummaryValue}" />
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2"
+                            Classes="summary-card"
+                            MinWidth="120">
+                        <StackPanel Spacing="4">
+                            <TextBlock Classes="summary-label"
+                                       Text="Files" />
+                            <TextBlock Name="FileSummaryValueText"
+                                       Classes="summary-value"
+                                       Text="{Binding Summary.FileSummaryValue}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Button Name="SettingsButton"
+                        Grid.Column="2"
+                        Classes="action-button"
                         VerticalAlignment="Center"
-                        Spacing="12">
-                <StackPanel Orientation="Horizontal"
-                            VerticalAlignment="Center"
-                            Spacing="8">
-                    <Button Name="OpenFolderButton"
-                            Classes="action-button primary"
-                            Command="{Binding Toolbar.OpenFolderCommand}"
-                            ToolTip.Tip="Open a folder for analysis">
-                        <StackPanel Classes="action-button-content">
-                            <Path Classes="action-button-icon"
-                                  Data="{StaticResource FluentFolderOpen20Geometry}" />
-                            <TextBlock VerticalAlignment="Center"
-                                       Text="Open Folder" />
-                        </StackPanel>
-                    </Button>
-                    <Button Name="RescanButton"
-                            Classes="action-button"
-                            Command="{Binding Toolbar.RescanCommand}"
-                            ToolTip.Tip="Run the scan again for the selected folder">
-                        <StackPanel Classes="action-button-content">
-                            <Path Classes="action-button-icon"
-                                  Data="{StaticResource FluentArrowClockwise20Geometry}" />
-                            <TextBlock VerticalAlignment="Center"
-                                       Text="Rescan" />
-                        </StackPanel>
-                    </Button>
-                    <Button Name="StopButton"
-                            Classes="action-button"
-                            Content="Stop"
-                            Command="{Binding Toolbar.CancelCommand}"
-                            IsVisible="{Binding Toolbar.IsStopVisible}"
-                            ToolTip.Tip="Stop the current scan" />
-                </StackPanel>
-
-                <StackPanel MaxWidth="280"
-                            VerticalAlignment="Center"
-                            Spacing="2">
-                    <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                               FontSize="11"
-                               Text="Selected folder" />
-                    <TextBlock Name="SelectedFolderValueText"
-                               FontSize="13"
-                               FontWeight="Medium"
-                               TextTrimming="CharacterEllipsis"
-                               Text="{Binding Toolbar.SelectedFolderDisplay}" />
-                </StackPanel>
-            </StackPanel>
-
-            <Grid Name="ToolbarSummaryGroup"
-                  Grid.Column="1"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  ColumnDefinitions="Auto,Auto,Auto"
-                  ColumnSpacing="18">
-                <Border Classes="summary-card"
-                        MinWidth="120">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="summary-label"
-                                   Text="Tokens" />
-                        <TextBlock Name="TokenSummaryValueText"
-                                   Classes="summary-value"
-                                   Text="{Binding Summary.TokenSummaryValue}" />
+                        Command="{Binding ToggleSettingsCommand}"
+                        ToolTip.Tip="Open settings">
+                    <StackPanel Classes="action-button-content">
+                        <Path Classes="action-button-icon"
+                              Data="{StaticResource FluentAppsSettings20Geometry}" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="Settings" />
                     </StackPanel>
-                </Border>
-                <Border Grid.Column="1"
-                        Classes="summary-card"
-                        MinWidth="120">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="summary-label"
-                                   Text="Lines" />
-                        <TextBlock Name="LineSummaryValueText"
-                                   Classes="summary-value"
-                                   Text="{Binding Summary.LineSummaryValue}" />
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="2"
-                        Classes="summary-card"
-                        MinWidth="120">
-                    <StackPanel Spacing="4">
-                        <TextBlock Classes="summary-label"
-                                   Text="Files" />
-                        <TextBlock Name="FileSummaryValueText"
-                                   Classes="summary-value"
-                                   Text="{Binding Summary.FileSummaryValue}" />
-                    </StackPanel>
-                </Border>
+                </Button>
             </Grid>
-
-            <Button Name="SettingsButton"
-                    Grid.Column="2"
-                    Classes="action-button"
-                    VerticalAlignment="Center"
-                    Command="{Binding ToggleSettingsCommand}"
-                    ToolTip.Tip="Open settings">
-                <StackPanel Classes="action-button-content">
-                    <Path Classes="action-button-icon"
-                          Data="{StaticResource FluentAppsSettings20Geometry}" />
-                    <TextBlock VerticalAlignment="Center"
-                               Text="Settings" />
-                </StackPanel>
-            </Button>
         </Grid>
     </Border>
 </UserControl>

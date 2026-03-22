@@ -24,6 +24,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.True(settings.Analysis.RespectIgnore);
         Assert.True(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
+        Assert.Empty(settings.RecentFolderPaths);
     }
 
     [Fact]
@@ -46,7 +47,13 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
               },
               "logging": {
                 "minLevel": "Error"
-              }
+              },
+              "recentFolderPaths": [
+                "C:\\RepoA",
+                "",
+                "C:\\RepoA",
+                "C:\\RepoB"
+              ]
             }
             """);
 
@@ -61,6 +68,10 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.False(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
+        Assert.Collection(
+            settings.RecentFolderPaths,
+            path => Assert.Equal("C:\\RepoA", path),
+            path => Assert.Equal("C:\\RepoB", path));
     }
 
     [Fact]
@@ -100,6 +111,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Analysis.RespectGitIgnore = false;
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Logging.MinLevel = AppLogLevel.Warning;
+        settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
 
         store.Save(settings);
 
@@ -110,6 +122,10 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.False(reloaded.Analysis.RespectGitIgnore);
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);
+        Assert.Collection(
+            reloaded.RecentFolderPaths,
+            path => Assert.Equal("C:\\RepoA", path),
+            path => Assert.Equal("C:\\RepoB", path));
     }
 
     public void Dispose()

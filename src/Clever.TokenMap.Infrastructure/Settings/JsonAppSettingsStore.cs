@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -129,10 +130,44 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         {
             settings.Logging.MinLevel = minimumLevel;
         }
+
+        if (persistedSettings?.RecentFolderPaths is { } recentFolderPaths)
+        {
+            settings.RecentFolderPaths = NormalizeRecentFolderPaths(recentFolderPaths);
+        }
     }
 
     private static string GetDefaultSettingsFilePath()
         => TokenMapAppDataPaths.GetSettingsFilePath();
+
+    private static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> persistedPaths)
+    {
+        var uniquePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var normalizedPaths = new List<string>();
+
+        foreach (var persistedPath in persistedPaths)
+        {
+            if (string.IsNullOrWhiteSpace(persistedPath))
+            {
+                continue;
+            }
+
+            var trimmedPath = persistedPath.Trim();
+            if (!uniquePaths.Add(trimmedPath))
+            {
+                continue;
+            }
+
+            normalizedPaths.Add(trimmedPath);
+
+            if (normalizedPaths.Count >= 10)
+            {
+                break;
+            }
+        }
+
+        return normalizedPaths;
+    }
 
     private sealed class PersistedAppSettings
     {
@@ -141,6 +176,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         public PersistedAppearanceSettings? Appearance { get; set; }
 
         public PersistedLoggingSettings? Logging { get; set; }
+
+        public List<string>? RecentFolderPaths { get; set; }
     }
 
     private sealed class PersistedAnalysisSettings

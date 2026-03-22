@@ -44,6 +44,114 @@
         <Setter Property="FontSize" Value="18" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
+    <Style Selector="Button.recent-folder-button">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      RecognizesAccessKey="True"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="Padding" Value="14,13" />
+        <Setter Property="Margin" Value="0,0,10,10" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.recent-clear-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="Padding" Value="10,4" />
+        <Setter Property="MinHeight" Value="28" />
+    </Style>
+    <Style Selector="Button.recent-clear-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="Button.recent-clear-button:pressed">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceMutedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="Button.recent-folder-remove-button">
+        <Setter Property="Margin" Value="0,8,8,0" />
+        <Setter Property="Opacity" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+    </Style>
+    <Style Selector="Grid.recent-folder-tile:pointerover Button.recent-folder-remove-button">
+        <Setter Property="Opacity" Value="0.85" />
+    </Style>
+    <Style Selector="Button.recent-folder-remove-button:pointerover">
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+    <Style Selector="Button.recent-folder-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+    </Style>
+    <Style Selector="Button.recent-folder-button:pressed">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceMutedBrush}" />
+    </Style>
+    <Style Selector="Border.recent-folder-icon-host">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Padding" Value="8" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Border.recent-folder-icon-host.menu-item">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="6" />
+    </Style>
+    <Style Selector="Path.recent-folder-icon">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Stretch" Value="Uniform" />
+        <Setter Property="Fill" Value="{DynamicResource TokenMapAccentBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+    <Style Selector="TextBlock.recent-folder-title">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="TextBlock.recent-folder-path">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="Border.recent-folder-status-badge">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceMutedBrush}" />
+        <Setter Property="CornerRadius" Value="999" />
+        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TextBlock.recent-folder-status-text">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
     <Style Selector="Button.tree-expander">
         <Setter Property="Width" Value="14" />
         <Setter Property="Height" Value="14" />
@@ -133,6 +241,19 @@
     </Style>
     <Style Selector="Button.action-button.primary Path.action-button-icon">
         <Setter Property="Fill" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button">
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button:pressed">
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
     </Style>
     <Style Selector="TextBlock.tree-table-name">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />

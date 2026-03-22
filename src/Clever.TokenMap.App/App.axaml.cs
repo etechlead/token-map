@@ -11,6 +11,7 @@ using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Logging;
+using Clever.TokenMap.Infrastructure.Paths;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Infrastructure.Text;
@@ -34,6 +35,7 @@ public partial class App : Application
             var appSettingsStore = new JsonAppSettingsStore();
             var appSettings = appSettingsStore.Load();
             var themeService = new ApplicationThemeService(this);
+            var folderPathService = new FileSystemFolderPathService();
             var loggerFactory = new AppLoggerFactory(appSettings.Logging);
             var settingsCoordinator = new SettingsCoordinator(
                 appSettingsStore,
@@ -56,11 +58,13 @@ public partial class App : Application
             var analysisSessionController = new AnalysisSessionController(
                 analyzer,
                 new WindowFolderPickerService(mainWindow),
+                folderPathService,
                 loggerFactory.CreateLogger<AnalysisSessionController>());
             mainWindow.DataContext = new MainWindowViewModel(
                 analysisSessionController,
                 new TreemapNavigationState(),
-                settingsCoordinator);
+                settingsCoordinator,
+                folderPathService);
             desktop.MainWindow = mainWindow;
         }
 

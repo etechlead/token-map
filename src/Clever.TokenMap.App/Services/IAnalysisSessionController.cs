@@ -25,6 +25,8 @@ public interface IAnalysisSessionController : INotifyPropertyChanged
 
     Task OpenFolderAsync(ScanOptions options);
 
+    Task OpenFolderAsync(string folderPath, ScanOptions options);
+
     Task RescanAsync(ScanOptions options);
 
     void Cancel();

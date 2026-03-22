@@ -13,6 +13,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
 {
     private readonly IProjectAnalyzer _projectAnalyzer;
     private readonly IFolderPickerService _folderPickerService;
+    private readonly IFolderPathService _folderPathService;
     private readonly IAppLogger _logger;
 
     private CancellationTokenSource? _analysisCancellationTokenSource;
@@ -22,10 +23,12 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     public AnalysisSessionController(
         IProjectAnalyzer projectAnalyzer,
         IFolderPickerService folderPickerService,
+        IFolderPathService folderPathService,
         IAppLogger? logger = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
+        _folderPathService = folderPathService;
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -63,9 +66,16 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             return;
         }
 
-        _logger.LogInformation($"Folder selected for analysis: '{selectedFolder}'.");
+        await OpenFolderAsync(selectedFolder, options);
+    }
 
-        await AnalyzeFolderAsync(selectedFolder, options, commitSelectedFolderOnSuccess: true);
+    public Task OpenFolderAsync(string folderPath, ScanOptions options)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
+        ArgumentNullException.ThrowIfNull(options);
+
+        _logger.LogInformation($"Folder selected for analysis: '{folderPath}'.");
+        return AnalyzeFolderAsync(folderPath, options, commitSelectedFolderOnSuccess: true);
     }
 
     public Task RescanAsync(ScanOptions options)
@@ -106,6 +116,14 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
 
         _activeAnalysisFolderPath = folderPath;
         CurrentProgress = null;
+
+        if (!_folderPathService.Exists(folderPath))
+        {
+            _logger.LogInformation($"Analysis skipped because project root was not found: '{folderPath}'.");
+            SetState(AnalysisState.Failed, $"Project root was not found: {folderPath}");
+            return;
+        }
+
         SetState(AnalysisState.Scanning, $"Analyzing {folderPath}");
 
         var progress = new Progress<AnalysisProgress>(value =>

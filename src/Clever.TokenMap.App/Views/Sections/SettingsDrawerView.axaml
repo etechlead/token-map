@@ -4,7 +4,6 @@
              x:Class="Clever.TokenMap.App.Views.Sections.SettingsDrawerView"
              x:DataType="vm:MainWindowViewModel">
     <Border Name="SettingsDrawer"
-            ZIndex="1"
             Classes="panel settings-drawer"
             HorizontalAlignment="Right"
             VerticalAlignment="Stretch"

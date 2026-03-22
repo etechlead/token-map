@@ -29,6 +29,23 @@ public sealed class SettingsCoordinatorTests
         Assert.False(coordinator.State.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
+        Assert.Empty(coordinator.State.RecentFolderPaths);
+        Assert.Equal(0, store.SaveCallCount);
+    }
+
+    [Fact]
+    public void Constructor_LoadsRecentFolderPathsIntoState()
+    {
+        var settings = AppSettings.CreateDefault();
+        settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
+
+        var store = new RecordingAppSettingsStore(settings);
+        var coordinator = new SettingsCoordinator(store, new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(25));
+
+        Assert.Collection(
+            coordinator.State.RecentFolderPaths,
+            path => Assert.Equal("C:\\RepoA", path),
+            path => Assert.Equal("C:\\RepoB", path));
         Assert.Equal(0, store.SaveCallCount);
     }
 
@@ -46,6 +63,26 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.Equal(AnalysisMetric.NonEmptyLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+    }
+
+    [Fact]
+    public async Task RecentFolders_AreDebouncedIntoSingleSave()
+    {
+        var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
+        var coordinator = new SettingsCoordinator(store, new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
+
+        coordinator.State.RecordRecentFolder("C:\\RepoA");
+        coordinator.State.RecordRecentFolder("C:\\RepoB");
+        coordinator.State.RecordRecentFolder("C:\\RepoA");
+
+        await Task.Delay(120);
+
+        Assert.Equal(1, store.SaveCallCount);
+        Assert.NotNull(store.LastSavedSettings);
+        Assert.Collection(
+            store.LastSavedSettings!.RecentFolderPaths,
+            path => Assert.Equal("C:\\RepoA", path),
+            path => Assert.Equal("C:\\RepoB", path));
     }
 
     [Fact]
@@ -70,6 +107,7 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(TokenProfile.P50KBase, store.LastSavedSettings!.Analysis.SelectedTokenProfile);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
+        Assert.Empty(store.LastSavedSettings.RecentFolderPaths);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
     }
 
