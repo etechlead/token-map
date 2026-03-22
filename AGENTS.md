@@ -27,11 +27,11 @@ Maintain `TokenMap` as a local desktop app for source-tree analysis with synchro
 
 ## Documentation Rules
 - Keep docs limited to current state and plans.
+- Keep one source of truth: rewrite the canonical instruction in place, prefer fewer precise rules, and do not add duplicate or follow-up guidance beside it.
 - Update `docs/AGENTS.md` if the documentation map or policy changes.
-- Rewrite docs in place; do not append history, journals, or completed-stage lists.
 
 ## Verification
-- Standard repo verification flow:
+- Standard repo verification flow, run sequentially and never overlap `dotnet build` with `dotnet test`:
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
