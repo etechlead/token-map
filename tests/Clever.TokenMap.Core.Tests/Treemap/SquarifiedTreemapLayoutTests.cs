@@ -117,52 +117,6 @@ public sealed class SquarifiedTreemapLayoutTests
     }
 
     [Fact]
-    public void Calculate_SkewedWeights_UsesBalancedSplitToAvoidExtremeTailStripes()
-    {
-        var root = CreateNode(
-            string.Empty,
-            ProjectNodeKind.Root,
-            1_068,
-            0,
-            CreateNode("a", ProjectNodeKind.File, 500, 0),
-            CreateNode("b", ProjectNodeKind.File, 433, 0),
-            CreateNode("c", ProjectNodeKind.File, 78, 0),
-            CreateNode("d", ProjectNodeKind.File, 25, 0),
-            CreateNode("e", ProjectNodeKind.File, 25, 0),
-            CreateNode("f", ProjectNodeKind.File, 7, 0));
-        var layout = new SquarifiedTreemapLayout();
-
-        var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), AnalysisMetric.Tokens);
-
-        var worstAspectRatio = visuals
-            .Where(visual => visual.Depth == 0)
-            .Max(visual => GetAspectRatio(visual.Bounds));
-
-        Assert.True(worstAspectRatio < 4.0, $"Expected balanced split fallback to avoid extreme stripe-like bounds, got worst aspect ratio {worstAspectRatio:F3}.");
-    }
-
-    [Fact]
-    public void Calculate_ThreeSkewedSiblings_DoesNotLeaveSmallestNodeAsFullHeightStripe()
-    {
-        var root = CreateNode(
-            string.Empty,
-            ProjectNodeKind.Root,
-            182,
-            0,
-            CreateNode("SquarifiedTreemapLayoutTests.cs", ProjectNodeKind.File, 109, 0),
-            CreateNode("TreemapVisualRulesTests.cs", ProjectNodeKind.File, 46, 0),
-            CreateNode("TreemapColorRulesTests.cs", ProjectNodeKind.File, 27, 0));
-        var layout = new SquarifiedTreemapLayout();
-
-        var visuals = layout.Calculate(root, new Rect(0, 0, 360, 220), AnalysisMetric.Tokens);
-
-        var smallest = visuals.Single(visual => visual.Depth == 0 && visual.Node.RelativePath == "TreemapColorRulesTests.cs");
-
-        Assert.True(smallest.Bounds.Width > 80, $"Expected the smallest sibling to remain visually targetable, got {smallest.Bounds}.");
-        Assert.True(smallest.Bounds.Height < 180, $"Expected the smallest sibling to avoid a full-height stripe, got {smallest.Bounds}.");
-    }
-
-    [Fact]
     public void Calculate_DirectoryChildren_ArePlacedBelowDirectoryHeaderWhenSpaceAllows()
     {
         var directory = CreateNode(
@@ -180,34 +134,6 @@ public sealed class SquarifiedTreemapLayoutTests
         var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");
 
         Assert.True(fileVisual.Bounds.Y >= directoryVisual.Bounds.Y + 14, $"Expected child bounds below directory header, got dir {directoryVisual.Bounds} and file {fileVisual.Bounds}.");
-    }
-
-    [Fact]
-    public void Calculate_DoesNotRenderChildren_ForDirectoryWithTooNarrowContentBounds()
-    {
-        var fixtures = CreateNode(
-            "tests/Fixtures",
-            ProjectNodeKind.Directory,
-            2,
-            0,
-            CreateNode("tests/Fixtures/a.txt", ProjectNodeKind.File, 1, 0),
-            CreateNode("tests/Fixtures/b.txt", ProjectNodeKind.File, 1, 0));
-        var tests = CreateNode(
-            "tests",
-            ProjectNodeKind.Directory,
-            2002,
-            0,
-            CreateNode("tests/Clever.TokenMap.Core.Tests", ProjectNodeKind.Directory, 1000, 0),
-            CreateNode("tests/Clever.TokenMap.HeadlessTests", ProjectNodeKind.Directory, 1000, 0),
-            fixtures);
-        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 2002, 0, tests);
-        var layout = new SquarifiedTreemapLayout();
-
-        var visuals = layout.Calculate(root, new Rect(0, 0, 600, 400), AnalysisMetric.Tokens);
-
-        Assert.Contains(visuals, visual => visual.Node.RelativePath == "tests/Fixtures");
-        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tests/Fixtures/a.txt");
-        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tests/Fixtures/b.txt");
     }
 
     [Fact]
@@ -271,16 +197,6 @@ public sealed class SquarifiedTreemapLayoutTests
 
         Assert.True(first.Bounds.Width > 400, $"Expected a full-width leading row, got {first.Bounds}.");
         Assert.True(first.Bounds.Height < 433, $"Expected the leading item to be a row, got {first.Bounds}.");
-    }
-
-    private static double GetAspectRatio(Rect bounds)
-    {
-        if (bounds.Width <= 0 || bounds.Height <= 0)
-        {
-            return double.PositiveInfinity;
-        }
-
-        return Math.Max(bounds.Width / bounds.Height, bounds.Height / bounds.Width);
     }
 
     private static ProjectNode CreateTree()

@@ -460,3 +460,4 @@ public sealed class TreemapControl : Control
         node.Children.Count > 0;
 
 }
+
