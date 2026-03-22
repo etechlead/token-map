@@ -1,5 +1,5 @@
 using Avalonia;
-using Clever.TokenMap.Treemap.Layout;
+using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 

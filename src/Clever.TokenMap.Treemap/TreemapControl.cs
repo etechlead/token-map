@@ -4,8 +4,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Clever.TokenMap.Treemap.Layout;
-using Clever.TokenMap.Treemap.Models;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using System.IO;
@@ -30,8 +28,6 @@ public sealed class TreemapControl : Control
     private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
     private static readonly IBrush TooltipBorderFallbackBrush = new SolidColorBrush(Color.Parse("#D7DCE2"));
     private static readonly IBrush TooltipBackgroundFallbackBrush = new SolidColorBrush(Color.Parse("#FFFFFF"));
-    private static readonly IBrush TooltipLabelFallbackBrush = new SolidColorBrush(Color.Parse("#667085"));
-    private static readonly IBrush TooltipValueFallbackBrush = new SolidColorBrush(Color.Parse("#1F2933"));
 
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
