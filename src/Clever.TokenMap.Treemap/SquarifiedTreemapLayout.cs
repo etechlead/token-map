@@ -6,7 +6,7 @@ namespace Clever.TokenMap.Treemap;
 
 public sealed class SquarifiedTreemapLayout
 {
-    private const int BalancedSplitMinChildCount = 4;
+    private const int BalancedSplitMinChildCount = 3;
     private const double BalancedSplitMaxShareThreshold = 0.45d;
     private const double BalancedSplitSkewRatioThreshold = 6d;
 

@@ -142,6 +142,27 @@ public sealed class SquarifiedTreemapLayoutTests
     }
 
     [Fact]
+    public void Calculate_ThreeSkewedSiblings_DoesNotLeaveSmallestNodeAsFullHeightStripe()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            182,
+            0,
+            CreateNode("SquarifiedTreemapLayoutTests.cs", ProjectNodeKind.File, 109, 0),
+            CreateNode("TreemapVisualRulesTests.cs", ProjectNodeKind.File, 46, 0),
+            CreateNode("TreemapColorRulesTests.cs", ProjectNodeKind.File, 27, 0));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 360, 220), AnalysisMetric.Tokens);
+
+        var smallest = visuals.Single(visual => visual.Depth == 0 && visual.Node.RelativePath == "TreemapColorRulesTests.cs");
+
+        Assert.True(smallest.Bounds.Width > 80, $"Expected the smallest sibling to remain visually targetable, got {smallest.Bounds}.");
+        Assert.True(smallest.Bounds.Height < 180, $"Expected the smallest sibling to avoid a full-height stripe, got {smallest.Bounds}.");
+    }
+
+    [Fact]
     public void Calculate_DirectoryChildren_ArePlacedBelowDirectoryHeaderWhenSpaceAllows()
     {
         var directory = CreateNode(
