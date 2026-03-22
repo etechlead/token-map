@@ -60,6 +60,9 @@ public partial class ToolbarViewModel : ViewModelBase
     private bool canChangeMetric;
 
     [ObservableProperty]
+    private bool isStopVisible;
+
+    [ObservableProperty]
     private string selectedFolderDisplay = "No folder selected";
 
     [ObservableProperty]
@@ -100,6 +103,7 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         CanConfigureScanOptions = !isBusy;
         CanChangeMetric = hasSnapshot && !isBusy;
+        IsStopVisible = isBusy;
         OpenFolderCommand.NotifyCanExecuteChanged();
         RescanCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();

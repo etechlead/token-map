@@ -37,6 +37,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl"));
         Assert.Null(window.FindControl<Control>("DetailsPane"));
         Assert.NotNull(window.FindControl<Button>("SettingsButton"));
+        var stopButton = window.FindControl<Button>("StopButton");
         var settingsDrawer = window.FindControl<Control>("SettingsDrawer");
         Assert.Null(window.FindControl<TextBlock>("TreemapScopeText"));
         Assert.Null(window.FindControl<Button>("TreemapBackToOverviewButton"));
@@ -44,6 +45,8 @@ public sealed class MainWindowLayoutTests
         Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
         Assert.Null(window.FindControl<TextBlock>("StatusValueText"));
         Assert.False(statusStrip.IsVisible);
+        Assert.NotNull(stopButton);
+        Assert.False(stopButton.IsVisible);
         Assert.NotNull(settingsDrawer);
         Assert.False(settingsDrawer.IsVisible);
     }
@@ -475,11 +478,11 @@ public sealed class MainWindowLayoutTests
         });
 
         Assert.EndsWith("/Assets/FileIcons/folder-src.svg", folderNode.IconPath, StringComparison.Ordinal);
-        Assert.Equal("M 3 2 L 6.5 5 L 3 8", folderNode.ExpanderPathData);
+        Assert.True(folderNode.IsCollapsed);
 
         folderNode.IsExpanded = true;
         Assert.EndsWith("/Assets/FileIcons/folder-src-open.svg", folderNode.IconPath, StringComparison.Ordinal);
-        Assert.Equal("M 2 3 L 5 6.5 L 8 3", folderNode.ExpanderPathData);
+        Assert.False(folderNode.IsCollapsed);
 
         var csharpFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
@@ -491,7 +494,7 @@ public sealed class MainWindowLayoutTests
             Metrics = NodeMetrics.Empty,
         });
         Assert.EndsWith("/Assets/FileIcons/csharp.svg", csharpFileNode.IconPath, StringComparison.Ordinal);
-        Assert.Equal(string.Empty, csharpFileNode.ExpanderPathData);
+        Assert.False(csharpFileNode.HasChildren);
 
         var tsxFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
@@ -538,18 +541,23 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
         var statusStrip = window.FindControl<Control>("StatusStrip");
+        var stopButton = window.FindControl<Button>("StopButton");
 
         Assert.NotNull(statusStrip);
+        Assert.NotNull(stopButton);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(stopButton.IsVisible);
 
         var openTask = viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
         await Task.Delay(100);
         Assert.True(statusStrip.IsVisible);
+        Assert.True(stopButton.IsVisible);
         viewModel.Toolbar.CancelCommand.Execute(null);
         await openTask;
 
         Assert.Equal(AnalysisState.Cancelled, viewModel.AnalysisState);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(stopButton.IsVisible);
     }
 
     [AvaloniaFact]

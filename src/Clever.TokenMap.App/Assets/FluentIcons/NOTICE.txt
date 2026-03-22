@@ -1,0 +1,5 @@
+TokenMap uses a curated subset of icon geometry derived from Microsoft Fluent UI System Icons:
+https://github.com/microsoft/fluentui-system-icons
+
+The upstream icon set is MIT licensed. The license text is included in
+FLUENT_UI_SYSTEM_ICONS_LICENSE.txt.

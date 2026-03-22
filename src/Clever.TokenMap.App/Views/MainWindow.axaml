@@ -78,16 +78,17 @@
             <Setter Property="BorderThickness" Value="0" />
             <Setter Property="CornerRadius" Value="0" />
         </Style>
-        <Style Selector="Path.tree-expander-chevron">
-            <Setter Property="Width" Value="8" />
-            <Setter Property="Height" Value="8" />
+        <Style Selector="Path.tree-expander-icon">
+            <Setter Property="Width" Value="10" />
+            <Setter Property="Height" Value="10" />
             <Setter Property="Stretch" Value="Uniform" />
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapMutedTextBrush}" />
-            <Setter Property="StrokeThickness" Value="1.6" />
-            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
             <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Button.tree-expander:pointerover Path.tree-expander-icon">
+            <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="Button.action-button">
             <Setter Property="Template">
@@ -142,6 +143,21 @@
         </Style>
         <Style Selector="Button.action-button:disabled">
             <Setter Property="Opacity" Value="0.55" />
+        </Style>
+        <Style Selector="StackPanel.action-button-content">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="Spacing" Value="8" />
+        </Style>
+        <Style Selector="Path.action-button-icon">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Button.action-button.primary Path.action-button-icon">
+            <Setter Property="Fill" Value="White" />
         </Style>
         <Style Selector="TextBlock.tree-table-name">
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
@@ -259,19 +275,17 @@
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="Path.close-button-icon">
-            <Setter Property="Width" Value="10" />
-            <Setter Property="Height" Value="10" />
+            <Setter Property="Width" Value="12" />
+            <Setter Property="Height" Value="12" />
             <Setter Property="Stretch" Value="Uniform" />
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapMutedTextBrush}" />
-            <Setter Property="StrokeThickness" Value="1.6" />
-            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
             <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
         <Style Selector="Button.close-button:pointerover Path.close-button-icon">
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapTextBrush}" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="Button.close-button:pressed Path.close-button-icon">
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapTextBrush}" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="ComboBox">
             <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
@@ -369,16 +383,24 @@
             <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
         <Style Selector="Path.theme-mode-icon">
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapMutedTextBrush}" />
-            <Setter Property="StrokeThickness" Value="1.6" />
-            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
             <Setter Property="IsHitTestVisible" Value="False" />
         </Style>
+        <Style Selector="Path.theme-mode-icon-filled">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon-regular">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon-filled">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
         <Style Selector="ToggleButton.theme-mode-button:pointerover Path.theme-mode-icon">
-            <Setter Property="Stroke" Value="{DynamicResource TokenMapTextBrush}" />
+            <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon">
-            <Setter Property="Stroke" Value="White" />
+            <Setter Property="Fill" Value="White" />
         </Style>
     </Window.Styles>
 
@@ -400,16 +422,32 @@
                                 Spacing="8">
                         <Button Name="OpenFolderButton"
                                 Classes="action-button primary"
-                                Content="Open Folder"
-                                Command="{Binding Toolbar.OpenFolderCommand}" />
+                                Command="{Binding Toolbar.OpenFolderCommand}"
+                                ToolTip.Tip="Open a folder for analysis">
+                            <StackPanel Classes="action-button-content">
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Open Folder" />
+                            </StackPanel>
+                        </Button>
                         <Button Name="RescanButton"
                                 Classes="action-button"
-                                Content="Rescan"
-                                Command="{Binding Toolbar.RescanCommand}" />
-                        <Button Name="CancelButton"
+                                Command="{Binding Toolbar.RescanCommand}"
+                                ToolTip.Tip="Run the scan again for the selected folder">
+                            <StackPanel Classes="action-button-content">
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentArrowClockwise20Geometry}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="Rescan" />
+                            </StackPanel>
+                        </Button>
+                        <Button Name="StopButton"
                                 Classes="action-button"
-                                Content="Cancel"
-                                Command="{Binding Toolbar.CancelCommand}" />
+                                Content="Stop"
+                                Command="{Binding Toolbar.CancelCommand}"
+                                IsVisible="{Binding Toolbar.IsStopVisible}"
+                                ToolTip.Tip="Stop the current scan" />
                     </StackPanel>
 
                     <StackPanel MaxWidth="280"
@@ -470,8 +508,15 @@
                         Grid.Column="2"
                         Classes="action-button"
                         VerticalAlignment="Center"
-                        Content="Settings"
-                        Command="{Binding ToggleSettingsCommand}" />
+                        Command="{Binding ToggleSettingsCommand}"
+                        ToolTip.Tip="Open settings">
+                    <StackPanel Classes="action-button-content">
+                        <Path Classes="action-button-icon"
+                              Data="{StaticResource FluentAppsSettings20Geometry}" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Text="Settings" />
+                    </StackPanel>
+                </Button>
             </Grid>
         </Border>
 
@@ -514,8 +559,15 @@
                                                     VerticalAlignment="Center"
                                                     Click="ProjectTreeExpandCollapseButton_OnClick"
                                                     IsVisible="{Binding HasChildren}">
-                                                <Path Classes="tree-expander-chevron"
-                                                      Data="{Binding ExpanderPathData}" />
+                                                <Grid Width="10"
+                                                      Height="10">
+                                                    <Path Classes="tree-expander-icon"
+                                                          Data="{StaticResource FluentChevronRight16Geometry}"
+                                                          IsVisible="{Binding IsCollapsed}" />
+                                                    <Path Classes="tree-expander-icon"
+                                                          Data="{StaticResource FluentChevronDown16Geometry}"
+                                                          IsVisible="{Binding IsExpanded}" />
+                                                </Grid>
                                             </Button>
                                             <svg:Svg Grid.Column="1"
                                                      Classes="tree-file-icon"
@@ -651,12 +703,10 @@
                         <Button Grid.Column="1"
                                 Classes="close-button"
                                 VerticalAlignment="Center"
-                                Command="{Binding ToggleSettingsCommand}">
+                                Command="{Binding ToggleSettingsCommand}"
+                                ToolTip.Tip="Close settings">
                             <Path Classes="close-button-icon"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Data="M 1 1 L 9 9 M 9 1 L 1 9"
-                                  IsHitTestVisible="False" />
+                                  Data="{StaticResource FluentDismiss20Geometry}" />
                         </Button>
                     </Grid>
 
@@ -728,13 +778,16 @@
                                                   Classes="theme-mode-button start"
                                                   IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
                                                   Command="{Binding Toolbar.SelectThemePreferenceCommand}"
-                                                  CommandParameter="Light">
+                                                  CommandParameter="Light"
+                                                  ToolTip.Tip="Use the light theme">
                                         <Viewbox Classes="theme-mode-icon-host">
-                                            <Canvas Width="20"
-                                                    Height="20">
-                                                <Path Classes="theme-mode-icon"
-                                                      Data="M 10 5.75 A 4.25 4.25 0 1 0 10 14.25 A 4.25 4.25 0 1 0 10 5.75 M 10 2.25 L 10 4 M 10 16 L 10 17.75 M 2.25 10 L 4 10 M 16 10 L 17.75 10 M 4.5 4.5 L 5.8 5.8 M 14.2 14.2 L 15.5 15.5 M 4.5 15.5 L 5.8 14.2 M 14.2 5.8 L 15.5 4.5" />
-                                            </Canvas>
+                                            <Grid Width="20"
+                                                  Height="20">
+                                                <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                      Data="{StaticResource FluentBrightnessHigh20RegularGeometry}" />
+                                                <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                      Data="{StaticResource FluentBrightnessHigh20FilledGeometry}" />
+                                            </Grid>
                                         </Viewbox>
                                     </ToggleButton>
                                     <Border Grid.Column="1"
@@ -744,13 +797,16 @@
                                                   Classes="theme-mode-button middle"
                                                   IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
                                                   Command="{Binding Toolbar.SelectThemePreferenceCommand}"
-                                                  CommandParameter="System">
+                                                  CommandParameter="System"
+                                                  ToolTip.Tip="Follow the system theme">
                                         <Viewbox Classes="theme-mode-icon-host">
-                                            <Canvas Width="20"
-                                                    Height="20">
-                                                <Path Classes="theme-mode-icon"
-                                                      Data="M 3.5 4.5 H 16.5 M 4.75 4.5 H 15.25 A 1.25 1.25 0 0 1 16.5 5.75 V 12 A 1.25 1.25 0 0 1 15.25 13.25 H 4.75 A 1.25 1.25 0 0 1 3.5 12 V 5.75 A 1.25 1.25 0 0 1 4.75 4.5 M 7.5 15.5 H 12.5 M 10 13.25 V 15.5" />
-                                            </Canvas>
+                                            <Grid Width="20"
+                                                  Height="20">
+                                                <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                      Data="{StaticResource FluentDesktop20RegularGeometry}" />
+                                                <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                      Data="{StaticResource FluentDesktop20FilledGeometry}" />
+                                            </Grid>
                                         </Viewbox>
                                     </ToggleButton>
                                     <Border Grid.Column="3"
@@ -760,13 +816,16 @@
                                                   Classes="theme-mode-button end"
                                                   IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
                                                   Command="{Binding Toolbar.SelectThemePreferenceCommand}"
-                                                  CommandParameter="Dark">
+                                                  CommandParameter="Dark"
+                                                  ToolTip.Tip="Use the dark theme">
                                         <Viewbox Classes="theme-mode-icon-host">
-                                            <Canvas Width="20"
-                                                    Height="20">
-                                                <Path Classes="theme-mode-icon"
-                                                      Data="M 11.75 2.5 A 7 7 0 1 0 11.75 17.5 A 5.25 5.25 0 1 1 11.75 2.5" />
-                                            </Canvas>
+                                            <Grid Width="20"
+                                                  Height="20">
+                                                <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                      Data="{StaticResource FluentDarkTheme20RegularGeometry}" />
+                                                <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                      Data="{StaticResource FluentDarkTheme20FilledGeometry}" />
+                                            </Grid>
                                         </Viewbox>
                                     </ToggleButton>
                                 </Grid>

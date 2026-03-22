@@ -52,11 +52,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string IconPath => $"avares://Clever.TokenMap.App/Assets/FileIcons/{GetIconFileName()}";
 
-    public string ExpanderPathData => !HasChildren
-        ? string.Empty
-        : IsExpanded
-            ? "M 2 3 L 5 6.5 L 8 3"
-            : "M 3 2 L 6.5 5 L 3 8";
+    public bool IsCollapsed => !IsExpanded;
 
     public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
 
@@ -73,7 +69,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IconPath))]
-    [NotifyPropertyChangedFor(nameof(ExpanderPathData))]
+    [NotifyPropertyChangedFor(nameof(IsCollapsed))]
     private bool isExpanded;
 
     private string GetIconFileName()
