@@ -1,0 +1,4 @@
+interface:
+  display_name: "ReSharper Unused Code"
+  short_description: "Run inspectcode and filter dead-code noise"
+  default_prompt: "Use $resharper-unused-code to scan this repository for dead code and return only actionable unused-code candidates."
