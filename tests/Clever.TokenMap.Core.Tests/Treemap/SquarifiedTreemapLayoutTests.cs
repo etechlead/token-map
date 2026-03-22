@@ -134,6 +134,9 @@ public sealed class SquarifiedTreemapLayoutTests
         var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");
 
         Assert.True(fileVisual.Bounds.Y >= directoryVisual.Bounds.Y + 14, $"Expected child bounds below directory header, got dir {directoryVisual.Bounds} and file {fileVisual.Bounds}.");
+        Assert.Equal(directoryVisual.Bounds.X, fileVisual.Bounds.X, precision: 3);
+        Assert.Equal(directoryVisual.Bounds.Right, fileVisual.Bounds.Right, precision: 3);
+        Assert.Equal(directoryVisual.Bounds.Bottom, fileVisual.Bounds.Bottom, precision: 3);
     }
 
     [Fact]

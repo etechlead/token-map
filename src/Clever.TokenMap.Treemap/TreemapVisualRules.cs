@@ -34,16 +34,15 @@ internal static class TreemapVisualRules
 
     public static Rect GetContentBounds(ProjectNode node, Rect bounds)
     {
-        var innerBounds = Inset(bounds, NodeInset);
         var headerHeight = GetDirectoryHeaderHeight(node, bounds);
         if (headerHeight <= 0)
         {
-            return innerBounds;
+            return bounds;
         }
 
-        return innerBounds.Height <= headerHeight
-            ? new Rect(innerBounds.X, innerBounds.Bottom, innerBounds.Width, 0)
-            : new Rect(innerBounds.X, innerBounds.Y + headerHeight, innerBounds.Width, innerBounds.Height - headerHeight);
+        return bounds.Height <= headerHeight
+            ? new Rect(bounds.X, bounds.Bottom, bounds.Width, 0)
+            : new Rect(bounds.X, bounds.Y + headerHeight, bounds.Width, bounds.Height - headerHeight);
     }
 
     public static Rect GetHeaderBounds(ProjectNode node, Rect bounds)
@@ -54,8 +53,7 @@ internal static class TreemapVisualRules
             return default;
         }
 
-        var innerBounds = Inset(bounds, NodeInset);
-        return new Rect(innerBounds.X, innerBounds.Y, innerBounds.Width, headerHeight);
+        return new Rect(bounds.X, bounds.Y, bounds.Width, headerHeight);
     }
 
     public static Rect GetLabelBounds(ProjectNode node, Rect bounds)

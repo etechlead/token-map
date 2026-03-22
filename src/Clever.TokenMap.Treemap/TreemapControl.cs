@@ -135,8 +135,10 @@ public sealed class TreemapControl : Control
             {
                 var fill = new SolidColorBrush(TreemapColorRules.GetLeafColor(visual.Node));
                 context.FillRectangle(fill, visual.Bounds);
+                continue;
             }
-            else if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
+
+            if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
             {
                 context.FillRectangle(directoryFillBrush, visual.Bounds);
 
@@ -146,24 +148,32 @@ public sealed class TreemapControl : Control
                     context.FillRectangle(directoryHeaderBrush, headerBounds);
                 }
             }
+        }
 
+        foreach (var visual in _nodeVisuals)
+        {
             context.DrawRectangle(CreateBorderPen(visual.Node), visual.Bounds);
+        }
 
-            if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
+        foreach (var visual in _nodeVisuals)
+        {
+            if (!TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
-                var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
-                IBrush labelBrush = isLeaf ? Brushes.White : directoryLabelBrush;
-                var formattedText = new FormattedText(
-                    visual.Node.Name,
-                    culture: System.Globalization.CultureInfo.InvariantCulture,
-                    flowDirection: FlowDirection.LeftToRight,
-                    typeface: Typeface.Default,
-                    emSize: TreemapVisualRules.GetLabelFontSize(visual.Node),
-                    foreground: labelBrush);
-
-                using var clip = context.PushClip(labelBounds);
-                context.DrawText(formattedText, new Point(labelBounds.X, labelBounds.Y));
+                continue;
             }
+
+            var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
+            IBrush labelBrush = IsLeafNode(visual.Node) ? Brushes.White : directoryLabelBrush;
+            var formattedText = new FormattedText(
+                visual.Node.Name,
+                culture: System.Globalization.CultureInfo.InvariantCulture,
+                flowDirection: FlowDirection.LeftToRight,
+                typeface: Typeface.Default,
+                emSize: TreemapVisualRules.GetLabelFontSize(visual.Node),
+                foreground: labelBrush);
+
+            using var clip = context.PushClip(labelBounds);
+            context.DrawText(formattedText, new Point(labelBounds.X, labelBounds.Y));
         }
     }
 
@@ -460,4 +470,3 @@ public sealed class TreemapControl : Control
         node.Children.Count > 0;
 
 }
-
