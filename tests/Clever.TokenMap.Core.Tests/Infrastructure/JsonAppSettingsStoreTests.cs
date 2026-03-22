@@ -21,6 +21,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.True(settings.Analysis.RespectGitIgnore);
         Assert.True(settings.Analysis.RespectIgnore);
         Assert.True(settings.Analysis.UseDefaultExcludes);
+        Assert.Equal(ThemePreferences.System, settings.Appearance.ThemePreference);
     }
 
     [Fact]
@@ -38,6 +39,9 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
                 "respectIgnore": false,
                 "useDefaultExcludes": false
               },
+              "appearance": {
+                "themePreference": "Dark"
+              },
               "logging": {
                 "minLevel": "Error"
               }
@@ -53,6 +57,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.RespectIgnore);
         Assert.False(settings.Analysis.UseDefaultExcludes);
+        Assert.Equal(ThemePreferences.Dark, settings.Appearance.ThemePreference);
         Assert.Equal("Error", settings.Logging.MinLevel);
     }
 
@@ -64,6 +69,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Analysis.SelectedMetric = "Total lines";
         settings.Analysis.SelectedTokenProfile = "p50k_base";
         settings.Analysis.RespectGitIgnore = false;
+        settings.Appearance.ThemePreference = ThemePreferences.Dark;
         settings.Logging.MinLevel = "Warning";
 
         store.Save(settings);
@@ -73,6 +79,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Equal("Total lines", reloaded.Analysis.SelectedMetric);
         Assert.Equal("p50k_base", reloaded.Analysis.SelectedTokenProfile);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
+        Assert.Equal(ThemePreferences.Dark, reloaded.Appearance.ThemePreference);
         Assert.Equal("Warning", reloaded.Logging.MinLevel);
     }
 

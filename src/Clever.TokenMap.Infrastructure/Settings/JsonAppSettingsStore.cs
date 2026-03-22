@@ -115,6 +115,13 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             }
         }
 
+        if (TryGetObject(root, "appearance", out var appearance) &&
+            TryGetString(appearance, "themePreference", out var themePreference) &&
+            TryNormalizeThemePreference(themePreference, out var normalizedThemePreference))
+        {
+            settings.Appearance.ThemePreference = normalizedThemePreference;
+        }
+
         if (TryGetObject(root, "logging", out var logging) &&
             TryGetString(logging, "minLevel", out var minLevel) &&
             TryNormalizeMinLevel(minLevel, out var normalizedMinLevel))
@@ -197,6 +204,30 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         if (string.Equals(value, "Critical", StringComparison.OrdinalIgnoreCase))
         {
             normalized = "Critical";
+            return true;
+        }
+
+        normalized = string.Empty;
+        return false;
+    }
+
+    private static bool TryNormalizeThemePreference(string value, out string normalized)
+    {
+        if (string.Equals(value, ThemePreferences.System, StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = ThemePreferences.System;
+            return true;
+        }
+
+        if (string.Equals(value, ThemePreferences.Light, StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = ThemePreferences.Light;
+            return true;
+        }
+
+        if (string.Equals(value, ThemePreferences.Dark, StringComparison.OrdinalIgnoreCase))
+        {
+            normalized = ThemePreferences.Dark;
             return true;
         }
 

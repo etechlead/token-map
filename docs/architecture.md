@@ -30,6 +30,7 @@
 
 - Per-user settings are stored in one lightweight `settings.json` file under the user data directory.
 - The app starts from defaults first, then best-effort applies values from `settings.json`.
+- Analysis preferences and appearance preferences, including theme mode, are stored in that settings file.
 - Missing, unreadable, or malformed settings files must not block startup.
 - `Clever.TokenMap.App` uses a settings service/store rather than reading the settings file directly.
 - Logs and future cache data live next to that settings file in separate files/directories rather than inside the settings document.

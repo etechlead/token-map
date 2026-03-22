@@ -34,10 +34,12 @@ public partial class App : Application
             var mainWindow = new MainWindow();
             var appSettingsStore = new JsonAppSettingsStore();
             var appSettings = appSettingsStore.Load();
+            var themeService = new ApplicationThemeService(this);
+            themeService.ApplyThemePreference(appSettings.Appearance.ThemePreference);
             var loggerFactory = new AppLoggerFactory(appSettings.Logging);
             desktop.Exit += (_, _) => loggerFactory.Dispose();
             loggerFactory.CreateLogger<App>().LogInformation(
-                $"Application starting. OS='{Environment.OSVersion}', framework='{Environment.Version}', logLevel='{appSettings.Logging.MinLevel}'.");
+                $"Application starting. OS='{Environment.OSVersion}', framework='{Environment.Version}', logLevel='{appSettings.Logging.MinLevel}', themePreference='{appSettings.Appearance.ThemePreference}', systemTheme='{themeService.CurrentSystemTheme}'.");
             var analyzer = new ProjectAnalyzer(
                 new FileSystemProjectScanner(logger: loggerFactory.CreateLogger<FileSystemProjectScanner>()),
                 new HeuristicTextFileDetector(),
@@ -50,6 +52,7 @@ public partial class App : Application
                 analyzer,
                 new WindowFolderPickerService(mainWindow),
                 appSettingsStore,
+                themeService,
                 loggerFactory.CreateLogger<MainWindowViewModel>());
             desktop.MainWindow = mainWindow;
         }

@@ -20,6 +20,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IAppSettingsStore _appSettingsStore;
     private readonly IAppLogger _logger;
     private readonly IProjectAnalyzer _projectAnalyzer;
+    private readonly IThemeService _themeService;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
@@ -31,12 +32,12 @@ public partial class MainWindowViewModel : ViewModelBase
     private ProjectNode? _treemapRootNode;
 
     public MainWindowViewModel()
-        : this(new NullProjectAnalyzer(), new NullFolderPickerService(), new NullAppSettingsStore(), NullAppLogger.Instance)
+        : this(new NullProjectAnalyzer(), new NullFolderPickerService(), new NullAppSettingsStore(), new NullThemeService(), NullAppLogger.Instance)
     {
     }
 
     public MainWindowViewModel(IProjectAnalyzer projectAnalyzer, IFolderPickerService folderPickerService)
-        : this(projectAnalyzer, folderPickerService, new NullAppSettingsStore(), NullAppLogger.Instance)
+        : this(projectAnalyzer, folderPickerService, new NullAppSettingsStore(), new NullThemeService(), NullAppLogger.Instance)
     {
     }
 
@@ -45,10 +46,21 @@ public partial class MainWindowViewModel : ViewModelBase
         IFolderPickerService folderPickerService,
         IAppSettingsStore appSettingsStore,
         IAppLogger? logger = null)
+        : this(projectAnalyzer, folderPickerService, appSettingsStore, new NullThemeService(), logger)
+    {
+    }
+
+    public MainWindowViewModel(
+        IProjectAnalyzer projectAnalyzer,
+        IFolderPickerService folderPickerService,
+        IAppSettingsStore appSettingsStore,
+        IThemeService themeService,
+        IAppLogger? logger = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
         _appSettingsStore = appSettingsStore;
+        _themeService = themeService;
         _logger = logger ?? NullAppLogger.Instance;
         _currentSettings = AppSettings.CreateDefault();
 
@@ -328,6 +340,8 @@ public partial class MainWindowViewModel : ViewModelBase
         try
         {
             Toolbar.ApplyAnalysisSettings(_currentSettings.Analysis);
+            Toolbar.ApplyAppearanceSettings(_currentSettings.Appearance);
+            _themeService.ApplyThemePreference(_currentSettings.Appearance.ThemePreference);
         }
         finally
         {
@@ -346,9 +360,12 @@ public partial class MainWindowViewModel : ViewModelBase
             nameof(ToolbarViewModel.SelectedTokenProfile) or
             nameof(ToolbarViewModel.RespectGitIgnore) or
             nameof(ToolbarViewModel.RespectIgnore) or
-            nameof(ToolbarViewModel.UseDefaultExcludes))
+            nameof(ToolbarViewModel.UseDefaultExcludes) or
+            nameof(ToolbarViewModel.SelectedThemePreference))
         {
             _currentSettings.Analysis = Toolbar.BuildAnalysisSettings();
+            _currentSettings.Appearance = Toolbar.BuildAppearanceSettings();
+            _themeService.ApplyThemePreference(_currentSettings.Appearance.ThemePreference);
             _appSettingsStore.Save(_currentSettings);
             _logger.LogDebug("Persisted updated analysis settings to settings.json.");
         }
@@ -375,6 +392,15 @@ public partial class MainWindowViewModel : ViewModelBase
         public AppSettings Load() => AppSettings.CreateDefault();
 
         public void Save(AppSettings settings)
+        {
+        }
+    }
+
+    private sealed class NullThemeService : IThemeService
+    {
+        public string CurrentSystemTheme => ThemePreferences.Light;
+
+        public void ApplyThemePreference(string themePreference)
         {
         }
     }

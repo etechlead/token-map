@@ -38,6 +38,11 @@ public sealed class TreemapControl : Control
         AffectsRender<TreemapControl>(MetricProperty, RootNodeProperty, BoundsProperty);
     }
 
+    public TreemapControl()
+    {
+        ActualThemeVariantChanged += (_, _) => InvalidateVisual();
+    }
+
     public string Metric
     {
         get => GetValue(MetricProperty);
@@ -91,11 +96,20 @@ public sealed class TreemapControl : Control
     {
         base.Render(context);
 
+        var isDarkTheme = IsDarkTheme();
         var drawingBounds = new Rect(Bounds.Size).Deflate(6);
-        var canvasBrush = GetThemeBrush("TokenMapSurfaceSubtleBrush", new SolidColorBrush(Color.Parse("#F7F8FA")));
-        var directoryFillBrush = GetThemeBrush("TokenMapSurfaceMutedBrush", new SolidColorBrush(Color.Parse("#F1F3F5")));
-        var directoryHeaderBrush = GetThemeBrush("TokenMapDividerBrush", new SolidColorBrush(Color.Parse("#E7EBF0")));
-        var directoryLabelBrush = GetThemeBrush("TokenMapTextBrush", new SolidColorBrush(Color.Parse("#1F2933")));
+        var canvasBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#1B2129"))
+            : new SolidColorBrush(Color.Parse("#F7F8FA"));
+        var directoryFillBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#242B34"))
+            : new SolidColorBrush(Color.Parse("#F1F3F5"));
+        var directoryHeaderBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#313845"))
+            : new SolidColorBrush(Color.Parse("#E7EBF0"));
+        var directoryLabelBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#F3F4F6"))
+            : new SolidColorBrush(Color.Parse("#1F2933"));
 
         context.FillRectangle(canvasBrush, new Rect(Bounds.Size));
 
@@ -140,7 +154,7 @@ public sealed class TreemapControl : Control
             if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
                 var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
-                var labelBrush = isLeaf ? Brushes.White : directoryLabelBrush;
+                IBrush labelBrush = isLeaf ? Brushes.White : directoryLabelBrush;
                 var formattedText = new FormattedText(
                     visual.Node.Name,
                     culture: System.Globalization.CultureInfo.InvariantCulture,
@@ -187,7 +201,9 @@ public sealed class TreemapControl : Control
             flowDirection: FlowDirection.LeftToRight,
             typeface: Typeface.Default,
             emSize: 12,
-            foreground: new SolidColorBrush(Color.Parse("#8FA3B8")));
+            foreground: IsDarkTheme()
+                ? new SolidColorBrush(Color.Parse("#AAB4C0"))
+                : new SolidColorBrush(Color.Parse("#667085")));
 
         var point = new Point(
             Math.Max(12, (Bounds.Width - formattedText.Width) / 2),
@@ -275,6 +291,7 @@ public sealed class TreemapControl : Control
 
     private Pen CreateBorderPen(ProjectNode node)
     {
+        var isDarkTheme = IsDarkTheme();
         var isSelected = SelectedNode?.Id == node.Id;
         var isHovered = HoveredNode?.Id == node.Id;
         var isLeaf = IsLeafNode(node);
@@ -290,8 +307,16 @@ public sealed class TreemapControl : Control
         }
 
         return isLeaf
-            ? new Pen(new SolidColorBrush(Color.FromArgb(166, 255, 255, 255)), 1)
-            : new Pen(GetThemeBrush("TokenMapBorderBrush", TooltipBorderFallbackBrush), 1);
+            ? new Pen(
+                isDarkTheme
+                    ? new SolidColorBrush(Color.FromArgb(166, 255, 255, 255))
+                    : new SolidColorBrush(Color.FromArgb(166, 255, 255, 255)),
+                1)
+            : new Pen(
+                isDarkTheme
+                    ? new SolidColorBrush(Color.Parse("#3A4350"))
+                    : new SolidColorBrush(Color.Parse("#D7DCE2")),
+                1);
     }
 
     private IBrush GetThemeBrush(string resourceKey, IBrush fallbackBrush)
@@ -320,6 +345,7 @@ public sealed class TreemapControl : Control
 
     private Control BuildTooltipContent(ProjectNode node)
     {
+        var isDarkTheme = IsDarkTheme();
         var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
         var share = RootNode is null
             ? "n/a"
@@ -332,8 +358,12 @@ public sealed class TreemapControl : Control
                 ? Path.GetExtension(node.Name) is { Length: > 0 } extension ? extension : "(none)"
                 : "n/a");
 
-        var labelBrush = GetThemeBrush("TokenMapMutedTextBrush", TooltipLabelFallbackBrush);
-        var valueBrush = GetThemeBrush("TokenMapTextBrush", TooltipValueFallbackBrush);
+        var labelBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#AAB4C0"))
+            : new SolidColorBrush(Color.Parse("#667085"));
+        var valueBrush = isDarkTheme
+            ? new SolidColorBrush(Color.Parse("#F3F4F6"))
+            : new SolidColorBrush(Color.Parse("#1F2933"));
 
         var content = new StackPanel
         {
@@ -362,14 +392,24 @@ public sealed class TreemapControl : Control
 
         return new Border
         {
-            Background = GetThemeBrush("TokenMapSurfaceBrush", TooltipBackgroundFallbackBrush),
-            BorderBrush = GetThemeBrush("TokenMapBorderBrush", TooltipBorderFallbackBrush),
+            Background = isDarkTheme
+                ? new SolidColorBrush(Color.Parse("#1C2128"))
+                : TooltipBackgroundFallbackBrush,
+            BorderBrush = isDarkTheme
+                ? new SolidColorBrush(Color.Parse("#3A4350"))
+                : TooltipBorderFallbackBrush,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(4),
             Padding = new Thickness(12),
             Child = content,
             MaxWidth = 360,
         };
+    }
+
+    private bool IsDarkTheme()
+    {
+        var variant = Application.Current?.ActualThemeVariant ?? ActualThemeVariant;
+        return variant == ThemeVariant.Dark;
     }
 
     private static Control CreateTooltipRow(string label, string value, IBrush labelBrush, IBrush valueBrush)

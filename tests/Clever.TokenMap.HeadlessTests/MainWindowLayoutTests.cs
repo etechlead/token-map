@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Clever.TokenMap.App.Models;
 using Clever.TokenMap.Controls;
@@ -108,17 +109,29 @@ public sealed class MainWindowLayoutTests
         window.Show();
 
         var metricComboBox = window.FindControl<ComboBox>("MetricComboBox");
+        var themeSystemButton = window.FindControl<ToggleButton>("ThemeSystemButton");
+        var themeLightButton = window.FindControl<ToggleButton>("ThemeLightButton");
+        var themeDarkButton = window.FindControl<ToggleButton>("ThemeDarkButton");
         var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
         var gitIgnoreCheckBox = window.FindControl<CheckBox>("RespectGitIgnoreCheckBox");
         var ignoreCheckBox = window.FindControl<CheckBox>("RespectIgnoreCheckBox");
         var defaultExcludesCheckBox = window.FindControl<CheckBox>("UseDefaultExcludesCheckBox");
 
         Assert.NotNull(metricComboBox);
+        Assert.NotNull(themeSystemButton);
+        Assert.NotNull(themeLightButton);
+        Assert.NotNull(themeDarkButton);
         Assert.NotNull(tokenizerComboBox);
         Assert.NotNull(gitIgnoreCheckBox);
         Assert.NotNull(ignoreCheckBox);
         Assert.NotNull(defaultExcludesCheckBox);
         Assert.False(metricComboBox.IsEnabled);
+        Assert.True(themeSystemButton.IsEnabled);
+        Assert.True(themeLightButton.IsEnabled);
+        Assert.True(themeDarkButton.IsEnabled);
+        Assert.True(themeSystemButton.IsChecked);
+        Assert.False(themeLightButton.IsChecked);
+        Assert.False(themeDarkButton.IsChecked);
         Assert.True(tokenizerComboBox.IsEnabled);
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(ignoreCheckBox.IsEnabled);

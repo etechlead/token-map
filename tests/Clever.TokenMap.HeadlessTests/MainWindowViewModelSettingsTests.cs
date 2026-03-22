@@ -17,19 +17,24 @@ public sealed class MainWindowViewModelSettingsTests
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.RespectIgnore = false;
         settings.Analysis.UseDefaultExcludes = false;
+        settings.Appearance.ThemePreference = ThemePreferences.Dark;
 
         var store = new RecordingAppSettingsStore(settings);
+        var themeService = new RecordingThemeService();
 
         var viewModel = new MainWindowViewModel(
             new StubProjectAnalyzer(),
             new StubFolderPickerService(),
-            store);
+            store,
+            themeService);
 
         Assert.Equal("Code lines", viewModel.Toolbar.SelectedMetric);
         Assert.Equal("p50k_base", viewModel.Toolbar.SelectedTokenProfile);
         Assert.False(viewModel.Toolbar.RespectGitIgnore);
         Assert.False(viewModel.Toolbar.RespectIgnore);
         Assert.False(viewModel.Toolbar.UseDefaultExcludes);
+        Assert.Equal(ThemePreferences.Dark, viewModel.Toolbar.SelectedThemePreference);
+        Assert.Equal(ThemePreferences.Dark, themeService.LastAppliedThemePreference);
         Assert.Equal(0, store.SaveCallCount);
     }
 
@@ -39,17 +44,22 @@ public sealed class MainWindowViewModelSettingsTests
         var settings = AppSettings.CreateDefault();
         settings.Logging.MinLevel = "Error";
         var store = new RecordingAppSettingsStore(settings);
+        var themeService = new RecordingThemeService();
         var viewModel = new MainWindowViewModel(
             new StubProjectAnalyzer(),
             new StubFolderPickerService(),
-            store);
+            store,
+            themeService);
 
         viewModel.Toolbar.SelectedMetric = "Total lines";
+        viewModel.Toolbar.SelectedThemePreference = ThemePreferences.Dark;
 
-        Assert.Equal(1, store.SaveCallCount);
+        Assert.Equal(2, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
         Assert.Equal("Total lines", store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(ThemePreferences.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal("Error", store.LastSavedSettings.Logging.MinLevel);
+        Assert.Equal(ThemePreferences.Dark, themeService.LastAppliedThemePreference);
     }
 
     private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore
@@ -77,11 +87,27 @@ public sealed class MainWindowViewModelSettingsTests
                     RespectIgnore = settings.Analysis.RespectIgnore,
                     UseDefaultExcludes = settings.Analysis.UseDefaultExcludes,
                 },
+                Appearance = new AppearanceSettings
+                {
+                    ThemePreference = settings.Appearance.ThemePreference,
+                },
                 Logging = new LoggingSettings
                 {
                     MinLevel = settings.Logging.MinLevel,
                 },
             };
+    }
+
+    private sealed class RecordingThemeService : IThemeService
+    {
+        public string CurrentSystemTheme => ThemePreferences.Light;
+
+        public string? LastAppliedThemePreference { get; private set; }
+
+        public void ApplyThemePreference(string themePreference)
+        {
+            LastAppliedThemePreference = themePreference;
+        }
     }
 
     private sealed class StubFolderPickerService : IFolderPickerService

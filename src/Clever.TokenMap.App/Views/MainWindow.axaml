@@ -116,8 +116,8 @@
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
         <Style Selector="Button.action-button:pointerover">
-            <Setter Property="Background" Value="#FCFCFD" />
-            <Setter Property="BorderBrush" Value="#C9D1DA" />
+            <Setter Property="Background" Value="{DynamicResource TokenMapControlHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="Button.action-button:pressed">
@@ -149,7 +149,7 @@
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
         <Style Selector="TextBlock.tree-table-number">
-            <Setter Property="Foreground" Value="#344054" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapSecondaryTextBrush}" />
             <Setter Property="HorizontalAlignment" Value="Right" />
             <Setter Property="TextAlignment" Value="Right" />
         </Style>
@@ -167,7 +167,7 @@
         </Style>
         <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader">
             <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderBrush" Value="{DynamicResource TokenMapDividerBrush}" />
             <Setter Property="BorderThickness" Value="0,0,0,1" />
@@ -281,7 +281,7 @@
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         </Style>
         <Style Selector="ComboBox:pointerover">
-            <Setter Property="BorderBrush" Value="#C9D1DA" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
         </Style>
         <Style Selector="ComboBox /template/ ContentPresenter">
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
@@ -300,6 +300,85 @@
         </Style>
         <Style Selector="CheckBox">
             <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        </Style>
+        <Style Selector="Border.theme-switcher-panel">
+            <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="1" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinHeight" Value="40" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch">
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button.start">
+            <Setter Property="CornerRadius" Value="4,0,0,4" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button.middle">
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button.end">
+            <Setter Property="CornerRadius" Value="0,4,4,0" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource TokenMapControlHoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:checked">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        </Style>
+        <Style Selector="Border.theme-mode-divider">
+            <Setter Property="Background" Value="{DynamicResource TokenMapBorderBrush}" />
+            <Setter Property="Width" Value="1" />
+        </Style>
+        <Style Selector="Viewbox.theme-mode-icon-host">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="Path.theme-mode-icon">
+            <Setter Property="Stroke" Value="{DynamicResource TokenMapMutedTextBrush}" />
+            <Setter Property="StrokeThickness" Value="1.6" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:pointerover Path.theme-mode-icon">
+            <Setter Property="Stroke" Value="{DynamicResource TokenMapTextBrush}" />
+        </Style>
+        <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon">
+            <Setter Property="Stroke" Value="White" />
         </Style>
     </Window.Styles>
 
@@ -555,72 +634,139 @@
                     VerticalAlignment="Stretch"
                     Margin="0,10,0,8"
                     IsVisible="{Binding IsSettingsOpen}">
-                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel Spacing="12">
-                        <Grid ColumnDefinitions="*,Auto"
-                              ColumnSpacing="8">
-                            <TextBlock Classes="panel-title"
-                                       VerticalAlignment="Center"
-                                       Text="Settings" />
-                            <Button Grid.Column="1"
-                                    Classes="close-button"
-                                    VerticalAlignment="Center"
-                                    Command="{Binding ToggleSettingsCommand}">
-                                <Path Classes="close-button-icon"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Center"
-                                      Data="M 1 1 L 9 9 M 9 1 L 1 9"
-                                      IsHitTestVisible="False" />
-                            </Button>
-                        </Grid>
+                <Grid RowDefinitions="Auto,*,Auto"
+                      RowSpacing="12">
+                    <Grid ColumnDefinitions="*,Auto"
+                          ColumnSpacing="8">
+                        <TextBlock Classes="panel-title"
+                                   VerticalAlignment="Center"
+                                   Text="Settings" />
+                        <Button Grid.Column="1"
+                                Classes="close-button"
+                                VerticalAlignment="Center"
+                                Command="{Binding ToggleSettingsCommand}">
+                            <Path Classes="close-button-icon"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Data="M 1 1 L 9 9 M 9 1 L 1 9"
+                                  IsHitTestVisible="False" />
+                        </Button>
+                    </Grid>
 
-                        <Border Classes="toolbar-group">
-                            <StackPanel Spacing="8">
-                                <TextBlock Classes="toolbar-group-title"
-                                           Text="View" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                                               FontSize="11"
-                                               Text="Treemap metric" />
-                                    <ComboBox Name="MetricComboBox"
-                                              ItemsSource="{Binding Toolbar.MetricOptions}"
-                                              SelectedItem="{Binding Toolbar.SelectedMetric}"
-                                              IsEnabled="{Binding Toolbar.CanChangeMetric}" />
+                    <ScrollViewer Grid.Row="1"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="12">
+                            <Border Classes="toolbar-group">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Classes="toolbar-group-title"
+                                               Text="View" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                                   FontSize="11"
+                                                   Text="Treemap metric" />
+                                        <ComboBox Name="MetricComboBox"
+                                                  ItemsSource="{Binding Toolbar.MetricOptions}"
+                                                  SelectedItem="{Binding Toolbar.SelectedMetric}"
+                                                  IsEnabled="{Binding Toolbar.CanChangeMetric}" />
+                                    </StackPanel>
                                 </StackPanel>
-                            </StackPanel>
-                        </Border>
+                            </Border>
 
-                        <Border Classes="toolbar-group">
-                            <StackPanel Spacing="10">
-                                <TextBlock Classes="toolbar-group-title"
-                                           Text="Scan" />
-                                <StackPanel Spacing="4">
-                                    <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                                               FontSize="11"
-                                               Text="Tokenizer" />
-                                    <ComboBox Name="TokenizerComboBox"
-                                              ItemsSource="{Binding Toolbar.TokenProfiles}"
-                                              SelectedItem="{Binding Toolbar.SelectedTokenProfile}"
+                            <Border Classes="toolbar-group">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="toolbar-group-title"
+                                               Text="Scan" />
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                                   FontSize="11"
+                                                   Text="Tokenizer" />
+                                        <ComboBox Name="TokenizerComboBox"
+                                                  ItemsSource="{Binding Toolbar.TokenProfiles}"
+                                                  SelectedItem="{Binding Toolbar.SelectedTokenProfile}"
+                                                  IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                    </StackPanel>
+
+                                    <CheckBox Name="RespectGitIgnoreCheckBox"
+                                              Content="Respect .gitignore"
+                                              IsChecked="{Binding Toolbar.RespectGitIgnore}"
+                                              IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                    <CheckBox Name="RespectIgnoreCheckBox"
+                                              Content="Respect .ignore"
+                                              IsChecked="{Binding Toolbar.RespectIgnore}"
+                                              IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                    <CheckBox Name="UseDefaultExcludesCheckBox"
+                                              Content="Use default excludes"
+                                              IsChecked="{Binding Toolbar.UseDefaultExcludes}"
                                               IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
 
-                                <CheckBox Name="RespectGitIgnoreCheckBox"
-                                          Content="Respect .gitignore"
-                                          IsChecked="{Binding Toolbar.RespectGitIgnore}"
-                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                                <CheckBox Name="RespectIgnoreCheckBox"
-                                          Content="Respect .ignore"
-                                          IsChecked="{Binding Toolbar.RespectIgnore}"
-                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                                <CheckBox Name="UseDefaultExcludesCheckBox"
-                                          Content="Use default excludes"
-                                          IsChecked="{Binding Toolbar.UseDefaultExcludes}"
-                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                    <Border Grid.Row="2"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            Padding="0">
+                        <Grid RowDefinitions="Auto,Auto"
+                              RowSpacing="8">
+                            <TextBlock Classes="toolbar-group-title"
+                                       Text="Theme" />
+                            <Border Grid.Row="1"
+                                    Grid.ColumnSpan="2"
+                                    Classes="theme-switcher-panel">
+                                <Grid ColumnDefinitions="*,Auto,*,Auto,*">
+                                    <ToggleButton Name="ThemeLightButton"
+                                                  Classes="theme-mode-button start"
+                                                  IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
+                                                  Command="{Binding Toolbar.SelectThemePreferenceCommand}"
+                                                  CommandParameter="Light">
+                                        <Viewbox Classes="theme-mode-icon-host">
+                                            <Canvas Width="20"
+                                                    Height="20">
+                                                <Path Classes="theme-mode-icon"
+                                                      Data="M 10 5.75 A 4.25 4.25 0 1 0 10 14.25 A 4.25 4.25 0 1 0 10 5.75 M 10 2.25 L 10 4 M 10 16 L 10 17.75 M 2.25 10 L 4 10 M 16 10 L 17.75 10 M 4.5 4.5 L 5.8 5.8 M 14.2 14.2 L 15.5 15.5 M 4.5 15.5 L 5.8 14.2 M 14.2 5.8 L 15.5 4.5" />
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                    <Border Grid.Column="1"
+                                            Classes="theme-mode-divider" />
+                                    <ToggleButton Name="ThemeSystemButton"
+                                                  Grid.Column="2"
+                                                  Classes="theme-mode-button middle"
+                                                  IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
+                                                  Command="{Binding Toolbar.SelectThemePreferenceCommand}"
+                                                  CommandParameter="System">
+                                        <Viewbox Classes="theme-mode-icon-host">
+                                            <Canvas Width="20"
+                                                    Height="20">
+                                                <Path Classes="theme-mode-icon"
+                                                      Data="M 3.5 4.5 H 16.5 M 4.75 4.5 H 15.25 A 1.25 1.25 0 0 1 16.5 5.75 V 12 A 1.25 1.25 0 0 1 15.25 13.25 H 4.75 A 1.25 1.25 0 0 1 3.5 12 V 5.75 A 1.25 1.25 0 0 1 4.75 4.5 M 7.5 15.5 H 12.5 M 10 13.25 V 15.5" />
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                    <Border Grid.Column="3"
+                                            Classes="theme-mode-divider" />
+                                    <ToggleButton Name="ThemeDarkButton"
+                                                  Grid.Column="4"
+                                                  Classes="theme-mode-button end"
+                                                  IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
+                                                  Command="{Binding Toolbar.SelectThemePreferenceCommand}"
+                                                  CommandParameter="Dark">
+                                        <Viewbox Classes="theme-mode-icon-host">
+                                            <Canvas Width="20"
+                                                    Height="20">
+                                                <Path Classes="theme-mode-icon"
+                                                      Data="M 11.75 2.5 A 7 7 0 1 0 11.75 17.5 A 5.25 5.25 0 1 1 11.75 2.5" />
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </Grid>
             </Border>
         </Grid>
 

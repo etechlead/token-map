@@ -4,9 +4,20 @@ public sealed class AppSettings
 {
     public AnalysisSettings Analysis { get; set; } = new();
 
+    public AppearanceSettings Appearance { get; set; } = new();
+
     public LoggingSettings Logging { get; set; } = new();
 
     public static AppSettings CreateDefault() => new();
+}
+
+public static class ThemePreferences
+{
+    public const string System = "System";
+
+    public const string Light = "Light";
+
+    public const string Dark = "Dark";
 }
 
 public sealed class AnalysisSettings
@@ -20,6 +31,11 @@ public sealed class AnalysisSettings
     public bool RespectIgnore { get; set; } = true;
 
     public bool UseDefaultExcludes { get; set; } = true;
+}
+
+public sealed class AppearanceSettings
+{
+    public string ThemePreference { get; set; } = ThemePreferences.System;
 }
 
 public sealed class LoggingSettings

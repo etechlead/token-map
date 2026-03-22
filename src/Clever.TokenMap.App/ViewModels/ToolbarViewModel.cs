@@ -11,6 +11,8 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ToolbarViewModel : ViewModelBase
 {
+    private readonly RelayCommand<string> _selectThemePreferenceCommand;
+
     public ToolbarViewModel(
         IAsyncRelayCommand openFolderCommand,
         IAsyncRelayCommand rescanCommand,
@@ -19,6 +21,7 @@ public partial class ToolbarViewModel : ViewModelBase
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
+        _selectThemePreferenceCommand = new RelayCommand<string>(SelectThemePreference);
     }
 
     public IAsyncRelayCommand OpenFolderCommand { get; }
@@ -26,6 +29,8 @@ public partial class ToolbarViewModel : ViewModelBase
     public IAsyncRelayCommand RescanCommand { get; }
 
     public IRelayCommand CancelCommand { get; }
+
+    public IRelayCommand<string> SelectThemePreferenceCommand => _selectThemePreferenceCommand;
 
     public IReadOnlyList<string> MetricOptions { get; } =
     [
@@ -39,6 +44,13 @@ public partial class ToolbarViewModel : ViewModelBase
         "o200k_base",
         "cl100k_base",
         "p50k_base",
+    ];
+
+    public IReadOnlyList<string> ThemeOptions { get; } =
+    [
+        ThemePreferences.System,
+        ThemePreferences.Light,
+        ThemePreferences.Dark,
     ];
 
     [ObservableProperty]
@@ -64,6 +76,18 @@ public partial class ToolbarViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool useDefaultExcludes = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsSystemThemeSelected))]
+    [NotifyPropertyChangedFor(nameof(IsLightThemeSelected))]
+    [NotifyPropertyChangedFor(nameof(IsDarkThemeSelected))]
+    private string selectedThemePreference = ThemePreferences.System;
+
+    public bool IsSystemThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.System, StringComparison.Ordinal);
+
+    public bool IsLightThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.Light, StringComparison.Ordinal);
+
+    public bool IsDarkThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.Dark, StringComparison.Ordinal);
 
     public void UpdateFolder(string? folderPath)
     {
@@ -105,6 +129,12 @@ public partial class ToolbarViewModel : ViewModelBase
             UseDefaultExcludes = UseDefaultExcludes,
         };
 
+    public AppearanceSettings BuildAppearanceSettings() =>
+        new()
+        {
+            ThemePreference = SelectedThemePreference,
+        };
+
     public void ApplyAnalysisSettings(AnalysisSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -120,9 +150,29 @@ public partial class ToolbarViewModel : ViewModelBase
         UseDefaultExcludes = settings.UseDefaultExcludes;
     }
 
+    public void ApplyAppearanceSettings(AppearanceSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        SelectedThemePreference = IsKnownThemePreference(settings.ThemePreference)
+            ? settings.ThemePreference
+            : ThemePreferences.System;
+    }
+
+    private void SelectThemePreference(string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value) && IsKnownThemePreference(value))
+        {
+            SelectedThemePreference = value;
+        }
+    }
+
     private bool IsKnownMetric(string value) =>
         MetricOptions.Contains(value, StringComparer.Ordinal);
 
     private bool IsKnownTokenProfile(string value) =>
         TokenProfiles.Contains(value, StringComparer.Ordinal);
+
+    private bool IsKnownThemePreference(string value) =>
+        ThemeOptions.Contains(value, StringComparer.Ordinal);
 }

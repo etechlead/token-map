@@ -2,34 +2,74 @@
              xmlns:fluent="clr-namespace:Avalonia.Themes.Fluent;assembly=Avalonia.Themes.Fluent"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Clever.TokenMap.App.App"
-             RequestedThemeVariant="Light">
+             RequestedThemeVariant="Default">
     <Application.Resources>
-        <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"
-                         Color="#F3F4F6" />
-        <SolidColorBrush x:Key="TokenMapSurfaceBrush"
-                         Color="#FFFFFF" />
-        <SolidColorBrush x:Key="TokenMapSurfaceSubtleBrush"
-                         Color="#F7F8FA" />
-        <SolidColorBrush x:Key="TokenMapSurfaceMutedBrush"
-                         Color="#F1F3F5" />
-        <SolidColorBrush x:Key="TokenMapBorderBrush"
-                         Color="#D7DCE2" />
-        <SolidColorBrush x:Key="TokenMapDividerBrush"
-                         Color="#E7EBF0" />
-        <SolidColorBrush x:Key="TokenMapTextBrush"
-                         Color="#1F2933" />
-        <SolidColorBrush x:Key="TokenMapMutedTextBrush"
-                         Color="#667085" />
-        <SolidColorBrush x:Key="TokenMapAccentBrush"
-                         Color="#0F6CBD" />
-        <SolidColorBrush x:Key="TokenMapAccentHoverBrush"
-                         Color="#2B7DE9" />
-        <SolidColorBrush x:Key="TokenMapAccentPressedBrush"
-                         Color="#0A5FC2" />
-        <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
-                         Color="#0A5FC2" />
-        <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
-                         Color="#DCEBFF" />
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"
+                                     Color="#F3F4F6" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceBrush"
+                                     Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceSubtleBrush"
+                                     Color="#F7F8FA" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceMutedBrush"
+                                     Color="#F1F3F5" />
+                    <SolidColorBrush x:Key="TokenMapBorderBrush"
+                                     Color="#D7DCE2" />
+                    <SolidColorBrush x:Key="TokenMapDividerBrush"
+                                     Color="#E7EBF0" />
+                    <SolidColorBrush x:Key="TokenMapTextBrush"
+                                     Color="#1F2933" />
+                    <SolidColorBrush x:Key="TokenMapMutedTextBrush"
+                                     Color="#667085" />
+                    <SolidColorBrush x:Key="TokenMapSecondaryTextBrush"
+                                     Color="#344054" />
+                    <SolidColorBrush x:Key="TokenMapControlHoverBrush"
+                                     Color="#FCFCFD" />
+                    <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
+                                     Color="#C9D1DA" />
+                    <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
+                                     Color="#0A5FC2" />
+                    <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
+                                     Color="#DCEBFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"
+                                     Color="#15181D" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceBrush"
+                                     Color="#1C2128" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceSubtleBrush"
+                                     Color="#222832" />
+                    <SolidColorBrush x:Key="TokenMapSurfaceMutedBrush"
+                                     Color="#28303A" />
+                    <SolidColorBrush x:Key="TokenMapBorderBrush"
+                                     Color="#3A4350" />
+                    <SolidColorBrush x:Key="TokenMapDividerBrush"
+                                     Color="#313845" />
+                    <SolidColorBrush x:Key="TokenMapTextBrush"
+                                     Color="#F3F4F6" />
+                    <SolidColorBrush x:Key="TokenMapMutedTextBrush"
+                                     Color="#AAB4C0" />
+                    <SolidColorBrush x:Key="TokenMapSecondaryTextBrush"
+                                     Color="#C8D1DB" />
+                    <SolidColorBrush x:Key="TokenMapControlHoverBrush"
+                                     Color="#2A3038" />
+                    <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
+                                     Color="#4A5565" />
+                    <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
+                                     Color="#8BC3FF" />
+                    <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
+                                     Color="#16314D" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <SolidColorBrush x:Key="TokenMapAccentBrush"
+                             Color="#0F6CBD" />
+            <SolidColorBrush x:Key="TokenMapAccentHoverBrush"
+                             Color="#2B7DE9" />
+            <SolidColorBrush x:Key="TokenMapAccentPressedBrush"
+                             Color="#0A5FC2" />
+        </ResourceDictionary>
     </Application.Resources>
     <Application.Styles>
         <FluentTheme>
