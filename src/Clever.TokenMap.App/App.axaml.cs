@@ -36,7 +36,15 @@ public partial class App : Application
             var themeService = new ApplicationThemeService(this);
             themeService.ApplyThemePreference(appSettings.Appearance.ThemePreference);
             var loggerFactory = new AppLoggerFactory(appSettings.Logging);
-            desktop.Exit += (_, _) => loggerFactory.Dispose();
+            var settingsCoordinator = new SettingsCoordinator(
+                appSettingsStore,
+                themeService,
+                loggerFactory.CreateLogger<SettingsCoordinator>());
+            desktop.Exit += (_, _) =>
+            {
+                settingsCoordinator.FlushAsync().GetAwaiter().GetResult();
+                loggerFactory.Dispose();
+            };
             loggerFactory.CreateLogger<App>().LogInformation(
                 $"Application starting. OS='{Environment.OSVersion}', framework='{Environment.Version}', logLevel='{appSettings.Logging.MinLevel}', themePreference='{appSettings.Appearance.ThemePreference}', systemTheme='{themeService.CurrentSystemTheme}'.");
             var analyzer = new ProjectAnalyzer(
@@ -45,12 +53,14 @@ public partial class App : Application
                 new MicrosoftMlTokenCounter(),
                 new InMemoryCacheStore(),
                 loggerFactory: loggerFactory);
-
-            mainWindow.DataContext = new MainWindowViewModel(
+            var analysisSessionController = new AnalysisSessionController(
                 analyzer,
                 new WindowFolderPickerService(mainWindow),
-                appSettingsStore,
-                themeService,
+                loggerFactory.CreateLogger<AnalysisSessionController>());
+            mainWindow.DataContext = new MainWindowViewModel(
+                analysisSessionController,
+                new TreemapNavigationState(),
+                settingsCoordinator,
                 loggerFactory.CreateLogger<MainWindowViewModel>());
             desktop.MainWindow = mainWindow;
         }
@@ -58,7 +68,7 @@ public partial class App : Application
         base.OnFrameworkInitializationCompleted();
     }
 
-    private void DisableAvaloniaDataAnnotationValidation()
+    private static void DisableAvaloniaDataAnnotationValidation()
     {
         var dataValidationPluginsToRemove =
             BindingPlugins.DataValidators.OfType<DataAnnotationsValidationPlugin>().ToArray();

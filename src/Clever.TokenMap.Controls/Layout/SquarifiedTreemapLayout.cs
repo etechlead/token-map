@@ -1,14 +1,14 @@
 using Avalonia;
 using Clever.TokenMap.Controls;
-using Clever.TokenMap.Controls.Models;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Controls.Models;
 using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.Controls.Layout;
 
 public sealed class SquarifiedTreemapLayout
 {
-    public IReadOnlyList<TreemapNodeVisual> Calculate(ProjectNode rootNode, Rect bounds, string metric)
+    public IReadOnlyList<TreemapNodeVisual> Calculate(ProjectNode rootNode, Rect bounds, AnalysisMetric metric)
     {
         ArgumentNullException.ThrowIfNull(rootNode);
 
@@ -25,7 +25,7 @@ public sealed class SquarifiedTreemapLayout
     private void LayoutNode(
         ProjectNode node,
         Rect bounds,
-        string metric,
+        AnalysisMetric metric,
         List<TreemapNodeVisual> visuals,
         int depth)
     {
@@ -78,7 +78,7 @@ public sealed class SquarifiedTreemapLayout
         IReadOnlyList<WeightedNode> row,
         Rect bounds,
         List<TreemapNodeVisual> visuals,
-        string metric,
+        AnalysisMetric metric,
         int depth)
     {
         var rowArea = row.Sum(item => item.Area);
@@ -172,11 +172,11 @@ public sealed class SquarifiedTreemapLayout
             sumSquared / (sideSquared * min));
     }
 
-    private static double GetWeight(ProjectNode node, string metric) =>
+    private static double GetWeight(ProjectNode node, AnalysisMetric metric) =>
         metric switch
         {
-            "Total lines" => node.Metrics.TotalLines,
-            "Non-empty lines" => node.Metrics.NonEmptyLines,
+            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
             _ => node.Metrics.Tokens,
         };
 

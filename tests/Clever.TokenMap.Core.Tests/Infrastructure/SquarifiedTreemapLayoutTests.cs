@@ -13,7 +13,7 @@ public sealed class SquarifiedTreemapLayoutTests
         var root = CreateTree();
         var layout = new SquarifiedTreemapLayout();
 
-        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), "Tokens");
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
 
         Assert.NotEmpty(visuals);
         Assert.All(visuals, visual =>
@@ -46,8 +46,8 @@ public sealed class SquarifiedTreemapLayoutTests
         var root = CreateTree();
         var layout = new SquarifiedTreemapLayout();
 
-        var tokenVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), "Tokens");
-        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), "Non-empty lines");
+        var tokenVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Tokens);
+        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.NonEmptyLines);
 
         var tokensLargest = tokenVisuals
             .Where(visual => visual.Node.RelativePath is "src" or "docs")
@@ -78,7 +78,7 @@ public sealed class SquarifiedTreemapLayoutTests
             CreateNode("f.cs", ProjectNodeKind.File, 100, 10));
         var layout = new SquarifiedTreemapLayout();
 
-        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), "Tokens");
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
 
         var topLevelVisuals = visuals
             .Where(visual => visual.Depth == 0)
@@ -105,7 +105,7 @@ public sealed class SquarifiedTreemapLayoutTests
             CreateNode("f", ProjectNodeKind.File, 7, 0));
         var layout = new SquarifiedTreemapLayout();
 
-        var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), "Tokens");
+        var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), AnalysisMetric.Tokens);
 
         var first = visuals
             .Where(visual => visual.Depth == 0)
@@ -128,7 +128,7 @@ public sealed class SquarifiedTreemapLayoutTests
         var root = CreateNode(string.Empty, ProjectNodeKind.Root, 100, 10, directory);
         var layout = new SquarifiedTreemapLayout();
 
-        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), "Tokens");
+        var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
 
         var directoryVisual = visuals.Single(visual => visual.Node.RelativePath == "src");
         var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");

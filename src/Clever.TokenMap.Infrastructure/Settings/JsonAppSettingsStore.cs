@@ -1,16 +1,15 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Infrastructure.Logging;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
 public sealed class JsonAppSettingsStore : IAppSettingsStore
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
+    private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
 
     private readonly string _settingsFilePath;
 
@@ -32,8 +31,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         try
         {
             using var stream = File.OpenRead(_settingsFilePath);
-            using var document = JsonDocument.Parse(stream);
-            ApplySettings(settings, document.RootElement);
+            var persistedSettings = JsonSerializer.Deserialize<PersistedAppSettings>(stream, SerializerOptions);
+            ApplySettings(settings, persistedSettings);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -80,161 +79,169 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         }
     }
 
-    private static void ApplySettings(AppSettings settings, JsonElement root)
+    private static JsonSerializerOptions CreateSerializerOptions()
     {
-        if (root.ValueKind != JsonValueKind.Object)
+        var options = new JsonSerializerOptions
         {
-            return;
-        }
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true,
+        };
+        options.Converters.Add(new JsonStringEnumConverter());
+        return options;
+    }
 
-        if (TryGetObject(root, "analysis", out var analysis))
+    private static void ApplySettings(AppSettings settings, PersistedAppSettings? persistedSettings)
+    {
+        if (persistedSettings?.Analysis is { } analysis)
         {
-            if (TryGetString(analysis, "selectedMetric", out var selectedMetric))
+            if (analysis.SelectedMetric is { } selectedMetric)
             {
                 settings.Analysis.SelectedMetric = selectedMetric;
             }
 
-            if (TryGetString(analysis, "selectedTokenProfile", out var selectedTokenProfile))
+            if (analysis.SelectedTokenProfile is { } selectedTokenProfile)
             {
                 settings.Analysis.SelectedTokenProfile = selectedTokenProfile;
             }
 
-            if (TryGetBoolean(analysis, "respectGitIgnore", out var respectGitIgnore))
+            if (analysis.RespectGitIgnore is { } respectGitIgnore)
             {
                 settings.Analysis.RespectGitIgnore = respectGitIgnore;
             }
 
-            if (TryGetBoolean(analysis, "respectIgnore", out var respectIgnore))
+            if (analysis.RespectIgnore is { } respectIgnore)
             {
                 settings.Analysis.RespectIgnore = respectIgnore;
             }
 
-            if (TryGetBoolean(analysis, "useDefaultExcludes", out var useDefaultExcludes))
+            if (analysis.UseDefaultExcludes is { } useDefaultExcludes)
             {
                 settings.Analysis.UseDefaultExcludes = useDefaultExcludes;
             }
         }
 
-        if (TryGetObject(root, "appearance", out var appearance) &&
-            TryGetString(appearance, "themePreference", out var themePreference) &&
-            TryNormalizeThemePreference(themePreference, out var normalizedThemePreference))
+        if (persistedSettings?.Appearance?.ThemePreference is { } themePreference)
         {
-            settings.Appearance.ThemePreference = normalizedThemePreference;
+            settings.Appearance.ThemePreference = themePreference;
         }
 
-        if (TryGetObject(root, "logging", out var logging) &&
-            TryGetString(logging, "minLevel", out var minLevel) &&
-            TryNormalizeMinLevel(minLevel, out var normalizedMinLevel))
+        if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
         {
-            settings.Logging.MinLevel = normalizedMinLevel;
+            settings.Logging.MinLevel = minimumLevel;
         }
-    }
-
-    private static bool TryGetObject(JsonElement parent, string propertyName, out JsonElement value)
-    {
-        if (parent.TryGetProperty(propertyName, out value) && value.ValueKind == JsonValueKind.Object)
-        {
-            return true;
-        }
-
-        value = default;
-        return false;
-    }
-
-    private static bool TryGetString(JsonElement parent, string propertyName, out string value)
-    {
-        if (parent.TryGetProperty(propertyName, out var property) &&
-            property.ValueKind == JsonValueKind.String &&
-            property.GetString() is { } text &&
-            !string.IsNullOrWhiteSpace(text))
-        {
-            value = text;
-            return true;
-        }
-
-        value = string.Empty;
-        return false;
-    }
-
-    private static bool TryGetBoolean(JsonElement parent, string propertyName, out bool value)
-    {
-        if (parent.TryGetProperty(propertyName, out var property) &&
-            (property.ValueKind == JsonValueKind.True || property.ValueKind == JsonValueKind.False))
-        {
-            value = property.GetBoolean();
-            return true;
-        }
-
-        value = default;
-        return false;
-    }
-
-    private static bool TryNormalizeMinLevel(string value, out string normalized)
-    {
-        if (string.Equals(value, "Trace", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Trace";
-            return true;
-        }
-
-        if (string.Equals(value, "Debug", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Debug";
-            return true;
-        }
-
-        if (string.Equals(value, "Information", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Information";
-            return true;
-        }
-
-        if (string.Equals(value, "Warning", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Warning";
-            return true;
-        }
-
-        if (string.Equals(value, "Error", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Error";
-            return true;
-        }
-
-        if (string.Equals(value, "Critical", StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = "Critical";
-            return true;
-        }
-
-        normalized = string.Empty;
-        return false;
-    }
-
-    private static bool TryNormalizeThemePreference(string value, out string normalized)
-    {
-        if (string.Equals(value, ThemePreferences.System, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = ThemePreferences.System;
-            return true;
-        }
-
-        if (string.Equals(value, ThemePreferences.Light, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = ThemePreferences.Light;
-            return true;
-        }
-
-        if (string.Equals(value, ThemePreferences.Dark, StringComparison.OrdinalIgnoreCase))
-        {
-            normalized = ThemePreferences.Dark;
-            return true;
-        }
-
-        normalized = string.Empty;
-        return false;
     }
 
     private static string GetDefaultSettingsFilePath()
         => TokenMapAppDataPaths.GetSettingsFilePath();
+
+    private sealed class PersistedAppSettings
+    {
+        public PersistedAnalysisSettings? Analysis { get; set; }
+
+        public PersistedAppearanceSettings? Appearance { get; set; }
+
+        public PersistedLoggingSettings? Logging { get; set; }
+    }
+
+    private sealed class PersistedAnalysisSettings
+    {
+        [JsonConverter(typeof(NullableStringEnumConverter<AnalysisMetric>))]
+        public AnalysisMetric? SelectedMetric { get; set; }
+
+        [JsonConverter(typeof(NullableStringEnumConverter<TokenProfile>))]
+        public TokenProfile? SelectedTokenProfile { get; set; }
+
+        [JsonConverter(typeof(NullableBooleanConverter))]
+        public bool? RespectGitIgnore { get; set; }
+
+        [JsonConverter(typeof(NullableBooleanConverter))]
+        public bool? RespectIgnore { get; set; }
+
+        [JsonConverter(typeof(NullableBooleanConverter))]
+        public bool? UseDefaultExcludes { get; set; }
+    }
+
+    private sealed class PersistedAppearanceSettings
+    {
+        [JsonConverter(typeof(NullableStringEnumConverter<ThemePreference>))]
+        public ThemePreference? ThemePreference { get; set; }
+    }
+
+    private sealed class PersistedLoggingSettings
+    {
+        [JsonConverter(typeof(NullableStringEnumConverter<AppLogLevel>))]
+        public AppLogLevel? MinLevel { get; set; }
+    }
+
+    private sealed class NullableBooleanConverter : JsonConverter<bool?>
+    {
+        public override bool? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.TokenType switch
+            {
+                JsonTokenType.True => true,
+                JsonTokenType.False => false,
+                JsonTokenType.Null => null,
+                _ => ReadInvalidBoolean(ref reader),
+            };
+        }
+
+        public override void Write(Utf8JsonWriter writer, bool? value, JsonSerializerOptions options)
+        {
+            if (value is { } booleanValue)
+            {
+                writer.WriteBooleanValue(booleanValue);
+                return;
+            }
+
+            writer.WriteNullValue();
+        }
+
+        private static bool? ReadInvalidBoolean(ref Utf8JsonReader reader)
+        {
+            using var _ = JsonDocument.ParseValue(ref reader);
+            return null;
+        }
+    }
+
+    private sealed class NullableStringEnumConverter<TEnum> : JsonConverter<TEnum?>
+        where TEnum : struct, Enum
+    {
+        public override TEnum? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return null;
+            }
+
+            if (reader.TokenType == JsonTokenType.String &&
+                reader.GetString() is { Length: > 0 } text &&
+                Enum.TryParse<TEnum>(text, ignoreCase: true, out var parsedValue) &&
+                Enum.IsDefined(parsedValue))
+            {
+                return parsedValue;
+            }
+
+            if (reader.TokenType == JsonTokenType.Number &&
+                reader.TryGetInt32(out var rawValue) &&
+                Enum.IsDefined(typeof(TEnum), rawValue))
+            {
+                return (TEnum)Enum.ToObject(typeof(TEnum), rawValue);
+            }
+
+            using var _ = JsonDocument.ParseValue(ref reader);
+            return null;
+        }
+
+        public override void Write(Utf8JsonWriter writer, TEnum? value, JsonSerializerOptions options)
+        {
+            if (value is { } enumValue)
+            {
+                writer.WriteStringValue(enumValue.ToString());
+                return;
+            }
+
+            writer.WriteNullValue();
+        }
+    }
 }

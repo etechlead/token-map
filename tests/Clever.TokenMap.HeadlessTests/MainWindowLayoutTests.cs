@@ -1,6 +1,8 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
+using Avalonia.VisualTree;
 using Clever.TokenMap.App.Models;
 using Clever.TokenMap.Controls;
 using Clever.TokenMap.App.Services;
@@ -25,25 +27,25 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        Assert.NotNull(window.FindControl<Control>("ToolbarHost"));
-        Assert.NotNull(window.FindControl<Grid>("WorkspaceHost"));
-        Assert.NotNull(window.FindControl<Control>("ProjectTreePane"));
-        Assert.NotNull(window.FindControl<Control>("TreemapPane"));
-        var statusStrip = window.FindControl<Control>("StatusStrip");
+        Assert.NotNull(FindNamedDescendant<Control>(window, "ToolbarHost"));
+        Assert.NotNull(FindNamedDescendant<Grid>(window, "WorkspaceHost"));
+        Assert.NotNull(FindNamedDescendant<Control>(window, "ProjectTreePane"));
+        Assert.NotNull(FindNamedDescendant<Control>(window, "TreemapPane"));
+        var statusStrip = FindNamedDescendant<Control>(window, "StatusStrip");
 
         Assert.NotNull(statusStrip);
-        Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
-        Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
-        Assert.NotNull(window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl"));
-        Assert.Null(window.FindControl<Control>("DetailsPane"));
-        Assert.NotNull(window.FindControl<Button>("SettingsButton"));
-        var stopButton = window.FindControl<Button>("StopButton");
-        var settingsDrawer = window.FindControl<Control>("SettingsDrawer");
-        Assert.Null(window.FindControl<TextBlock>("TreemapScopeText"));
-        Assert.Null(window.FindControl<Button>("TreemapBackToOverviewButton"));
-        Assert.NotNull(window.FindControl<ProgressBar>("StatusProgressBar"));
-        Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
-        Assert.Null(window.FindControl<TextBlock>("StatusValueText"));
+        Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
+        Assert.NotNull(FindNamedDescendant<DataGrid>(window, "ProjectTreeTable"));
+        Assert.NotNull(FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl"));
+        Assert.Null(FindNamedDescendant<Control>(window, "DetailsPane"));
+        Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
+        var stopButton = FindNamedDescendant<Button>(window, "StopButton");
+        var settingsDrawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
+        Assert.Null(FindNamedDescendant<TextBlock>(window, "TreemapScopeText"));
+        Assert.Null(FindNamedDescendant<Button>(window, "TreemapBackToOverviewButton"));
+        Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
+        Assert.Null(FindNamedDescendant<TextBlock>(window, "ProgressTextBlock"));
+        Assert.Null(FindNamedDescendant<TextBlock>(window, "StatusValueText"));
         Assert.False(statusStrip.IsVisible);
         Assert.NotNull(stopButton);
         Assert.False(stopButton.IsVisible);
@@ -61,7 +63,7 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var workspaceHost = window.FindControl<Grid>("WorkspaceHost");
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
 
         Assert.NotNull(workspaceHost);
         Assert.Equal(3, workspaceHost.ColumnDefinitions.Count);
@@ -84,10 +86,10 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var primaryGroup = window.FindControl<Control>("ToolbarPrimaryGroup");
-        var summaryGroup = window.FindControl<Control>("ToolbarSummaryGroup");
-        var settingsButton = window.FindControl<Button>("SettingsButton");
-        var selectedFolderValue = window.FindControl<TextBlock>("SelectedFolderValueText");
+        var primaryGroup = FindNamedDescendant<Control>(window, "ToolbarPrimaryGroup");
+        var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
+        var settingsButton = FindNamedDescendant<Button>(window, "SettingsButton");
+        var selectedFolderValue = FindNamedDescendant<TextBlock>(window, "SelectedFolderValueText");
 
         Assert.NotNull(primaryGroup);
         Assert.NotNull(summaryGroup);
@@ -108,7 +110,7 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var treeTable = window.FindControl<DataGrid>("ProjectTreeTable");
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
 
         Assert.NotNull(treeTable);
         Assert.Collection(
@@ -136,14 +138,14 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var metricComboBox = window.FindControl<ComboBox>("MetricComboBox");
-        var themeSystemButton = window.FindControl<ToggleButton>("ThemeSystemButton");
-        var themeLightButton = window.FindControl<ToggleButton>("ThemeLightButton");
-        var themeDarkButton = window.FindControl<ToggleButton>("ThemeDarkButton");
-        var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
-        var gitIgnoreCheckBox = window.FindControl<CheckBox>("RespectGitIgnoreCheckBox");
-        var ignoreCheckBox = window.FindControl<CheckBox>("RespectIgnoreCheckBox");
-        var defaultExcludesCheckBox = window.FindControl<CheckBox>("UseDefaultExcludesCheckBox");
+        var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
+        var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
+        var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
+        var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
+        var tokenizerComboBox = FindNamedDescendant<ComboBox>(window, "TokenizerComboBox");
+        var gitIgnoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectGitIgnoreCheckBox");
+        var ignoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectIgnoreCheckBox");
+        var defaultExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseDefaultExcludesCheckBox");
 
         Assert.NotNull(metricComboBox);
         Assert.NotNull(themeSystemButton);
@@ -176,7 +178,7 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var drawer = window.FindControl<Control>("SettingsDrawer");
+        var drawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
         var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
 
         Assert.NotNull(drawer);
@@ -201,14 +203,14 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var treeTable = window.FindControl<DataGrid>("ProjectTreeTable");
-        var statusStrip = window.FindControl<Control>("StatusStrip");
-        var tokenSummaryText = window.FindControl<TextBlock>("TokenSummaryValueText");
-        var lineSummaryText = window.FindControl<TextBlock>("LineSummaryValueText");
-        var fileSummaryText = window.FindControl<TextBlock>("FileSummaryValueText");
-        var warningSummaryText = window.FindControl<TextBlock>("WarningSummaryValueText");
-        var metricComboBox = window.FindControl<ComboBox>("MetricComboBox");
-        var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var statusStrip = FindNamedDescendant<Control>(window, "StatusStrip");
+        var tokenSummaryText = FindNamedDescendant<TextBlock>(window, "TokenSummaryValueText");
+        var lineSummaryText = FindNamedDescendant<TextBlock>(window, "LineSummaryValueText");
+        var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
+        var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
+        var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
+        var tokenizerComboBox = FindNamedDescendant<ComboBox>(window, "TokenizerComboBox");
 
         Assert.NotNull(treeTable);
         Assert.NotNull(statusStrip);
@@ -534,8 +536,8 @@ public sealed class MainWindowLayoutTests
         window.DataContext = viewModel;
 
         window.Show();
-        var statusStrip = window.FindControl<Control>("StatusStrip");
-        var stopButton = window.FindControl<Button>("StopButton");
+        var statusStrip = FindNamedDescendant<Control>(window, "StatusStrip");
+        var stopButton = FindNamedDescendant<Button>(window, "StopButton");
 
         Assert.NotNull(statusStrip);
         Assert.NotNull(stopButton);
@@ -562,7 +564,7 @@ public sealed class MainWindowLayoutTests
             Width = 320,
             Height = 180,
             RootNode = CreateSnapshot().Root,
-            Metric = "Tokens",
+            Metric = AnalysisMetric.Tokens,
         };
         var window = new Window
         {
@@ -584,7 +586,7 @@ public sealed class MainWindowLayoutTests
             Width = 320,
             Height = 180,
             RootNode = CreateSnapshot().Root,
-            Metric = "Tokens",
+            Metric = AnalysisMetric.Tokens,
         };
         var window = new Window
         {
@@ -619,7 +621,7 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
         Assert.NotNull(control);
 
         var visual = Assert.Single(control.NodeVisuals);
@@ -645,7 +647,7 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
         Assert.NotNull(control);
 
         var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src/Program.cs");
@@ -677,8 +679,8 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
-        var breadcrumbs = window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        var breadcrumbs = FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl");
 
         Assert.NotNull(control);
         Assert.NotNull(breadcrumbs);
@@ -711,8 +713,8 @@ public sealed class MainWindowLayoutTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
-        var breadcrumbs = window.FindControl<ItemsControl>("TreemapBreadcrumbsItemsControl");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        var breadcrumbs = FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl");
 
         Assert.NotNull(control);
         Assert.NotNull(breadcrumbs);
@@ -747,7 +749,7 @@ public sealed class MainWindowLayoutTests
         var childNode = Assert.Single(viewModel.Tree.RootNodes[0].Children);
         viewModel.Tree.SelectedNode = childNode;
 
-        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
 
         Assert.NotNull(control);
         Assert.Equal("Program.cs", control.SelectedNode?.RelativePath);
@@ -761,7 +763,7 @@ public sealed class MainWindowLayoutTests
             Width = 320,
             Height = 180,
             RootNode = CreateSnapshot().Root,
-            Metric = "Tokens",
+            Metric = AnalysisMetric.Tokens,
         };
         var window = new Window
         {
@@ -840,6 +842,17 @@ public sealed class MainWindowLayoutTests
                 },
             },
         };
+
+    private static T? FindNamedDescendant<T>(Window window, string name)
+        where T : Control
+    {
+        return window.GetLogicalDescendants()
+            .OfType<T>()
+            .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal))
+            ?? window.GetVisualDescendants()
+            .OfType<T>()
+            .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
+    }
 
     private static ProjectTreeNodeViewModel CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
     {

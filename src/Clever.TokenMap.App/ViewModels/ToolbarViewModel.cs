@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Settings;
@@ -11,7 +10,9 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ToolbarViewModel : ViewModelBase
 {
-    private readonly RelayCommand<string> _selectThemePreferenceCommand;
+    private readonly RelayCommand _selectDarkThemePreferenceCommand;
+    private readonly RelayCommand _selectLightThemePreferenceCommand;
+    private readonly RelayCommand _selectSystemThemePreferenceCommand;
 
     public ToolbarViewModel(
         IAsyncRelayCommand openFolderCommand,
@@ -21,7 +22,9 @@ public partial class ToolbarViewModel : ViewModelBase
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
-        _selectThemePreferenceCommand = new RelayCommand<string>(SelectThemePreference);
+        _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
+        _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
+        _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
     }
 
     public IAsyncRelayCommand OpenFolderCommand { get; }
@@ -30,27 +33,24 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public IRelayCommand CancelCommand { get; }
 
-    public IRelayCommand<string> SelectThemePreferenceCommand => _selectThemePreferenceCommand;
+    public IRelayCommand SelectSystemThemePreferenceCommand => _selectSystemThemePreferenceCommand;
 
-    public IReadOnlyList<string> MetricOptions { get; } =
+    public IRelayCommand SelectLightThemePreferenceCommand => _selectLightThemePreferenceCommand;
+
+    public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
+
+    public IReadOnlyList<AnalysisMetric> MetricOptions { get; } =
     [
-        "Tokens",
-        "Total lines",
-        "Non-empty lines",
+        AnalysisMetric.Tokens,
+        AnalysisMetric.TotalLines,
+        AnalysisMetric.NonEmptyLines,
     ];
 
-    public IReadOnlyList<string> TokenProfiles { get; } =
+    public IReadOnlyList<TokenProfile> TokenProfiles { get; } =
     [
-        "o200k_base",
-        "cl100k_base",
-        "p50k_base",
-    ];
-
-    public IReadOnlyList<string> ThemeOptions { get; } =
-    [
-        ThemePreferences.System,
-        ThemePreferences.Light,
-        ThemePreferences.Dark,
+        TokenProfile.O200KBase,
+        TokenProfile.Cl100KBase,
+        TokenProfile.P50KBase,
     ];
 
     [ObservableProperty]
@@ -66,10 +66,10 @@ public partial class ToolbarViewModel : ViewModelBase
     private string selectedFolderDisplay = "No folder selected";
 
     [ObservableProperty]
-    private string selectedMetric = "Tokens";
+    private AnalysisMetric selectedMetric = AnalysisMetric.Tokens;
 
     [ObservableProperty]
-    private string selectedTokenProfile = "o200k_base";
+    private TokenProfile selectedTokenProfile = TokenProfile.O200KBase;
 
     [ObservableProperty]
     private bool respectGitIgnore = true;
@@ -84,13 +84,13 @@ public partial class ToolbarViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsSystemThemeSelected))]
     [NotifyPropertyChangedFor(nameof(IsLightThemeSelected))]
     [NotifyPropertyChangedFor(nameof(IsDarkThemeSelected))]
-    private string selectedThemePreference = ThemePreferences.System;
+    private ThemePreference selectedThemePreference = ThemePreference.System;
 
-    public bool IsSystemThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.System, StringComparison.Ordinal);
+    public bool IsSystemThemeSelected => SelectedThemePreference == ThemePreference.System;
 
-    public bool IsLightThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.Light, StringComparison.Ordinal);
+    public bool IsLightThemeSelected => SelectedThemePreference == ThemePreference.Light;
 
-    public bool IsDarkThemeSelected => string.Equals(SelectedThemePreference, ThemePreferences.Dark, StringComparison.Ordinal);
+    public bool IsDarkThemeSelected => SelectedThemePreference == ThemePreference.Dark;
 
     public void UpdateFolder(string? folderPath)
     {
@@ -112,12 +112,7 @@ public partial class ToolbarViewModel : ViewModelBase
     public ScanOptions BuildScanOptions() =>
         new()
         {
-            TokenProfile = SelectedTokenProfile switch
-            {
-                "cl100k_base" => TokenProfile.Cl100KBase,
-                "p50k_base" => TokenProfile.P50KBase,
-                _ => TokenProfile.O200KBase,
-            },
+            TokenProfile = SelectedTokenProfile,
             RespectGitIgnore = RespectGitIgnore,
             RespectDotIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
@@ -143,12 +138,8 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        SelectedMetric = IsKnownMetric(settings.SelectedMetric)
-            ? settings.SelectedMetric
-            : "Tokens";
-        SelectedTokenProfile = IsKnownTokenProfile(settings.SelectedTokenProfile)
-            ? settings.SelectedTokenProfile
-            : "o200k_base";
+        SelectedMetric = settings.SelectedMetric;
+        SelectedTokenProfile = settings.SelectedTokenProfile;
         RespectGitIgnore = settings.RespectGitIgnore;
         RespectIgnore = settings.RespectIgnore;
         UseDefaultExcludes = settings.UseDefaultExcludes;
@@ -158,25 +149,11 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        SelectedThemePreference = IsKnownThemePreference(settings.ThemePreference)
-            ? settings.ThemePreference
-            : ThemePreferences.System;
+        SelectedThemePreference = settings.ThemePreference;
     }
 
-    private void SelectThemePreference(string? value)
+    private void SelectThemePreference(ThemePreference value)
     {
-        if (!string.IsNullOrWhiteSpace(value) && IsKnownThemePreference(value))
-        {
-            SelectedThemePreference = value;
-        }
+        SelectedThemePreference = value;
     }
-
-    private bool IsKnownMetric(string value) =>
-        MetricOptions.Contains(value, StringComparer.Ordinal);
-
-    private bool IsKnownTokenProfile(string value) =>
-        TokenProfiles.Contains(value, StringComparer.Ordinal);
-
-    private bool IsKnownThemePreference(string value) =>
-        ThemeOptions.Contains(value, StringComparer.Ordinal);
 }

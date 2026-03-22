@@ -1,8 +1,8 @@
 namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 
-internal sealed class IgnoreFileEvaluator
+internal static class IgnoreFileEvaluator
 {
-    public bool IsIncluded(IgnoreDirectoryContext context, string normalizedRelativePath, bool isDirectory)
+    public static bool IsIncluded(IgnoreDirectoryContext context, string normalizedRelativePath, bool isDirectory)
     {
         var isIncluded = true;
 

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Clever.TokenMap.App.Models;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -75,10 +76,10 @@ public partial class SummaryViewModel : ViewModelBase
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
-        TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0");
-        LineSummaryValue = snapshot.Root.Metrics.TotalLines.ToString("N0");
-        FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0");
-        WarningSummaryValue = snapshot.Warnings.Count.ToString("N0");
+        TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
+        LineSummaryValue = snapshot.Root.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture);
+        FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
+        WarningSummaryValue = snapshot.Warnings.Count.ToString("N0", CultureInfo.CurrentCulture);
     }
 
     public void UpdateProgress(AnalysisProgress progress)

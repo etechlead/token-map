@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:controls="using:Clever.TokenMap.Controls"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.Sections.TreemapPaneView"
+             x:Name="TreemapPaneRoot"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Name="TreemapPane"
+            Classes="panel">
+        <Grid RowDefinitions="Auto,*"
+              RowSpacing="8">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="10">
+                <TextBlock Classes="panel-title"
+                           VerticalAlignment="Center"
+                           Text="Treemap" />
+                <ItemsControl Name="TreemapBreadcrumbsItemsControl"
+                              Grid.Column="1"
+                              HorizontalAlignment="Right"
+                              VerticalAlignment="Center"
+                              ItemsSource="{Binding TreemapBreadcrumbs}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="6" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TreemapBreadcrumbItemViewModel">
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="0">
+                                <Button Classes="breadcrumb-link"
+                                        IsVisible="{Binding CanNavigate}"
+                                        Content="{Binding Label}"
+                                        Command="{Binding #TreemapPaneRoot.DataContext.NavigateToTreemapBreadcrumbCommand}"
+                                        CommandParameter="{Binding Node}" />
+                                <TextBlock Classes="breadcrumb-current"
+                                           IsVisible="{Binding IsCurrent}"
+                                           Text="{Binding Label}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+            <Border Grid.Row="1"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    BorderThickness="0"
+                    CornerRadius="0"
+                    Padding="0">
+                <controls:TreemapControl Name="ProjectTreemapControl"
+                                         RootNode="{Binding TreemapRootNode}"
+                                         Metric="{Binding Toolbar.SelectedMetric}"
+                                         SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

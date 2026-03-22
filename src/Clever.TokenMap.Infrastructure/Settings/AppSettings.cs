@@ -1,3 +1,6 @@
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Infrastructure.Logging;
+
 namespace Clever.TokenMap.Infrastructure.Settings;
 
 public sealed class AppSettings
@@ -9,45 +12,73 @@ public sealed class AppSettings
     public LoggingSettings Logging { get; set; } = new();
 
     public static AppSettings CreateDefault() => new();
+
+    public AppSettings Clone() =>
+        new()
+        {
+            Analysis = Analysis.Clone(),
+            Appearance = Appearance.Clone(),
+            Logging = Logging.Clone(),
+        };
 }
 
-public static class ThemePreferences
+public enum ThemePreference
 {
-    public const string System = "System";
-
-    public const string Light = "Light";
-
-    public const string Dark = "Dark";
+    System = 0,
+    Light = 1,
+    Dark = 2,
 }
 
 public sealed class AnalysisSettings
 {
-    public string SelectedMetric { get; set; } = "Tokens";
+    public AnalysisMetric SelectedMetric { get; set; } = AnalysisMetric.Tokens;
 
-    public string SelectedTokenProfile { get; set; } = "o200k_base";
+    public TokenProfile SelectedTokenProfile { get; set; } = TokenProfile.O200KBase;
 
     public bool RespectGitIgnore { get; set; } = true;
 
     public bool RespectIgnore { get; set; } = true;
 
     public bool UseDefaultExcludes { get; set; } = true;
+
+    public AnalysisSettings Clone() =>
+        new()
+        {
+            SelectedMetric = SelectedMetric,
+            SelectedTokenProfile = SelectedTokenProfile,
+            RespectGitIgnore = RespectGitIgnore,
+            RespectIgnore = RespectIgnore,
+            UseDefaultExcludes = UseDefaultExcludes,
+        };
 }
 
 public sealed class AppearanceSettings
 {
-    public string ThemePreference { get; set; } = ThemePreferences.System;
+    public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
+
+    public AppearanceSettings Clone() =>
+        new()
+        {
+            ThemePreference = ThemePreference,
+        };
 }
 
 public sealed class LoggingSettings
 {
-    public string MinLevel { get; set; } = GetDefaultMinimumLevel();
+    public AppLogLevel MinLevel { get; set; } = GetDefaultMinimumLevel();
 
-    private static string GetDefaultMinimumLevel()
+    public LoggingSettings Clone() =>
+        new()
+        {
+            MinLevel = MinLevel,
+        };
+
+    private static AppLogLevel GetDefaultMinimumLevel()
     {
 #if DEBUG
-        return "Debug";
+        return AppLogLevel.Debug;
 #else
-        return "Warning";
+        return AppLogLevel.Warning;
 #endif
     }
 }

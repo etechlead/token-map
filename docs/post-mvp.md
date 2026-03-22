@@ -14,7 +14,7 @@ This file is a candidate backlog for work that is outside the current MVP scope.
 - Plugin or extensibility hooks if the product later needs them.
 
 ## Engineering Follow-Up
-- CI/CD publish matrix and release artifacts.
+- Release matrix and artifact publishing beyond build/test CI.
 - Installer, signing, and notarization work.
 - Better diagnostics, performance tracing, and developer profiling overlays.
 

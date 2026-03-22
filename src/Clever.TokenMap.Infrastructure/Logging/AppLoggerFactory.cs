@@ -1,3 +1,4 @@
+using System.Globalization;
 using Clever.TokenMap.Infrastructure.Settings;
 using Serilog;
 using Serilog.Events;
@@ -27,9 +28,10 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
             : logsDirectoryPath;
 
         var configuration = new LoggerConfiguration()
-            .MinimumLevel.Is(ToSerilogLevel(AppLogLevelParser.ParseOrDefault(settings.MinLevel)))
+            .MinimumLevel.Is(ToSerilogLevel(settings.MinLevel))
             .WriteTo.File(
                 path: Path.Combine(logDirectoryPath, "tokenmap-.log"),
+                formatProvider: CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Day,
                 rollOnFileSizeLimit: true,
                 fileSizeLimitBytes: fileSizeLimitBytes,
@@ -39,7 +41,9 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
 #if DEBUG
         if (enableConsoleSinkInDebugMode ?? true)
         {
-            configuration = configuration.WriteTo.Console(outputTemplate: ConsoleOutputTemplate);
+            configuration = configuration.WriteTo.Console(
+                formatProvider: CultureInfo.InvariantCulture,
+                outputTemplate: ConsoleOutputTemplate);
         }
 #endif
 

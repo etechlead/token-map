@@ -10,44 +10,29 @@ public sealed class ApplicationThemeService(Application application) : IThemeSer
 {
     private readonly Application _application = application;
 
-    public string CurrentSystemTheme => GetCurrentSystemTheme();
+    public ThemePreference CurrentSystemTheme => GetCurrentSystemTheme();
 
-    public void ApplyThemePreference(string themePreference)
+    public void ApplyThemePreference(ThemePreference themePreference)
     {
-        _application.RequestedThemeVariant = NormalizeThemePreference(themePreference) switch
+        _application.RequestedThemeVariant = themePreference switch
         {
-            ThemePreferences.Light => ThemeVariant.Light,
-            ThemePreferences.Dark => ThemeVariant.Dark,
+            ThemePreference.Light => ThemeVariant.Light,
+            ThemePreference.Dark => ThemeVariant.Dark,
             _ => ThemeVariant.Default,
         };
     }
 
-    private static string NormalizeThemePreference(string value)
-    {
-        if (string.Equals(value, ThemePreferences.Light, StringComparison.OrdinalIgnoreCase))
-        {
-            return ThemePreferences.Light;
-        }
-
-        if (string.Equals(value, ThemePreferences.Dark, StringComparison.OrdinalIgnoreCase))
-        {
-            return ThemePreferences.Dark;
-        }
-
-        return ThemePreferences.System;
-    }
-
-    private string GetCurrentSystemTheme()
+    private ThemePreference GetCurrentSystemTheme()
     {
         var platformSettings = _application.PlatformSettings;
         if (platformSettings is null)
         {
-            return ThemePreferences.Light;
+            return ThemePreference.Light;
         }
 
         var colorValues = platformSettings.GetColorValues();
         return colorValues.ThemeVariant == PlatformThemeVariant.Dark
-            ? ThemePreferences.Dark
-            : ThemePreferences.Light;
+            ? ThemePreference.Dark
+            : ThemePreference.Light;
     }
 }

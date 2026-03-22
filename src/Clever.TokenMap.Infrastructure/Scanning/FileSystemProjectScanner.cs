@@ -12,8 +12,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 {
     private static readonly string[] IgnoreFileNames = [".gitignore", ".ignore"];
 
-    private readonly DefaultExcludeMatcher _defaultExcludeMatcher = new();
-    private readonly IgnoreFileEvaluator _ignoreFileEvaluator = new();
     private readonly IgnoreFileParser _ignoreFileParser = new();
     private readonly IAppLogger _logger;
     private readonly IPathFilter _pathFilter;
@@ -137,7 +135,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 continue;
             }
 
-            if (!_ignoreFileEvaluator.IsIncluded(ignoreContext, entryRelativePath, isDirectory))
+            if (!IgnoreFileEvaluator.IsIncluded(ignoreContext, entryRelativePath, isDirectory))
             {
                 continue;
             }
@@ -219,11 +217,11 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 
         return new ProjectNode
         {
-            Id = _pathNormalizer.GetNodeId(normalizedRelativePath),
+            Id = PathNormalizer.GetNodeId(normalizedRelativePath),
             Name = name,
             FullPath = normalizedFullPath,
             RelativePath = normalizedRelativePath,
-            Kind = _pathNormalizer.GetNodeKind(isDirectory, isRoot),
+            Kind = PathNormalizer.GetNodeKind(isDirectory, isRoot),
             Metrics = NodeMetrics.Empty,
             SkippedReason = skippedReason,
             DiagnosticMessage = diagnosticMessage,
@@ -302,7 +300,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private bool IsExcludedByBuiltInPolicy(ScanOptions options, string normalizedRelativePath, bool isDirectory)
     {
         if (options.UseDefaultExcludes &&
-            _defaultExcludeMatcher.IsExcluded(normalizedRelativePath, isDirectory))
+            DefaultExcludeMatcher.IsExcluded(normalizedRelativePath, isDirectory))
         {
             return true;
         }

@@ -16,28 +16,32 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private readonly IFolderPickerService _folderPickerService;
-    private readonly IAppSettingsStore _appSettingsStore;
-    private readonly IAppLogger _logger;
-    private readonly IProjectAnalyzer _projectAnalyzer;
-    private readonly IThemeService _themeService;
+    private readonly string _windowTitle = "TokenMap";
+    private readonly IAnalysisSessionController _analysisSessionController;
+    private readonly ISettingsCoordinator _settingsCoordinator;
+    private readonly TreemapNavigationState _treemapNavigationState;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
-    private CancellationTokenSource? _analysisCancellationTokenSource;
-    private AppSettings _currentSettings;
-    private ProjectSnapshot? _currentSnapshot;
-    private bool _isApplyingSettings;
-    private string? _selectedFolderPath;
-    private ProjectNode? _treemapRootNode;
+
+    [ObservableProperty]
+    private bool isSettingsOpen;
 
     public MainWindowViewModel()
-        : this(new NullProjectAnalyzer(), new NullFolderPickerService(), new NullAppSettingsStore(), new NullThemeService(), NullAppLogger.Instance)
+        : this(
+            CreateAnalysisSessionController(new NullProjectAnalyzer(), new NullFolderPickerService(), NullAppLogger.Instance),
+            new TreemapNavigationState(),
+            new NullSettingsCoordinator(),
+            NullAppLogger.Instance)
     {
     }
 
     public MainWindowViewModel(IProjectAnalyzer projectAnalyzer, IFolderPickerService folderPickerService)
-        : this(projectAnalyzer, folderPickerService, new NullAppSettingsStore(), new NullThemeService(), NullAppLogger.Instance)
+        : this(
+            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, NullAppLogger.Instance),
+            new TreemapNavigationState(),
+            new NullSettingsCoordinator(),
+            NullAppLogger.Instance)
     {
     }
 
@@ -46,7 +50,11 @@ public partial class MainWindowViewModel : ViewModelBase
         IFolderPickerService folderPickerService,
         IAppSettingsStore appSettingsStore,
         IAppLogger? logger = null)
-        : this(projectAnalyzer, folderPickerService, appSettingsStore, new NullThemeService(), logger)
+        : this(
+            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, logger),
+            new TreemapNavigationState(),
+            new SettingsCoordinator(appSettingsStore, new NullThemeService(), logger),
+            logger)
     {
     }
 
@@ -56,31 +64,56 @@ public partial class MainWindowViewModel : ViewModelBase
         IAppSettingsStore appSettingsStore,
         IThemeService themeService,
         IAppLogger? logger = null)
+        : this(
+            CreateAnalysisSessionController(projectAnalyzer, folderPickerService, logger),
+            new TreemapNavigationState(),
+            new SettingsCoordinator(appSettingsStore, themeService, logger),
+            logger)
     {
-        _projectAnalyzer = projectAnalyzer;
-        _folderPickerService = folderPickerService;
-        _appSettingsStore = appSettingsStore;
-        _themeService = themeService;
-        _logger = logger ?? NullAppLogger.Instance;
-        _currentSettings = AppSettings.CreateDefault();
+    }
+
+    public MainWindowViewModel(
+        IAnalysisSessionController analysisSessionController,
+        TreemapNavigationState treemapNavigationState,
+        ISettingsCoordinator settingsCoordinator,
+        IAppLogger? logger = null)
+    {
+        _analysisSessionController = analysisSessionController;
+        _treemapNavigationState = treemapNavigationState;
+        _settingsCoordinator = settingsCoordinator;
 
         Toolbar = new ToolbarViewModel(
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
-        _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
-        _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
-        _toggleSettingsCommand = new RelayCommand(ToggleSettings);
         Tree = new ProjectTreeViewModel();
         Summary = new SummaryViewModel();
 
+        _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
+        _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
+        _toggleSettingsCommand = new RelayCommand(ToggleSettings);
+
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
-        Toolbar.PropertyChanged += ToolbarOnPropertyChanged;
-        LoadSettings();
-        Toolbar.RefreshAvailability(hasSelectedFolder: false, isBusy: false, hasSnapshot: false);
+        _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
+        _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
+
+        _settingsCoordinator.Attach(Toolbar);
+        Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
+        RefreshToolbarAvailability();
+
+        if (_analysisSessionController.CurrentSnapshot is { } snapshot)
+        {
+            ApplySnapshot(snapshot);
+        }
+
+        Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+        if (_analysisSessionController.CurrentProgress is { } progress)
+        {
+            Summary.UpdateProgress(progress);
+        }
     }
 
-    public string WindowTitle => "TokenMap";
+    public string WindowTitle => _windowTitle;
 
     public ToolbarViewModel Toolbar { get; }
 
@@ -88,20 +121,23 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public SummaryViewModel Summary { get; }
 
-    public ProjectNode? TreemapRootNode
+    public ProjectNode? TreemapRootNode => _treemapNavigationState.TreemapRootNode;
+
+    public ProjectNode? SelectedNode
     {
-        get => _treemapRootNode;
-        private set
-        {
-            if (SetProperty(ref _treemapRootNode, value))
-            {
-                OnPropertyChanged(nameof(CanResetTreemapRoot));
-                OnPropertyChanged(nameof(TreemapScopeDisplay));
-                TreemapBreadcrumbs = BuildTreemapBreadcrumbs(value);
-                _resetTreemapRootCommand.NotifyCanExecuteChanged();
-            }
-        }
+        get => _treemapNavigationState.SelectedNode;
+        set => _treemapNavigationState.SelectNode(value);
     }
+
+    public AnalysisState AnalysisState => _analysisSessionController.State;
+
+    public IReadOnlyList<TreemapBreadcrumbItemViewModel> TreemapBreadcrumbs => _treemapNavigationState.TreemapBreadcrumbs;
+
+    public bool CanResetTreemapRoot => _treemapNavigationState.CanResetTreemapRoot;
+
+    public bool CanShowTreemapScope => _treemapNavigationState.CanShowTreemapScope;
+
+    public string TreemapScopeDisplay => _treemapNavigationState.TreemapScopeDisplay;
 
     public IRelayCommand ResetTreemapRootCommand => _resetTreemapRootCommand;
 
@@ -109,158 +145,35 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IRelayCommand<ProjectNode?> NavigateToTreemapBreadcrumbCommand => _navigateToTreemapBreadcrumbCommand;
 
-    public bool CanResetTreemapRoot =>
-        _currentSnapshot is not null &&
-        TreemapRootNode is not null &&
-        !string.Equals(TreemapRootNode.Id, _currentSnapshot.Root.Id, StringComparison.Ordinal);
+    private bool CanOpenFolder() => !_analysisSessionController.IsBusy;
 
-    public bool CanShowTreemapScope => CanResetTreemapRoot;
+    private bool CanRescan() => !_analysisSessionController.IsBusy && _analysisSessionController.HasSelectedFolder;
 
-    public string TreemapScopeDisplay =>
-        _currentSnapshot is null || TreemapRootNode is null
-            ? string.Empty
-            : CanResetTreemapRoot
-                ? TreemapRootNode.RelativePath
-                : string.Empty;
-
-    [ObservableProperty]
-    private IReadOnlyList<TreemapBreadcrumbItemViewModel> treemapBreadcrumbs = [];
-
-    [ObservableProperty]
-    private ProjectNode? selectedNode;
-
-    [ObservableProperty]
-    private AnalysisState analysisState = AnalysisState.Idle;
-
-    [ObservableProperty]
-    private bool isSettingsOpen;
-
-    private bool CanOpenFolder() => AnalysisState != AnalysisState.Scanning;
-
-    private bool CanRescan() =>
-        AnalysisState != AnalysisState.Scanning &&
-        !string.IsNullOrWhiteSpace(_selectedFolderPath);
-
-    private bool CanCancel() => AnalysisState == AnalysisState.Scanning;
-
-    private async Task OpenFolderAsync()
-    {
-        var selectedFolder = await _folderPickerService.PickFolderAsync(CancellationToken.None);
-        if (string.IsNullOrWhiteSpace(selectedFolder))
-        {
-            return;
-        }
-
-        _selectedFolderPath = selectedFolder;
-        _logger.LogInformation($"Folder selected for analysis: '{selectedFolder}'.");
-        Toolbar.UpdateFolder(selectedFolder);
-        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: false, hasSnapshot: _currentSnapshot is not null);
-
-        await AnalyzeCurrentFolderAsync();
-    }
-
-    private Task RescanAsync() => AnalyzeCurrentFolderAsync();
-
-    private async Task AnalyzeCurrentFolderAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_selectedFolderPath))
-        {
-            return;
-        }
-
-        _analysisCancellationTokenSource?.Dispose();
-        _analysisCancellationTokenSource = new CancellationTokenSource();
-
-        SetState(AnalysisState.Scanning, $"Analyzing {_selectedFolderPath}");
-        Toolbar.RefreshAvailability(hasSelectedFolder: true, isBusy: true, hasSnapshot: _currentSnapshot is not null);
-
-        var progress = new Progress<AnalysisProgress>(value => Summary.UpdateProgress(value));
-
-        try
-        {
-            var snapshot = await _projectAnalyzer.AnalyzeAsync(
-                _selectedFolderPath,
-                Toolbar.BuildScanOptions(),
-                progress,
-                _analysisCancellationTokenSource.Token);
-
-            ApplySnapshot(snapshot);
-            SetState(AnalysisState.Completed);
-        }
-        catch (OperationCanceledException) when (_analysisCancellationTokenSource.IsCancellationRequested)
-        {
-            _logger.LogInformation($"Analysis cancelled from UI for '{_selectedFolderPath}'.");
-            SetState(AnalysisState.Cancelled, "Analysis cancelled.");
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, $"Analysis failed in UI flow for '{_selectedFolderPath}'.");
-            SetState(AnalysisState.Failed, exception.Message);
-        }
-        finally
-        {
-            _analysisCancellationTokenSource.Dispose();
-            _analysisCancellationTokenSource = null;
-            Toolbar.RefreshAvailability(
-                hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath),
-                isBusy: false,
-                hasSnapshot: _currentSnapshot is not null);
-        }
-    }
-
-    private void ApplySnapshot(ProjectSnapshot snapshot)
-    {
-        _currentSnapshot = snapshot;
-        var rootNode = new ProjectTreeNodeViewModel(snapshot.Root);
-        TreemapRootNode = snapshot.Root;
-        Tree.LoadRoot(rootNode);
-        Summary.SetCompleted(snapshot);
-        SelectedNode = snapshot.Root;
-        Toolbar.RefreshAvailability(
-            hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath),
-            isBusy: false,
-            hasSnapshot: true);
-    }
+    private bool CanCancel() => _analysisSessionController.IsBusy;
 
     public void DrillIntoTreemap(ProjectNode? node)
     {
-        if (!CanDrillIntoTreemap(node))
-        {
-            return;
-        }
+        _treemapNavigationState.DrillInto(node);
+    }
 
-        TreemapRootNode = node;
-        SelectedNode = node;
+    private async Task OpenFolderAsync()
+    {
+        await _analysisSessionController.OpenFolderAsync(Toolbar.BuildScanOptions());
+    }
+
+    private async Task RescanAsync()
+    {
+        await _analysisSessionController.RescanAsync(Toolbar.BuildScanOptions());
     }
 
     private void CancelAnalysis()
     {
-        _logger.LogInformation($"Cancellation requested for '{_selectedFolderPath}'.");
-        _analysisCancellationTokenSource?.Cancel();
-    }
-
-    private void SetState(AnalysisState state, string? message = null)
-    {
-        AnalysisState = state;
-        Summary.SetState(state, message);
-    }
-
-    partial void OnSelectedNodeChanged(ProjectNode? value)
-    {
-        if (value is not null)
-        {
-            Tree.SelectNodeById(value.Id);
-        }
+        _analysisSessionController.Cancel();
     }
 
     private void ResetTreemapRoot()
     {
-        if (_currentSnapshot is null)
-        {
-            return;
-        }
-
-        TreemapRootNode = _currentSnapshot.Root;
+        _treemapNavigationState.ResetTreemapRoot();
     }
 
     private void ToggleSettings()
@@ -270,105 +183,99 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void NavigateToTreemapBreadcrumb(ProjectNode? node)
     {
-        if (node is null)
-        {
-            return;
-        }
-
-        TreemapRootNode = node;
+        _treemapNavigationState.NavigateToBreadcrumb(node);
     }
 
-    private IReadOnlyList<TreemapBreadcrumbItemViewModel> BuildTreemapBreadcrumbs(ProjectNode? node)
+    private void AnalysisSessionControllerOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_currentSnapshot is null || node is null)
+        switch (e.PropertyName)
         {
-            return [];
-        }
+            case nameof(IAnalysisSessionController.SelectedFolderPath):
+                Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
+                RefreshToolbarAvailability();
+                break;
+            case nameof(IAnalysisSessionController.CurrentSnapshot):
+                if (_analysisSessionController.CurrentSnapshot is { } snapshot)
+                {
+                    ApplySnapshot(snapshot);
+                }
+                else
+                {
+                    Tree.Clear();
+                    _treemapNavigationState.Clear();
+                }
 
-        var path = new List<ProjectNode>();
-        if (!TryBuildNodePath(_currentSnapshot.Root, node.Id, path))
-        {
-            return [];
-        }
+                RefreshToolbarAvailability();
+                break;
+            case nameof(IAnalysisSessionController.State):
+                OnPropertyChanged(nameof(AnalysisState));
+                Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+                if (_analysisSessionController.State == AnalysisState.Completed &&
+                    _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
+                {
+                    Summary.SetCompleted(completedSnapshot);
+                }
 
-        var items = new List<TreemapBreadcrumbItemViewModel>(path.Count);
-        for (var index = 0; index < path.Count; index++)
-        {
-            var pathNode = path[index];
-            var label = index == 0
-                ? pathNode.Name
-                : $"/ {pathNode.Name}";
-            items.Add(new TreemapBreadcrumbItemViewModel(
-                label,
-                pathNode,
-                canNavigate: index < path.Count - 1));
-        }
+                RefreshToolbarAvailability();
+                break;
+            case nameof(IAnalysisSessionController.StatusMessage):
+                Summary.SetState(_analysisSessionController.State, _analysisSessionController.StatusMessage);
+                break;
+            case nameof(IAnalysisSessionController.CurrentProgress):
+                if (_analysisSessionController.CurrentProgress is { } progress)
+                {
+                    Summary.UpdateProgress(progress);
+                }
 
-        return items;
-    }
-
-    private static bool TryBuildNodePath(ProjectNode current, string targetId, List<ProjectNode> path)
-    {
-        path.Add(current);
-        if (string.Equals(current.Id, targetId, StringComparison.Ordinal))
-        {
-            return true;
-        }
-
-        foreach (var child in current.Children)
-        {
-            if (TryBuildNodePath(child, targetId, path))
-            {
-                return true;
-            }
-        }
-
-        path.RemoveAt(path.Count - 1);
-        return false;
-    }
-
-    private static bool CanDrillIntoTreemap(ProjectNode? node) =>
-        node is not null &&
-        node.Kind != Core.Enums.ProjectNodeKind.File &&
-        node.Children.Count > 0;
-
-    private void LoadSettings()
-    {
-        _currentSettings = _appSettingsStore.Load();
-        _isApplyingSettings = true;
-
-        try
-        {
-            Toolbar.ApplyAnalysisSettings(_currentSettings.Analysis);
-            Toolbar.ApplyAppearanceSettings(_currentSettings.Appearance);
-            _themeService.ApplyThemePreference(_currentSettings.Appearance.ThemePreference);
-        }
-        finally
-        {
-            _isApplyingSettings = false;
+                break;
         }
     }
 
-    private void ToolbarOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void TreemapNavigationStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isApplyingSettings)
+        switch (e.PropertyName)
         {
-            return;
+            case nameof(TreemapNavigationState.SelectedNode):
+                OnPropertyChanged(nameof(SelectedNode));
+                Tree.SelectNodeById(_treemapNavigationState.SelectedNode?.Id);
+                break;
+            case nameof(TreemapNavigationState.TreemapRootNode):
+                OnPropertyChanged(nameof(TreemapRootNode));
+                OnPropertyChanged(nameof(CanResetTreemapRoot));
+                OnPropertyChanged(nameof(CanShowTreemapScope));
+                OnPropertyChanged(nameof(TreemapScopeDisplay));
+                _resetTreemapRootCommand.NotifyCanExecuteChanged();
+                break;
+            case nameof(TreemapNavigationState.TreemapBreadcrumbs):
+                OnPropertyChanged(nameof(TreemapBreadcrumbs));
+                break;
         }
+    }
 
-        if (e.PropertyName is nameof(ToolbarViewModel.SelectedMetric) or
-            nameof(ToolbarViewModel.SelectedTokenProfile) or
-            nameof(ToolbarViewModel.RespectGitIgnore) or
-            nameof(ToolbarViewModel.RespectIgnore) or
-            nameof(ToolbarViewModel.UseDefaultExcludes) or
-            nameof(ToolbarViewModel.SelectedThemePreference))
-        {
-            _currentSettings.Analysis = Toolbar.BuildAnalysisSettings();
-            _currentSettings.Appearance = Toolbar.BuildAppearanceSettings();
-            _themeService.ApplyThemePreference(_currentSettings.Appearance.ThemePreference);
-            _appSettingsStore.Save(_currentSettings);
-            _logger.LogDebug("Persisted updated analysis settings to settings.json.");
-        }
+    private void ApplySnapshot(ProjectSnapshot snapshot)
+    {
+        Tree.LoadRoot(new ProjectTreeNodeViewModel(snapshot.Root));
+        _treemapNavigationState.LoadSnapshot(snapshot);
+        Summary.SetCompleted(snapshot);
+    }
+
+    private void RefreshToolbarAvailability()
+    {
+        Toolbar.RefreshAvailability(
+            _analysisSessionController.HasSelectedFolder,
+            _analysisSessionController.IsBusy,
+            _analysisSessionController.HasSnapshot);
+    }
+
+    private static AnalysisSessionController CreateAnalysisSessionController(
+        IProjectAnalyzer projectAnalyzer,
+        IFolderPickerService folderPickerService,
+        IAppLogger? logger)
+    {
+        ArgumentNullException.ThrowIfNull(projectAnalyzer);
+        ArgumentNullException.ThrowIfNull(folderPickerService);
+
+        return new AnalysisSessionController(projectAnalyzer, folderPickerService, logger);
     }
 
     private sealed class NullFolderPickerService : IFolderPickerService
@@ -387,21 +294,22 @@ public partial class MainWindowViewModel : ViewModelBase
             throw new InvalidOperationException("Project analyzer is not configured.");
     }
 
-    private sealed class NullAppSettingsStore : IAppSettingsStore
+    private sealed class NullThemeService : IThemeService
     {
-        public AppSettings Load() => AppSettings.CreateDefault();
+        public ThemePreference CurrentSystemTheme => ThemePreference.Light;
 
-        public void Save(AppSettings settings)
+        public void ApplyThemePreference(ThemePreference themePreference)
         {
         }
     }
 
-    private sealed class NullThemeService : IThemeService
+    private sealed class NullSettingsCoordinator : ISettingsCoordinator
     {
-        public string CurrentSystemTheme => ThemePreferences.Light;
-
-        public void ApplyThemePreference(string themePreference)
+        public void Attach(ToolbarViewModel toolbar)
         {
         }
+
+        public Task FlushAsync(CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 }

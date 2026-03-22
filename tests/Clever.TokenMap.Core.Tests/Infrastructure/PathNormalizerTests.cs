@@ -31,6 +31,6 @@ public sealed class PathNormalizerTests
     [Fact]
     public void GetNodeId_ReturnsSlashForRoot()
     {
-        Assert.Equal("/", _pathNormalizer.GetNodeId(string.Empty));
+        Assert.Equal("/", PathNormalizer.GetNodeId(string.Empty));
     }
 }

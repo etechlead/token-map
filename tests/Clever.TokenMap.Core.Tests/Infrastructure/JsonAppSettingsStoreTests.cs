@@ -1,3 +1,5 @@
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
 
 namespace Clever.TokenMap.Core.Tests.Infrastructure;
@@ -16,12 +18,12 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal("Tokens", settings.Analysis.SelectedMetric);
-        Assert.Equal("o200k_base", settings.Analysis.SelectedTokenProfile);
+        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(TokenProfile.O200KBase, settings.Analysis.SelectedTokenProfile);
         Assert.True(settings.Analysis.RespectGitIgnore);
         Assert.True(settings.Analysis.RespectIgnore);
         Assert.True(settings.Analysis.UseDefaultExcludes);
-        Assert.Equal(ThemePreferences.System, settings.Appearance.ThemePreference);
+        Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
     }
 
     [Fact]
@@ -33,7 +35,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             """
             {
               "analysis": {
-                "selectedMetric": "Non-empty lines",
+                "selectedMetric": "NonEmptyLines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
                 "respectIgnore": false,
@@ -52,13 +54,40 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal("Non-empty lines", settings.Analysis.SelectedMetric);
-        Assert.Equal("o200k_base", settings.Analysis.SelectedTokenProfile);
+        Assert.Equal(AnalysisMetric.NonEmptyLines, settings.Analysis.SelectedMetric);
+        Assert.Equal(TokenProfile.O200KBase, settings.Analysis.SelectedTokenProfile);
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.RespectIgnore);
         Assert.False(settings.Analysis.UseDefaultExcludes);
-        Assert.Equal(ThemePreferences.Dark, settings.Appearance.ThemePreference);
-        Assert.Equal("Error", settings.Logging.MinLevel);
+        Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
+        Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
+    }
+
+    [Fact]
+    public void Load_FallsBackToDefaults_ForLegacyAliasValues()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(
+            GetSettingsFilePath(),
+            """
+            {
+              "analysis": {
+                "selectedMetric": "Non-empty lines",
+                "selectedTokenProfile": "p50k_base"
+              },
+              "appearance": {
+                "themePreference": "Light"
+              }
+            }
+            """);
+
+        var store = CreateStore();
+
+        var settings = store.Load();
+
+        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(TokenProfile.O200KBase, settings.Analysis.SelectedTokenProfile);
+        Assert.Equal(ThemePreference.Light, settings.Appearance.ThemePreference);
     }
 
     [Fact]
@@ -66,21 +95,21 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = "Total lines";
-        settings.Analysis.SelectedTokenProfile = "p50k_base";
+        settings.Analysis.SelectedMetric = AnalysisMetric.TotalLines;
+        settings.Analysis.SelectedTokenProfile = TokenProfile.P50KBase;
         settings.Analysis.RespectGitIgnore = false;
-        settings.Appearance.ThemePreference = ThemePreferences.Dark;
-        settings.Logging.MinLevel = "Warning";
+        settings.Appearance.ThemePreference = ThemePreference.Dark;
+        settings.Logging.MinLevel = AppLogLevel.Warning;
 
         store.Save(settings);
 
         var reloaded = store.Load();
 
-        Assert.Equal("Total lines", reloaded.Analysis.SelectedMetric);
-        Assert.Equal("p50k_base", reloaded.Analysis.SelectedTokenProfile);
+        Assert.Equal(AnalysisMetric.TotalLines, reloaded.Analysis.SelectedMetric);
+        Assert.Equal(TokenProfile.P50KBase, reloaded.Analysis.SelectedTokenProfile);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
-        Assert.Equal(ThemePreferences.Dark, reloaded.Appearance.ThemePreference);
-        Assert.Equal("Warning", reloaded.Logging.MinLevel);
+        Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
+        Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);
     }
 
     public void Dispose()

@@ -15,7 +15,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     {
         string logFilePath;
 
-        using (var factory = CreateFactory("Debug"))
+        using (var factory = CreateFactory(AppLogLevel.Debug))
         {
             factory.CreateLogger("Tests.Logging").LogInformation("Analysis started.");
         }
@@ -30,7 +30,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     [Fact]
     public void Logger_DoesNotWriteEntriesBelowMinimumLevel()
     {
-        using var factory = CreateFactory("Warning");
+        using var factory = CreateFactory(AppLogLevel.Warning);
 
         factory.CreateLogger("Tests.Logging").LogInformation("This should be filtered.");
 
@@ -41,7 +41,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     public void Logger_RollsWhenFileSizeLimitIsReached()
     {
         using var factory = CreateFactory(
-            "Information",
+            AppLogLevel.Information,
             fileSizeLimitBytes: 512,
             retainedFileCountLimit: 10);
         var logger = factory.CreateLogger("Tests.Logging");
@@ -58,7 +58,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     public void Logger_RetainsOnlyConfiguredNumberOfFiles()
     {
         using var factory = CreateFactory(
-            "Information",
+            AppLogLevel.Information,
             fileSizeLimitBytes: 256,
             retainedFileCountLimit: 2);
         var logger = factory.CreateLogger("Tests.Logging");
@@ -81,7 +81,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
 
         try
         {
-            using var factory = CreateFactory("Information", enableConsoleSinkInDebugMode: true);
+            using var factory = CreateFactory(AppLogLevel.Information, enableConsoleSinkInDebugMode: true);
             factory.CreateLogger("Tests.Logging").LogInformation("console-check");
         }
         finally
@@ -102,7 +102,7 @@ public sealed class AppLoggerFactoryTests : IDisposable
     }
 
     private AppLoggerFactory CreateFactory(
-        string minLevel,
+        AppLogLevel minLevel,
         long fileSizeLimitBytes = 4 * 1024 * 1024,
         int retainedFileCountLimit = 10,
         bool enableConsoleSinkInDebugMode = false) =>

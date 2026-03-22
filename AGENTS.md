@@ -12,9 +12,10 @@ Maintain `TokenMap` as a local desktop app for source-tree analysis with synchro
 ## Non-Negotiables
 - `Clever.TokenMap.Core` stays free of Avalonia.
 - `Clever.TokenMap.App` does not read the file system directly; it goes through services and contracts.
+- `MainWindowViewModel` stays a shell coordinator; long-lived analysis, settings, and treemap scope state live in app-layer services/state objects.
 - Token counting stays local behind `ITokenCounter`.
-- Language and line metrics stay local behind `ITokeiRunner`.
-- The scanner defines the included tree; `tokei` only enriches included nodes.
+- Line metrics stay local in the infrastructure analysis pipeline for included text files.
+- The scanner defines the included tree and the set of analyzed nodes.
 - The treemap stays one custom-rendered control, not a control-per-rectangle surface.
 - Do not add WebView, browser embedding, JS charting, cloud services, remote tokenizers, or heavy dependencies without explicit need.
 

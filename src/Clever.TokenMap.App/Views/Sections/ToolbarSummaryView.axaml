@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.Sections.ToolbarSummaryView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Name="ToolbarHost"
+            Classes="panel"
+            Padding="10">
+        <Grid ColumnDefinitions="Auto,*,Auto"
+              ColumnSpacing="16">
+            <StackPanel Name="ToolbarPrimaryGroup"
+                        Grid.Column="0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Spacing="12">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="OpenFolderButton"
+                            Classes="action-button primary"
+                            Command="{Binding Toolbar.OpenFolderCommand}"
+                            ToolTip.Tip="Open a folder for analysis">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentFolderOpen20Geometry}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Open Folder" />
+                        </StackPanel>
+                    </Button>
+                    <Button Name="RescanButton"
+                            Classes="action-button"
+                            Command="{Binding Toolbar.RescanCommand}"
+                            ToolTip.Tip="Run the scan again for the selected folder">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentArrowClockwise20Geometry}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Rescan" />
+                        </StackPanel>
+                    </Button>
+                    <Button Name="StopButton"
+                            Classes="action-button"
+                            Content="Stop"
+                            Command="{Binding Toolbar.CancelCommand}"
+                            IsVisible="{Binding Toolbar.IsStopVisible}"
+                            ToolTip.Tip="Stop the current scan" />
+                </StackPanel>
+
+                <StackPanel MaxWidth="280"
+                            VerticalAlignment="Center"
+                            Spacing="2">
+                    <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                               FontSize="11"
+                               Text="Selected folder" />
+                    <TextBlock Name="SelectedFolderValueText"
+                               FontSize="13"
+                               FontWeight="Medium"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding Toolbar.SelectedFolderDisplay}" />
+                </StackPanel>
+            </StackPanel>
+
+            <Grid Name="ToolbarSummaryGroup"
+                  Grid.Column="1"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  ColumnDefinitions="Auto,Auto,Auto"
+                  ColumnSpacing="18">
+                <Border Classes="summary-card"
+                        MinWidth="120">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="summary-label"
+                                   Text="Tokens" />
+                        <TextBlock Name="TokenSummaryValueText"
+                                   Classes="summary-value"
+                                   Text="{Binding Summary.TokenSummaryValue}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="1"
+                        Classes="summary-card"
+                        MinWidth="120">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="summary-label"
+                                   Text="Lines" />
+                        <TextBlock Name="LineSummaryValueText"
+                                   Classes="summary-value"
+                                   Text="{Binding Summary.LineSummaryValue}" />
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2"
+                        Classes="summary-card"
+                        MinWidth="120">
+                    <StackPanel Spacing="4">
+                        <TextBlock Classes="summary-label"
+                                   Text="Files" />
+                        <TextBlock Name="FileSummaryValueText"
+                                   Classes="summary-value"
+                                   Text="{Binding Summary.FileSummaryValue}" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Button Name="SettingsButton"
+                    Grid.Column="2"
+                    Classes="action-button"
+                    VerticalAlignment="Center"
+                    Command="{Binding ToggleSettingsCommand}"
+                    ToolTip.Tip="Open settings">
+                <StackPanel Classes="action-button-content">
+                    <Path Classes="action-button-icon"
+                          Data="{StaticResource FluentAppsSettings20Geometry}" />
+                    <TextBlock VerticalAlignment="Center"
+                               Text="Settings" />
+                </StackPanel>
+            </Button>
+        </Grid>
+    </Border>
+</UserControl>

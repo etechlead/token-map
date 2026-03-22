@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -5,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Clever.TokenMap.Controls.Layout;
 using Clever.TokenMap.Controls.Models;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using System.IO;
 
@@ -12,8 +14,8 @@ namespace Clever.TokenMap.Controls;
 
 public sealed class TreemapControl : Control
 {
-    public static readonly StyledProperty<string> MetricProperty =
-        AvaloniaProperty.Register<TreemapControl, string>(nameof(Metric), "Tokens");
+    public static readonly StyledProperty<AnalysisMetric> MetricProperty =
+        AvaloniaProperty.Register<TreemapControl, AnalysisMetric>(nameof(Metric), AnalysisMetric.Tokens);
 
     public static readonly StyledProperty<ProjectNode?> RootNodeProperty =
         AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(RootNode));
@@ -43,7 +45,7 @@ public sealed class TreemapControl : Control
         ActualThemeVariantChanged += (_, _) => InvalidateVisual();
     }
 
-    public string Metric
+    public AnalysisMetric Metric
     {
         get => GetValue(MetricProperty);
         set => SetValue(MetricProperty, value);
@@ -340,7 +342,7 @@ public sealed class TreemapControl : Control
         return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nNon-empty/Blank: {breakdown}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
-    private Control BuildTooltipContent(ProjectNode node)
+    private Border BuildTooltipContent(ProjectNode node)
     {
         var isDarkTheme = IsDarkTheme();
         var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
@@ -377,12 +379,12 @@ public sealed class TreemapControl : Control
             Foreground = labelBrush,
             FontSize = 11,
         });
-        content.Children.Add(CreateTooltipRow("Tokens", node.Metrics.Tokens.ToString("N0"), labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Tokens", node.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Share", share, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Lines", node.Metrics.TotalLines.ToString("N0"), labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Lines", node.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Non-empty/Blank", breakdown, labelBrush, valueBrush));
         content.Children.Add(CreateTooltipRow("Ext", extension, labelBrush, valueBrush));
-        content.Children.Add(CreateTooltipRow("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0"), labelBrush, valueBrush));
+        content.Children.Add(CreateTooltipRow("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture), labelBrush, valueBrush));
 
         return new Border
         {
@@ -406,7 +408,7 @@ public sealed class TreemapControl : Control
         return variant == ThemeVariant.Dark;
     }
 
-    private static Control CreateTooltipRow(string label, string value, IBrush labelBrush, IBrush valueBrush)
+    private static Grid CreateTooltipRow(string label, string value, IBrush labelBrush, IBrush valueBrush)
     {
         var grid = new Grid
         {
@@ -437,8 +439,8 @@ public sealed class TreemapControl : Control
     private double GetMetricValue(ProjectNode node) =>
         Metric switch
         {
-            "Total lines" => node.Metrics.TotalLines,
-            "Non-empty lines" => node.Metrics.NonEmptyLines,
+            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
             _ => node.Metrics.Tokens,
         };
 

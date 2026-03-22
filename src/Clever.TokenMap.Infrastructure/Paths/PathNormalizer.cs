@@ -30,7 +30,7 @@ public sealed class PathNormalizer
         return NormalizeRelativePath(relativePath);
     }
 
-    public string NormalizeRelativePath(string relativePath)
+    public static string NormalizeRelativePath(string relativePath)
     {
         ArgumentNullException.ThrowIfNull(relativePath);
 
@@ -54,12 +54,12 @@ public sealed class PathNormalizer
             : normalized;
     }
 
-    public string GetNodeId(string normalizedRelativePath) =>
+    public static string GetNodeId(string normalizedRelativePath) =>
         string.IsNullOrEmpty(normalizedRelativePath)
             ? "/"
             : normalizedRelativePath;
 
-    public ProjectNodeKind GetNodeKind(bool isDirectory, bool isRoot = false) =>
+    public static ProjectNodeKind GetNodeKind(bool isDirectory, bool isRoot = false) =>
         isRoot
             ? ProjectNodeKind.Root
             : isDirectory
