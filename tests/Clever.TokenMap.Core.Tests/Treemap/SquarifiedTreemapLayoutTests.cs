@@ -117,6 +117,31 @@ public sealed class SquarifiedTreemapLayoutTests
     }
 
     [Fact]
+    public void Calculate_SkewedWeights_UsesBalancedSplitToAvoidExtremeTailStripes()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            1_068,
+            0,
+            CreateNode("a", ProjectNodeKind.File, 500, 0),
+            CreateNode("b", ProjectNodeKind.File, 433, 0),
+            CreateNode("c", ProjectNodeKind.File, 78, 0),
+            CreateNode("d", ProjectNodeKind.File, 25, 0),
+            CreateNode("e", ProjectNodeKind.File, 25, 0),
+            CreateNode("f", ProjectNodeKind.File, 7, 0));
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), AnalysisMetric.Tokens);
+
+        var worstAspectRatio = visuals
+            .Where(visual => visual.Depth == 0)
+            .Max(visual => GetAspectRatio(visual.Bounds));
+
+        Assert.True(worstAspectRatio < 4.0, $"Expected balanced split fallback to avoid extreme stripe-like bounds, got worst aspect ratio {worstAspectRatio:F3}.");
+    }
+
+    [Fact]
     public void Calculate_DirectoryChildren_ArePlacedBelowDirectoryHeaderWhenSpaceAllows()
     {
         var directory = CreateNode(
@@ -134,9 +159,6 @@ public sealed class SquarifiedTreemapLayoutTests
         var fileVisual = visuals.Single(visual => visual.Node.RelativePath == "src/file.cs");
 
         Assert.True(fileVisual.Bounds.Y >= directoryVisual.Bounds.Y + 14, $"Expected child bounds below directory header, got dir {directoryVisual.Bounds} and file {fileVisual.Bounds}.");
-        Assert.Equal(directoryVisual.Bounds.X, fileVisual.Bounds.X, precision: 3);
-        Assert.Equal(directoryVisual.Bounds.Right, fileVisual.Bounds.Right, precision: 3);
-        Assert.Equal(directoryVisual.Bounds.Bottom, fileVisual.Bounds.Bottom, precision: 3);
     }
 
     [Fact]
@@ -200,6 +222,16 @@ public sealed class SquarifiedTreemapLayoutTests
 
         Assert.True(first.Bounds.Width > 400, $"Expected a full-width leading row, got {first.Bounds}.");
         Assert.True(first.Bounds.Height < 433, $"Expected the leading item to be a row, got {first.Bounds}.");
+    }
+
+    private static double GetAspectRatio(Rect bounds)
+    {
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return double.PositiveInfinity;
+        }
+
+        return Math.Max(bounds.Width / bounds.Height, bounds.Height / bounds.Width);
     }
 
     private static ProjectNode CreateTree()

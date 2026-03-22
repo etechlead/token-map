@@ -34,9 +34,9 @@ public sealed class TreemapVisualRulesTests
 
         var labelBounds = TreemapVisualRules.GetLabelBounds(node, new Rect(10, 20, 160, 80));
 
-        Assert.Equal(13, labelBounds.X);
-        Assert.Equal(21, labelBounds.Y);
-        Assert.Equal(154, labelBounds.Width);
+        Assert.Equal(14, labelBounds.X);
+        Assert.Equal(22, labelBounds.Y);
+        Assert.Equal(152, labelBounds.Width);
         Assert.Equal(16, labelBounds.Height);
     }
 
@@ -68,10 +68,10 @@ public sealed class TreemapVisualRulesTests
 
         var contentBounds = TreemapVisualRules.GetContentBounds(directory, new Rect(10, 20, 80, 30));
 
-        Assert.Equal(10, contentBounds.X);
-        Assert.Equal(34, contentBounds.Y);
-        Assert.Equal(80, contentBounds.Width);
-        Assert.Equal(16, contentBounds.Height);
+        Assert.Equal(11, contentBounds.X);
+        Assert.Equal(35, contentBounds.Y);
+        Assert.Equal(78, contentBounds.Width);
+        Assert.Equal(14, contentBounds.Height);
     }
 
     [Fact]

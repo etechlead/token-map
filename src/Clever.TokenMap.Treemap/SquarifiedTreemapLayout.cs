@@ -6,6 +6,10 @@ namespace Clever.TokenMap.Treemap;
 
 public sealed class SquarifiedTreemapLayout
 {
+    private const int BalancedSplitMinChildCount = 4;
+    private const double BalancedSplitMaxShareThreshold = 0.45d;
+    private const double BalancedSplitSkewRatioThreshold = 6d;
+
     public IReadOnlyList<TreemapNodeVisual> Calculate(ProjectNode rootNode, Rect bounds, AnalysisMetric metric)
     {
         ArgumentNullException.ThrowIfNull(rootNode);
@@ -27,6 +31,11 @@ public sealed class SquarifiedTreemapLayout
         List<TreemapNodeVisual> visuals,
         int depth)
     {
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+        {
+            return;
+        }
+
         var items = node.Children
             .Select(child => new WeightedNode(child, GetWeight(child, metric)))
             .Where(item => item.Weight > 0)
@@ -48,6 +57,13 @@ public sealed class SquarifiedTreemapLayout
         items = items
             .Select(item => item with { Area = boundsArea * (item.Weight / totalWeight) })
             .ToList();
+
+        // Heavily skewed sibling sets tend to collapse into stripe-like tails with greedy squarify.
+        if (ShouldUseBalancedSplit(items, totalWeight))
+        {
+            LayoutBalanced(items, 0, items.Count, totalWeight, bounds, visuals, metric, depth);
+            return;
+        }
 
         var remainingBounds = bounds;
         var row = new List<WeightedNode>();
@@ -98,13 +114,7 @@ public sealed class SquarifiedTreemapLayout
                     ? 0
                     : item.Area / rowWidth;
                 var itemBounds = new Rect(bounds.X, y, rowWidth, itemHeight);
-                visuals.Add(new TreemapNodeVisual(item.Node, itemBounds, depth));
-
-                if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
-                {
-                    LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
-                }
-
+                AddVisual(item.Node, itemBounds, metric, visuals, depth);
                 y += itemHeight;
             }
 
@@ -120,17 +130,146 @@ public sealed class SquarifiedTreemapLayout
                 ? 0
                 : item.Area / rowHeight;
             var itemBounds = new Rect(x, bounds.Y, itemWidth, rowHeight);
-            visuals.Add(new TreemapNodeVisual(item.Node, itemBounds, depth));
-
-            if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
-            {
-                LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
-            }
-
+            AddVisual(item.Node, itemBounds, metric, visuals, depth);
             x += itemWidth;
         }
 
         return new Rect(bounds.X, bounds.Y + rowHeight, bounds.Width, Math.Max(0, bounds.Height - rowHeight));
+    }
+
+    private void LayoutBalanced(
+        IReadOnlyList<WeightedNode> items,
+        int startIndex,
+        int endIndex,
+        double totalWeight,
+        Rect bounds,
+        List<TreemapNodeVisual> visuals,
+        AnalysisMetric metric,
+        int depth)
+    {
+        if (startIndex >= endIndex || bounds.Width <= 0 || bounds.Height <= 0 || totalWeight <= 0)
+        {
+            return;
+        }
+
+        if (endIndex - startIndex == 1)
+        {
+            AddVisual(items[startIndex].Node, bounds, metric, visuals, depth);
+            return;
+        }
+
+        var splitIndex = FindBalancedSplitIndex(items, startIndex, endIndex, totalWeight, out var leadingWeight);
+        if (splitIndex <= startIndex || splitIndex >= endIndex || leadingWeight <= 0 || leadingWeight >= totalWeight)
+        {
+            AddVisual(items[startIndex].Node, bounds, metric, visuals, depth);
+            LayoutBalanced(
+                items,
+                startIndex + 1,
+                endIndex,
+                totalWeight - items[startIndex].Weight,
+                bounds,
+                visuals,
+                metric,
+                depth);
+            return;
+        }
+
+        if (bounds.Width >= bounds.Height)
+        {
+            var leadingWidth = bounds.Width * (leadingWeight / totalWeight);
+            var leadingBounds = new Rect(bounds.X, bounds.Y, leadingWidth, bounds.Height);
+            var trailingBounds = new Rect(
+                bounds.X + leadingWidth,
+                bounds.Y,
+                Math.Max(0, bounds.Width - leadingWidth),
+                bounds.Height);
+
+            LayoutBalanced(items, startIndex, splitIndex, leadingWeight, leadingBounds, visuals, metric, depth);
+            LayoutBalanced(items, splitIndex, endIndex, totalWeight - leadingWeight, trailingBounds, visuals, metric, depth);
+            return;
+        }
+
+        var leadingHeight = bounds.Height * (leadingWeight / totalWeight);
+        var topBounds = new Rect(bounds.X, bounds.Y, bounds.Width, leadingHeight);
+        var bottomBounds = new Rect(
+            bounds.X,
+            bounds.Y + leadingHeight,
+            bounds.Width,
+            Math.Max(0, bounds.Height - leadingHeight));
+
+        LayoutBalanced(items, startIndex, splitIndex, leadingWeight, topBounds, visuals, metric, depth);
+        LayoutBalanced(items, splitIndex, endIndex, totalWeight - leadingWeight, bottomBounds, visuals, metric, depth);
+    }
+
+    private void AddVisual(
+        ProjectNode node,
+        Rect bounds,
+        AnalysisMetric metric,
+        List<TreemapNodeVisual> visuals,
+        int depth)
+    {
+        visuals.Add(new TreemapNodeVisual(node, bounds, depth));
+
+        if (node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
+        {
+            LayoutNode(node, TreemapVisualRules.GetContentBounds(node, bounds), metric, visuals, depth + 1);
+        }
+    }
+
+    private static bool ShouldUseBalancedSplit(IReadOnlyList<WeightedNode> items, double totalWeight)
+    {
+        if (items.Count < BalancedSplitMinChildCount || totalWeight <= 0)
+        {
+            return false;
+        }
+
+        var maxWeight = items[0].Weight;
+        var minWeight = items[^1].Weight;
+        if (minWeight <= 0)
+        {
+            return true;
+        }
+
+        var largestShare = maxWeight / totalWeight;
+        var skewRatio = maxWeight / minWeight;
+        return largestShare >= BalancedSplitMaxShareThreshold ||
+               skewRatio >= BalancedSplitSkewRatioThreshold;
+    }
+
+    private static int FindBalancedSplitIndex(
+        IReadOnlyList<WeightedNode> items,
+        int startIndex,
+        int endIndex,
+        double totalWeight,
+        out double leadingWeight)
+    {
+        var targetWeight = totalWeight / 2d;
+        leadingWeight = 0d;
+        var splitIndex = startIndex;
+
+        while (splitIndex < endIndex && leadingWeight + items[splitIndex].Weight <= targetWeight)
+        {
+            leadingWeight += items[splitIndex].Weight;
+            splitIndex++;
+        }
+
+        if (splitIndex == startIndex)
+        {
+            leadingWeight = items[startIndex].Weight;
+            return startIndex + 1;
+        }
+
+        if (splitIndex < endIndex)
+        {
+            var includedWeight = leadingWeight + items[splitIndex].Weight;
+            if (Math.Abs(targetWeight - includedWeight) < Math.Abs(targetWeight - leadingWeight))
+            {
+                leadingWeight = includedWeight;
+                splitIndex++;
+            }
+        }
+
+        return splitIndex;
     }
 
     private static bool ImprovesAspectRatio(IReadOnlyList<WeightedNode> row, WeightedNode candidate, Rect bounds)
@@ -183,4 +322,3 @@ public sealed class SquarifiedTreemapLayout
         public double Area { get; init; }
     }
 }
-
