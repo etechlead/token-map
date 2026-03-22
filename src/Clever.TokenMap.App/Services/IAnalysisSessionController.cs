@@ -1,6 +1,6 @@
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.Models;
+using Clever.TokenMap.App;
 using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.App.Services;

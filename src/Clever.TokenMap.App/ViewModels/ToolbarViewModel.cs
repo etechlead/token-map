@@ -10,6 +10,20 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ToolbarViewModel : ViewModelBase
 {
+    private static readonly IReadOnlyList<AnalysisMetricOption> MetricOptionItems =
+    [
+        new(AnalysisMetric.Tokens, "Tokens"),
+        new(AnalysisMetric.TotalLines, "Total lines"),
+        new(AnalysisMetric.NonEmptyLines, "Non-empty lines"),
+    ];
+
+    private static readonly IReadOnlyList<TokenProfileOption> TokenProfileOptionItems =
+    [
+        new(TokenProfile.O200KBase, "o200k_base"),
+        new(TokenProfile.Cl100KBase, "cl100k_base"),
+        new(TokenProfile.P50KBase, "p50k_base"),
+    ];
+
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
@@ -39,19 +53,9 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
 
-    public IReadOnlyList<AnalysisMetric> MetricOptions { get; } =
-    [
-        AnalysisMetric.Tokens,
-        AnalysisMetric.TotalLines,
-        AnalysisMetric.NonEmptyLines,
-    ];
+    public IReadOnlyList<AnalysisMetricOption> MetricOptions { get; } = MetricOptionItems;
 
-    public IReadOnlyList<TokenProfile> TokenProfiles { get; } =
-    [
-        TokenProfile.O200KBase,
-        TokenProfile.Cl100KBase,
-        TokenProfile.P50KBase,
-    ];
+    public IReadOnlyList<TokenProfileOption> TokenProfileOptions { get; } = TokenProfileOptionItems;
 
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
@@ -66,10 +70,24 @@ public partial class ToolbarViewModel : ViewModelBase
     private string selectedFolderDisplay = "No folder selected";
 
     [ObservableProperty]
-    private AnalysisMetric selectedMetric = AnalysisMetric.Tokens;
+    [NotifyPropertyChangedFor(nameof(SelectedMetric))]
+    private AnalysisMetricOption selectedMetricOption = MetricOptionItems[0];
+
+    public AnalysisMetric SelectedMetric
+    {
+        get => SelectedMetricOption.Value;
+        set => SelectedMetricOption = GetMetricOption(value);
+    }
 
     [ObservableProperty]
-    private TokenProfile selectedTokenProfile = TokenProfile.O200KBase;
+    [NotifyPropertyChangedFor(nameof(SelectedTokenProfile))]
+    private TokenProfileOption selectedTokenProfileOption = TokenProfileOptionItems[0];
+
+    public TokenProfile SelectedTokenProfile
+    {
+        get => SelectedTokenProfileOption.Value;
+        set => SelectedTokenProfileOption = GetTokenProfileOption(value);
+    }
 
     [ObservableProperty]
     private bool respectGitIgnore = true;
@@ -156,4 +174,20 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         SelectedThemePreference = value;
     }
+
+    private static AnalysisMetricOption GetMetricOption(AnalysisMetric value) =>
+        value switch
+        {
+            AnalysisMetric.TotalLines => MetricOptionItems[1],
+            AnalysisMetric.NonEmptyLines => MetricOptionItems[2],
+            _ => MetricOptionItems[0],
+        };
+
+    private static TokenProfileOption GetTokenProfileOption(TokenProfile value) =>
+        value switch
+        {
+            TokenProfile.Cl100KBase => TokenProfileOptionItems[1],
+            TokenProfile.P50KBase => TokenProfileOptionItems[2],
+            _ => TokenProfileOptionItems[0],
+        };
 }

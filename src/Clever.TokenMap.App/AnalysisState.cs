@@ -1,4 +1,4 @@
-namespace Clever.TokenMap.App.Models;
+namespace Clever.TokenMap.App;
 
 public enum AnalysisState
 {

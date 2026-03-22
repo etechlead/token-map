@@ -41,11 +41,11 @@
                                            Text="Treemap metric" />
                                 <ComboBox Name="MetricComboBox"
                                           ItemsSource="{Binding Toolbar.MetricOptions}"
-                                          SelectedItem="{Binding Toolbar.SelectedMetric}"
+                                          SelectedItem="{Binding Toolbar.SelectedMetricOption}"
                                           IsEnabled="{Binding Toolbar.CanChangeMetric}">
                                     <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource EnumDisplayTextConverter}}" />
+                                        <DataTemplate x:DataType="vm:AnalysisMetricOption">
+                                            <TextBlock Text="{Binding Label}" />
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>
@@ -62,12 +62,12 @@
                                            FontSize="11"
                                            Text="Tokenizer" />
                                 <ComboBox Name="TokenizerComboBox"
-                                          ItemsSource="{Binding Toolbar.TokenProfiles}"
-                                          SelectedItem="{Binding Toolbar.SelectedTokenProfile}"
+                                          ItemsSource="{Binding Toolbar.TokenProfileOptions}"
+                                          SelectedItem="{Binding Toolbar.SelectedTokenProfileOption}"
                                           IsEnabled="{Binding Toolbar.CanConfigureScanOptions}">
                                     <ComboBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <TextBlock Text="{Binding Converter={StaticResource EnumDisplayTextConverter}}" />
+                                        <DataTemplate x:DataType="vm:TokenProfileOption">
+                                            <TextBlock Text="{Binding Label}" />
                                         </DataTemplate>
                                     </ComboBox.ItemTemplate>
                                 </ComboBox>

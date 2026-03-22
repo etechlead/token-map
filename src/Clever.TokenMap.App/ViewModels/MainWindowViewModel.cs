@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.Models;
+using Clever.TokenMap.App;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;

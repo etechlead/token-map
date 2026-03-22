@@ -3,7 +3,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
-using Clever.TokenMap.App.Models;
+using Clever.TokenMap.App;
 using Clever.TokenMap.Treemap;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
