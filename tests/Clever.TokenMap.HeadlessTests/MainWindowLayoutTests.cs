@@ -513,11 +513,15 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
         Assert.Null(control.SelectedNode);
         Assert.Contains("Program.cs", control.TooltipText);
+        Assert.True(ToolTip.GetIsOpen(control));
+        Assert.Equal(control.TooltipText, ToolTip.GetTip(control));
 
         control.ClearHover();
 
         Assert.Null(control.HoveredNode);
         Assert.Null(control.TooltipText);
+        Assert.False(ToolTip.GetIsOpen(control));
+        Assert.Null(ToolTip.GetTip(control));
     }
 
     private static ProjectSnapshot CreateSnapshot() =>

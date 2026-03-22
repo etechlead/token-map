@@ -216,6 +216,8 @@ public sealed class TreemapControl : Control
         HoveredNode = hoveredNode;
         TooltipText = hoveredNode is null ? null : BuildTooltip(hoveredNode);
         ToolTip.SetTip(this, TooltipText);
+        ToolTip.SetShowDelay(this, 0);
+        ToolTip.SetIsOpen(this, hoveredNode is not null);
         InvalidateVisual();
     }
 
@@ -228,6 +230,7 @@ public sealed class TreemapControl : Control
 
         HoveredNode = null;
         TooltipText = null;
+        ToolTip.SetIsOpen(this, false);
         ToolTip.SetTip(this, null);
         InvalidateVisual();
     }
