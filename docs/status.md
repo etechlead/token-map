@@ -14,6 +14,7 @@
 - Tree view, summary strip, details panel и treemap в одном окне.
 - Hover tooltip, persistent selection highlight и sync `Tree ↔ Treemap ↔ Details`.
 - Автоматическое раскрытие пути в дереве при выборе узла из treemap.
+- Drill down в treemap по double-click на директории с локальным scope и возвратом через `Back to overview`.
 - Проверенный `win-x64` publish и настроенный secondary target `osx-arm64`.
 
 ## Зафиксированные решения
@@ -28,6 +29,7 @@
 ## Документация
 - Документация синхронизирована с кодом по состоянию на 2026-03-22.
 - Политика документации зафиксирована в [AGENTS.md](/Z:/Projects/My/tokenmap/src/AGENTS.md): документы отражают только текущее состояние или запланированную работу; историчность остаётся в git.
+- Для treemap navigation текущий минимальный UX: `Scope` + `Back to overview`; breadcrumb/history остаются post-MVP улучшением.
 
 ## Последняя проверка
 - Дата: 2026-03-22
@@ -35,6 +37,7 @@
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
+  - headless-сценарии `treemap drill down` и возврата к глобальному overview
 
 ## Как запустить
 - Dev run:

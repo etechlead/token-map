@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Clever.TokenMap.Controls;
 using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Views;
@@ -17,6 +18,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var treemap = this.FindControl<TreemapControl>("ProjectTreemapControl");
+        if (treemap is not null)
+        {
+            treemap.DrillDownRequested += ProjectTreemapControl_OnDrillDownRequested;
+        }
+
         DataContextChanged += (_, _) => ApplyProjectTreeTableHeaderStateFromViewModel();
         Opened += (_, _) => ApplyProjectTreeTableHeaderStateFromViewModel();
     }
@@ -189,5 +196,15 @@ public partial class MainWindow : Window
                 column = default;
                 return false;
         }
+    }
+
+    private void ProjectTreemapControl_OnDrillDownRequested(object? sender, TreemapDrillDownRequestedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.DrillIntoTreemap(e.Node);
     }
 }

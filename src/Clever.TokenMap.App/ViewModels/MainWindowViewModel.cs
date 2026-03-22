@@ -14,9 +14,11 @@ public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IFolderPickerService _folderPickerService;
     private readonly IProjectAnalyzer _projectAnalyzer;
+    private readonly RelayCommand _resetTreemapRootCommand;
     private CancellationTokenSource? _analysisCancellationTokenSource;
     private ProjectSnapshot? _currentSnapshot;
     private string? _selectedFolderPath;
+    private ProjectNode? _treemapRootNode;
 
     public MainWindowViewModel()
         : this(new NullProjectAnalyzer(), new NullFolderPickerService())
@@ -32,6 +34,7 @@ public partial class MainWindowViewModel : ViewModelBase
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
+        _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
         Tree = new ProjectTreeViewModel();
         Summary = new SummaryViewModel();
 
@@ -47,7 +50,35 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public SummaryViewModel Summary { get; }
 
-    public ProjectNode? TreemapRootNode { get; private set; }
+    public ProjectNode? TreemapRootNode
+    {
+        get => _treemapRootNode;
+        private set
+        {
+            if (SetProperty(ref _treemapRootNode, value))
+            {
+                OnPropertyChanged(nameof(CanResetTreemapRoot));
+                OnPropertyChanged(nameof(TreemapScopeDisplay));
+                _resetTreemapRootCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public IRelayCommand ResetTreemapRootCommand => _resetTreemapRootCommand;
+
+    public bool CanResetTreemapRoot =>
+        _currentSnapshot is not null &&
+        TreemapRootNode is not null &&
+        !string.Equals(TreemapRootNode.Id, _currentSnapshot.Root.Id, StringComparison.Ordinal);
+
+    public bool CanShowTreemapScope => CanResetTreemapRoot;
+
+    public string TreemapScopeDisplay =>
+        _currentSnapshot is null || TreemapRootNode is null
+            ? string.Empty
+            : CanResetTreemapRoot
+                ? TreemapRootNode.RelativePath
+                : string.Empty;
 
     [ObservableProperty]
     private ProjectNode? selectedNode;
@@ -133,11 +164,21 @@ public partial class MainWindowViewModel : ViewModelBase
         Tree.LoadRoot(rootNode);
         Summary.SetCompleted(snapshot);
         SelectedNode = snapshot.Root;
-        OnPropertyChanged(nameof(TreemapRootNode));
         Toolbar.RefreshAvailability(
             hasSelectedFolder: !string.IsNullOrWhiteSpace(_selectedFolderPath),
             isBusy: false,
             hasSnapshot: true);
+    }
+
+    public void DrillIntoTreemap(ProjectNode? node)
+    {
+        if (!CanDrillIntoTreemap(node))
+        {
+            return;
+        }
+
+        TreemapRootNode = node;
+        SelectedNode = node;
     }
 
     private void CancelAnalysis()
@@ -158,6 +199,21 @@ public partial class MainWindowViewModel : ViewModelBase
             Tree.SelectNodeById(value.Id);
         }
     }
+
+    private void ResetTreemapRoot()
+    {
+        if (_currentSnapshot is null)
+        {
+            return;
+        }
+
+        TreemapRootNode = _currentSnapshot.Root;
+    }
+
+    private static bool CanDrillIntoTreemap(ProjectNode? node) =>
+        node is not null &&
+        node.Kind != Core.Enums.ProjectNodeKind.File &&
+        node.Children.Count > 0;
 
     private sealed class NullFolderPickerService : IFolderPickerService
     {

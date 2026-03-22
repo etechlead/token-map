@@ -32,6 +32,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(statusStrip);
         Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
         Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
+        Assert.NotNull(window.FindControl<TextBlock>("TreemapScopeText"));
         Assert.Null(window.FindControl<Control>("DetailsPane"));
         Assert.NotNull(window.FindControl<ProgressBar>("StatusProgressBar"));
         Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
@@ -461,6 +462,77 @@ public sealed class MainWindowLayoutTests
         Assert.True(directoryNode.IsExpanded);
         Assert.Equal(fileNode, viewModel.Tree.SelectedNode);
         Assert.Equal("src/Program.cs", viewModel.SelectedNode?.RelativePath);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapDirectoryDrillDown_ScopesTreemapAndSynchronizesTree()
+    {
+        var window = new MainWindow();
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(CreateNestedSnapshot()),
+            new StubFolderPickerService("C:\\Demo"));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var backButton = window.FindControl<Button>("TreemapBackToOverviewButton");
+        var scopeText = window.FindControl<TextBlock>("TreemapScopeText");
+
+        Assert.NotNull(control);
+        Assert.NotNull(backButton);
+        Assert.NotNull(scopeText);
+        Assert.False(scopeText.IsVisible);
+
+        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
+        var handled = control.RequestDrillDownAt(new Avalonia.Point(
+            directoryVisual.Bounds.X + 6,
+            directoryVisual.Bounds.Y + 6));
+
+        Assert.True(handled);
+        Assert.Equal("src", viewModel.TreemapRootNode?.RelativePath);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
+        Assert.Equal("src", viewModel.SelectedNode?.RelativePath);
+        Assert.Equal("src", scopeText.Text);
+        Assert.True(backButton.IsVisible);
+        Assert.All(control.NodeVisuals, item => Assert.StartsWith("src", item.Node.RelativePath));
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapBackToOverview_RestoresGlobalTreemap()
+    {
+        var window = new MainWindow();
+        var viewModel = new MainWindowViewModel(
+            new StubProjectAnalyzer(CreateNestedSnapshot()),
+            new StubFolderPickerService("C:\\Demo"));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var control = window.FindControl<TreemapControl>("ProjectTreemapControl");
+        var backButton = window.FindControl<Button>("TreemapBackToOverviewButton");
+        var scopeText = window.FindControl<TextBlock>("TreemapScopeText");
+
+        Assert.NotNull(control);
+        Assert.NotNull(backButton);
+        Assert.NotNull(scopeText);
+        Assert.False(scopeText.IsVisible);
+
+        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
+        control.RequestDrillDownAt(new Avalonia.Point(
+            directoryVisual.Bounds.X + 6,
+            directoryVisual.Bounds.Y + 6));
+
+        viewModel.ResetTreemapRootCommand.Execute(null);
+
+        Assert.Equal("/", viewModel.TreemapRootNode?.Id);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
+        Assert.Equal(string.Empty, scopeText.Text);
+        Assert.False(scopeText.IsVisible);
+        Assert.False(backButton.IsVisible);
+        Assert.Contains(control.NodeVisuals, item => item.Node.RelativePath == "src");
     }
 
     [AvaloniaFact]

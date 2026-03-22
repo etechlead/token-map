@@ -24,6 +24,8 @@ public sealed class TreemapControl : Control
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
     private Size _layoutSize;
 
+    public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
+
     static TreemapControl()
     {
         AffectsRender<TreemapControl>(MetricProperty, RootNodeProperty, BoundsProperty);
@@ -159,7 +161,13 @@ public sealed class TreemapControl : Control
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        SelectNodeAt(e.GetPosition(this));
+        var point = e.GetPosition(this);
+        SelectNodeAt(point);
+
+        if (e.ClickCount == 2)
+        {
+            RequestDrillDownAt(point);
+        }
     }
 
     private void DrawPlaceholder(DrawingContext context, string message)
@@ -241,6 +249,21 @@ public sealed class TreemapControl : Control
         SelectedNode = PressedNode;
     }
 
+    internal bool RequestDrillDownAt(Point point)
+    {
+        var node = HitTestNode(point);
+        if (!CanDrillDown(node))
+        {
+            return false;
+        }
+
+        var targetNode = node!;
+        PressedNode = targetNode;
+        SelectedNode = targetNode;
+        DrillDownRequested?.Invoke(this, new TreemapDrillDownRequestedEventArgs(targetNode));
+        return true;
+    }
+
     private Pen CreateBorderPen(ProjectNode node)
     {
         var isSelected = SelectedNode?.Id == node.Id;
@@ -300,5 +323,10 @@ public sealed class TreemapControl : Control
 
     private static bool IsLeafNode(ProjectNode node) =>
         node.Kind == Core.Enums.ProjectNodeKind.File || node.Children.Count == 0;
+
+    private static bool CanDrillDown(ProjectNode? node) =>
+        node is not null &&
+        node.Kind != Core.Enums.ProjectNodeKind.File &&
+        node.Children.Count > 0;
 
 }
