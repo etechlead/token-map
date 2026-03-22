@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
@@ -145,9 +146,7 @@ internal static class HeadlessTestSupport
 
     private sealed class StubSettingsCoordinator : ISettingsCoordinator
     {
-        public void Attach(ToolbarViewModel toolbar)
-        {
-        }
+        public SettingsState State { get; } = new();
     }
 }
 

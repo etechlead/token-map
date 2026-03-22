@@ -2,7 +2,8 @@ using System;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
 
@@ -18,7 +19,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private readonly TimeSpan _debounceDelay;
     private readonly Lock _syncLock = new();
 
-    private ToolbarViewModel? _toolbar;
     private AppSettings _currentSettings = AppSettings.CreateDefault();
     private CancellationTokenSource? _saveDebounceCancellationTokenSource;
     private Task? _pendingSaveTask;
@@ -29,6 +29,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public SettingsCoordinator(
         IAppSettingsStore appSettingsStore,
         IThemeService themeService,
+        AppSettings? initialSettings = null,
         IAppLogger? logger = null,
         TimeSpan? debounceDelay = null)
     {
@@ -36,34 +37,13 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         _themeService = themeService;
         _logger = logger ?? NullAppLogger.Instance;
         _debounceDelay = debounceDelay ?? DefaultDebounceDelay;
+        State = new SettingsState();
+        State.PropertyChanged += StateOnPropertyChanged;
+
+        LoadSettings(initialSettings ?? _appSettingsStore.Load());
     }
 
-    public void Attach(ToolbarViewModel toolbar)
-    {
-        ArgumentNullException.ThrowIfNull(toolbar);
-
-        if (_toolbar is not null)
-        {
-            _toolbar.PropertyChanged -= ToolbarOnPropertyChanged;
-        }
-
-        _toolbar = toolbar;
-        _currentSettings = _appSettingsStore.Load();
-
-        _isApplyingSettings = true;
-        try
-        {
-            _toolbar.ApplyAnalysisSettings(_currentSettings.Analysis);
-            _toolbar.ApplyAppearanceSettings(_currentSettings.Appearance);
-            _themeService.ApplyThemePreference(_currentSettings.Appearance.ThemePreference);
-        }
-        finally
-        {
-            _isApplyingSettings = false;
-        }
-
-        _toolbar.PropertyChanged += ToolbarOnPropertyChanged;
-    }
+    public SettingsState State { get; }
 
     public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
@@ -97,21 +77,25 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         SaveIfNeeded(versionToSave);
     }
 
-    private void ToolbarOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void StateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (_isApplyingSettings || _toolbar is null || !IsPersistedToolbarProperty(e.PropertyName))
+        if (_isApplyingSettings || !IsPersistedStateProperty(e.PropertyName))
         {
             return;
         }
 
         lock (_syncLock)
         {
-            _currentSettings.Analysis = _toolbar.BuildAnalysisSettings();
-            _currentSettings.Appearance = _toolbar.BuildAppearanceSettings();
+            _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
+            _currentSettings.Analysis.SelectedTokenProfile = State.SelectedTokenProfile;
+            _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
+            _currentSettings.Analysis.RespectIgnore = State.RespectIgnore;
+            _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
+            _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
             _settingsVersion++;
         }
 
-        _themeService.ApplyThemePreference(_toolbar.SelectedThemePreference);
+        _themeService.ApplyThemePreference(State.SelectedThemePreference);
         ScheduleSave();
     }
 
@@ -165,11 +149,34 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         _logger.LogDebug("Persisted updated app settings to settings.json.");
     }
 
-    private static bool IsPersistedToolbarProperty(string? propertyName) =>
-        propertyName is nameof(ToolbarViewModel.SelectedMetric) or
-        nameof(ToolbarViewModel.SelectedTokenProfile) or
-        nameof(ToolbarViewModel.RespectGitIgnore) or
-        nameof(ToolbarViewModel.RespectIgnore) or
-        nameof(ToolbarViewModel.UseDefaultExcludes) or
-        nameof(ToolbarViewModel.SelectedThemePreference);
+    private void LoadSettings(AppSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        _currentSettings = settings.Clone();
+
+        _isApplyingSettings = true;
+        try
+        {
+            State.SelectedMetric = _currentSettings.Analysis.SelectedMetric;
+            State.SelectedTokenProfile = _currentSettings.Analysis.SelectedTokenProfile;
+            State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
+            State.RespectIgnore = _currentSettings.Analysis.RespectIgnore;
+            State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
+            State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
+            _themeService.ApplyThemePreference(State.SelectedThemePreference);
+        }
+        finally
+        {
+            _isApplyingSettings = false;
+        }
+    }
+
+    private static bool IsPersistedStateProperty(string? propertyName) =>
+        propertyName is nameof(SettingsState.SelectedMetric) or
+        nameof(SettingsState.SelectedTokenProfile) or
+        nameof(SettingsState.RespectGitIgnore) or
+        nameof(SettingsState.RespectIgnore) or
+        nameof(SettingsState.UseDefaultExcludes) or
+        nameof(SettingsState.SelectedThemePreference);
 }

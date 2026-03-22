@@ -34,11 +34,11 @@ public partial class App : Application
             var appSettingsStore = new JsonAppSettingsStore();
             var appSettings = appSettingsStore.Load();
             var themeService = new ApplicationThemeService(this);
-            themeService.ApplyThemePreference(appSettings.Appearance.ThemePreference);
             var loggerFactory = new AppLoggerFactory(appSettings.Logging);
             var settingsCoordinator = new SettingsCoordinator(
                 appSettingsStore,
                 themeService,
+                appSettings,
                 loggerFactory.CreateLogger<SettingsCoordinator>());
             desktop.Exit += (_, _) =>
             {

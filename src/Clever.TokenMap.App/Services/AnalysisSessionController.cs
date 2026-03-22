@@ -16,6 +16,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     private readonly IAppLogger _logger;
 
     private CancellationTokenSource? _analysisCancellationTokenSource;
+    private string? _activeAnalysisFolderPath;
     private int _analysisVersion;
 
     public AnalysisSessionController(
@@ -62,33 +63,38 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             return;
         }
 
-        SelectedFolderPath = selectedFolder;
         _logger.LogInformation($"Folder selected for analysis: '{selectedFolder}'.");
 
-        await AnalyzeCurrentFolderAsync(options);
+        await AnalyzeFolderAsync(selectedFolder, options, commitSelectedFolderOnSuccess: true);
     }
 
-    public Task RescanAsync(ScanOptions options) => AnalyzeCurrentFolderAsync(options);
+    public Task RescanAsync(ScanOptions options)
+    {
+        if (!HasSelectedFolder)
+        {
+            return Task.CompletedTask;
+        }
+
+        return AnalyzeFolderAsync(SelectedFolderPath!, options, commitSelectedFolderOnSuccess: false);
+    }
 
     public void Cancel()
     {
-        if (!HasSelectedFolder)
+        if (!IsBusy)
         {
             return;
         }
 
-        _logger.LogInformation($"Cancellation requested for '{SelectedFolderPath}'.");
+        var activeFolderPath = _activeAnalysisFolderPath ?? SelectedFolderPath ?? "<unknown>";
+        _logger.LogInformation($"Cancellation requested for '{activeFolderPath}'.");
         _analysisCancellationTokenSource?.Cancel();
     }
 
-    private async Task AnalyzeCurrentFolderAsync(ScanOptions options)
+    private async Task AnalyzeFolderAsync(
+        string folderPath,
+        ScanOptions options,
+        bool commitSelectedFolderOnSuccess)
     {
-        if (!HasSelectedFolder)
-        {
-            return;
-        }
-
-        var folderPath = SelectedFolderPath!;
         var version = Interlocked.Increment(ref _analysisVersion);
         var cancellationTokenSource = new CancellationTokenSource();
 
@@ -98,6 +104,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         previousCancellationTokenSource?.Cancel();
         previousCancellationTokenSource?.Dispose();
 
+        _activeAnalysisFolderPath = folderPath;
         CurrentProgress = null;
         SetState(AnalysisState.Scanning, $"Analyzing {folderPath}");
 
@@ -120,6 +127,11 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             if (version != _analysisVersion)
             {
                 return;
+            }
+
+            if (commitSelectedFolderOnSuccess)
+            {
+                SelectedFolderPath = snapshot.RootPath;
             }
 
             CurrentSnapshot = snapshot;
@@ -153,6 +165,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             if (ReferenceEquals(_analysisCancellationTokenSource, cancellationTokenSource))
             {
                 _analysisCancellationTokenSource = null;
+                _activeAnalysisFolderPath = null;
             }
 
             cancellationTokenSource.Dispose();

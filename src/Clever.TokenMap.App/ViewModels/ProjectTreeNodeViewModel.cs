@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.IO;
 using Avalonia;
 using Clever.TokenMap.Core.Enums;
@@ -10,20 +8,16 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ProjectTreeNodeViewModel : ViewModelBase
 {
-    public ProjectTreeNodeViewModel(ProjectNode node, ProjectTreeNodeViewModel? parent = null)
+    public ProjectTreeNodeViewModel(ProjectNode node, int depth = 0, bool isExpanded = false)
     {
         Node = node;
-        Parent = parent;
-        Depth = parent is null ? 0 : parent.Depth + 1;
+        Depth = depth;
         Name = node.Name;
         RelativePath = string.IsNullOrEmpty(node.RelativePath) ? "(root)" : node.RelativePath;
-        Children = new ObservableCollection<ProjectTreeNodeViewModel>(
-            node.Children.Select(child => new ProjectTreeNodeViewModel(child, this)));
+        IsExpanded = isExpanded;
     }
 
     public ProjectNode Node { get; }
-
-    public ProjectTreeNodeViewModel? Parent { get; }
 
     public int Depth { get; }
 
@@ -31,9 +25,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string RelativePath { get; }
 
-    public ObservableCollection<ProjectTreeNodeViewModel> Children { get; }
-
-    public bool HasChildren => Children.Count > 0;
+    public bool HasChildren => Node.Children.Count > 0;
 
     public Thickness IndentMargin => new(Depth * 14, 0, 0, 0);
 

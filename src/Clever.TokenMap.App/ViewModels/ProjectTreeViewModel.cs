@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -10,9 +12,14 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ProjectTreeViewModel : ViewModelBase
 {
-    private readonly Dictionary<string, ProjectTreeNodeViewModel> _nodesById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ProjectNode> _nodesById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string?> _parentNodeIdsById = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ProjectTreeNodeViewModel> _visibleNodesById = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _expandedNodeIds = new(StringComparer.Ordinal);
     private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Tokens;
     private ListSortDirection _currentSortDirection = ListSortDirection.Descending;
+    private ProjectNode? _rootNode;
+    private string? _selectedNodeId;
 
     public ProjectTreeViewModel()
     {
@@ -34,24 +41,33 @@ public partial class ProjectTreeViewModel : ViewModelBase
 
     public event EventHandler<ProjectTreeNodeViewModel?>? SelectedNodeChanged;
 
-    public void LoadRoot(ProjectTreeNodeViewModel rootNode)
+    public void LoadRoot(ProjectNode rootNode)
     {
+        ArgumentNullException.ThrowIfNull(rootNode);
+
+        _rootNode = rootNode;
         RootNodes.Clear();
         VisibleNodes.Clear();
         _nodesById.Clear();
-        RootNodes.Add(rootNode);
-        RegisterNode(rootNode);
-        rootNode.IsExpanded = true;
-        ApplyCurrentSort();
+        _parentNodeIdsById.Clear();
+        _visibleNodesById.Clear();
+        _expandedNodeIds.Clear();
+        RegisterNode(rootNode, parentNodeId: null);
+        _expandedNodeIds.Add(rootNode.Id);
         RebuildVisibleNodes();
-        SelectedNode = rootNode;
+        SelectNodeById(rootNode.Id);
     }
 
     public void Clear()
     {
+        _rootNode = null;
         RootNodes.Clear();
         VisibleNodes.Clear();
         _nodesById.Clear();
+        _parentNodeIdsById.Clear();
+        _visibleNodesById.Clear();
+        _expandedNodeIds.Clear();
+        _selectedNodeId = null;
         SelectedNode = null;
     }
 
@@ -63,15 +79,16 @@ public partial class ProjectTreeViewModel : ViewModelBase
             return;
         }
 
-        if (_nodesById.TryGetValue(nodeId, out var node))
+        if (_nodesById.ContainsKey(nodeId))
         {
-            var expanded = ExpandToNode(node);
-            if (expanded)
+            var rebuildRequired = ExpandToNode(nodeId) || !_visibleNodesById.ContainsKey(nodeId);
+            if (rebuildRequired)
             {
                 RebuildVisibleNodes();
             }
 
-            if (!ReferenceEquals(SelectedNode, node))
+            if (_visibleNodesById.TryGetValue(nodeId, out var node) &&
+                !ReferenceEquals(SelectedNode, node))
             {
                 SelectedNode = node;
             }
@@ -80,6 +97,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
 
     partial void OnSelectedNodeChanged(ProjectTreeNodeViewModel? value)
     {
+        _selectedNodeId = value?.Node.Id;
         SelectedNodeChanged?.Invoke(this, value);
     }
 
@@ -87,36 +105,27 @@ public partial class ProjectTreeViewModel : ViewModelBase
     {
         _currentSortColumn = column;
         _currentSortDirection = direction;
-        ApplyCurrentSort();
         RebuildVisibleNodes();
     }
 
-    private void ApplyCurrentSort()
+    private void RegisterNode(ProjectNode node, string? parentNodeId)
     {
-        SortCollection(RootNodes, _currentSortColumn, _currentSortDirection);
-        foreach (var root in RootNodes)
-        {
-            SortChildrenRecursive(root, _currentSortColumn, _currentSortDirection);
-        }
-    }
+        _nodesById[node.Id] = node;
+        _parentNodeIdsById[node.Id] = parentNodeId;
 
-    private void RegisterNode(ProjectTreeNodeViewModel node)
-    {
-        _nodesById[node.Node.Id] = node;
         foreach (var child in node.Children)
         {
-            RegisterNode(child);
+            RegisterNode(child, node.Id);
         }
     }
 
-    private static bool ExpandToNode(ProjectTreeNodeViewModel node)
+    private bool ExpandToNode(string nodeId)
     {
         var expanded = false;
-        for (var current = node.Parent; current is not null; current = current.Parent)
+        for (var current = nodeId; _parentNodeIdsById.TryGetValue(current, out var parentNodeId) && parentNodeId is not null; current = parentNodeId)
         {
-            if (!current.IsExpanded)
+            if (_expandedNodeIds.Add(parentNodeId))
             {
-                current.IsExpanded = true;
                 expanded = true;
             }
         }
@@ -131,84 +140,117 @@ public partial class ProjectTreeViewModel : ViewModelBase
             return;
         }
 
-        node.IsExpanded = !node.IsExpanded;
+        if (_expandedNodeIds.Contains(node.Node.Id))
+        {
+            _expandedNodeIds.Remove(node.Node.Id);
+            if (IsSelectedNodeInsideCollapsedBranch(node.Node.Id))
+            {
+                _selectedNodeId = node.Node.Id;
+            }
+        }
+        else
+        {
+            _expandedNodeIds.Add(node.Node.Id);
+        }
+
         RebuildVisibleNodes();
+
+        if (_selectedNodeId is { } selectedNodeId &&
+            _visibleNodesById.TryGetValue(selectedNodeId, out var selectedNode))
+        {
+            SelectedNode = selectedNode;
+        }
     }
 
     private void RebuildVisibleNodes()
     {
+        RootNodes.Clear();
         VisibleNodes.Clear();
+        _visibleNodesById.Clear();
 
-        foreach (var root in RootNodes)
-        {
-            AddVisibleNodeAndChildren(root);
-        }
-    }
-
-    private void AddVisibleNodeAndChildren(ProjectTreeNodeViewModel node)
-    {
-        VisibleNodes.Add(node);
-
-        if (!node.IsExpanded)
+        if (_rootNode is null)
         {
             return;
         }
 
-        foreach (var child in node.Children)
+        AddVisibleNodeAndChildren(_rootNode, depth: 0);
+    }
+
+    private void AddVisibleNodeAndChildren(ProjectNode node, int depth)
+    {
+        var viewModel = new ProjectTreeNodeViewModel(
+            node,
+            depth,
+            isExpanded: _expandedNodeIds.Contains(node.Id));
+
+        if (depth == 0)
         {
-            AddVisibleNodeAndChildren(child);
+            RootNodes.Add(viewModel);
+        }
+
+        VisibleNodes.Add(viewModel);
+        _visibleNodesById[node.Id] = viewModel;
+
+        if (!_expandedNodeIds.Contains(node.Id))
+        {
+            return;
+        }
+
+        foreach (var child in GetSortedChildren(node))
+        {
+            AddVisibleNodeAndChildren(child, depth + 1);
         }
     }
 
-    private static void SortChildrenRecursive(
-        ProjectTreeNodeViewModel node,
-        ProjectTreeSortColumn column,
-        ListSortDirection direction)
+    private IEnumerable<ProjectNode> GetSortedChildren(ProjectNode node)
     {
         if (node.Children.Count == 0)
         {
-            return;
+            return [];
         }
 
-        SortCollection(node.Children, column, direction);
-
-        foreach (var child in node.Children)
-        {
-            SortChildrenRecursive(child, column, direction);
-        }
+        return _currentSortDirection == ListSortDirection.Ascending
+            ? node.Children
+                .OrderBy(child => GetSortValue(child, _currentSortColumn))
+                .ThenBy(child => child.Name, StringComparer.OrdinalIgnoreCase)
+            : node.Children
+                .OrderByDescending(child => GetSortValue(child, _currentSortColumn))
+                .ThenBy(child => child.Name, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static void SortCollection(
-        ObservableCollection<ProjectTreeNodeViewModel> nodes,
-        ProjectTreeSortColumn column,
-        ListSortDirection direction)
+    private bool IsSelectedNodeInsideCollapsedBranch(string collapsedNodeId)
     {
-        var ordered = direction == ListSortDirection.Ascending
-            ? nodes.OrderBy(node => GetSortValue(node, column)).ThenBy(node => node.Name, StringComparer.OrdinalIgnoreCase).ToList()
-            : nodes.OrderByDescending(node => GetSortValue(node, column)).ThenBy(node => node.Name, StringComparer.OrdinalIgnoreCase).ToList();
-
-        if (ordered.SequenceEqual(nodes))
+        if (_selectedNodeId is null)
         {
-            return;
+            return false;
         }
 
-        nodes.Clear();
-        foreach (var node in ordered)
+        for (var current = _selectedNodeId; ; )
         {
-            nodes.Add(node);
+            if (string.Equals(current, collapsedNodeId, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            if (!_parentNodeIdsById.TryGetValue(current, out var parentNodeId) || parentNodeId is null)
+            {
+                return false;
+            }
+
+            current = parentNodeId;
         }
     }
 
-    private static IComparable GetSortValue(ProjectTreeNodeViewModel node, ProjectTreeSortColumn column) =>
+    private static IComparable GetSortValue(ProjectNode node, ProjectTreeSortColumn column) =>
         column switch
         {
-            ProjectTreeSortColumn.Size => node.Node.Metrics.FileSizeBytes,
-            ProjectTreeSortColumn.Lines => node.Node.Metrics.TotalLines,
-            ProjectTreeSortColumn.Tokens => node.Node.Metrics.Tokens,
-            ProjectTreeSortColumn.Files => node.Node.Kind switch
+            ProjectTreeSortColumn.Size => node.Metrics.FileSizeBytes,
+            ProjectTreeSortColumn.Lines => node.Metrics.TotalLines,
+            ProjectTreeSortColumn.Tokens => node.Metrics.Tokens,
+            ProjectTreeSortColumn.Files => node.Kind switch
             {
-                Core.Enums.ProjectNodeKind.Directory => node.Node.Metrics.DescendantFileCount,
-                Core.Enums.ProjectNodeKind.Root => node.Node.Metrics.DescendantFileCount,
+                ProjectNodeKind.Directory => node.Metrics.DescendantFileCount,
+                ProjectNodeKind.Root => node.Metrics.DescendantFileCount,
                 _ => 0,
             },
             _ => node.Name,

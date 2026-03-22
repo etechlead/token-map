@@ -389,58 +389,57 @@ public sealed class MainWindowLayoutTests
     public void ProjectTreeViewModel_SortBy_ReordersVisibleRows()
     {
         var viewModel = new ProjectTreeViewModel();
-        var root = new ProjectTreeNodeViewModel(
-            new ProjectNode
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: 30,
+                TotalLines: 3,
+                NonEmptyLines: 3,
+                BlankLines: 0,
+                FileSizeBytes: 30,
+                DescendantFileCount: 2,
+                DescendantDirectoryCount: 0),
+            Children =
             {
-                Id = "/",
-                Name = "Demo",
-                FullPath = "C:\\Demo",
-                RelativePath = string.Empty,
-                Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 30,
-                    TotalLines: 3,
-                    NonEmptyLines: 3,
-                    BlankLines: 0,
-                    FileSizeBytes: 30,
-                    DescendantFileCount: 2,
-                    DescendantDirectoryCount: 0),
-                Children =
+                new ProjectNode
                 {
-                    new ProjectNode
-                    {
-                        Id = "A.cs",
-                        Name = "A.cs",
-                        FullPath = "C:\\Demo\\A.cs",
-                        RelativePath = "A.cs",
-                        Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 10,
-                            TotalLines: 1,
-                            NonEmptyLines: 1,
-                            BlankLines: 0,
-                            FileSizeBytes: 10,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
-                    },
-                    new ProjectNode
-                    {
-                        Id = "B.cs",
-                        Name = "B.cs",
-                        FullPath = "C:\\Demo\\B.cs",
-                        RelativePath = "B.cs",
-                        Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 20,
-                            TotalLines: 2,
-                            NonEmptyLines: 2,
-                            BlankLines: 0,
-                            FileSizeBytes: 20,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
-                    },
+                    Id = "A.cs",
+                    Name = "A.cs",
+                    FullPath = "C:\\Demo\\A.cs",
+                    RelativePath = "A.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 10,
+                        TotalLines: 1,
+                        NonEmptyLines: 1,
+                        BlankLines: 0,
+                        FileSizeBytes: 10,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
                 },
-            });
+                new ProjectNode
+                {
+                    Id = "B.cs",
+                    Name = "B.cs",
+                    FullPath = "C:\\Demo\\B.cs",
+                    RelativePath = "B.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 20,
+                        TotalLines: 2,
+                        NonEmptyLines: 2,
+                        BlankLines: 0,
+                        FileSizeBytes: 20,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+            },
+        };
 
         viewModel.LoadRoot(root);
         viewModel.SortBy(ProjectTreeSortColumn.Tokens, System.ComponentModel.ListSortDirection.Descending);
@@ -456,10 +455,10 @@ public sealed class MainWindowLayoutTests
     public void ProjectTreeViewModel_ToggleNodeCommand_ShowsAndHidesChildrenInVisibleRows()
     {
         var viewModel = new ProjectTreeViewModel();
-        var root = new ProjectTreeNodeViewModel(CreateNestedSnapshot().Root);
+        var root = CreateNestedSnapshot().Root;
         viewModel.LoadRoot(root);
 
-        var directoryNode = Assert.Single(root.Children);
+        var directoryNode = Assert.Single(viewModel.VisibleNodes, node => node.Node.Id == "src");
 
         Assert.Equal(2, viewModel.VisibleNodes.Count);
 
@@ -502,7 +501,7 @@ public sealed class MainWindowLayoutTests
     public void ProjectTreeViewModel_SelectNodeById_RebuildsVisibleRowsWhenAncestorExpansionIsNeeded()
     {
         var viewModel = new ProjectTreeViewModel();
-        var root = new ProjectTreeNodeViewModel(CreateNestedSnapshot().Root);
+        var root = CreateNestedSnapshot().Root;
         viewModel.LoadRoot(root);
 
         var resetCount = 0;
@@ -649,7 +648,7 @@ public sealed class MainWindowLayoutTests
         method.Invoke(projectTreePane, [viewModel, treeTable, clickedColumn, sortColumn]);
     }
 
-    private static ProjectTreeNodeViewModel CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
+    private static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
     {
         var root = new ProjectNode
         {
@@ -688,7 +687,7 @@ public sealed class MainWindowLayoutTests
             });
         }
 
-        return new ProjectTreeNodeViewModel(root);
+        return root;
     }
 
     private sealed class CancelAwareProjectAnalyzer : IProjectAnalyzer

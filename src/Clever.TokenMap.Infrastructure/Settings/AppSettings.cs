@@ -22,13 +22,6 @@ public sealed class AppSettings
         };
 }
 
-public enum ThemePreference
-{
-    System = 0,
-    Light = 1,
-    Dark = 2,
-}
-
 public sealed class AnalysisSettings
 {
     public AnalysisMetric SelectedMetric { get; set; } = AnalysisMetric.Tokens;

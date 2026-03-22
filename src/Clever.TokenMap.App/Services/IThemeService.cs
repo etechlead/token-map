@@ -1,4 +1,4 @@
-using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.App.Services;
 

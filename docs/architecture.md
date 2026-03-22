@@ -10,8 +10,10 @@
 ## App-Layer State
 
 - `MainWindowViewModel` is the shell coordinator for the desktop window.
-- `AnalysisSessionController` owns selected folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow.
-- `SettingsCoordinator` owns settings load/apply/save behavior, debounced persistence, and theme application.
+- `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
+- `SettingsState` is the app-layer source of truth for persisted analysis and appearance preferences.
+- `SettingsCoordinator` owns settings load/save behavior, maps persisted settings onto `SettingsState`, debounces persistence, and applies theme changes.
+- `ProjectTreeViewModel` owns tree sort mode, expansion state, selection, and the visible-row projection built from the scanned `ProjectNode` tree.
 - `TreemapNavigationState` owns selected node state, treemap root scope, and breadcrumb rebuilding.
 - `MainWindow` composes section `UserControl`s for toolbar/summary, project tree, treemap, and settings drawer. Per-section UI behavior stays in section code-behind when it is strictly view-specific, such as `DataGrid` sorting headers and treemap drill-down event wiring.
 
@@ -39,6 +41,7 @@
 - Per-user settings are stored in one lightweight `settings.json` file under the user data directory.
 - The app starts from defaults first, then best-effort applies values from `settings.json`.
 - Analysis preferences and appearance preferences, including theme mode, are stored in that settings file.
+- `Clever.TokenMap.App` works against app-layer settings state and services; infrastructure settings types remain persistence details behind the settings store/coordinator boundary.
 - Settings use typed enum-backed values and persist as JSON strings.
 - Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.
 - Missing, unreadable, or malformed settings files must not block startup.

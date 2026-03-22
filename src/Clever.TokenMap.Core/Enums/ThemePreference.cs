@@ -1,0 +1,8 @@
+namespace Clever.TokenMap.Core.Enums;
+
+public enum ThemePreference
+{
+    System = 0,
+    Light = 1,
+    Dark = 2,
+}

@@ -54,8 +54,8 @@ public sealed class MainWindowTreemapIntegrationTests
         control.SelectNodeAt(point);
 
         var rootNode = Assert.Single(viewModel.Tree.RootNodes);
-        var directoryNode = Assert.Single(rootNode.Children);
-        var fileNode = Assert.Single(directoryNode.Children);
+        var directoryNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "src");
+        var fileNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "src/Program.cs");
 
         Assert.True(rootNode.IsExpanded);
         Assert.True(directoryNode.IsExpanded);
@@ -136,7 +136,7 @@ public sealed class MainWindowTreemapIntegrationTests
         window.Show();
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
-        var childNode = Assert.Single(viewModel.Tree.RootNodes[0].Children);
+        var childNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Program.cs");
         viewModel.Tree.SelectedNode = childNode;
 
         var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");

@@ -1,8 +1,8 @@
-using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.State;
 
 namespace Clever.TokenMap.App.Services;
 
 public interface ISettingsCoordinator
 {
-    void Attach(ToolbarViewModel toolbar);
+    SettingsState State { get; }
 }

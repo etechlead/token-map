@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -27,15 +28,19 @@ public partial class ToolbarViewModel : ViewModelBase
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
+    private readonly SettingsState _settingsState;
 
     public ToolbarViewModel(
+        SettingsState settingsState,
         IAsyncRelayCommand openFolderCommand,
         IAsyncRelayCommand rescanCommand,
         IRelayCommand cancelCommand)
     {
+        _settingsState = settingsState;
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
+        _settingsState.PropertyChanged += SettingsStateOnPropertyChanged;
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
@@ -69,40 +74,65 @@ public partial class ToolbarViewModel : ViewModelBase
     [ObservableProperty]
     private string selectedFolderDisplay = "No folder selected";
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SelectedMetric))]
-    private AnalysisMetricOption selectedMetricOption = MetricOptionItems[0];
+    public AnalysisMetricOption SelectedMetricOption
+    {
+        get => GetMetricOption(_settingsState.SelectedMetric);
+        set
+        {
+            if (value is not null)
+            {
+                SelectedMetric = value.Value;
+            }
+        }
+    }
 
     public AnalysisMetric SelectedMetric
     {
-        get => SelectedMetricOption.Value;
-        set => SelectedMetricOption = GetMetricOption(value);
+        get => _settingsState.SelectedMetric;
+        set => _settingsState.SelectedMetric = value;
     }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SelectedTokenProfile))]
-    private TokenProfileOption selectedTokenProfileOption = TokenProfileOptionItems[0];
+    public TokenProfileOption SelectedTokenProfileOption
+    {
+        get => GetTokenProfileOption(_settingsState.SelectedTokenProfile);
+        set
+        {
+            if (value is not null)
+            {
+                SelectedTokenProfile = value.Value;
+            }
+        }
+    }
 
     public TokenProfile SelectedTokenProfile
     {
-        get => SelectedTokenProfileOption.Value;
-        set => SelectedTokenProfileOption = GetTokenProfileOption(value);
+        get => _settingsState.SelectedTokenProfile;
+        set => _settingsState.SelectedTokenProfile = value;
     }
 
-    [ObservableProperty]
-    private bool respectGitIgnore = true;
+    public bool RespectGitIgnore
+    {
+        get => _settingsState.RespectGitIgnore;
+        set => _settingsState.RespectGitIgnore = value;
+    }
 
-    [ObservableProperty]
-    private bool respectIgnore = true;
+    public bool RespectIgnore
+    {
+        get => _settingsState.RespectIgnore;
+        set => _settingsState.RespectIgnore = value;
+    }
 
-    [ObservableProperty]
-    private bool useDefaultExcludes = true;
+    public bool UseDefaultExcludes
+    {
+        get => _settingsState.UseDefaultExcludes;
+        set => _settingsState.UseDefaultExcludes = value;
+    }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsSystemThemeSelected))]
-    [NotifyPropertyChangedFor(nameof(IsLightThemeSelected))]
-    [NotifyPropertyChangedFor(nameof(IsDarkThemeSelected))]
-    private ThemePreference selectedThemePreference = ThemePreference.System;
+    public ThemePreference SelectedThemePreference
+    {
+        get => _settingsState.SelectedThemePreference;
+        set => _settingsState.SelectedThemePreference = value;
+    }
 
     public bool IsSystemThemeSelected => SelectedThemePreference == ThemePreference.System;
 
@@ -127,6 +157,41 @@ public partial class ToolbarViewModel : ViewModelBase
         CancelCommand.NotifyCanExecuteChanged();
     }
 
+    private void SelectThemePreference(ThemePreference value)
+    {
+        SelectedThemePreference = value;
+    }
+
+    private void SettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(SettingsState.SelectedMetric):
+                OnPropertyChanged(nameof(SelectedMetric));
+                OnPropertyChanged(nameof(SelectedMetricOption));
+                break;
+            case nameof(SettingsState.SelectedTokenProfile):
+                OnPropertyChanged(nameof(SelectedTokenProfile));
+                OnPropertyChanged(nameof(SelectedTokenProfileOption));
+                break;
+            case nameof(SettingsState.RespectGitIgnore):
+                OnPropertyChanged(nameof(RespectGitIgnore));
+                break;
+            case nameof(SettingsState.RespectIgnore):
+                OnPropertyChanged(nameof(RespectIgnore));
+                break;
+            case nameof(SettingsState.UseDefaultExcludes):
+                OnPropertyChanged(nameof(UseDefaultExcludes));
+                break;
+            case nameof(SettingsState.SelectedThemePreference):
+                OnPropertyChanged(nameof(SelectedThemePreference));
+                OnPropertyChanged(nameof(IsSystemThemeSelected));
+                OnPropertyChanged(nameof(IsLightThemeSelected));
+                OnPropertyChanged(nameof(IsDarkThemeSelected));
+                break;
+        }
+    }
+
     public ScanOptions BuildScanOptions() =>
         new()
         {
@@ -135,45 +200,6 @@ public partial class ToolbarViewModel : ViewModelBase
             RespectDotIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
         };
-
-    public AnalysisSettings BuildAnalysisSettings() =>
-        new()
-        {
-            SelectedMetric = SelectedMetric,
-            SelectedTokenProfile = SelectedTokenProfile,
-            RespectGitIgnore = RespectGitIgnore,
-            RespectIgnore = RespectIgnore,
-            UseDefaultExcludes = UseDefaultExcludes,
-        };
-
-    public AppearanceSettings BuildAppearanceSettings() =>
-        new()
-        {
-            ThemePreference = SelectedThemePreference,
-        };
-
-    public void ApplyAnalysisSettings(AnalysisSettings settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-
-        SelectedMetric = settings.SelectedMetric;
-        SelectedTokenProfile = settings.SelectedTokenProfile;
-        RespectGitIgnore = settings.RespectGitIgnore;
-        RespectIgnore = settings.RespectIgnore;
-        UseDefaultExcludes = settings.UseDefaultExcludes;
-    }
-
-    public void ApplyAppearanceSettings(AppearanceSettings settings)
-    {
-        ArgumentNullException.ThrowIfNull(settings);
-
-        SelectedThemePreference = settings.ThemePreference;
-    }
-
-    private void SelectThemePreference(ThemePreference value)
-    {
-        SelectedThemePreference = value;
-    }
 
     private static AnalysisMetricOption GetMetricOption(AnalysisMetric value) =>
         value switch

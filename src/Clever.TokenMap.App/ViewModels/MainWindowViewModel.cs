@@ -4,11 +4,11 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Logging;
-using Clever.TokenMap.Infrastructure.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -45,6 +45,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _settingsCoordinator = settingsCoordinator;
 
         Toolbar = new ToolbarViewModel(
+            _settingsCoordinator.State,
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
@@ -59,7 +60,6 @@ public partial class MainWindowViewModel : ViewModelBase
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
         _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
 
-        _settingsCoordinator.Attach(Toolbar);
         Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
         RefreshToolbarAvailability();
 
@@ -214,7 +214,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void ApplySnapshot(ProjectSnapshot snapshot)
     {
-        Tree.LoadRoot(new ProjectTreeNodeViewModel(snapshot.Root));
+        Tree.LoadRoot(snapshot.Root);
         _treemapNavigationState.LoadSnapshot(snapshot);
         Summary.SetCompleted(snapshot);
     }
@@ -255,8 +255,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private sealed class NullSettingsCoordinator : ISettingsCoordinator
     {
-        public void Attach(ToolbarViewModel toolbar)
-        {
-        }
+        public SettingsState State { get; } = new();
     }
 }

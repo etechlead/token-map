@@ -1,16 +1,14 @@
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
-using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.HeadlessTests;
 
 public sealed class SettingsCoordinatorTests
 {
     [Fact]
-    public void Attach_AppliesPersistedSettingsWithoutSaving()
+    public void Constructor_AppliesPersistedSettingsToStateWithoutSaving()
     {
         var settings = AppSettings.CreateDefault();
         settings.Analysis.SelectedMetric = AnalysisMetric.NonEmptyLines;
@@ -23,16 +21,13 @@ public sealed class SettingsCoordinatorTests
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
-        var toolbar = CreateToolbar();
 
-        coordinator.Attach(toolbar);
-
-        Assert.Equal(AnalysisMetric.NonEmptyLines, toolbar.SelectedMetric);
-        Assert.Equal(TokenProfile.P50KBase, toolbar.SelectedTokenProfile);
-        Assert.False(toolbar.RespectGitIgnore);
-        Assert.False(toolbar.RespectIgnore);
-        Assert.False(toolbar.UseDefaultExcludes);
-        Assert.Equal(ThemePreference.Dark, toolbar.SelectedThemePreference);
+        Assert.Equal(AnalysisMetric.NonEmptyLines, coordinator.State.SelectedMetric);
+        Assert.Equal(TokenProfile.P50KBase, coordinator.State.SelectedTokenProfile);
+        Assert.False(coordinator.State.RespectGitIgnore);
+        Assert.False(coordinator.State.RespectIgnore);
+        Assert.False(coordinator.State.UseDefaultExcludes);
+        Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
         Assert.Equal(0, store.SaveCallCount);
     }
@@ -43,11 +38,9 @@ public sealed class SettingsCoordinatorTests
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
-        var toolbar = CreateToolbar();
 
-        coordinator.Attach(toolbar);
-        toolbar.SelectedMetric = AnalysisMetric.TotalLines;
-        toolbar.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+        coordinator.State.SelectedMetric = AnalysisMetric.NonEmptyLines;
 
         await Task.Delay(120);
 
@@ -64,11 +57,9 @@ public sealed class SettingsCoordinatorTests
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromSeconds(5));
-        var toolbar = CreateToolbar();
 
-        coordinator.Attach(toolbar);
-        toolbar.SelectedTokenProfile = TokenProfile.P50KBase;
-        toolbar.SelectedThemePreference = ThemePreference.Dark;
+        coordinator.State.SelectedTokenProfile = TokenProfile.P50KBase;
+        coordinator.State.SelectedThemePreference = ThemePreference.Dark;
 
         Assert.Equal(0, store.SaveCallCount);
 
@@ -81,12 +72,6 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
     }
-
-    private static ToolbarViewModel CreateToolbar() =>
-        new(
-            new AsyncRelayCommand(() => Task.CompletedTask),
-            new AsyncRelayCommand(() => Task.CompletedTask),
-            new RelayCommand(() => { }));
 
     private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore
     {
