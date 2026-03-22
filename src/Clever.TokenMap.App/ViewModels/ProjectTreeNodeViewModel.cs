@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.IO;
 using Avalonia;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
@@ -49,6 +50,8 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public Thickness IndentMargin => new(Depth * 16, 0, 0, 0);
 
+    public string IconPath => $"avares://Clever.TokenMap.App/Assets/FileIcons/{GetIconFileName()}";
+
     public string ExpanderGlyph => !HasChildren ? string.Empty : IsExpanded ? "-" : "+";
 
     public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
@@ -65,8 +68,71 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
     };
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IconPath))]
     [NotifyPropertyChangedFor(nameof(ExpanderGlyph))]
     private bool isExpanded;
+
+    private string GetIconFileName()
+    {
+        return Node.Kind switch
+        {
+            ProjectNodeKind.Root => IsExpanded ? "folder-project-open.svg" : "folder-project.svg",
+            ProjectNodeKind.Directory => GetDirectoryIconFileName(),
+            _ => GetFileIconFileName(),
+        };
+    }
+
+    private string GetDirectoryIconFileName()
+    {
+        var normalizedName = Node.Name.Trim().ToLowerInvariant();
+        return normalizedName switch
+        {
+            "src" => IsExpanded ? "folder-src-open.svg" : "folder-src.svg",
+            "test" or "tests" or "__tests__" => IsExpanded ? "folder-test-open.svg" : "folder-test.svg",
+            "docs" or "doc" or "documentation" => IsExpanded ? "folder-markdown-open.svg" : "folder-markdown.svg",
+            "scripts" or "script" => IsExpanded ? "folder-scripts-open.svg" : "folder-scripts.svg",
+            ".github" or ".git" => IsExpanded ? "folder-github-open.svg" : "folder-github.svg",
+            _ => IsExpanded ? "folder-base-open.svg" : "folder-base.svg",
+        };
+    }
+
+    private string GetFileIconFileName()
+    {
+        var normalizedName = Node.Name.Trim().ToLowerInvariant();
+        if (normalizedName is "dockerfile" or "docker-compose.yml" or "docker-compose.yaml")
+        {
+            return "docker.svg";
+        }
+
+        if (normalizedName is ".editorconfig")
+        {
+            return "editorconfig.svg";
+        }
+
+        if (normalizedName is ".gitignore" or ".gitattributes" or ".gitmodules")
+        {
+            return "git.svg";
+        }
+
+        return Path.GetExtension(normalizedName) switch
+        {
+            ".cs" or ".csx" or ".csproj" or ".sln" => "csharp.svg",
+            ".ts" or ".mts" or ".cts" => "typescript.svg",
+            ".tsx" => "react_ts.svg",
+            ".js" or ".mjs" or ".cjs" => "javascript.svg",
+            ".jsx" => "react.svg",
+            ".css" or ".scss" or ".sass" or ".less" => "css.svg",
+            ".html" or ".htm" => "html.svg",
+            ".json" or ".jsonc" => "json.svg",
+            ".md" or ".mdx" => "markdown.svg",
+            ".yaml" or ".yml" => "yaml.svg",
+            ".xml" or ".props" or ".targets" or ".resx" => "xml.svg",
+            ".toml" => "toml.svg",
+            ".py" or ".pyi" => "python.svg",
+            ".sql" => "database.svg",
+            _ => "document.svg",
+        };
+    }
 
     private static string FormatFileSize(long bytes) =>
         bytes switch

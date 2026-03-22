@@ -1,0 +1,6 @@
+TokenMap vendors a baseline subset of file and folder SVG icons from
+Material Icon Theme:
+https://github.com/material-extensions/vscode-material-icon-theme
+
+The copied assets are used for the project tree file/folder icon mapping.
+The upstream MIT license is included in MATERIAL_ICON_THEME_LICENSE.txt.

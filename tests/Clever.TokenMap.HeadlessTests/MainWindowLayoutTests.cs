@@ -358,6 +358,70 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void ProjectTreeNodeViewModel_MapsBaselineIconsForFoldersAndFiles()
+    {
+        var folderNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "src",
+            Name = "src",
+            FullPath = "C:\\Demo\\src",
+            RelativePath = "src",
+            Kind = ProjectNodeKind.Directory,
+            Metrics = NodeMetrics.Empty,
+            Children =
+            {
+                new ProjectNode
+                {
+                    Id = "src/Program.cs",
+                    Name = "Program.cs",
+                    FullPath = "C:\\Demo\\src\\Program.cs",
+                    RelativePath = "src/Program.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = NodeMetrics.Empty,
+                },
+            },
+        });
+
+        Assert.EndsWith("/Assets/FileIcons/folder-src.svg", folderNode.IconPath, StringComparison.Ordinal);
+
+        folderNode.IsExpanded = true;
+        Assert.EndsWith("/Assets/FileIcons/folder-src-open.svg", folderNode.IconPath, StringComparison.Ordinal);
+
+        var csharpFileNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "Program.cs",
+            Name = "Program.cs",
+            FullPath = "C:\\Demo\\Program.cs",
+            RelativePath = "Program.cs",
+            Kind = ProjectNodeKind.File,
+            Metrics = NodeMetrics.Empty,
+        });
+        Assert.EndsWith("/Assets/FileIcons/csharp.svg", csharpFileNode.IconPath, StringComparison.Ordinal);
+
+        var tsxFileNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "Component.tsx",
+            Name = "Component.tsx",
+            FullPath = "C:\\Demo\\Component.tsx",
+            RelativePath = "Component.tsx",
+            Kind = ProjectNodeKind.File,
+            Metrics = NodeMetrics.Empty,
+        });
+        Assert.EndsWith("/Assets/FileIcons/react_ts.svg", tsxFileNode.IconPath, StringComparison.Ordinal);
+
+        var fallbackFileNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "README.unknown",
+            Name = "README.unknown",
+            FullPath = "C:\\Demo\\README.unknown",
+            RelativePath = "README.unknown",
+            Kind = ProjectNodeKind.File,
+            Metrics = NodeMetrics.Empty,
+        });
+        Assert.EndsWith("/Assets/FileIcons/document.svg", fallbackFileNode.IconPath, StringComparison.Ordinal);
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_CancelCommand_ShowsProgressOnlyWhileScanIsRunning()
     {
         var window = new MainWindow();

@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:controls="using:Clever.TokenMap.Controls"
+        xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -116,6 +117,10 @@
             <Setter Property="Foreground" Value="#F5F7FA" />
             <Setter Property="TextWrapping" Value="NoWrap" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+        <Style Selector="svg|Svg.tree-file-icon">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Height" Value="18" />
         </Style>
         <Style Selector="Border.settings-drawer">
             <Setter Property="Width" Value="340" />
@@ -252,28 +257,31 @@
                                                         SortMemberPath="Name"
                                                         Width="3*">
                                     <DataGridTemplateColumn.CellTemplate>
-                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                            <Grid Margin="{Binding IndentMargin}"
-                                                  ColumnDefinitions="18,*"
-                                                  ColumnSpacing="6">
-                                                <Button Grid.Column="0"
-                                                        Classes="tree-expander"
-                                                        HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center"
+                                    <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                        <Grid Margin="{Binding IndentMargin}"
+                                              ColumnDefinitions="18,18,*"
+                                              ColumnSpacing="6">
+                                            <Button Grid.Column="0"
+                                                    Classes="tree-expander"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
                                                         Click="ProjectTreeExpandCollapseButton_OnClick"
                                                         IsVisible="{Binding HasChildren}">
                                                     <TextBlock HorizontalAlignment="Center"
                                                                VerticalAlignment="Center"
                                                                FontSize="10"
-                                                               Foreground="#D6E3F0"
-                                                               Text="{Binding ExpanderGlyph}" />
-                                                </Button>
-                                                <TextBlock Grid.Column="1"
-                                                           Classes="tree-table-name"
-                                                           VerticalAlignment="Center"
-                                                           Text="{Binding Name}" />
-                                            </Grid>
-                                        </DataTemplate>
+                                                           Foreground="#D6E3F0"
+                                                           Text="{Binding ExpanderGlyph}" />
+                                            </Button>
+                                            <svg:Svg Grid.Column="1"
+                                                     Classes="tree-file-icon"
+                                                     Path="{Binding IconPath}" />
+                                            <TextBlock Grid.Column="2"
+                                                       Classes="tree-table-name"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding Name}" />
+                                        </Grid>
+                                    </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Size"
