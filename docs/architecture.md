@@ -27,10 +27,11 @@ tests/
   Fixtures/
 third_party/
   tokei/
+    README.md
     win-x64/
       tokei.exe
     osx-arm64/
-      tokei
+      README.md
 ```
 
 ## 2. Responsibility split

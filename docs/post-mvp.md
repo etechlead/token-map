@@ -76,7 +76,6 @@
 - multi-column tree;
 - richer details panel;
 - более богатый tooltip/popup для treemap;
-- автоматическое раскрытие пути к выбранному узлу в дереве;
 - открытие файла/папки в системном explorer;
 - quick copy path.
 
