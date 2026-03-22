@@ -1,9 +1,29 @@
 <Application xmlns="https://github.com/avaloniaui"
+             xmlns:fluent="clr-namespace:Avalonia.Themes.Fluent;assembly=Avalonia.Themes.Fluent"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Clever.TokenMap.App.App"
              RequestedThemeVariant="Default">
+    <Application.Resources>
+        <SolidColorBrush x:Key="TokenMapAccentBrush"
+                         Color="#4C9FFF" />
+        <SolidColorBrush x:Key="TokenMapAccentHoverBrush"
+                         Color="#8BC3FF" />
+        <SolidColorBrush x:Key="TokenMapAccentPressedBrush"
+                         Color="#2F6FD6" />
+        <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
+                         Color="#E7F2FF" />
+        <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
+                         Color="#17273A" />
+    </Application.Resources>
     <Application.Styles>
-        <FluentTheme />
+        <FluentTheme>
+            <FluentTheme.Palettes>
+                <fluent:ColorPaletteResources x:Key="Light"
+                                              Accent="#4C9FFF" />
+                <fluent:ColorPaletteResources x:Key="Dark"
+                                              Accent="#4C9FFF" />
+            </FluentTheme.Palettes>
+        </FluentTheme>
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     </Application.Styles>
 </Application>

@@ -14,6 +14,7 @@
 - Tree view, summary strip, and treemap in one window.
 - Tooltip is the current detailed inspection surface for nodes.
 - Hover tooltip, persistent selection highlight, and `Tree <-> Treemap` synchronization.
+- Shared accent alignment is in place for selection, focus, progress, and action emphasis without changing treemap fill colors.
 - Automatic path expansion in the tree when a node is selected from the treemap.
 - Treemap drill-down on directory double-click with local scope and return through `Back to overview`.
 - Verified `win-x64` publish and configured secondary target `osx-arm64`.
@@ -24,6 +25,7 @@
 - `Clever.TokenMap.App` works with the file system only through services/contracts.
 - The treemap is implemented as one custom control with no visual/control per rectangle.
 - `tokei` is used as a local sidecar and source of truth for language / code / comments / blanks when statistics are available.
+- Stage 1 of the active UX/UI plan is complete: one shared accent family now drives selection, focus, progress, and action emphasis.
 - Primary publish target: `win-x64`.
 - `single-file`, `Native AOT`, installer/signing, and Linux polish are post-MVP.
 

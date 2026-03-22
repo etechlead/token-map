@@ -16,7 +16,7 @@ This file tracks the current ordered work. Check off a stage only after code, do
 
 ## Ordered Stages
 
-- [ ] Stage 1. Shared UI foundation and accent alignment
+- [x] Stage 1. Shared UI foundation and accent alignment
   - Introduce one shared accent color/token set for selection, focus, and progress.
   - Align tree selection, treemap selection/hover, and actionable controls to the same accent.
   - Preserve the current thin progress-bar-only analysis feedback.

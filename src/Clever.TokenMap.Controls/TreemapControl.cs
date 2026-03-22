@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Clever.TokenMap.Controls.Layout;
 using Clever.TokenMap.Controls.Models;
 using Clever.TokenMap.Core.Models;
@@ -23,6 +24,8 @@ public sealed class TreemapControl : Control
     private readonly SquarifiedTreemapLayout _layout = new();
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
     private Size _layoutSize;
+    private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
+    private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
 
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
@@ -272,17 +275,24 @@ public sealed class TreemapControl : Control
 
         if (isSelected)
         {
-            return new Pen(new SolidColorBrush(Color.Parse("#FFF0B3")), 2);
+            return new Pen(GetThemeBrush("TokenMapAccentStrongBrush", SelectedAccentFallbackBrush), 2);
         }
 
         if (isHovered)
         {
-            return new Pen(new SolidColorBrush(Color.Parse("#B7D7FF")), 2);
+            return new Pen(GetThemeBrush("TokenMapAccentHoverBrush", HoverAccentFallbackBrush), 2);
         }
 
         return isLeaf
             ? new Pen(new SolidColorBrush(Color.Parse("#121A25")), 1)
             : new Pen(new SolidColorBrush(Color.Parse("#314459")), 1);
+    }
+
+    private IBrush GetThemeBrush(string resourceKey, IBrush fallbackBrush)
+    {
+        return TryGetResource(resourceKey, ActualThemeVariant, out var value) && value is IBrush brush
+            ? brush
+            : fallbackBrush;
     }
 
     private string BuildTooltip(ProjectNode node)

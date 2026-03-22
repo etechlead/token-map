@@ -74,6 +74,43 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="CornerRadius" Value="3" />
         </Style>
+        <Style Selector="Button.tree-expander:pointerover">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+        </Style>
+        <Style Selector="Button.tree-expander:pressed">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+        </Style>
+        <Style Selector="Button.action-button">
+            <Setter Property="Background" Value="#162131" />
+            <Setter Property="BorderBrush" Value="#233041" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+        </Style>
+        <Style Selector="Button.action-button:pointerover">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+        </Style>
+        <Style Selector="Button.action-button:pressed">
+            <Setter Property="Background" Value="#111C2B" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+        </Style>
+        <Style Selector="Button.action-button.primary">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+        </Style>
+        <Style Selector="Button.action-button.primary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+        </Style>
+        <Style Selector="Button.action-button.primary:pressed">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+        </Style>
+        <Style Selector="Button.action-button:disabled">
+            <Setter Property="Opacity" Value="0.55" />
+        </Style>
         <Style Selector="TextBlock.tree-table-name">
             <Setter Property="Foreground" Value="#F5F7FA" />
             <Setter Property="TextWrapping" Value="NoWrap" />
@@ -96,12 +133,15 @@
                                 VerticalAlignment="Center"
                                 Spacing="8">
                         <Button Name="OpenFolderButton"
+                                Classes="action-button primary"
                                 Content="Open Folder"
                                 Command="{Binding Toolbar.OpenFolderCommand}" />
                         <Button Name="RescanButton"
+                                Classes="action-button"
                                 Content="Rescan"
                                 Command="{Binding Toolbar.RescanCommand}" />
                         <Button Name="CancelButton"
+                                Classes="action-button"
                                 Content="Cancel"
                                 Command="{Binding Toolbar.CancelCommand}" />
                     </StackPanel>
@@ -313,6 +353,7 @@
                                    Text="{Binding TreemapScopeDisplay}" />
                         <Button Name="TreemapBackToOverviewButton"
                                 Grid.Column="2"
+                                Classes="action-button"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Center"
                                 Content="Back to Root"
@@ -338,6 +379,7 @@
                 Grid.Row="2"
                 IsVisible="{Binding Summary.IsProgressVisible}">
             <ProgressBar Name="StatusProgressBar"
+                         Foreground="{DynamicResource TokenMapAccentBrush}"
                          Height="4"
                          Minimum="0"
                          Maximum="100"
