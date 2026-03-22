@@ -18,7 +18,7 @@
 - Toolbar settings are collapsed behind an on-demand right-side settings drawer that does not consume workspace width while closed.
 - Treemap hover now uses a custom structured tooltip layout instead of a raw multiline text tooltip.
 - Treemap scope navigation now uses breadcrumbs instead of the old `Scope + Back to overview` pair.
-- Tree table now shows a baseline Material Icon Theme subset for common folders and developer file types.
+- Tree table now shows a baseline Material Icon Theme subset for common folders and developer file types, explicit sort-state in headers, right-aligned numeric columns, and stronger hover/selection emphasis.
 - Automatic path expansion in the tree when a node is selected from the treemap.
 - Treemap drill-down on directory double-click now pairs with breadcrumb-based scope return.
 - Verified `win-x64` publish and configured secondary target `osx-arm64`.
@@ -33,7 +33,7 @@
 - Stage 2 of the active UX/UI plan is complete: toolbar settings moved into a toggleable right-side drawer overlay.
 - Stage 3 of the active UX/UI plan is complete: treemap hover details render through a custom tooltip layout.
 - Stage 4 of the active UX/UI plan is complete: breadcrumb navigation replaced `Scope + Back to overview` for treemap scope changes.
-- Stage 5 is partially implemented: the tree now has baseline developer-oriented icons, while the remaining table-polish items stay pending.
+- Stage 5 of the active UX/UI plan is complete: the tree now has developer-oriented icons, explicit sort-state visibility, right-aligned metrics, and clearer row emphasis.
 - Primary publish target: `win-x64`.
 - `single-file`, `Native AOT`, installer/signing, and Linux polish are post-MVP.
 
@@ -48,7 +48,7 @@
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
-  - headless scenarios for treemap drill-down and return to the global overview
+  - headless scenarios for treemap drill-down, breadcrumb return, and tree-table icon/sort layout expectations
 
 ## How To Run
 - Development run:
@@ -66,8 +66,6 @@
 - The ignore parser covers the MVP subset of rules, not the full range of Git ignore edge cases.
 - The cache is still in-memory only and lives within a single process.
 - The `tokei` sidecar is physically included only for `win-x64`; `osx-arm64` has only a prepared placement slot.
-- Tree table polish is not finished yet: numeric alignment and row emphasis still need a final pass.
-- `restore/build` currently warn about a transitive vulnerability in `Microsoft.Bcl.Memory 9.0.4` coming from `Microsoft.ML.Tokenizers` (`NU1903`).
 - Linux support, installer/signing, single-file publish, and Native AOT are outside MVP.
 
 ## Handoff Summary

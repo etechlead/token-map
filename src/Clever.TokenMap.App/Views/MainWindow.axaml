@@ -118,9 +118,50 @@
             <Setter Property="TextWrapping" Value="NoWrap" />
             <Setter Property="TextTrimming" Value="CharacterEllipsis" />
         </Style>
+        <Style Selector="TextBlock.tree-table-number">
+            <Setter Property="Foreground" Value="#D6E3F0" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="TextAlignment" Value="Right" />
+        </Style>
         <Style Selector="svg|Svg.tree-file-icon">
             <Setter Property="Width" Value="18" />
             <Setter Property="Height" Value="18" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable">
+            <Setter Property="Background" Value="#0F1621" />
+            <Setter Property="BorderBrush" Value="#233041" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="RowBackground" Value="#111722" />
+            <Setter Property="HorizontalGridLinesBrush" Value="#1F2A38" />
+            <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader">
+            <Setter Property="Background" Value="#0B1018" />
+            <Setter Property="Foreground" Value="#D6E3F0" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="#1F2A38" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader:pointerover">
+            <Setter Property="Background" Value="#152133" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridCell">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,8" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridRow">
+            <Setter Property="Background" Value="#111722" />
+            <Setter Property="Foreground" Value="#F5F7FA" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridRow:pointerover">
+            <Setter Property="Background" Value="#152133" />
+        </Style>
+        <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected">
+            <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentStrongBrush}" />
         </Style>
         <Style Selector="Border.settings-drawer">
             <Setter Property="Width" Value="340" />
@@ -284,22 +325,50 @@
                                     </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="Size"
-                                                    SortMemberPath="Size"
-                                                    Binding="{Binding SizeText}"
-                                                    Width="110" />
-                                <DataGridTextColumn Header="Lines"
-                                                    SortMemberPath="Lines"
-                                                    Binding="{Binding TotalLinesText}"
-                                                    Width="90" />
-                                <DataGridTextColumn Header="Tokens"
-                                                    SortMemberPath="Tokens"
-                                                    Binding="{Binding TokensText}"
-                                                    Width="110" />
-                                <DataGridTextColumn Header="Files"
-                                                    SortMemberPath="Files"
-                                                    Binding="{Binding FilesText}"
-                                                    Width="80" />
+                                <DataGridTemplateColumn Header="Size"
+                                                        SortMemberPath="Size"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                            <TextBlock Classes="tree-table-number"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding SizeText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Lines"
+                                                        SortMemberPath="Lines"
+                                                        Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                            <TextBlock Classes="tree-table-number"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding TotalLinesText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Tokens"
+                                                        SortMemberPath="Tokens"
+                                                        Width="110">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                            <TextBlock Classes="tree-table-number"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding TokensText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Files"
+                                                        SortMemberPath="Files"
+                                                        Width="80">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                            <TextBlock Classes="tree-table-number"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding FilesText}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

@@ -88,6 +88,12 @@ public sealed class MainWindowLayoutTests
             header => Assert.Equal("Lines", header),
             header => Assert.Equal("Tokens", header),
             header => Assert.Equal("Files", header));
+
+        Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[0]);
+        Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[1]);
+        Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[2]);
+        Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[3]);
+        Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[4]);
     }
 
     [AvaloniaFact]

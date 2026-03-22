@@ -37,7 +37,7 @@ This file tracks the current ordered work. Check off a stage only after code, do
   - Preserve the current drill-down behavior and root reset behavior.
   - Do not add extra metric text into treemap tiles.
 
-- [ ] Stage 5. Tree table polish
+- [x] Stage 5. Tree table polish
   - Add explicit sort-state visibility.
   - Improve numeric alignment and row emphasis.
   - Add developer-oriented icons for folders and common source-file types.
