@@ -1,3 +1,4 @@
+using System;
 using Clever.TokenMap.App.Models;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,6 +7,8 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class SummaryViewModel : ViewModelBase
 {
+    private bool _acceptProgressUpdates;
+
     [ObservableProperty]
     private string summaryText = "Select a folder to build a project treemap and metrics snapshot.";
 
@@ -13,10 +16,13 @@ public partial class SummaryViewModel : ViewModelBase
     private string totalsText = "No snapshot loaded";
 
     [ObservableProperty]
-    private string progressText = "Waiting for input";
+    private double progressValue;
 
     [ObservableProperty]
-    private string statusText = "Idle";
+    private bool isProgressIndeterminate;
+
+    [ObservableProperty]
+    private bool isProgressVisible;
 
     [ObservableProperty]
     private string tokenSummaryValue = "0";
@@ -32,8 +38,6 @@ public partial class SummaryViewModel : ViewModelBase
 
     public void SetState(AnalysisState state, string? message = null)
     {
-        StatusText = state.ToString();
-
         SummaryText = state switch
         {
             AnalysisState.Idle => "Select a folder to build a project treemap and metrics snapshot.",
@@ -43,23 +47,34 @@ public partial class SummaryViewModel : ViewModelBase
             _ => SummaryText,
         };
 
-        if (!string.IsNullOrWhiteSpace(message))
+        switch (state)
         {
-            ProgressText = message;
+            case AnalysisState.Scanning:
+                _acceptProgressUpdates = true;
+                ProgressValue = 0;
+                IsProgressIndeterminate = true;
+                IsProgressVisible = true;
+                break;
+            default:
+                _acceptProgressUpdates = false;
+                ProgressValue = 0;
+                IsProgressIndeterminate = false;
+                IsProgressVisible = false;
+                break;
         }
     }
 
     public void SetCompleted(ProjectSnapshot snapshot)
     {
+        _acceptProgressUpdates = false;
         SummaryText = snapshot.Warnings.Count == 0
             ? $"Analysis completed for {snapshot.Root.Name}."
             : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Warnings.Count:N0} warnings.";
         TotalsText =
-            $"{snapshot.Root.Metrics.Tokens:N0} tokens · {snapshot.Root.Metrics.TotalLines:N0} lines · {snapshot.Root.Metrics.DescendantFileCount:N0} files · {snapshot.Warnings.Count:N0} warnings";
-        ProgressText = snapshot.Warnings.Count == 0
-            ? "Snapshot is ready."
-            : "Snapshot is ready. Review warnings before trusting unsupported files.";
-        StatusText = AnalysisState.Completed.ToString();
+            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.TotalLines:N0} lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Warnings.Count:N0} warnings";
+        ProgressValue = 0;
+        IsProgressIndeterminate = false;
+        IsProgressVisible = false;
         TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0");
         LineSummaryValue = snapshot.Root.Metrics.TotalLines.ToString("N0");
         FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0");
@@ -68,8 +83,22 @@ public partial class SummaryViewModel : ViewModelBase
 
     public void UpdateProgress(AnalysisProgress progress)
     {
-        var totalText = progress.TotalNodeCount?.ToString() ?? "?";
-        var currentPath = string.IsNullOrWhiteSpace(progress.CurrentPath) ? string.Empty : $" · {progress.CurrentPath}";
-        ProgressText = $"{progress.Phase}: {progress.ProcessedNodeCount}/{totalText}{currentPath}";
+        if (!_acceptProgressUpdates)
+        {
+            return;
+        }
+
+        IsProgressVisible = true;
+
+        if (progress.TotalNodeCount is > 0)
+        {
+            ProgressValue = Math.Clamp(progress.ProcessedNodeCount * 100d / progress.TotalNodeCount.Value, 0d, 100d);
+            IsProgressIndeterminate = false;
+        }
+        else
+        {
+            ProgressValue = 0;
+            IsProgressIndeterminate = true;
+        }
     }
 }

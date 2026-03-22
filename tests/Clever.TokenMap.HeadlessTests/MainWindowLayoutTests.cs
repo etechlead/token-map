@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Clever.TokenMap.App.Models;
 using Clever.TokenMap.Controls;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
@@ -26,11 +27,16 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(window.FindControl<Grid>("WorkspaceHost"));
         Assert.NotNull(window.FindControl<Control>("ProjectTreePane"));
         Assert.NotNull(window.FindControl<Control>("TreemapPane"));
-        Assert.NotNull(window.FindControl<Control>("StatusStrip"));
+        var statusStrip = window.FindControl<Control>("StatusStrip");
+
+        Assert.NotNull(statusStrip);
         Assert.NotNull(window.FindControl<TreemapControl>("ProjectTreemapControl"));
         Assert.NotNull(window.FindControl<DataGrid>("ProjectTreeTable"));
         Assert.Null(window.FindControl<Control>("DetailsPane"));
+        Assert.NotNull(window.FindControl<ProgressBar>("StatusProgressBar"));
         Assert.Null(window.FindControl<TextBlock>("ProgressTextBlock"));
+        Assert.Null(window.FindControl<TextBlock>("StatusValueText"));
+        Assert.False(statusStrip.IsVisible);
     }
 
     [AvaloniaFact]
@@ -118,7 +124,7 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         var treeTable = window.FindControl<DataGrid>("ProjectTreeTable");
-        var statusText = window.FindControl<TextBlock>("StatusValueText");
+        var statusStrip = window.FindControl<Control>("StatusStrip");
         var tokenSummaryText = window.FindControl<TextBlock>("TokenSummaryValueText");
         var lineSummaryText = window.FindControl<TextBlock>("LineSummaryValueText");
         var fileSummaryText = window.FindControl<TextBlock>("FileSummaryValueText");
@@ -127,15 +133,62 @@ public sealed class MainWindowLayoutTests
         var tokenizerComboBox = window.FindControl<ComboBox>("TokenizerComboBox");
 
         Assert.NotNull(treeTable);
+        Assert.NotNull(statusStrip);
         Assert.Single(viewModel.Tree.RootNodes);
         Assert.Equal(2, viewModel.Tree.VisibleNodes.Count);
-        Assert.Equal("Completed", statusText?.Text);
+        Assert.Equal(AnalysisState.Completed, viewModel.AnalysisState);
         Assert.Equal("42", tokenSummaryText?.Text);
         Assert.Equal("12", lineSummaryText?.Text);
         Assert.Equal("1", fileSummaryText?.Text);
         Assert.Null(warningSummaryText);
         Assert.True(metricComboBox?.IsEnabled);
         Assert.True(tokenizerComboBox?.IsEnabled);
+        Assert.False(statusStrip.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void SummaryViewModel_ShowsProgressOnlyWhileAnalysisIsActive()
+    {
+        var viewModel = new SummaryViewModel();
+
+        Assert.False(viewModel.IsProgressVisible);
+
+        viewModel.SetState(AnalysisState.Scanning, "Analyzing C:\\Demo");
+        Assert.True(viewModel.IsProgressVisible);
+        Assert.True(viewModel.IsProgressIndeterminate);
+        Assert.Equal(0, viewModel.ProgressValue);
+
+        viewModel.UpdateProgress(new AnalysisProgress("ScanningTree", 4, null, "src"));
+        Assert.True(viewModel.IsProgressVisible);
+        Assert.True(viewModel.IsProgressIndeterminate);
+        Assert.Equal(0, viewModel.ProgressValue);
+
+        viewModel.UpdateProgress(new AnalysisProgress("AnalyzingFiles", 3, 6, "src/Program.cs"));
+        Assert.True(viewModel.IsProgressVisible);
+        Assert.False(viewModel.IsProgressIndeterminate);
+        Assert.Equal(50, viewModel.ProgressValue);
+
+        viewModel.SetCompleted(CreateSnapshot());
+        Assert.False(viewModel.IsProgressVisible);
+        Assert.False(viewModel.IsProgressIndeterminate);
+        Assert.Equal(0, viewModel.ProgressValue);
+
+        viewModel.SetState(AnalysisState.Cancelled);
+        Assert.False(viewModel.IsProgressVisible);
+    }
+
+    [AvaloniaFact]
+    public void SummaryViewModel_IgnoresLateProgressAfterCompletion()
+    {
+        var viewModel = new SummaryViewModel();
+
+        viewModel.SetState(AnalysisState.Scanning);
+        viewModel.SetCompleted(CreateSnapshot());
+        viewModel.UpdateProgress(new AnalysisProgress("AnalyzingFiles", 6, 6, "src/Program.cs"));
+
+        Assert.False(viewModel.IsProgressVisible);
+        Assert.False(viewModel.IsProgressIndeterminate);
+        Assert.Equal(0, viewModel.ProgressValue);
     }
 
     [AvaloniaFact]
@@ -275,7 +328,7 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public async Task MainWindow_CancelCommand_UpdatesStatus()
+    public async Task MainWindow_CancelCommand_ShowsProgressOnlyWhileScanIsRunning()
     {
         var window = new MainWindow();
         var viewModel = new MainWindowViewModel(
@@ -284,13 +337,19 @@ public sealed class MainWindowLayoutTests
         window.DataContext = viewModel;
 
         window.Show();
+        var statusStrip = window.FindControl<Control>("StatusStrip");
+
+        Assert.NotNull(statusStrip);
+        Assert.False(statusStrip.IsVisible);
+
         var openTask = viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
         await Task.Delay(100);
+        Assert.True(statusStrip.IsVisible);
         viewModel.Toolbar.CancelCommand.Execute(null);
         await openTask;
 
-        var statusText = window.FindControl<TextBlock>("StatusValueText");
-        Assert.Equal("Cancelled", statusText?.Text);
+        Assert.Equal(AnalysisState.Cancelled, viewModel.AnalysisState);
+        Assert.False(statusStrip.IsVisible);
     }
 
     [AvaloniaFact]

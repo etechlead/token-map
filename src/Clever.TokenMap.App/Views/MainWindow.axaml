@@ -318,18 +318,13 @@
 
         <Border Name="StatusStrip"
                 Grid.Row="2"
-                Classes="panel"
-                Padding="12">
-            <Grid ColumnDefinitions="Auto,*">
-                <TextBlock Foreground="#8FA3B8"
-                           FontSize="12"
-                           Text="Status" />
-                <TextBlock Name="StatusValueText"
-                           Grid.Column="1"
-                           Margin="10,0,0,0"
-                           FontSize="12"
-                           Text="{Binding Summary.StatusText}" />
-            </Grid>
+                IsVisible="{Binding Summary.IsProgressVisible}">
+            <ProgressBar Name="StatusProgressBar"
+                         Height="4"
+                         Minimum="0"
+                         Maximum="100"
+                         IsIndeterminate="{Binding Summary.IsProgressIndeterminate}"
+                         Value="{Binding Summary.ProgressValue}" />
         </Border>
     </Grid>
 </Window>
