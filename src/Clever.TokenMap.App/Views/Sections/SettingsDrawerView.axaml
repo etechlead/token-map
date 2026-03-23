@@ -67,10 +67,32 @@
                                       Content="Respect .gitignore"
                                       IsChecked="{Binding Toolbar.RespectGitIgnore}"
                                       IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                            <CheckBox Name="UseDefaultExcludesCheckBox"
-                                      Content="Use default excludes"
-                                      IsChecked="{Binding Toolbar.UseDefaultExcludes}"
-                                      IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                            <StackPanel Spacing="6">
+                                <CheckBox Name="UseDefaultExcludesCheckBox"
+                                          Content="Use default excludes"
+                                          IsChecked="{Binding Toolbar.UseDefaultExcludes}"
+                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                <Button Name="DefaultExcludesDetailsButton"
+                                        Classes="settings-link"
+                                        HorizontalAlignment="Left"
+                                        Command="{Binding Toolbar.ToggleDefaultExcludesDetailsCommand}"
+                                        Content="{Binding Toolbar.DefaultExcludesDetailsToggleText}" />
+                                <Border Name="DefaultExcludesDetailsContainer"
+                                        Classes="settings-detail-panel"
+                                        IsVisible="{Binding Toolbar.IsDefaultExcludesDetailsVisible}">
+                                    <StackPanel Spacing="8">
+                                        <ScrollViewer Name="DefaultExcludesScrollViewer"
+                                                      HorizontalScrollBarVisibility="Auto"
+                                                      MaxHeight="160"
+                                                      VerticalScrollBarVisibility="Auto">
+                                            <TextBlock Name="DefaultExcludesTextBlock"
+                                                       Classes="settings-detail-text"
+                                                       Text="{Binding Toolbar.DefaultExcludesDetailsText, Mode=OneWay}"
+                                                       TextWrapping="NoWrap" />
+                                        </ScrollViewer>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>

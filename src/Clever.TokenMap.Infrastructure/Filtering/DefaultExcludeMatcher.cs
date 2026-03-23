@@ -4,24 +4,22 @@ using Clever.TokenMap.Infrastructure.Paths;
 
 public static class DefaultExcludeMatcher
 {
-    private static readonly HashSet<string> DirectoryNames = new(
+    private static readonly string[] ExcludedDirectoryNames =
     [
         ".git",
+        ".hg",
+        ".svn",
         ".vs",
-        ".idea",
-        ".vscode",
         "node_modules",
-        "bin",
-        "obj",
-        "dist",
-        "build",
-        "out",
-        "coverage",
         "target",
-        "Debug",
-        "Release",
-    ],
-    PathComparison.Comparer);
+        "vendor",
+    ];
+
+    private static readonly HashSet<string> DirectoryNameLookup = new(
+        ExcludedDirectoryNames,
+        PathComparison.Comparer);
+
+    public static IReadOnlyList<string> DefaultDirectoryNames { get; } = Array.AsReadOnly(ExcludedDirectoryNames);
 
     public static bool IsExcluded(string normalizedRelativePath, bool isDirectory)
     {
@@ -32,6 +30,6 @@ public static class DefaultExcludeMatcher
 
         return normalizedRelativePath
             .Split('/', StringSplitOptions.RemoveEmptyEntries)
-            .Any(segment => DirectoryNames.Contains(segment));
+            .Any(segment => DirectoryNameLookup.Contains(segment));
     }
 }

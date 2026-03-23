@@ -27,8 +27,8 @@ public sealed class IgnorePolicyScannerTests
         Assert.DoesNotContain("root-hidden.txt", relativePaths);
         Assert.DoesNotContain(".git", relativePaths);
         Assert.DoesNotContain("node_modules", relativePaths);
-        Assert.DoesNotContain("bin", relativePaths);
-        Assert.DoesNotContain("obj", relativePaths);
+        Assert.Contains("bin", relativePaths);
+        Assert.Contains("obj", relativePaths);
     }
 
     [Fact]

@@ -13,6 +13,7 @@ using Clever.TokenMap.App.Views.Sections;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Filtering;
 using System.Collections.Specialized;
 using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
@@ -513,6 +514,44 @@ public sealed class MainWindowLayoutTests
 
         viewModel.ToggleSettingsCommand.Execute(null);
         Assert.False(drawer.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_SettingsDrawer_DefaultExcludesDetails_ShowCanonicalListWhenExpanded()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        viewModel.ToggleSettingsCommand.Execute(null);
+        window.UpdateLayout();
+
+        var detailsButton = FindNamedDescendant<Button>(window, "DefaultExcludesDetailsButton");
+        var detailsContainer = FindNamedDescendant<Control>(window, "DefaultExcludesDetailsContainer");
+        var detailsTextBlock = FindNamedDescendant<TextBlock>(window, "DefaultExcludesTextBlock");
+        var detailsScrollViewer = FindNamedDescendant<ScrollViewer>(window, "DefaultExcludesScrollViewer");
+
+        Assert.NotNull(detailsButton);
+        Assert.NotNull(detailsContainer);
+        Assert.NotNull(detailsTextBlock);
+        Assert.NotNull(detailsScrollViewer);
+        Assert.False(detailsContainer.IsVisible);
+        Assert.Equal("View defaults", detailsButton.Content?.ToString());
+
+        viewModel.Toolbar.ToggleDefaultExcludesDetailsCommand.Execute(null);
+        window.UpdateLayout();
+
+        var expectedText = string.Join(
+            Environment.NewLine,
+            DefaultExcludeMatcher.DefaultDirectoryNames);
+
+        Assert.True(detailsContainer.IsVisible);
+        Assert.Equal("Hide defaults", detailsButton.Content?.ToString());
+        Assert.Equal(expectedText.ReplaceLineEndings("\n"), detailsTextBlock.Text?.ReplaceLineEndings("\n"));
     }
 
     [AvaloniaFact]

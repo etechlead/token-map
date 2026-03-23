@@ -368,6 +368,29 @@
     <Style Selector="Button.breadcrumb-link:pointerover">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
+    <Style Selector="Button.settings-link">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+    <Style Selector="Button.settings-link:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
+    </Style>
+    <Style Selector="Border.settings-detail-panel">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8" />
+    </Style>
+    <Style Selector="TextBlock.settings-detail-text">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+    </Style>
     <Style Selector="TextBlock.breadcrumb-current">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         <Setter Property="FontWeight" Value="Medium" />
