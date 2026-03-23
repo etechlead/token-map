@@ -330,11 +330,15 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" />
         <Setter Property="Padding" Value="8,6" />
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridCell:current">
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridCell:current /template/ Grid#FocusVisual">
+        <Setter Property="IsVisible" Value="False" />
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridCell:selected">
         <Setter Property="BorderBrush" Value="Transparent" />
