@@ -48,18 +48,24 @@ public sealed class SquarifiedTreemapLayoutTests
 
         var tokenVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Tokens);
         var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.TotalLines);
+        var sizeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Size);
 
         var tokensLargest = tokenVisuals
-            .Where(visual => visual.Node.RelativePath is "src" or "docs")
+            .Where(visual => visual.Node.RelativePath is "src" or "docs" or "assets")
             .OrderByDescending(visual => visual.Bounds.Width * visual.Bounds.Height)
             .First();
         var codeLargest = codeVisuals
-            .Where(visual => visual.Node.RelativePath is "src" or "docs")
+            .Where(visual => visual.Node.RelativePath is "src" or "docs" or "assets")
+            .OrderByDescending(visual => visual.Bounds.Width * visual.Bounds.Height)
+            .First();
+        var sizeLargest = sizeVisuals
+            .Where(visual => visual.Node.RelativePath is "src" or "docs" or "assets")
             .OrderByDescending(visual => visual.Bounds.Width * visual.Bounds.Height)
             .First();
 
         Assert.Equal("src", tokensLargest.Node.RelativePath);
         Assert.Equal("docs", codeLargest.Node.RelativePath);
+        Assert.Equal("assets", sizeLargest.Node.RelativePath);
     }
 
     [Fact]
@@ -70,12 +76,15 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Root,
             600,
             60,
-            CreateNode("a.cs", ProjectNodeKind.File, 100, 10),
-            CreateNode("b.cs", ProjectNodeKind.File, 100, 10),
-            CreateNode("c.cs", ProjectNodeKind.File, 100, 10),
-            CreateNode("d.cs", ProjectNodeKind.File, 100, 10),
-            CreateNode("e.cs", ProjectNodeKind.File, 100, 10),
-            CreateNode("f.cs", ProjectNodeKind.File, 100, 10));
+            children:
+            [
+                CreateNode("a.cs", ProjectNodeKind.File, 100, 10),
+                CreateNode("b.cs", ProjectNodeKind.File, 100, 10),
+                CreateNode("c.cs", ProjectNodeKind.File, 100, 10),
+                CreateNode("d.cs", ProjectNodeKind.File, 100, 10),
+                CreateNode("e.cs", ProjectNodeKind.File, 100, 10),
+                CreateNode("f.cs", ProjectNodeKind.File, 100, 10),
+            ]);
         var layout = new SquarifiedTreemapLayout();
 
         var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
@@ -97,12 +106,15 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Root,
             1_068,
             0,
-            CreateNode("a", ProjectNodeKind.File, 500, 0),
-            CreateNode("b", ProjectNodeKind.File, 433, 0),
-            CreateNode("c", ProjectNodeKind.File, 78, 0),
-            CreateNode("d", ProjectNodeKind.File, 25, 0),
-            CreateNode("e", ProjectNodeKind.File, 25, 0),
-            CreateNode("f", ProjectNodeKind.File, 7, 0));
+            children:
+            [
+                CreateNode("a", ProjectNodeKind.File, 500, 0),
+                CreateNode("b", ProjectNodeKind.File, 433, 0),
+                CreateNode("c", ProjectNodeKind.File, 78, 0),
+                CreateNode("d", ProjectNodeKind.File, 25, 0),
+                CreateNode("e", ProjectNodeKind.File, 25, 0),
+                CreateNode("f", ProjectNodeKind.File, 7, 0),
+            ]);
         var layout = new SquarifiedTreemapLayout();
 
         var visuals = layout.Calculate(root, new Rect(0, 0, 700, 433), AnalysisMetric.Tokens);
@@ -124,8 +136,11 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Directory,
             100,
             10,
-            CreateNode("src/file.cs", ProjectNodeKind.File, 100, 10));
-        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 100, 10, directory);
+            children:
+            [
+                CreateNode("src/file.cs", ProjectNodeKind.File, 100, 10),
+            ]);
+        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 100, 10, children: [directory]);
         var layout = new SquarifiedTreemapLayout();
 
         var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
@@ -162,8 +177,11 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Root,
             100,
             100,
-            CreateNode("zero.cs", ProjectNodeKind.File, 0, 0),
-            CreateNode("keep.cs", ProjectNodeKind.File, 100, 100));
+            children:
+            [
+                CreateNode("zero.cs", ProjectNodeKind.File, 0, 0),
+                CreateNode("keep.cs", ProjectNodeKind.File, 100, 100),
+            ]);
         var layout = new SquarifiedTreemapLayout();
 
         var visuals = layout.Calculate(root, new Rect(0, 0, 300, 180), AnalysisMetric.Tokens);
@@ -180,12 +198,15 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Root,
             1_068,
             0,
-            CreateNode("a", ProjectNodeKind.File, 500, 0),
-            CreateNode("b", ProjectNodeKind.File, 433, 0),
-            CreateNode("c", ProjectNodeKind.File, 78, 0),
-            CreateNode("d", ProjectNodeKind.File, 25, 0),
-            CreateNode("e", ProjectNodeKind.File, 25, 0),
-            CreateNode("f", ProjectNodeKind.File, 7, 0));
+            children:
+            [
+                CreateNode("a", ProjectNodeKind.File, 500, 0),
+                CreateNode("b", ProjectNodeKind.File, 433, 0),
+                CreateNode("c", ProjectNodeKind.File, 78, 0),
+                CreateNode("d", ProjectNodeKind.File, 25, 0),
+                CreateNode("e", ProjectNodeKind.File, 25, 0),
+                CreateNode("f", ProjectNodeKind.File, 7, 0),
+            ]);
         var layout = new SquarifiedTreemapLayout();
 
         var visuals = layout.Calculate(root, new Rect(0, 0, 433, 700), AnalysisMetric.Tokens);
@@ -206,16 +227,34 @@ public sealed class SquarifiedTreemapLayoutTests
             ProjectNodeKind.Directory,
             90,
             10,
-            CreateNode("src/app.cs", ProjectNodeKind.File, 60, 5),
-            CreateNode("src/lib.cs", ProjectNodeKind.File, 30, 5));
+            fileSizeBytes: 90,
+            children:
+            [
+                CreateNode("src/app.cs", ProjectNodeKind.File, 60, 5, fileSizeBytes: 60),
+                CreateNode("src/lib.cs", ProjectNodeKind.File, 30, 5, fileSizeBytes: 30),
+            ]);
         var docs = CreateNode(
             "docs",
             ProjectNodeKind.Directory,
             30,
             50,
-            CreateNode("docs/readme.md", ProjectNodeKind.File, 30, 50));
+            fileSizeBytes: 30,
+            children:
+            [
+                CreateNode("docs/readme.md", ProjectNodeKind.File, 30, 50, fileSizeBytes: 30),
+            ]);
+        var assets = CreateNode(
+            "assets",
+            ProjectNodeKind.Directory,
+            10,
+            5,
+            fileSizeBytes: 200,
+            children:
+            [
+                CreateNode("assets/logo.svg", ProjectNodeKind.File, 10, 5, fileSizeBytes: 200),
+            ]);
 
-        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 120, 60, src, docs);
+        var root = CreateNode(string.Empty, ProjectNodeKind.Root, 130, 65, fileSizeBytes: 320, children: [src, docs, assets]);
         return root;
     }
 
@@ -224,6 +263,7 @@ public sealed class SquarifiedTreemapLayoutTests
         ProjectNodeKind kind,
         long tokens,
         int codeLines,
+        long? fileSizeBytes = null,
         params ProjectNode[] children)
     {
         var node = new ProjectNode
@@ -236,7 +276,7 @@ public sealed class SquarifiedTreemapLayoutTests
             Metrics = new NodeMetrics(
                 Tokens: tokens,
                 TotalLines: codeLines,
-                FileSizeBytes: tokens,
+                FileSizeBytes: fileSizeBytes ?? tokens,
                 DescendantFileCount: kind == ProjectNodeKind.File ? 1 : children.Sum(child => child.Metrics.DescendantFileCount),
                 DescendantDirectoryCount: kind == ProjectNodeKind.File ? 0 : children.Count(child => child.Kind != ProjectNodeKind.File)),
         };

@@ -14,6 +14,7 @@ public sealed class ToolbarViewModelTests
 
         Assert.True(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
+        Assert.False(viewModel.IsSizeMetricSelected);
     }
 
     [Fact]
@@ -40,6 +41,21 @@ public sealed class ToolbarViewModelTests
 
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.True(viewModel.IsLinesMetricSelected);
+        Assert.False(viewModel.IsSizeMetricSelected);
+    }
+
+    [Fact]
+    public void SelectingSizeRadio_StoresCanonicalSizeMetric()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        viewModel.IsSizeMetricSelected = true;
+
+        Assert.Equal(AnalysisMetric.Size, state.SelectedMetric);
+        Assert.False(viewModel.IsTokensMetricSelected);
+        Assert.False(viewModel.IsLinesMetricSelected);
+        Assert.True(viewModel.IsSizeMetricSelected);
     }
 
     private static ToolbarViewModel CreateViewModel(SettingsState state)

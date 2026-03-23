@@ -79,6 +79,18 @@ public partial class ToolbarViewModel : ViewModelBase
         }
     }
 
+    public bool IsSizeMetricSelected
+    {
+        get => SelectedMetric == AnalysisMetric.Size;
+        set
+        {
+            if (value)
+            {
+                SelectedMetric = AnalysisMetric.Size;
+            }
+        }
+    }
+
     public AnalysisMetric SelectedMetric
     {
         get => _settingsState.SelectedMetric;
@@ -139,6 +151,7 @@ public partial class ToolbarViewModel : ViewModelBase
                 OnPropertyChanged(nameof(SelectedMetric));
                 OnPropertyChanged(nameof(IsTokensMetricSelected));
                 OnPropertyChanged(nameof(IsLinesMetricSelected));
+                OnPropertyChanged(nameof(IsSizeMetricSelected));
                 break;
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));

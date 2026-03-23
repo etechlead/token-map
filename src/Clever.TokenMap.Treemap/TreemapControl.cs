@@ -629,6 +629,7 @@ public sealed class TreemapControl : Control
         {
             AnalysisMetric.TotalLines => node.Metrics.TotalLines,
             AnalysisMetric.NonEmptyLines => node.Metrics.TotalLines,
+            AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };
 

@@ -10,7 +10,7 @@ TBD: replace this section with a real application screenshot after the current U
 
 - Local-only analysis: no cloud services, remote tokenizers, or browser-based rendering.
 - Synchronized inspection: selecting nodes in the tree updates the treemap, and treemap drill-down stays aligned with the tree.
-- Token-aware treemap: compare repository weight by tokens or lines, where lines count only non-empty lines.
+- Token-aware treemap: compare repository weight by tokens, lines, or size, where lines count only non-empty lines and size reflects file bytes.
 - Configurable scan behavior: adjust ignore handling without leaving the main window.
 - Lightweight desktop shell: Avalonia UI with one custom-rendered treemap control instead of a control-per-rectangle surface.
 

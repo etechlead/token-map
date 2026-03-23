@@ -133,7 +133,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = AnalysisMetric.TotalLines;
+        settings.Analysis.SelectedMetric = AnalysisMetric.Size;
         settings.Analysis.RespectGitIgnore = false;
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Logging.MinLevel = AppLogLevel.Warning;
@@ -147,7 +147,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var reloaded = store.Load();
 
-        Assert.Equal(AnalysisMetric.TotalLines, reloaded.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Size, reloaded.Analysis.SelectedMetric);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);

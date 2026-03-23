@@ -270,8 +270,15 @@ public sealed class TreemapControlHeadlessTests
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
             .First();
 
+        control.Metric = AnalysisMetric.Size;
+
+        var largestBySize = control.NodeVisuals
+            .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
+            .First();
+
         Assert.Equal("a.cs", largestByTokens.Node.RelativePath);
         Assert.Equal("b.cs", largestByLines.Node.RelativePath);
+        Assert.Equal("c.cs", largestBySize.Node.RelativePath);
     }
 
     private static TreemapControl CreateControl(
@@ -346,10 +353,10 @@ public sealed class TreemapControlHeadlessTests
     {
         var snapshot = CreateSnapshot();
         snapshot.Root.Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-            Tokens: 100,
+            Tokens: 105,
             TotalLines: 100,
-            FileSizeBytes: 256,
-            DescendantFileCount: 2,
+            FileSizeBytes: 350,
+            DescendantFileCount: 3,
             DescendantDirectoryCount: 0);
 
         snapshot.Root.Children.Clear();
@@ -363,7 +370,7 @@ public sealed class TreemapControlHeadlessTests
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 80,
                 TotalLines: 10,
-                FileSizeBytes: 128,
+                FileSizeBytes: 50,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
         });
@@ -377,7 +384,21 @@ public sealed class TreemapControlHeadlessTests
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 20,
                 TotalLines: 90,
-                FileSizeBytes: 128,
+                FileSizeBytes: 75,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        });
+        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        {
+            Id = "c.cs",
+            Name = "c.cs",
+            FullPath = "C:\\Demo\\c.cs",
+            RelativePath = "c.cs",
+            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                Tokens: 5,
+                TotalLines: 0,
+                FileSizeBytes: 225,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
         });

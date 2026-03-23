@@ -447,6 +447,7 @@ public sealed class MainWindowLayoutTests
 
         var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
         var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
+        var metricSizeRadioButton = FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton");
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
@@ -458,6 +459,7 @@ public sealed class MainWindowLayoutTests
 
         Assert.NotNull(metricTokensRadioButton);
         Assert.NotNull(metricLinesRadioButton);
+        Assert.NotNull(metricSizeRadioButton);
         Assert.NotNull(themeSystemButton);
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
@@ -468,8 +470,10 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(summaryGroup);
         Assert.False(metricTokensRadioButton.IsEnabled);
         Assert.False(metricLinesRadioButton.IsEnabled);
+        Assert.False(metricSizeRadioButton.IsEnabled);
         Assert.True(metricTokensRadioButton.IsChecked);
         Assert.False(metricLinesRadioButton.IsChecked);
+        Assert.False(metricSizeRadioButton.IsChecked);
         Assert.True(themeSystemButton.IsEnabled);
         Assert.True(themeLightButton.IsEnabled);
         Assert.True(themeDarkButton.IsEnabled);
@@ -529,6 +533,7 @@ public sealed class MainWindowLayoutTests
         var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
         var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
         var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
+        var metricSizeRadioButton = FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton");
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
@@ -551,10 +556,13 @@ public sealed class MainWindowLayoutTests
         Assert.Null(warningSummaryText);
         Assert.NotNull(metricTokensRadioButton);
         Assert.NotNull(metricLinesRadioButton);
+        Assert.NotNull(metricSizeRadioButton);
         Assert.True(metricTokensRadioButton.IsEnabled);
         Assert.True(metricLinesRadioButton.IsEnabled);
+        Assert.True(metricSizeRadioButton.IsEnabled);
         Assert.True(metricTokensRadioButton.IsChecked);
         Assert.False(metricLinesRadioButton.IsChecked);
+        Assert.False(metricSizeRadioButton.IsChecked);
         Assert.False(statusStrip.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(workspaceHost.IsVisible);

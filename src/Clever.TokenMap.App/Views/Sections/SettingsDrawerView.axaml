@@ -38,23 +38,23 @@
                                 <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
                                            FontSize="11"
                                            Text="Treemap metric" />
-                                <Border Classes="metric-switcher-panel">
-                                    <Grid ColumnDefinitions="*,*">
-                                        <RadioButton Name="MetricTokensRadioButton"
-                                                     Classes="metric-mode-button start"
-                                                     GroupName="TreemapMetric"
-                                                     Content="Tokens"
-                                                     IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                                     IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}" />
-                                        <RadioButton Name="MetricLinesRadioButton"
-                                                     Grid.Column="1"
-                                                     Classes="metric-mode-button end"
-                                                     GroupName="TreemapMetric"
-                                                     Content="Lines"
-                                                     IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                                     IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}" />
-                                    </Grid>
-                                </Border>
+                                <StackPanel Spacing="4">
+                                    <RadioButton Name="MetricTokensRadioButton"
+                                                 GroupName="TreemapMetric"
+                                                 Content="Tokens"
+                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                                 IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}" />
+                                    <RadioButton Name="MetricLinesRadioButton"
+                                                 GroupName="TreemapMetric"
+                                                 Content="Lines"
+                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                                 IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}" />
+                                    <RadioButton Name="MetricSizeRadioButton"
+                                                 GroupName="TreemapMetric"
+                                                 Content="Size"
+                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                                 IsChecked="{Binding Toolbar.IsSizeMetricSelected, Mode=TwoWay}" />
+                                </StackPanel>
                             </StackPanel>
                         </StackPanel>
                     </Border>

@@ -34,6 +34,7 @@
 ## Treemap Model
 
 - The treemap is one custom-rendered control, not a control tree of rectangles.
+- Treemap weighting can switch between tokens, non-empty lines, and file size.
 - Layout, rendering, and hit testing are handled on the control's own computed rectangle data.
 
 ## User Settings
