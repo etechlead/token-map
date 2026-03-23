@@ -128,6 +128,16 @@ public partial class ProjectTreePaneView : UserControl
         }
     }
 
+    private void ProjectTreeTable_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (sender is not DataGrid grid || grid.SelectedItem is null)
+        {
+            return;
+        }
+
+        ScheduleScrollSelectedProjectTreeRowIntoView(grid);
+    }
+
     private void EnsureProjectTreeTableBaseHeaders(DataGrid grid)
     {
         foreach (var column in grid.Columns)
@@ -171,6 +181,23 @@ public partial class ProjectTreePaneView : UserControl
         Dispatcher.UIThread.Post(
             ApplyProjectTreeTableHeaderStateFromViewModel,
             DispatcherPriority.Loaded);
+    }
+
+    private static void ScheduleScrollSelectedProjectTreeRowIntoView(DataGrid grid)
+    {
+        Dispatcher.UIThread.Post(
+            () => ScrollSelectedProjectTreeRowIntoView(grid),
+            DispatcherPriority.Loaded);
+    }
+
+    private static void ScrollSelectedProjectTreeRowIntoView(DataGrid grid)
+    {
+        if (grid.SelectedItem is null || TopLevel.GetTopLevel(grid) is null)
+        {
+            return;
+        }
+
+        grid.ScrollIntoView(grid.SelectedItem, null);
     }
 
     private void UpdateProjectTreeTableHeaderState(

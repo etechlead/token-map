@@ -1,7 +1,12 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Clever.TokenMap.App.Views;
+using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
@@ -143,5 +148,104 @@ public sealed class MainWindowTreemapIntegrationTests
 
         Assert.NotNull(control);
         Assert.Equal("Program.cs", control.SelectedNode?.RelativePath);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapSelection_ScrollsTreeRowIntoView()
+    {
+        const string targetRelativePath = "File-079.cs";
+
+        var window = new MainWindow
+        {
+            Height = 650,
+        };
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateWideSnapshot(fileCount: 80)));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        window.UpdateLayout();
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+
+        Assert.NotNull(treeTable);
+        Assert.NotNull(control);
+        Assert.Null(FindProjectTreeRow(window, targetRelativePath));
+
+        var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == targetRelativePath);
+        var point = new Point(
+            visual.Bounds.X + (visual.Bounds.Width / 2),
+            visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+        control.SelectNodeAt(point);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
+        window.UpdateLayout();
+
+        var row = FindProjectTreeRow(window, targetRelativePath);
+
+        Assert.NotNull(row);
+        Assert.Equal(targetRelativePath, viewModel.Tree.SelectedNode?.Node.RelativePath);
+        Assert.Equal(targetRelativePath, (row.DataContext as ProjectTreeNodeViewModel)?.Node.RelativePath);
+    }
+
+    private static DataGridRow? FindProjectTreeRow(Window window, string relativePath)
+    {
+        return window.GetVisualDescendants()
+            .OfType<DataGridRow>()
+            .FirstOrDefault(row =>
+                string.Equals(
+                    (row.DataContext as ProjectTreeNodeViewModel)?.Node.RelativePath,
+                    relativePath,
+                    StringComparison.Ordinal));
+    }
+
+    private static ProjectSnapshot CreateWideSnapshot(int fileCount)
+    {
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: fileCount,
+                TotalLines: fileCount * 10,
+                NonEmptyLines: fileCount * 9,
+                BlankLines: fileCount,
+                FileSizeBytes: fileCount * 100,
+                DescendantFileCount: fileCount,
+                DescendantDirectoryCount: 0),
+        };
+
+        for (var index = 0; index < fileCount; index++)
+        {
+            var fileName = $"File-{index:D3}.cs";
+            root.Children.Add(new ProjectNode
+            {
+                Id = fileName,
+                Name = fileName,
+                FullPath = $"C:\\Demo\\{fileName}",
+                RelativePath = fileName,
+                Kind = ProjectNodeKind.File,
+                Metrics = new NodeMetrics(
+                    Tokens: 1,
+                    TotalLines: 10,
+                    NonEmptyLines: 9,
+                    BlankLines: 1,
+                    FileSizeBytes: 100,
+                    DescendantFileCount: 1,
+                    DescendantDirectoryCount: 0),
+            });
+        }
+
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = root,
+        };
     }
 }
