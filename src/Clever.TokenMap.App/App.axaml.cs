@@ -64,7 +64,8 @@ public partial class App : Application
                 analysisSessionController,
                 new TreemapNavigationState(),
                 settingsCoordinator,
-                folderPathService);
+                folderPathService,
+                new PathShellService());
             desktop.MainWindow = mainWindow;
         }
 

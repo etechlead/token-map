@@ -22,6 +22,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly string _windowTitle = "TokenMap";
     private readonly IAnalysisSessionController _analysisSessionController;
     private readonly IFolderPathService _folderPathService;
+    private readonly IPathShellService _pathShellService;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly TreemapNavigationState _treemapNavigationState;
     private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolders = [];
@@ -45,7 +46,8 @@ public partial class MainWindowViewModel : ViewModelBase
                 NullAppLogger.Instance),
             new TreemapNavigationState(),
             new NullSettingsCoordinator(),
-            new NullFolderPathService())
+            new NullFolderPathService(),
+            new NullPathShellService())
     {
     }
 
@@ -53,12 +55,14 @@ public partial class MainWindowViewModel : ViewModelBase
         IAnalysisSessionController analysisSessionController,
         TreemapNavigationState treemapNavigationState,
         ISettingsCoordinator settingsCoordinator,
-        IFolderPathService folderPathService)
+        IFolderPathService folderPathService,
+        IPathShellService pathShellService)
     {
         _analysisSessionController = analysisSessionController;
         _treemapNavigationState = treemapNavigationState;
         _settingsCoordinator = settingsCoordinator;
         _folderPathService = folderPathService;
+        _pathShellService = pathShellService;
 
         Toolbar = new ToolbarViewModel(
             _settingsCoordinator.State,
@@ -155,6 +159,29 @@ public partial class MainWindowViewModel : ViewModelBase
     public void DrillIntoTreemap(ProjectNode? node)
     {
         _treemapNavigationState.DrillInto(node);
+    }
+
+    public Task OpenNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
+    {
+        if (node is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _pathShellService.TryOpenAsync(node.FullPath, cancellationToken);
+    }
+
+    public Task RevealNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
+    {
+        if (node is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        return _pathShellService.TryRevealAsync(
+            node.FullPath,
+            node.Kind is not Core.Enums.ProjectNodeKind.File,
+            cancellationToken);
     }
 
     private async Task OpenFolderAsync()
@@ -388,5 +415,14 @@ public partial class MainWindowViewModel : ViewModelBase
     private sealed class NullSettingsCoordinator : ISettingsCoordinator
     {
         public SettingsState State { get; } = new();
+    }
+
+    private sealed class NullPathShellService : IPathShellService
+    {
+        public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
+
+        public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
     }
 }

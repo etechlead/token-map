@@ -169,6 +169,42 @@ public sealed class TreemapControlHeadlessTests
     }
 
     [AvaloniaFact]
+    public void TreemapControl_SetTooltipSuppressed_HidesTooltipAndBlocksHoverUntilReenabled()
+    {
+        var control = CreateControl();
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        var point = GetCenter(visual);
+
+        control.UpdateHover(point);
+
+        Assert.NotNull(control.TooltipText);
+        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
+
+        control.SetTooltipSuppressed(true);
+
+        Assert.True(control.IsTooltipSuppressed);
+        Assert.Null(control.HoveredNode);
+        Assert.Null(control.TooltipText);
+        Assert.Null(control.TooltipAnchorPoint);
+
+        control.UpdateHover(point);
+
+        Assert.Null(control.HoveredNode);
+        Assert.Null(control.TooltipText);
+
+        control.SetTooltipSuppressed(false);
+        control.UpdateHover(point);
+
+        Assert.False(control.IsTooltipSuppressed);
+        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
+        Assert.NotNull(control.TooltipText);
+    }
+
+    [AvaloniaFact]
     public void TreemapControl_HoverDirectory_UsesDirectoryTooltipFields()
     {
         var control = CreateControl(CreateNestedSnapshot());

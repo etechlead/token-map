@@ -10,6 +10,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Views.Sections;
@@ -17,11 +18,15 @@ namespace Clever.TokenMap.App.Views.Sections;
 public partial class ProjectTreePaneView : UserControl
 {
     private readonly Dictionary<DataGridColumn, string> _projectTreeTableBaseHeaders = [];
+    private readonly ProjectNodeContextMenuController _projectNodeContextMenuController;
     private Geometry? _sortIconGeometry;
 
     public ProjectTreePaneView()
     {
         InitializeComponent();
+        _projectNodeContextMenuController = new ProjectNodeContextMenuController(
+            this,
+            () => DataContext as MainWindowViewModel);
         DataContextChanged += (_, _) => ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
         AttachedToVisualTree += (_, _) => ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
     }
@@ -65,6 +70,40 @@ public partial class ProjectTreePaneView : UserControl
         }
 
         ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn);
+        e.Handled = true;
+    }
+
+    private void ProjectTreeTable_OnContextRequested(object? sender, ContextRequestedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel ||
+            sender is not DataGrid grid)
+        {
+            return;
+        }
+
+        if (FindAncestor<DataGridColumnHeader>(e.Source as StyledElement) is not null)
+        {
+            return;
+        }
+
+        var targetNode = FindAncestor<DataGridRow>(e.Source as StyledElement)?.DataContext as ProjectTreeNodeViewModel;
+        if (targetNode is null)
+        {
+            if (e.TryGetPosition(grid, out _))
+            {
+                return;
+            }
+
+            targetNode = viewModel.Tree.SelectedNode;
+        }
+
+        if (targetNode is null)
+        {
+            return;
+        }
+
+        viewModel.SelectedNode = targetNode.Node;
+        _projectNodeContextMenuController.Show(grid, targetNode.Node);
         e.Handled = true;
     }
 
@@ -296,6 +335,7 @@ public partial class ProjectTreePaneView : UserControl
                 return false;
         }
     }
+
 }
 
 internal sealed class ProjectTreeColumnHeaderContent(string text) : Grid

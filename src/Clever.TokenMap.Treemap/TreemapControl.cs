@@ -31,6 +31,7 @@ public sealed class TreemapControl : Control
 
     private readonly SquarifiedTreemapLayout _layout = new();
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
+    private bool _isTooltipSuppressed;
     private Size _layoutSize;
     private Point? _tooltipAnchorPoint;
     private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
@@ -72,6 +73,8 @@ public sealed class TreemapControl : Control
     internal string? TooltipText { get; private set; }
 
     internal Point? TooltipAnchorPoint => _tooltipAnchorPoint;
+
+    internal bool IsTooltipSuppressed => _isTooltipSuppressed;
 
     internal IReadOnlyList<TreemapNodeVisual> NodeVisuals => _nodeVisuals;
 
@@ -233,7 +236,7 @@ public sealed class TreemapControl : Control
         _nodeVisuals = _layout.Calculate(RootNode, drawingBounds, Metric);
     }
 
-    internal ProjectNode? HitTestNode(Point point)
+    public ProjectNode? HitTestNode(Point point)
     {
         for (var index = _nodeVisuals.Count - 1; index >= 0; index--)
         {
@@ -248,6 +251,11 @@ public sealed class TreemapControl : Control
 
     internal void UpdateHover(Point point)
     {
+        if (_isTooltipSuppressed)
+        {
+            return;
+        }
+
         var hoveredNode = HitTestNode(point);
         if (hoveredNode is null)
         {
@@ -265,6 +273,23 @@ public sealed class TreemapControl : Control
         InvalidateVisual();
     }
 
+    public void SetTooltipSuppressed(bool isSuppressed)
+    {
+        if (_isTooltipSuppressed == isSuppressed)
+        {
+            return;
+        }
+
+        _isTooltipSuppressed = isSuppressed;
+        if (isSuppressed)
+        {
+            ClearHover();
+            return;
+        }
+
+        InvalidateVisual();
+    }
+
     internal void ClearHover()
     {
         if (HoveredNode is null && TooltipText is null)
@@ -278,7 +303,7 @@ public sealed class TreemapControl : Control
         InvalidateVisual();
     }
 
-    internal void SelectNodeAt(Point point)
+    public void SelectNodeAt(Point point)
     {
         PressedNode = HitTestNode(point);
         SelectedNode = PressedNode;

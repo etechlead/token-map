@@ -121,7 +121,8 @@ internal static class HeadlessTestSupport
     internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
         string? selectedFolderPath = "C:\\Demo",
-        IEnumerable<string>? recentFolderPaths = null) =>
+        IEnumerable<string>? recentFolderPaths = null,
+        IPathShellService? pathShellService = null) =>
         new(
             new AnalysisSessionController(
                 projectAnalyzer,
@@ -129,7 +130,8 @@ internal static class HeadlessTestSupport
                 new StubFolderPathService()),
             new TreemapNavigationState(),
             new StubSettingsCoordinator(recentFolderPaths),
-            new StubFolderPathService());
+            new StubFolderPathService(),
+            pathShellService ?? new StubPathShellService());
 
     internal static T? FindNamedDescendant<T>(Window window, string name)
         where T : Control
@@ -172,6 +174,15 @@ internal static class HeadlessTestSupport
 
             return state;
         }
+    }
+
+    private sealed class StubPathShellService : IPathShellService
+    {
+        public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
+
+        public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
     }
 }
 
