@@ -143,11 +143,53 @@ public partial class ToolbarViewModel : ViewModelBase
         set => _settingsState.SelectedThemePreference = value;
     }
 
+    public TreemapPalette SelectedTreemapPalette
+    {
+        get => _settingsState.SelectedTreemapPalette;
+        set => _settingsState.SelectedTreemapPalette = value;
+    }
+
     public bool IsSystemThemeSelected => SelectedThemePreference == ThemePreference.System;
 
     public bool IsLightThemeSelected => SelectedThemePreference == ThemePreference.Light;
 
     public bool IsDarkThemeSelected => SelectedThemePreference == ThemePreference.Dark;
+
+    public bool IsClassicTreemapPaletteSelected
+    {
+        get => SelectedTreemapPalette == TreemapPalette.Classic;
+        set
+        {
+            if (value)
+            {
+                SelectedTreemapPalette = TreemapPalette.Classic;
+            }
+        }
+    }
+
+    public bool IsWeightedTreemapPaletteSelected
+    {
+        get => SelectedTreemapPalette == TreemapPalette.Weighted;
+        set
+        {
+            if (value)
+            {
+                SelectedTreemapPalette = TreemapPalette.Weighted;
+            }
+        }
+    }
+
+    public bool IsStudioTreemapPaletteSelected
+    {
+        get => SelectedTreemapPalette == TreemapPalette.Studio;
+        set
+        {
+            if (value)
+            {
+                SelectedTreemapPalette = TreemapPalette.Studio;
+            }
+        }
+    }
 
     public void UpdateFolder(string? folderPath)
     {
@@ -204,6 +246,12 @@ public partial class ToolbarViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsSystemThemeSelected));
                 OnPropertyChanged(nameof(IsLightThemeSelected));
                 OnPropertyChanged(nameof(IsDarkThemeSelected));
+                break;
+            case nameof(SettingsState.SelectedTreemapPalette):
+                OnPropertyChanged(nameof(SelectedTreemapPalette));
+                OnPropertyChanged(nameof(IsClassicTreemapPaletteSelected));
+                OnPropertyChanged(nameof(IsWeightedTreemapPaletteSelected));
+                OnPropertyChanged(nameof(IsStudioTreemapPaletteSelected));
                 break;
         }
     }

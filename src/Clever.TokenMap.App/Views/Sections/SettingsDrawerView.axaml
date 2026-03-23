@@ -56,6 +56,25 @@
                                                  IsChecked="{Binding Toolbar.IsSizeMetricSelected, Mode=TwoWay}" />
                                 </StackPanel>
                             </StackPanel>
+                            <StackPanel Spacing="4">
+                                <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                           FontSize="11"
+                                           Text="Treemap palette" />
+                                <StackPanel Spacing="4">
+                                    <RadioButton Name="TreemapPaletteWeightedRadioButton"
+                                                 GroupName="TreemapPalette"
+                                                 Content="Weighted"
+                                                 IsChecked="{Binding Toolbar.IsWeightedTreemapPaletteSelected, Mode=TwoWay}" />
+                                    <RadioButton Name="TreemapPaletteStudioRadioButton"
+                                                 GroupName="TreemapPalette"
+                                                 Content="Studio"
+                                                 IsChecked="{Binding Toolbar.IsStudioTreemapPaletteSelected, Mode=TwoWay}" />
+                                    <RadioButton Name="TreemapPaletteClassicRadioButton"
+                                                 GroupName="TreemapPalette"
+                                                 Content="Classic"
+                                                 IsChecked="{Binding Toolbar.IsClassicTreemapPaletteSelected, Mode=TwoWay}" />
+                                </StackPanel>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
 

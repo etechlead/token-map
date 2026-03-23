@@ -93,6 +93,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
+            _currentSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(State.SelectedTreemapPalette);
             _settingsVersion++;
         }
 
@@ -172,6 +173,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         _currentSettings = settings.Clone();
         _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(_currentSettings.Analysis.SelectedMetric);
+        _currentSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(_currentSettings.Appearance.TreemapPalette);
 
         _isApplyingSettings = true;
         try
@@ -180,6 +182,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
             State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
             State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
+            State.SelectedTreemapPalette = _currentSettings.Appearance.TreemapPalette;
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
             _themeService.ApplyThemePreference(State.SelectedThemePreference);
         }
@@ -193,10 +196,16 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         propertyName is nameof(SettingsState.SelectedMetric) or
         nameof(SettingsState.RespectGitIgnore) or
         nameof(SettingsState.UseDefaultExcludes) or
-        nameof(SettingsState.SelectedThemePreference);
+        nameof(SettingsState.SelectedThemePreference) or
+        nameof(SettingsState.SelectedTreemapPalette);
 
     private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
         selectedMetric == AnalysisMetric.NonEmptyLines
             ? AnalysisMetric.TotalLines
             : selectedMetric;
+
+    private static TreemapPalette NormalizeTreemapPalette(TreemapPalette selectedPalette) =>
+        Enum.IsDefined(selectedPalette)
+            ? selectedPalette
+            : TreemapPalette.Weighted;
 }

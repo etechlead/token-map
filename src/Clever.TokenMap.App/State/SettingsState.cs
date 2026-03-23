@@ -33,6 +33,9 @@ public sealed partial class SettingsState : ObservableObject
     [ObservableProperty]
     private ThemePreference selectedThemePreference = ThemePreference.System;
 
+    [ObservableProperty]
+    private TreemapPalette selectedTreemapPalette = TreemapPalette.Weighted;
+
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     public event NotifyCollectionChangedEventHandler? RecentFolderPathsChanged;

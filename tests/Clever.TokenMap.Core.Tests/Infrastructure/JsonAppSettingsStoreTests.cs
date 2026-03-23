@@ -22,6 +22,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.True(settings.Analysis.RespectGitIgnore);
         Assert.True(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
+        Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
         Assert.Empty(settings.RecentFolderPaths);
     }
 
@@ -40,7 +41,8 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
                 "useDefaultExcludes": false
               },
               "appearance": {
-                "themePreference": "Dark"
+                "themePreference": "Dark",
+                "treemapPalette": "Studio"
               },
               "logging": {
                 "minLevel": "Error"
@@ -62,6 +64,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
+        Assert.Equal(TreemapPalette.Studio, settings.Appearance.TreemapPalette);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
         Assert.Collection(
             settings.RecentFolderPaths,
@@ -93,6 +96,27 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Light, settings.Appearance.ThemePreference);
+    }
+
+    [Fact]
+    public void Load_FallsBackToDefault_ForUnknownTreemapPalette()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(
+            GetSettingsFilePath(),
+            """
+            {
+              "appearance": {
+                "treemapPalette": "Emphasis"
+              }
+            }
+            """);
+
+        var store = CreateStore();
+
+        var settings = store.Load();
+
+        Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
     }
 
     [Fact]
@@ -136,6 +160,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Analysis.SelectedMetric = AnalysisMetric.Size;
         settings.Analysis.RespectGitIgnore = false;
         settings.Appearance.ThemePreference = ThemePreference.Dark;
+        settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
         settings.Logging.MinLevel = AppLogLevel.Warning;
         settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
 
@@ -144,12 +169,14 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         var persistedJson = File.ReadAllText(GetSettingsFilePath());
         Assert.DoesNotContain("selectedTokenProfile", persistedJson, StringComparison.Ordinal);
         Assert.DoesNotContain("respectIgnore", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""treemapPalette"": ""Weighted""", persistedJson, StringComparison.Ordinal);
 
         var reloaded = store.Load();
 
         Assert.Equal(AnalysisMetric.Size, reloaded.Analysis.SelectedMetric);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
+        Assert.Equal(TreemapPalette.Weighted, reloaded.Appearance.TreemapPalette);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);
         Assert.Collection(
             reloaded.RecentFolderPaths,

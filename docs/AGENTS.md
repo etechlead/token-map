@@ -18,6 +18,7 @@
 ## Read Order
 - Start with root `AGENTS.md`, then this file.
 - For most implementation tasks, read `architecture.md` and `workflow.md`.
+- Read `tools.md` when the request touches internal harnesses, screenshot capture, visual diffs, or repo tooling.
 - Read `ui-principles.md` only for UI-facing changes.
 - Read `commit-policy.md` only when the user asks for a commit or commit message.
 - Read `post-mvp.md` only when the request touches deferred scope or backlog questions.
@@ -25,6 +26,7 @@
 ## Documentation Router
 - `architecture.md`: current technical boundaries and sources of truth.
 - `post-mvp.md`: inactive backlog candidates outside the current MVP scope.
+- `tools.md`: internal repo tools and harnesses that are useful for implementation and debugging work.
 - `ui-principles.md`: current UI constraints and interaction principles.
 - `workflow.md`: the concise workflow for turning a request into code and docs.
 - `commit-policy.md`: commit format, grouping, and git safety rules.

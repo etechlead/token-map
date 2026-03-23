@@ -15,6 +15,7 @@ public sealed class SettingsCoordinatorTests
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.UseDefaultExcludes = false;
         settings.Appearance.ThemePreference = ThemePreference.Dark;
+        settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
@@ -24,6 +25,7 @@ public sealed class SettingsCoordinatorTests
         Assert.False(coordinator.State.RespectGitIgnore);
         Assert.False(coordinator.State.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
+        Assert.Equal(TreemapPalette.Weighted, coordinator.State.SelectedTreemapPalette);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
         Assert.Empty(coordinator.State.RecentFolderPaths);
         Assert.Equal(0, store.SaveCallCount);
@@ -54,11 +56,13 @@ public sealed class SettingsCoordinatorTests
 
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        coordinator.State.SelectedTreemapPalette = TreemapPalette.Weighted;
 
         await Task.Delay(120);
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(TreemapPalette.Weighted, store.LastSavedSettings.Appearance.TreemapPalette);
     }
 
     [Fact]
@@ -93,6 +97,7 @@ public sealed class SettingsCoordinatorTests
 
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
+        coordinator.State.SelectedTreemapPalette = TreemapPalette.Studio;
 
         Assert.Equal(0, store.SaveCallCount);
 
@@ -102,6 +107,7 @@ public sealed class SettingsCoordinatorTests
         Assert.NotNull(store.LastSavedSettings);
         Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
+        Assert.Equal(TreemapPalette.Studio, store.LastSavedSettings.Appearance.TreemapPalette);
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
         Assert.Empty(store.LastSavedSettings.RecentFolderPaths);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);

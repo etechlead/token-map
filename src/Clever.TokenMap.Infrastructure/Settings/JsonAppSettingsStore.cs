@@ -59,6 +59,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
             var normalizedSettings = settings.Clone();
             normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
+            normalizedSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(normalizedSettings.Appearance.TreemapPalette);
             var json = JsonSerializer.Serialize(normalizedSettings, SerializerOptions);
             File.WriteAllText(tempFilePath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             File.Move(tempFilePath, _settingsFilePath, overwrite: true);
@@ -119,6 +120,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.Appearance.ThemePreference = themePreference;
         }
 
+        if (persistedSettings?.Appearance?.TreemapPalette is { } treemapPalette)
+        {
+            settings.Appearance.TreemapPalette = NormalizeTreemapPalette(treemapPalette);
+        }
+
         if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
         {
             settings.Logging.MinLevel = minimumLevel;
@@ -137,6 +143,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         selectedMetric == AnalysisMetric.NonEmptyLines
             ? AnalysisMetric.TotalLines
             : selectedMetric;
+
+    private static TreemapPalette NormalizeTreemapPalette(TreemapPalette treemapPalette) =>
+        Enum.IsDefined(treemapPalette)
+            ? treemapPalette
+            : TreemapPalette.Weighted;
 
     private static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> persistedPaths)
     {
@@ -194,6 +205,9 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         [JsonConverter(typeof(NullableStringEnumConverter<ThemePreference>))]
         public ThemePreference? ThemePreference { get; set; }
+
+        [JsonConverter(typeof(NullableStringEnumConverter<TreemapPalette>))]
+        public TreemapPalette? TreemapPalette { get; set; }
     }
 
     private sealed class PersistedLoggingSettings

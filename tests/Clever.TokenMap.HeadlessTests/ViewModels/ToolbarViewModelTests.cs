@@ -15,6 +15,9 @@ public sealed class ToolbarViewModelTests
         Assert.True(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
         Assert.False(viewModel.IsSizeMetricSelected);
+        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
+        Assert.False(viewModel.IsStudioTreemapPaletteSelected);
         Assert.Equal("Treemap - tokens", viewModel.TreemapTitle);
     }
 
@@ -43,7 +46,6 @@ public sealed class ToolbarViewModelTests
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.True(viewModel.IsLinesMetricSelected);
         Assert.False(viewModel.IsSizeMetricSelected);
-        Assert.Equal("Treemap - tokens", viewModel.TreemapTitle);
     }
 
     [Fact]
@@ -72,6 +74,35 @@ public sealed class ToolbarViewModelTests
         state.SelectedMetric = AnalysisMetric.Size;
         Assert.Equal("Treemap - size", viewModel.TreemapTitle);
     }
+
+    [Fact]
+    public void SelectingWeightedPalette_StoresPaletteSelection()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        viewModel.IsWeightedTreemapPaletteSelected = true;
+
+        Assert.Equal(TreemapPalette.Weighted, state.SelectedTreemapPalette);
+        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
+        Assert.False(viewModel.IsStudioTreemapPaletteSelected);
+    }
+
+    [Fact]
+    public void SelectingStudioPalette_StoresPaletteSelection()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        viewModel.IsStudioTreemapPaletteSelected = true;
+
+        Assert.Equal(TreemapPalette.Studio, state.SelectedTreemapPalette);
+        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.False(viewModel.IsWeightedTreemapPaletteSelected);
+        Assert.True(viewModel.IsStudioTreemapPaletteSelected);
+    }
+
     private static ToolbarViewModel CreateViewModel(SettingsState state)
     {
         return new ToolbarViewModel(

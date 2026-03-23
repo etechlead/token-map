@@ -47,10 +47,13 @@ public sealed class AppearanceSettings
 {
     public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
 
+    public TreemapPalette TreemapPalette { get; set; } = TreemapPalette.Weighted;
+
     public AppearanceSettings Clone() =>
         new()
         {
             ThemePreference = ThemePreference,
+            TreemapPalette = TreemapPalette,
         };
 }
 

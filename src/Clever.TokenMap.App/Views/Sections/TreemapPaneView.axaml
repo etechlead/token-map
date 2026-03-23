@@ -52,6 +52,7 @@
                 <controls:TreemapControl Name="ProjectTreemapControl"
                                          RootNode="{Binding TreemapRootNode}"
                                          Metric="{Binding Toolbar.SelectedMetric}"
+                                         Palette="{Binding Toolbar.SelectedTreemapPalette}"
                                          SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
             </Border>
         </Grid>

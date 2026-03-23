@@ -29,6 +29,9 @@ public sealed class TreemapControl : Control
     public static readonly StyledProperty<ProjectNode?> SelectedNodeProperty =
         AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(SelectedNode), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
 
+    public static readonly StyledProperty<TreemapPalette> PaletteProperty =
+        AvaloniaProperty.Register<TreemapControl, TreemapPalette>(nameof(Palette), TreemapPalette.Weighted);
+
     private readonly SquarifiedTreemapLayout _layout = new();
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
     private bool _isTooltipSuppressed;
@@ -40,7 +43,7 @@ public sealed class TreemapControl : Control
 
     static TreemapControl()
     {
-        AffectsRender<TreemapControl>(MetricProperty, RootNodeProperty, BoundsProperty);
+        AffectsRender<TreemapControl>(MetricProperty, RootNodeProperty, SelectedNodeProperty, PaletteProperty, BoundsProperty);
     }
 
     public TreemapControl()
@@ -64,6 +67,12 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(SelectedNodeProperty);
         set => SetValue(SelectedNodeProperty, value);
+    }
+
+    public TreemapPalette Palette
+    {
+        get => GetValue(PaletteProperty);
+        set => SetValue(PaletteProperty, value);
     }
 
     internal ProjectNode? HoveredNode { get; private set; }
@@ -95,7 +104,7 @@ public sealed class TreemapControl : Control
             InvalidateVisual();
         }
 
-        if (change.Property == SelectedNodeProperty)
+        if (change.Property == SelectedNodeProperty || change.Property == PaletteProperty)
         {
             InvalidateVisual();
         }
@@ -139,12 +148,21 @@ public sealed class TreemapControl : Control
             return;
         }
 
+        var paletteContext = TreemapColorRules.CreatePaletteContext(
+            _nodeVisuals
+                .Select(static visual => visual.Node)
+                .Where(IsLeafNode),
+            Metric);
+
         foreach (var visual in _nodeVisuals)
         {
             var isLeaf = IsLeafNode(visual.Node);
+            var leafFillColor = isLeaf
+                ? TreemapColorRules.GetLeafColor(visual.Node, Palette, paletteContext)
+                : default;
             if (isLeaf)
             {
-                var fill = new SolidColorBrush(TreemapColorRules.GetLeafColor(visual.Node));
+                var fill = new SolidColorBrush(leafFillColor);
                 context.FillRectangle(fill, visual.Bounds);
             }
             else if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
@@ -163,7 +181,9 @@ public sealed class TreemapControl : Control
             if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
                 var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
-                IBrush labelBrush = isLeaf ? Brushes.White : directoryLabelBrush;
+                IBrush labelBrush = isLeaf
+                    ? new SolidColorBrush(TreemapColorRules.GetLeafLabelColor(leafFillColor))
+                    : directoryLabelBrush;
                 var formattedText = new FormattedText(
                     visual.Node.Name,
                     culture: System.Globalization.CultureInfo.InvariantCulture,

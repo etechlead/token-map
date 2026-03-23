@@ -5,6 +5,14 @@ namespace Clever.TokenMap.HeadlessTests;
 public sealed class SettingsStateTests
 {
     [Fact]
+    public void Defaults_UseWeightedTreemapPalette()
+    {
+        var state = new SettingsState();
+
+        Assert.Equal(Clever.TokenMap.Core.Enums.TreemapPalette.Weighted, state.SelectedTreemapPalette);
+    }
+
+    [Fact]
     public void RecordRecentFolder_UsesCurrentPlatformPathComparer()
     {
         var state = new SettingsState();
