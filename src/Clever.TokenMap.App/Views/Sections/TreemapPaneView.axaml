@@ -12,8 +12,9 @@
             <Grid ColumnDefinitions="Auto,*"
                   ColumnSpacing="10">
                 <TextBlock Classes="panel-title"
+                           Name="TreemapTitleText"
                            VerticalAlignment="Center"
-                           Text="Treemap" />
+                           Text="{Binding Toolbar.TreemapTitle}" />
                 <ItemsControl Name="TreemapBreadcrumbsItemsControl"
                               Grid.Column="1"
                               HorizontalAlignment="Right"

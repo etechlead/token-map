@@ -41,6 +41,7 @@ public sealed class MainWindowLayoutTests
 
         Assert.NotNull(statusStrip);
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
+        var treemapTitle = FindNamedDescendant<TextBlock>(window, "TreemapTitleText");
         Assert.NotNull(FindNamedDescendant<DataGrid>(window, "ProjectTreeTable"));
         Assert.NotNull(FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl"));
         Assert.Null(FindNamedDescendant<Control>(window, "DetailsPane"));
@@ -58,6 +59,33 @@ public sealed class MainWindowLayoutTests
         Assert.False(stopButton.IsVisible);
         Assert.NotNull(settingsDrawer);
         Assert.False(settingsDrawer.IsVisible);
+        Assert.NotNull(treemapTitle);
+        Assert.Equal("Treemap - tokens", treemapTitle.Text);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_TreemapTitle_ReflectsSelectedMetric()
+    {
+        var viewModel = new MainWindowViewModel();
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var treemapTitle = FindNamedDescendant<TextBlock>(window, "TreemapTitleText");
+
+        Assert.NotNull(treemapTitle);
+        Assert.Equal("Treemap - tokens", treemapTitle.Text);
+
+        viewModel.Toolbar.IsSizeMetricSelected = true;
+        window.UpdateLayout();
+        Assert.Equal("Treemap - size", treemapTitle.Text);
+
+        viewModel.Toolbar.IsLinesMetricSelected = true;
+        window.UpdateLayout();
+        Assert.Equal("Treemap - lines", treemapTitle.Text);
     }
 
     [AvaloniaFact]

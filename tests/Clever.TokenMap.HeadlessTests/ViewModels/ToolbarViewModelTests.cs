@@ -15,6 +15,7 @@ public sealed class ToolbarViewModelTests
         Assert.True(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
         Assert.False(viewModel.IsSizeMetricSelected);
+        Assert.Equal("Treemap - tokens", viewModel.TreemapTitle);
     }
 
     [Fact]
@@ -42,6 +43,7 @@ public sealed class ToolbarViewModelTests
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.True(viewModel.IsLinesMetricSelected);
         Assert.False(viewModel.IsSizeMetricSelected);
+        Assert.Equal("Treemap - tokens", viewModel.TreemapTitle);
     }
 
     [Fact]
@@ -58,6 +60,18 @@ public sealed class ToolbarViewModelTests
         Assert.True(viewModel.IsSizeMetricSelected);
     }
 
+    [Fact]
+    public void TreemapTitle_TracksSelectedMetric()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        state.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        Assert.Equal("Treemap - lines", viewModel.TreemapTitle);
+
+        state.SelectedMetric = AnalysisMetric.Size;
+        Assert.Equal("Treemap - size", viewModel.TreemapTitle);
+    }
     private static ToolbarViewModel CreateViewModel(SettingsState state)
     {
         return new ToolbarViewModel(

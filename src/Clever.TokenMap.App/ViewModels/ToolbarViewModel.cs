@@ -72,6 +72,17 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public string DefaultExcludesDetailsText => _defaultExcludesDetailsText;
 
+    public string TreemapTitle => $"Treemap - {TreemapMetricDisplay}";
+
+    public string TreemapMetricDisplay =>
+        SelectedMetric switch
+        {
+            AnalysisMetric.TotalLines => "lines",
+            AnalysisMetric.NonEmptyLines => "lines",
+            AnalysisMetric.Size => "size",
+            _ => "tokens",
+        };
+
     public bool IsTokensMetricSelected
     {
         get => SelectedMetric == AnalysisMetric.Tokens;
@@ -179,6 +190,8 @@ public partial class ToolbarViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsTokensMetricSelected));
                 OnPropertyChanged(nameof(IsLinesMetricSelected));
                 OnPropertyChanged(nameof(IsSizeMetricSelected));
+                OnPropertyChanged(nameof(TreemapMetricDisplay));
+                OnPropertyChanged(nameof(TreemapTitle));
                 break;
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
