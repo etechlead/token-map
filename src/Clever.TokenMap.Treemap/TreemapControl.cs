@@ -371,7 +371,7 @@ public sealed class TreemapControl : Control
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatAnalysisMetric(node, node.Metrics.Tokens)}\nShare: {share}\nLines: {FormatAnalysisMetric(node, node.Metrics.TotalLines)}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
     private void DrawTooltipOverlay(DrawingContext context)
@@ -510,9 +510,9 @@ public sealed class TreemapControl : Control
         return
         [
             ("Type", GetKindText(node)),
-            ("Tokens", node.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture)),
+            ("Tokens", FormatAnalysisMetric(node, node.Metrics.Tokens)),
             ("Share", share),
-            ("Lines", node.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture)),
+            ("Lines", FormatAnalysisMetric(node, node.Metrics.TotalLines)),
             ("Ext", extension),
             ("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
         ];
@@ -643,6 +643,11 @@ public sealed class TreemapControl : Control
             Core.Enums.ProjectNodeKind.Directory => "Directory",
             _ => "File",
         };
+
+    private static string FormatAnalysisMetric(ProjectNode node, long value) =>
+        node.SkippedReason is not null
+            ? "n/a"
+            : value.ToString("N0", CultureInfo.CurrentCulture);
 
     private static bool IsLeafNode(ProjectNode node) =>
         node.Kind == Core.Enums.ProjectNodeKind.File || node.Children.Count == 0;

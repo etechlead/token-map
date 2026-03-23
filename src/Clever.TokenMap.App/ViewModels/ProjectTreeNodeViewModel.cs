@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using Avalonia;
 using Clever.TokenMap.Core.Enums;
@@ -35,9 +36,9 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
 
-    public string LinesText => $"{Node.Metrics.TotalLines:N0}";
+    public string LinesText => FormatAnalysisMetric(Node.Metrics.TotalLines);
 
-    public string TokensText => $"{Node.Metrics.Tokens:N0}";
+    public string TokensText => FormatAnalysisMetric(Node.Metrics.Tokens);
 
     public string FilesText => Node.Kind switch
     {
@@ -121,4 +122,9 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
             >= 1024 => $"{bytes / 1024d:F1} KB",
             _ => $"{bytes} B",
         };
+
+    private string FormatAnalysisMetric(long value) =>
+        Node.SkippedReason is not null
+            ? "n/a"
+            : value.ToString("N0", CultureInfo.CurrentCulture);
 }

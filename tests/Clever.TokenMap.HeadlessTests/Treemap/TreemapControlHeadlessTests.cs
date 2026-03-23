@@ -237,6 +237,23 @@ public sealed class TreemapControlHeadlessTests
     }
 
     [AvaloniaFact]
+    public void TreemapControl_HoverSkippedBinaryFile_ShowsNaForAnalysisMetrics()
+    {
+        var control = CreateControl(CreateSnapshotWithSkippedBinaryFile(), AnalysisMetric.Size);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        control.UpdateHover(GetCenter(visual));
+
+        Assert.Contains("image.ico", control.TooltipText);
+        Assert.Contains("Tokens: n/a", control.TooltipText);
+        Assert.Contains("Lines: n/a", control.TooltipText);
+        Assert.Contains("Share: 100.0%", control.TooltipText);
+    }
+
+    [AvaloniaFact]
     public void TreemapControl_Hover_UsesSelectedMetricForShare()
     {
         var snapshot = CreateMetricSensitiveSnapshot();
@@ -342,6 +359,36 @@ public sealed class TreemapControlHeadlessTests
                 Tokens: 42,
                 TotalLines: 11,
                 FileSizeBytes: 128,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        });
+
+        return snapshot;
+    }
+
+    private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithSkippedBinaryFile()
+    {
+        var snapshot = CreateSnapshot();
+        snapshot.Root.Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+            Tokens: 0,
+            TotalLines: 0,
+            FileSizeBytes: 171_801,
+            DescendantFileCount: 1,
+            DescendantDirectoryCount: 0);
+
+        snapshot.Root.Children.Clear();
+        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        {
+            Id = "image.ico",
+            Name = "image.ico",
+            FullPath = "C:\\Demo\\image.ico",
+            RelativePath = "image.ico",
+            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+            SkippedReason = SkippedReason.Binary,
+            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                Tokens: 0,
+                TotalLines: 0,
+                FileSizeBytes: 171_801,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
         });

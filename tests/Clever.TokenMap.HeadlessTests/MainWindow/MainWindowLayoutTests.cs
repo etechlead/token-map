@@ -864,6 +864,30 @@ public sealed class MainWindowLayoutTests
         Assert.EndsWith("/Assets/FileIcons/document.svg", fallbackFileNode.IconPath, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void ProjectTreeNodeViewModel_ShowsNaForSkippedAnalysisMetrics()
+    {
+        var skippedFileNode = new ProjectTreeNodeViewModel(new ProjectNode
+        {
+            Id = "image.ico",
+            Name = "image.ico",
+            FullPath = "C:\\Demo\\image.ico",
+            RelativePath = "image.ico",
+            Kind = ProjectNodeKind.File,
+            SkippedReason = SkippedReason.Binary,
+            Metrics = new NodeMetrics(
+                Tokens: 0,
+                TotalLines: 0,
+                FileSizeBytes: 171_801,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        });
+
+        Assert.Equal("n/a", skippedFileNode.TokensText);
+        Assert.Equal("n/a", skippedFileNode.LinesText);
+        Assert.Equal("167.8 KB", skippedFileNode.SizeText);
+    }
+
     [AvaloniaFact]
     public async Task MainWindow_CancelCommand_ShowsProgressOnlyWhileScanIsRunning()
     {
