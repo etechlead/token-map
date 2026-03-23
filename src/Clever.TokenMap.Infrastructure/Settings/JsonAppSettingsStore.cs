@@ -100,11 +100,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 settings.Analysis.SelectedMetric = selectedMetric;
             }
 
-            if (analysis.SelectedTokenProfile is { } selectedTokenProfile)
-            {
-                settings.Analysis.SelectedTokenProfile = selectedTokenProfile;
-            }
-
             if (analysis.RespectGitIgnore is { } respectGitIgnore)
             {
                 settings.Analysis.RespectGitIgnore = respectGitIgnore;
@@ -184,9 +179,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         [JsonConverter(typeof(NullableStringEnumConverter<AnalysisMetric>))]
         public AnalysisMetric? SelectedMetric { get; set; }
-
-        [JsonConverter(typeof(NullableStringEnumConverter<TokenProfile>))]
-        public TokenProfile? SelectedTokenProfile { get; set; }
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? RespectGitIgnore { get; set; }

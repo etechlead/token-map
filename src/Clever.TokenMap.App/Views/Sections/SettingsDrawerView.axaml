@@ -56,22 +56,6 @@
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
                                        Text="Scan" />
-                            <StackPanel Spacing="4">
-                                <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                                           FontSize="11"
-                                           Text="Tokenizer" />
-                                <ComboBox Name="TokenizerComboBox"
-                                          ItemsSource="{Binding Toolbar.TokenProfileOptions}"
-                                          SelectedItem="{Binding Toolbar.SelectedTokenProfileOption}"
-                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:TokenProfileOption">
-                                            <TextBlock Text="{Binding Label}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
-                            </StackPanel>
-
                             <CheckBox Name="RespectGitIgnoreCheckBox"
                                       Content="Respect .gitignore"
                                       IsChecked="{Binding Toolbar.RespectGitIgnore}"

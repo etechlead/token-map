@@ -134,7 +134,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     {
         public List<string> SeenContents { get; } = [];
 
-        public ValueTask<int> CountTokensAsync(string content, TokenProfile tokenProfile, CancellationToken cancellationToken)
+        public ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
         {
             SeenContents.Add(content);
             return ValueTask.FromResult(content.Length);

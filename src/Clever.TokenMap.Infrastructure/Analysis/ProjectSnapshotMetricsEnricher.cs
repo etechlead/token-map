@@ -40,7 +40,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         var progressState = new ProgressState();
         await EnrichNodeAsync(
             snapshot.Root,
-            snapshot.Options.TokenProfile,
             warnings,
             progress,
             totalFileCount,
@@ -60,7 +59,6 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task EnrichNodeAsync(
         ProjectNode node,
-        TokenProfile tokenProfile,
         List<string> warnings,
         IProgress<AnalysisProgress>? progress,
         int totalFileCount,
@@ -71,7 +69,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.Kind == ProjectNodeKind.File)
         {
-            await EnrichFileNodeAsync(node, tokenProfile, warnings, cancellationToken);
+            await EnrichFileNodeAsync(node, warnings, cancellationToken);
             progressState.ProcessedFileCount++;
             progress?.Report(new AnalysisProgress(
                 Phase: "AnalyzingFiles",
@@ -85,7 +83,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         {
             await EnrichNodeAsync(
                 child,
-                tokenProfile,
                 warnings,
                 progress,
                 totalFileCount,
@@ -96,7 +93,6 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task EnrichFileNodeAsync(
         ProjectNode node,
-        TokenProfile tokenProfile,
         List<string> warnings,
         CancellationToken cancellationToken)
     {
@@ -111,9 +107,9 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (fileState.Exists &&
             _cacheStore is not null &&
-            await TryRestoreCachedMetricsAsync(node, fileState, tokenProfile, cancellationToken))
+            await TryRestoreCachedMetricsAsync(node, fileState, cancellationToken))
         {
-            _logger.LogTrace($"Restored cached metrics for '{node.FullPath}' using {tokenProfile}.");
+            _logger.LogTrace($"Restored cached metrics for '{node.FullPath}'.");
             return;
         }
 
@@ -160,7 +156,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         try
         {
-            tokens = await _tokenCounter.CountTokensAsync(normalizedContent, tokenProfile, cancellationToken);
+            tokens = await _tokenCounter.CountTokensAsync(normalizedContent, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -187,7 +183,6 @@ public sealed class ProjectSnapshotMetricsEnricher
                 node.FullPath,
                 fileState.FileSizeBytes,
                 fileState.LastWriteTimeUtc,
-                tokenProfile,
                 node.Metrics,
                 cancellationToken);
         }
@@ -327,14 +322,12 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task<bool> TryRestoreCachedMetricsAsync(
         ProjectNode node,
         FileState fileState,
-        TokenProfile tokenProfile,
         CancellationToken cancellationToken)
     {
         var cachedMetrics = await _cacheStore!.TryGetFileMetricsAsync(
             node.FullPath,
             fileState.FileSizeBytes,
             fileState.LastWriteTimeUtc,
-            tokenProfile,
             cancellationToken);
 
         if (cachedMetrics is null)

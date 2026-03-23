@@ -1,7 +1,7 @@
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -12,7 +12,6 @@ public sealed class SettingsCoordinatorTests
     {
         var settings = AppSettings.CreateDefault();
         settings.Analysis.SelectedMetric = AnalysisMetric.NonEmptyLines;
-        settings.Analysis.SelectedTokenProfile = TokenProfile.P50KBase;
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.RespectIgnore = false;
         settings.Analysis.UseDefaultExcludes = false;
@@ -23,7 +22,6 @@ public sealed class SettingsCoordinatorTests
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Equal(AnalysisMetric.NonEmptyLines, coordinator.State.SelectedMetric);
-        Assert.Equal(TokenProfile.P50KBase, coordinator.State.SelectedTokenProfile);
         Assert.False(coordinator.State.RespectGitIgnore);
         Assert.False(coordinator.State.RespectIgnore);
         Assert.False(coordinator.State.UseDefaultExcludes);
@@ -95,7 +93,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.State.SelectedTokenProfile = TokenProfile.P50KBase;
+        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
 
         Assert.Equal(0, store.SaveCallCount);
@@ -104,7 +102,7 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(TokenProfile.P50KBase, store.LastSavedSettings!.Analysis.SelectedTokenProfile);
+        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
         Assert.Empty(store.LastSavedSettings.RecentFolderPaths);

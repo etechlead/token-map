@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
+using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
@@ -30,8 +30,6 @@ public sealed class AnalysisSettings
 {
     public AnalysisMetric SelectedMetric { get; set; } = AnalysisMetric.Tokens;
 
-    public TokenProfile SelectedTokenProfile { get; set; } = TokenProfile.O200KBase;
-
     public bool RespectGitIgnore { get; set; } = true;
 
     public bool RespectIgnore { get; set; } = true;
@@ -42,7 +40,6 @@ public sealed class AnalysisSettings
         new()
         {
             SelectedMetric = SelectedMetric,
-            SelectedTokenProfile = SelectedTokenProfile,
             RespectGitIgnore = RespectGitIgnore,
             RespectIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,

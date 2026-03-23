@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Clever.TokenMap.Core.Enums;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.App.State;
 
@@ -23,9 +23,6 @@ public sealed partial class SettingsState : ObservableObject
 
     [ObservableProperty]
     private AnalysisMetric selectedMetric = AnalysisMetric.Tokens;
-
-    [ObservableProperty]
-    private TokenProfile selectedTokenProfile = TokenProfile.O200KBase;
 
     [ObservableProperty]
     private bool respectGitIgnore = true;

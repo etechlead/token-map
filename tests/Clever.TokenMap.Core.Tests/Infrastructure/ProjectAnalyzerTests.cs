@@ -128,7 +128,7 @@ public sealed class ProjectAnalyzerTests : IDisposable
     {
         public int CallCount { get; private set; }
 
-        public ValueTask<int> CountTokensAsync(string content, TokenProfile tokenProfile, CancellationToken cancellationToken)
+        public ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
         {
             CallCount++;
             return ValueTask.FromResult(content.Length);
@@ -137,7 +137,7 @@ public sealed class ProjectAnalyzerTests : IDisposable
 
     private sealed class BlockingTokenCounter : ITokenCounter
     {
-        public async ValueTask<int> CountTokensAsync(string content, TokenProfile tokenProfile, CancellationToken cancellationToken)
+        public async ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
         {
             await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
             return content.Length;

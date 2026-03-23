@@ -5,9 +5,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.App.Services;
 
@@ -90,7 +90,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         lock (_syncLock)
         {
             _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
-            _currentSettings.Analysis.SelectedTokenProfile = State.SelectedTokenProfile;
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.RespectIgnore = State.RespectIgnore;
             _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
@@ -178,7 +177,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         try
         {
             State.SelectedMetric = _currentSettings.Analysis.SelectedMetric;
-            State.SelectedTokenProfile = _currentSettings.Analysis.SelectedTokenProfile;
             State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
             State.RespectIgnore = _currentSettings.Analysis.RespectIgnore;
             State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
@@ -194,7 +192,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
     private static bool IsPersistedStateProperty(string? propertyName) =>
         propertyName is nameof(SettingsState.SelectedMetric) or
-        nameof(SettingsState.SelectedTokenProfile) or
         nameof(SettingsState.RespectGitIgnore) or
         nameof(SettingsState.RespectIgnore) or
         nameof(SettingsState.UseDefaultExcludes) or

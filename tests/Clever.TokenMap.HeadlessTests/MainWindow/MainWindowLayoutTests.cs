@@ -449,7 +449,6 @@ public sealed class MainWindowLayoutTests
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
-        var tokenizerComboBox = FindNamedDescendant<ComboBox>(window, "TokenizerComboBox");
         var gitIgnoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectGitIgnoreCheckBox");
         var ignoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectIgnoreCheckBox");
         var defaultExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseDefaultExcludesCheckBox");
@@ -461,7 +460,6 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(themeSystemButton);
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
-        Assert.NotNull(tokenizerComboBox);
         Assert.NotNull(gitIgnoreCheckBox);
         Assert.NotNull(ignoreCheckBox);
         Assert.NotNull(defaultExcludesCheckBox);
@@ -475,7 +473,7 @@ public sealed class MainWindowLayoutTests
         Assert.True(themeSystemButton.IsChecked);
         Assert.False(themeLightButton.IsChecked);
         Assert.False(themeDarkButton.IsChecked);
-        Assert.True(tokenizerComboBox.IsEnabled);
+        Assert.Null(FindNamedDescendant<ComboBox>(window, "TokenizerComboBox"));
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(ignoreCheckBox.IsEnabled);
         Assert.True(defaultExcludesCheckBox.IsEnabled);
@@ -529,7 +527,6 @@ public sealed class MainWindowLayoutTests
         var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
         var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
         var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
-        var tokenizerComboBox = FindNamedDescendant<ComboBox>(window, "TokenizerComboBox");
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
@@ -551,7 +548,7 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("1", fileSummaryText?.Text);
         Assert.Null(warningSummaryText);
         Assert.True(metricComboBox?.IsEnabled);
-        Assert.True(tokenizerComboBox?.IsEnabled);
+        Assert.Null(FindNamedDescendant<ComboBox>(window, "TokenizerComboBox"));
         Assert.False(statusStrip.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(workspaceHost.IsVisible);

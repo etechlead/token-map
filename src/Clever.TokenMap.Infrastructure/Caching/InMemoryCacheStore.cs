@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Paths;
@@ -22,12 +21,11 @@ public sealed class InMemoryCacheStore : ICacheStore
         string fullPath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
-        TokenProfile tokenProfile,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc, tokenProfile);
+        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc);
         return ValueTask.FromResult(_entries.TryGetValue(key, out var metrics) ? metrics : null);
     }
 
@@ -35,7 +33,6 @@ public sealed class InMemoryCacheStore : ICacheStore
         string fullPath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
-        TokenProfile tokenProfile,
         NodeMetrics metrics,
         CancellationToken cancellationToken)
     {
@@ -43,7 +40,7 @@ public sealed class InMemoryCacheStore : ICacheStore
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc, tokenProfile);
+        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc);
         _entries[key] = metrics;
 
         return ValueTask.CompletedTask;
@@ -52,27 +49,23 @@ public sealed class InMemoryCacheStore : ICacheStore
     private CacheKey CreateKey(
         string fullPath,
         long fileSizeBytes,
-        DateTimeOffset lastWriteTimeUtc,
-        TokenProfile tokenProfile) =>
+        DateTimeOffset lastWriteTimeUtc) =>
         new(
             _pathNormalizer.NormalizeFullPath(fullPath),
             fileSizeBytes,
-            lastWriteTimeUtc,
-            tokenProfile);
+            lastWriteTimeUtc);
 
     private readonly record struct CacheKey(
         string FullPath,
         long FileSizeBytes,
-        DateTimeOffset LastWriteTimeUtc,
-        TokenProfile TokenProfile);
+        DateTimeOffset LastWriteTimeUtc);
 
     private sealed class CacheKeyComparer(StringComparer pathComparer) : IEqualityComparer<CacheKey>
     {
         public bool Equals(CacheKey x, CacheKey y) =>
             pathComparer.Equals(x.FullPath, y.FullPath) &&
             x.FileSizeBytes == y.FileSizeBytes &&
-            x.LastWriteTimeUtc.Equals(y.LastWriteTimeUtc) &&
-            x.TokenProfile == y.TokenProfile;
+            x.LastWriteTimeUtc.Equals(y.LastWriteTimeUtc);
 
         public int GetHashCode([DisallowNull] CacheKey obj)
         {
@@ -80,7 +73,6 @@ public sealed class InMemoryCacheStore : ICacheStore
             hash.Add(obj.FullPath, pathComparer);
             hash.Add(obj.FileSizeBytes);
             hash.Add(obj.LastWriteTimeUtc);
-            hash.Add((int)obj.TokenProfile);
             return hash.ToHashCode();
         }
     }

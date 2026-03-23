@@ -20,7 +20,7 @@
 ## Sources Of Truth
 
 - The scanner defines the tree structure and the included path set.
-- Token counts come from the local tokenizer pipeline.
+- Token counts come from the local `o200k_base` tokenizer pipeline.
 - Line metrics come from local file analysis for included text files.
 - File details show extensions rather than inferred languages.
 
