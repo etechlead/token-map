@@ -16,7 +16,7 @@
         d:DesignWidth="1600"
         d:DesignHeight="1000"
         mc:Ignorable="d"
-        Icon="/Assets/avalonia-logo.ico"
+        Icon="/Assets/app-icon.ico"
         Title="{Binding WindowTitle}">
     <Design.DataContext>
         <vm:MainWindowViewModel />
