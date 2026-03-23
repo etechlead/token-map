@@ -38,16 +38,23 @@
                                 <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
                                            FontSize="11"
                                            Text="Treemap metric" />
-                                <ComboBox Name="MetricComboBox"
-                                          ItemsSource="{Binding Toolbar.MetricOptions}"
-                                          SelectedItem="{Binding Toolbar.SelectedMetricOption}"
-                                          IsEnabled="{Binding Toolbar.CanChangeMetric}">
-                                    <ComboBox.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:AnalysisMetricOption">
-                                            <TextBlock Text="{Binding Label}" />
-                                        </DataTemplate>
-                                    </ComboBox.ItemTemplate>
-                                </ComboBox>
+                                <Border Classes="metric-switcher-panel">
+                                    <Grid ColumnDefinitions="*,*">
+                                        <RadioButton Name="MetricTokensRadioButton"
+                                                     Classes="metric-mode-button start"
+                                                     GroupName="TreemapMetric"
+                                                     Content="Tokens"
+                                                     IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                                     IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}" />
+                                        <RadioButton Name="MetricLinesRadioButton"
+                                                     Grid.Column="1"
+                                                     Classes="metric-mode-button end"
+                                                     GroupName="TreemapMetric"
+                                                     Content="Lines"
+                                                     IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                                     IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}" />
+                                    </Grid>
+                                </Border>
                             </StackPanel>
                         </StackPanel>
                     </Border>

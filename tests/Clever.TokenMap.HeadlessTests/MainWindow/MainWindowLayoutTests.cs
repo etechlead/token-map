@@ -445,7 +445,8 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
+        var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
+        var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
@@ -455,7 +456,8 @@ public sealed class MainWindowLayoutTests
         var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
 
-        Assert.NotNull(metricComboBox);
+        Assert.NotNull(metricTokensRadioButton);
+        Assert.NotNull(metricLinesRadioButton);
         Assert.NotNull(themeSystemButton);
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
@@ -464,14 +466,16 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(rescanButton);
         Assert.NotNull(selectedFolderGroup);
         Assert.NotNull(summaryGroup);
-        Assert.False(metricComboBox.IsEnabled);
+        Assert.False(metricTokensRadioButton.IsEnabled);
+        Assert.False(metricLinesRadioButton.IsEnabled);
+        Assert.True(metricTokensRadioButton.IsChecked);
+        Assert.False(metricLinesRadioButton.IsChecked);
         Assert.True(themeSystemButton.IsEnabled);
         Assert.True(themeLightButton.IsEnabled);
         Assert.True(themeDarkButton.IsEnabled);
         Assert.True(themeSystemButton.IsChecked);
         Assert.False(themeLightButton.IsChecked);
         Assert.False(themeDarkButton.IsChecked);
-        Assert.Null(FindNamedDescendant<ComboBox>(window, "TokenizerComboBox"));
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(defaultExcludesCheckBox.IsEnabled);
         Assert.False(rescanButton.IsVisible);
@@ -523,7 +527,8 @@ public sealed class MainWindowLayoutTests
         var lineSummaryText = FindNamedDescendant<TextBlock>(window, "LineSummaryValueText");
         var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
         var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
-        var metricComboBox = FindNamedDescendant<ComboBox>(window, "MetricComboBox");
+        var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
+        var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
@@ -544,8 +549,12 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("11", lineSummaryText?.Text);
         Assert.Equal("1", fileSummaryText?.Text);
         Assert.Null(warningSummaryText);
-        Assert.True(metricComboBox?.IsEnabled);
-        Assert.Null(FindNamedDescendant<ComboBox>(window, "TokenizerComboBox"));
+        Assert.NotNull(metricTokensRadioButton);
+        Assert.NotNull(metricLinesRadioButton);
+        Assert.True(metricTokensRadioButton.IsEnabled);
+        Assert.True(metricLinesRadioButton.IsEnabled);
+        Assert.True(metricTokensRadioButton.IsChecked);
+        Assert.False(metricLinesRadioButton.IsChecked);
         Assert.False(statusStrip.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(workspaceHost.IsVisible);

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
@@ -11,12 +10,6 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ToolbarViewModel : ViewModelBase
 {
-    private static readonly IReadOnlyList<AnalysisMetricOption> MetricOptionItems =
-    [
-        new(AnalysisMetric.Tokens, "Tokens"),
-        new(AnalysisMetric.TotalLines, "Lines"),
-    ];
-
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
@@ -50,8 +43,6 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
 
-    public IReadOnlyList<AnalysisMetricOption> MetricOptions { get; } = MetricOptionItems;
-
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
 
@@ -64,14 +55,26 @@ public partial class ToolbarViewModel : ViewModelBase
     [ObservableProperty]
     private string selectedFolderDisplay = "No folder selected";
 
-    public AnalysisMetricOption SelectedMetricOption
+    public bool IsTokensMetricSelected
     {
-        get => GetMetricOption(_settingsState.SelectedMetric);
+        get => SelectedMetric == AnalysisMetric.Tokens;
         set
         {
-            if (value is not null)
+            if (value)
             {
-                SelectedMetric = value.Value;
+                SelectedMetric = AnalysisMetric.Tokens;
+            }
+        }
+    }
+
+    public bool IsLinesMetricSelected
+    {
+        get => SelectedMetric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines;
+        set
+        {
+            if (value)
+            {
+                SelectedMetric = AnalysisMetric.TotalLines;
             }
         }
     }
@@ -134,7 +137,8 @@ public partial class ToolbarViewModel : ViewModelBase
         {
             case nameof(SettingsState.SelectedMetric):
                 OnPropertyChanged(nameof(SelectedMetric));
-                OnPropertyChanged(nameof(SelectedMetricOption));
+                OnPropertyChanged(nameof(IsTokensMetricSelected));
+                OnPropertyChanged(nameof(IsLinesMetricSelected));
                 break;
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
@@ -156,13 +160,5 @@ public partial class ToolbarViewModel : ViewModelBase
         {
             RespectGitIgnore = RespectGitIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
-        };
-
-    private static AnalysisMetricOption GetMetricOption(AnalysisMetric value) =>
-        value switch
-        {
-            AnalysisMetric.TotalLines => MetricOptionItems[1],
-            AnalysisMetric.NonEmptyLines => MetricOptionItems[1],
-            _ => MetricOptionItems[0],
         };
 }
