@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Infrastructure.Logging;
+using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
@@ -137,7 +138,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
     private static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> persistedPaths)
     {
-        var uniquePaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var uniquePaths = new HashSet<string>(PathComparison.Comparer);
         var normalizedPaths = new List<string>();
 
         foreach (var persistedPath in persistedPaths)

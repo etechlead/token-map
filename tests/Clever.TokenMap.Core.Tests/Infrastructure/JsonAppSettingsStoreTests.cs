@@ -99,6 +99,39 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Load_UsesCurrentPlatformPathComparer_ForRecentFolders()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(
+            GetSettingsFilePath(),
+            """
+            {
+              "recentFolderPaths": [
+                "/Users/demo/Repo",
+                "/Users/demo/repo"
+              ]
+            }
+            """);
+
+        var store = CreateStore();
+
+        var settings = store.Load();
+
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Collection(
+                settings.RecentFolderPaths,
+                path => Assert.Equal("/Users/demo/Repo", path));
+            return;
+        }
+
+        Assert.Collection(
+            settings.RecentFolderPaths,
+            path => Assert.Equal("/Users/demo/Repo", path),
+            path => Assert.Equal("/Users/demo/repo", path));
+    }
+
+    [Fact]
     public void Save_WritesJsonThatCanBeLoadedAgain()
     {
         var store = CreateStore();

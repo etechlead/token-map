@@ -1,0 +1,48 @@
+name: release-macos
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build-dmg:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Clever.TokenMap.sln
+
+      - name: Build
+        run: dotnet build Clever.TokenMap.sln --no-restore
+
+      - name: Test
+        run: dotnet test Clever.TokenMap.sln --no-build
+
+      - name: Package macOS DMG
+        run: bash ./scripts/package-macos-dmg.sh
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TokenMap-macos-arm64-dmg
+          path: artifacts/macos-arm64/TokenMap-macos-arm64.dmg
+          if-no-files-found: error
+
+      - name: Attach DMG to GitHub release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" artifacts/macos-arm64/TokenMap-macos-arm64.dmg --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

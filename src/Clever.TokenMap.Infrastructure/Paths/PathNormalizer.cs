@@ -4,8 +4,7 @@ namespace Clever.TokenMap.Infrastructure.Paths;
 
 public sealed class PathNormalizer
 {
-    public StringComparer PathComparer { get; } =
-        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+    public StringComparer PathComparer { get; } = PathComparison.Comparer;
 
     public string NormalizeRootPath(string rootPath)
     {

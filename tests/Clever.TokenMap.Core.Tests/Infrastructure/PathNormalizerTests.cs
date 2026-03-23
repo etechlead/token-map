@@ -29,6 +29,14 @@ public sealed class PathNormalizerTests
     }
 
     [Fact]
+    public void NormalizeRelativePath_RemovesCurrentDirectoryPrefix_ForPosixStyleRelativePath()
+    {
+        var relativePath = PathNormalizer.NormalizeRelativePath("./src/app/Program.cs");
+
+        Assert.Equal("src/app/Program.cs", relativePath);
+    }
+
+    [Fact]
     public void GetNodeId_ReturnsSlashForRoot()
     {
         Assert.Equal("/", PathNormalizer.GetNodeId(string.Empty));

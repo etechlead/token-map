@@ -31,8 +31,8 @@ The current technical boundaries are documented in [docs/architecture.md](docs/a
 
 Current limitations:
 
-- Windows is the primary MVP target. macOS is validated as a secondary target. Linux polish is intentionally deferred.
-- The repository ships source and CI for the first public release, but not installers, signing, notarization, or release automation.
+- Windows is the primary MVP target. macOS targets Apple Silicon only. Local validation can use a bundle published on Windows, and GitHub Actions can produce an unsigned Apple Silicon DMG for Releases. Linux polish is intentionally deferred.
+- The repository ships source, CI, and an unsigned Apple Silicon DMG release path, but not signing, notarization, installers, or broader multi-platform release automation.
 - Settings currently persist lightweight analysis and appearance preferences, not recent projects or saved scan presets.
 
 ## Getting Started
@@ -49,10 +49,33 @@ Run the desktop app:
 dotnet run --project .\src\Clever.TokenMap.App\Clever.TokenMap.App.csproj
 ```
 
+Build an Apple Silicon macOS bundle from Windows:
+
+```powershell
+.\scripts\publish-macos-arm64.ps1
+```
+
+The script writes `artifacts\macos-arm64\TokenMap.app`. Copy that bundle to a Mac for manual validation. If the direct copy drops execute permissions, run:
+
+```bash
+chmod +x "TokenMap.app/Contents/MacOS/Clever.TokenMap.App"
+```
+
+Build an Apple Silicon macOS DMG on macOS or in GitHub Actions:
+
+```bash
+bash ./scripts/package-macos-dmg.sh
+```
+
+The script writes `artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The release workflow in [release-macos.yml](.github/workflows/release-macos.yml) runs on `macos-latest`, uploads that DMG as a workflow artifact, and attaches it to published GitHub Releases.
+
+The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
+
 ## Repository Quality
 
 - `README`, `LICENSE`, `.editorconfig`, analyzer policy, and GitHub Actions are part of the repo baseline.
 - Build and test CI runs on `windows-latest` and `macos-latest`.
+- A release workflow can package an unsigned Apple Silicon DMG on `macos-latest` and attach it to GitHub Releases.
 - Headless UI tests cover the shell layout and tree/treemap synchronization.
 - Unit tests cover settings serialization, debounced settings persistence, analysis session flow, and treemap navigation state.
 

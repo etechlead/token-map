@@ -1,5 +1,7 @@
 namespace Clever.TokenMap.Infrastructure.Filtering;
 
+using Clever.TokenMap.Infrastructure.Paths;
+
 public static class DefaultExcludeMatcher
 {
     private static readonly HashSet<string> DirectoryNames = new(
@@ -19,7 +21,7 @@ public static class DefaultExcludeMatcher
         "Debug",
         "Release",
     ],
-    OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
+    PathComparison.Comparer);
 
     public static bool IsExcluded(string normalizedRelativePath, bool isDirectory)
     {

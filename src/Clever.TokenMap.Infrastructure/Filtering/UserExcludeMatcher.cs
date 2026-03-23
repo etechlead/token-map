@@ -1,14 +1,12 @@
 using System.Text;
 using System.Text.RegularExpressions;
+using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Filtering;
 
 public sealed class UserExcludeMatcher
 {
-    private readonly RegexOptions _regexOptions =
-        RegexOptions.Compiled |
-        RegexOptions.CultureInvariant |
-        (OperatingSystem.IsWindows() ? RegexOptions.IgnoreCase : RegexOptions.None);
+    private readonly RegexOptions _regexOptions = PathComparison.PathRegexOptions;
 
     public bool IsExcluded(IReadOnlyList<string> userExcludes, string normalizedRelativePath, bool isDirectory)
     {
