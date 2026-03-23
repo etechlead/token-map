@@ -19,7 +19,6 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private readonly string _windowTitle = "TokenMap";
     private readonly IAnalysisSessionController _analysisSessionController;
     private readonly IFolderPathService _folderPathService;
     private readonly IPathShellService _pathShellService;
@@ -102,7 +101,7 @@ public partial class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public string WindowTitle => _windowTitle;
+    public string WindowTitle => BuildWindowTitle(_analysisSessionController.SelectedFolderPath);
 
     public ToolbarViewModel Toolbar { get; }
 
@@ -250,9 +249,11 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             case nameof(IAnalysisSessionController.SelectedFolderPath):
                 Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
+                OnPropertyChanged(nameof(WindowTitle));
                 RefreshToolbarAvailability();
                 break;
             case nameof(IAnalysisSessionController.CurrentSnapshot):
+                OnPropertyChanged(nameof(WindowTitle));
                 OnPropertyChanged(nameof(HasSnapshot));
                 OnPropertyChanged(nameof(ShowRecentStartSurface));
                 if (_analysisSessionController.CurrentSnapshot is { } snapshot)
@@ -355,17 +356,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private RecentFolderItemViewModel CreateRecentFolderItem(string folderPath)
     {
-        var trimmedPath = folderPath.Trim();
-        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        if (string.IsNullOrWhiteSpace(displayName))
-        {
-            displayName = trimmedPath;
-        }
-
         return new RecentFolderItemViewModel(
-            displayName,
-            trimmedPath,
-            isMissing: !_folderPathService.Exists(trimmedPath));
+            GetFolderDisplayName(folderPath),
+            folderPath.Trim(),
+            isMissing: !_folderPathService.Exists(folderPath.Trim()));
     }
 
     private static RecentFolderItemViewModel CreateEmptyFlyoutItem()
@@ -376,6 +370,28 @@ public partial class MainWindowViewModel : ViewModelBase
             secondaryText: "Analyze a folder once and it will appear here.",
             canOpen: false,
             showFolderIcon: false);
+    }
+
+    private static string BuildWindowTitle(string? folderPath)
+    {
+        var displayName = GetFolderDisplayName(folderPath);
+        return string.IsNullOrWhiteSpace(displayName)
+            ? "TokenMap"
+            : $"{displayName} - TokenMap";
+    }
+
+    private static string GetFolderDisplayName(string? folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return string.Empty;
+        }
+
+        var trimmedPath = folderPath.Trim();
+        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        return string.IsNullOrWhiteSpace(displayName)
+            ? trimmedPath
+            : displayName;
     }
 
     private static AnalysisSessionController CreateAnalysisSessionController(

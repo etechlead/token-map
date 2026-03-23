@@ -24,6 +24,32 @@ namespace Clever.TokenMap.HeadlessTests;
 public sealed class MainWindowLayoutTests
 {
     [AvaloniaFact]
+    public void MainWindow_Title_DefaultsToTokenMap_WhenNoFolderIsSelected()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        Assert.Equal("TokenMap", window.Title);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_Title_UsesSelectedFolderName_AfterFolderIsOpened()
+    {
+        var window = new MainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        Assert.Equal("Demo - TokenMap", window.Title);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_ContainsMvpShellSections()
     {
         var window = new MainWindow
