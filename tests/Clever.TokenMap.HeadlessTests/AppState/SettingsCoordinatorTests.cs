@@ -20,7 +20,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        Assert.Equal(AnalysisMetric.NonEmptyLines, coordinator.State.SelectedMetric);
+        Assert.Equal(AnalysisMetric.TotalLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
         Assert.False(coordinator.State.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
@@ -58,7 +58,7 @@ public sealed class SettingsCoordinatorTests
         await Task.Delay(120);
 
         Assert.Equal(1, store.SaveCallCount);
-        Assert.Equal(AnalysisMetric.NonEmptyLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
     }
 
     [Fact]

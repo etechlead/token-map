@@ -75,8 +75,6 @@ public sealed class TreemapColorRulesTests
             Metrics = new NodeMetrics(
                 Tokens: 100,
                 TotalLines: 20,
-                NonEmptyLines: 20,
-                BlankLines: 0,
                 FileSizeBytes: 100,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),

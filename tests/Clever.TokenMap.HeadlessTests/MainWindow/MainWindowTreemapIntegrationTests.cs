@@ -211,9 +211,7 @@ public sealed class MainWindowTreemapIntegrationTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: fileCount,
-                TotalLines: fileCount * 10,
-                NonEmptyLines: fileCount * 9,
-                BlankLines: fileCount,
+                TotalLines: fileCount * 9,
                 FileSizeBytes: fileCount * 100,
                 DescendantFileCount: fileCount,
                 DescendantDirectoryCount: 0),
@@ -231,9 +229,7 @@ public sealed class MainWindowTreemapIntegrationTests
                 Kind = ProjectNodeKind.File,
                 Metrics = new NodeMetrics(
                     Tokens: 1,
-                    TotalLines: 10,
-                    NonEmptyLines: 9,
-                    BlankLines: 1,
+                    TotalLines: 9,
                     FileSizeBytes: 100,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),

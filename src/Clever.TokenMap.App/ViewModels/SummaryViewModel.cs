@@ -42,7 +42,7 @@ public partial class SummaryViewModel : ViewModelBase
         SummaryText = state switch
         {
             AnalysisState.Idle => "Select a folder to build a project treemap and metrics snapshot.",
-            AnalysisState.Scanning => "Analyzing project structure, token counts and line statistics.",
+            AnalysisState.Scanning => "Analyzing project structure, token counts and non-empty line statistics.",
             AnalysisState.Cancelled => "Analysis was cancelled. Previous snapshot remains available.",
             AnalysisState.Failed => "Analysis failed. Check the status message and diagnostics.",
             _ => SummaryText,

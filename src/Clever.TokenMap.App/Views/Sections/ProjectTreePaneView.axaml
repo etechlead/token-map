@@ -79,7 +79,7 @@
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <TextBlock Classes="tree-table-number"
                                            VerticalAlignment="Center"
-                                           Text="{Binding TotalLinesText}" />
+                                           Text="{Binding LinesText}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

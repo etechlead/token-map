@@ -41,32 +41,22 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(["one\n\n  \ntwo", "hello\nworld"], tokenCounter.SeenContents);
 
         Assert.Equal(11, programNode.Metrics.Tokens);
-        Assert.Equal(4, programNode.Metrics.TotalLines);
-        Assert.Equal(2, programNode.Metrics.NonEmptyLines);
-        Assert.Equal(2, programNode.Metrics.BlankLines);
+        Assert.Equal(2, programNode.Metrics.TotalLines);
 
         Assert.Equal(11, notesNode.Metrics.Tokens);
         Assert.Equal(2, notesNode.Metrics.TotalLines);
-        Assert.Equal(2, notesNode.Metrics.NonEmptyLines);
-        Assert.Equal(0, notesNode.Metrics.BlankLines);
 
         Assert.Equal(SkippedReason.Binary, imageNode.SkippedReason);
         Assert.Equal(0, imageNode.Metrics.Tokens);
         Assert.Equal(0, imageNode.Metrics.TotalLines);
-        Assert.Equal(0, imageNode.Metrics.NonEmptyLines);
-        Assert.Equal(0, imageNode.Metrics.BlankLines);
 
         Assert.Equal(22, enriched.Root.Metrics.Tokens);
-        Assert.Equal(6, enriched.Root.Metrics.TotalLines);
-        Assert.Equal(4, enriched.Root.Metrics.NonEmptyLines);
-        Assert.Equal(2, enriched.Root.Metrics.BlankLines);
+        Assert.Equal(4, enriched.Root.Metrics.TotalLines);
         Assert.Equal(3, enriched.Root.Metrics.DescendantFileCount);
         Assert.Equal(1, enriched.Root.Metrics.DescendantDirectoryCount);
 
         Assert.Equal(11, srcNode.Metrics.Tokens);
-        Assert.Equal(4, srcNode.Metrics.TotalLines);
-        Assert.Equal(2, srcNode.Metrics.NonEmptyLines);
-        Assert.Equal(2, srcNode.Metrics.BlankLines);
+        Assert.Equal(2, srcNode.Metrics.TotalLines);
         Assert.Equal(1, srcNode.Metrics.DescendantFileCount);
         Assert.Equal(0, srcNode.Metrics.DescendantDirectoryCount);
     }
@@ -93,8 +83,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
         Assert.Equal(0, enriched.Root.Metrics.Tokens);
         Assert.Equal(0, enriched.Root.Metrics.TotalLines);
-        Assert.Equal(0, enriched.Root.Metrics.NonEmptyLines);
-        Assert.Equal(0, enriched.Root.Metrics.BlankLines);
     }
 
     [Fact]
@@ -113,13 +101,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var sampleNode = Assert.Single(enriched.Root.Children, node => node.Name == "sample.txt");
         var emptyNode = Assert.Single(enriched.Root.Children, node => node.Name == "empty.txt");
 
-        Assert.Equal(5, sampleNode.Metrics.TotalLines);
-        Assert.Equal(2, sampleNode.Metrics.NonEmptyLines);
-        Assert.Equal(3, sampleNode.Metrics.BlankLines);
+        Assert.Equal(2, sampleNode.Metrics.TotalLines);
 
         Assert.Equal(0, emptyNode.Metrics.TotalLines);
-        Assert.Equal(0, emptyNode.Metrics.NonEmptyLines);
-        Assert.Equal(0, emptyNode.Metrics.BlankLines);
     }
 
     public void Dispose()

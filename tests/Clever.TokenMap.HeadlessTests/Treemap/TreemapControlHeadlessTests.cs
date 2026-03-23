@@ -58,7 +58,7 @@ public sealed class TreemapControlHeadlessTests
         Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
         Assert.Null(control.SelectedNode);
         Assert.Contains("Program.cs", control.TooltipText);
-        Assert.Contains("Non-empty/Blank: 11/1", control.TooltipText);
+        Assert.Contains("Lines: 11", control.TooltipText);
         Assert.Contains("Ext: .cs", control.TooltipText);
         Assert.Equal(point, control.TooltipAnchorPoint);
 
@@ -248,7 +248,7 @@ public sealed class TreemapControlHeadlessTests
         var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "a.cs");
         control.UpdateHover(GetCenter(visual));
 
-        Assert.Contains("Share: 20.0%", control.TooltipText);
+        Assert.Contains("Share: 10.0%", control.TooltipText);
     }
 
     [AvaloniaFact]
@@ -311,9 +311,7 @@ public sealed class TreemapControlHeadlessTests
             Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Directory,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 42,
-                TotalLines: 12,
-                NonEmptyLines: 11,
-                BlankLines: 1,
+                TotalLines: 11,
                 FileSizeBytes: 128,
                 DescendantFileCount: 0,
                 DescendantDirectoryCount: 0),
@@ -335,9 +333,7 @@ public sealed class TreemapControlHeadlessTests
             Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 42,
-                TotalLines: 12,
-                NonEmptyLines: 11,
-                BlankLines: 1,
+                TotalLines: 11,
                 FileSizeBytes: 128,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -352,8 +348,6 @@ public sealed class TreemapControlHeadlessTests
         snapshot.Root.Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
             Tokens: 100,
             TotalLines: 100,
-            NonEmptyLines: 100,
-            BlankLines: 0,
             FileSizeBytes: 256,
             DescendantFileCount: 2,
             DescendantDirectoryCount: 0);
@@ -368,9 +362,7 @@ public sealed class TreemapControlHeadlessTests
             Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 80,
-                TotalLines: 20,
-                NonEmptyLines: 10,
-                BlankLines: 10,
+                TotalLines: 10,
                 FileSizeBytes: 128,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -384,9 +376,7 @@ public sealed class TreemapControlHeadlessTests
             Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 20,
-                TotalLines: 80,
-                NonEmptyLines: 90,
-                BlankLines: 0,
+                TotalLines: 90,
                 FileSizeBytes: 128,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),

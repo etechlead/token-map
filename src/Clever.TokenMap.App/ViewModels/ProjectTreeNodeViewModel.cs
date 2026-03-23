@@ -35,7 +35,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
 
-    public string TotalLinesText => $"{Node.Metrics.TotalLines:N0}";
+    public string LinesText => $"{Node.Metrics.TotalLines:N0}";
 
     public string TokensText => $"{Node.Metrics.Tokens:N0}";
 

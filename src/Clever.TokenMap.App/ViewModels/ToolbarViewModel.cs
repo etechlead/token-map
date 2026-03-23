@@ -14,8 +14,7 @@ public partial class ToolbarViewModel : ViewModelBase
     private static readonly IReadOnlyList<AnalysisMetricOption> MetricOptionItems =
     [
         new(AnalysisMetric.Tokens, "Tokens"),
-        new(AnalysisMetric.TotalLines, "Total lines"),
-        new(AnalysisMetric.NonEmptyLines, "Non-empty lines"),
+        new(AnalysisMetric.TotalLines, "Lines"),
     ];
 
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
@@ -163,7 +162,7 @@ public partial class ToolbarViewModel : ViewModelBase
         value switch
         {
             AnalysisMetric.TotalLines => MetricOptionItems[1],
-            AnalysisMetric.NonEmptyLines => MetricOptionItems[2],
+            AnalysisMetric.NonEmptyLines => MetricOptionItems[1],
             _ => MetricOptionItems[0],
         };
 }

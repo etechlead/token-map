@@ -367,12 +367,11 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var breakdown = $"{node.Metrics.NonEmptyLines:N0}/{node.Metrics.BlankLines:N0}";
         var extension = node.Kind == Core.Enums.ProjectNodeKind.File
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nNon-empty/Blank: {breakdown}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {node.Metrics.Tokens:N0}\nShare: {share}\nLines: {node.Metrics.TotalLines:N0}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
     private void DrawTooltipOverlay(DrawingContext context)
@@ -504,7 +503,6 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var breakdown = $"{node.Metrics.NonEmptyLines:N0}/{node.Metrics.BlankLines:N0}";
         var extension = node.Kind == Core.Enums.ProjectNodeKind.File
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
@@ -515,7 +513,6 @@ public sealed class TreemapControl : Control
             ("Tokens", node.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture)),
             ("Share", share),
             ("Lines", node.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture)),
-            ("Non-empty/Blank", breakdown),
             ("Ext", extension),
             ("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
         ];
@@ -631,7 +628,7 @@ public sealed class TreemapControl : Control
         Metric switch
         {
             AnalysisMetric.TotalLines => node.Metrics.TotalLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.TotalLines,
             _ => node.Metrics.Tokens,
         };
 

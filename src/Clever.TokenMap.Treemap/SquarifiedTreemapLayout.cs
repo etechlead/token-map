@@ -174,7 +174,7 @@ public sealed class SquarifiedTreemapLayout
         metric switch
         {
             AnalysisMetric.TotalLines => node.Metrics.TotalLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.TotalLines,
             _ => node.Metrics.Tokens,
         };
 
@@ -183,4 +183,3 @@ public sealed class SquarifiedTreemapLayout
         public double Area { get; init; }
     }
 }
-

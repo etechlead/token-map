@@ -57,7 +57,9 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 Directory.CreateDirectory(directoryPath);
             }
 
-            var json = JsonSerializer.Serialize(settings, SerializerOptions);
+            var normalizedSettings = settings.Clone();
+            normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
+            var json = JsonSerializer.Serialize(normalizedSettings, SerializerOptions);
             File.WriteAllText(tempFilePath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             File.Move(tempFilePath, _settingsFilePath, overwrite: true);
         }
@@ -98,7 +100,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         {
             if (analysis.SelectedMetric is { } selectedMetric)
             {
-                settings.Analysis.SelectedMetric = selectedMetric;
+                settings.Analysis.SelectedMetric = NormalizeAnalysisMetric(selectedMetric);
             }
 
             if (analysis.RespectGitIgnore is { } respectGitIgnore)
@@ -130,6 +132,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
     private static string GetDefaultSettingsFilePath()
         => TokenMapAppDataPaths.GetSettingsFilePath();
+
+    private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
+        selectedMetric == AnalysisMetric.NonEmptyLines
+            ? AnalysisMetric.TotalLines
+            : selectedMetric;
 
     private static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> persistedPaths)
     {

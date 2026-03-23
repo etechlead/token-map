@@ -541,7 +541,7 @@ public sealed class MainWindowLayoutTests
         Assert.Equal(2, viewModel.Tree.VisibleNodes.Count);
         Assert.Equal(AnalysisState.Completed, viewModel.AnalysisState);
         Assert.Equal("42", tokenSummaryText?.Text);
-        Assert.Equal("12", lineSummaryText?.Text);
+        Assert.Equal("11", lineSummaryText?.Text);
         Assert.Equal("1", fileSummaryText?.Text);
         Assert.Null(warningSummaryText);
         Assert.True(metricComboBox?.IsEnabled);
@@ -654,8 +654,6 @@ public sealed class MainWindowLayoutTests
             Metrics = new NodeMetrics(
                 Tokens: 30,
                 TotalLines: 3,
-                NonEmptyLines: 3,
-                BlankLines: 0,
                 FileSizeBytes: 30,
                 DescendantFileCount: 2,
                 DescendantDirectoryCount: 0),
@@ -671,8 +669,6 @@ public sealed class MainWindowLayoutTests
                     Metrics = new NodeMetrics(
                         Tokens: 10,
                         TotalLines: 1,
-                        NonEmptyLines: 1,
-                        BlankLines: 0,
                         FileSizeBytes: 10,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -687,8 +683,6 @@ public sealed class MainWindowLayoutTests
                     Metrics = new NodeMetrics(
                         Tokens: 20,
                         TotalLines: 2,
-                        NonEmptyLines: 2,
-                        BlankLines: 0,
                         FileSizeBytes: 20,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -930,8 +924,6 @@ public sealed class MainWindowLayoutTests
             Metrics = new NodeMetrics(
                 Tokens: children.Sum(item => item.Tokens),
                 TotalLines: children.Sum(item => item.TotalLines),
-                NonEmptyLines: children.Sum(item => item.TotalLines),
-                BlankLines: 0,
                 FileSizeBytes: children.Sum(item => item.FileSizeBytes),
                 DescendantFileCount: children.Length,
                 DescendantDirectoryCount: 0),
@@ -949,8 +941,6 @@ public sealed class MainWindowLayoutTests
                 Metrics = new NodeMetrics(
                     Tokens: item.Tokens,
                     TotalLines: item.TotalLines,
-                    NonEmptyLines: item.TotalLines,
-                    BlankLines: 0,
                     FileSizeBytes: item.FileSizeBytes,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),

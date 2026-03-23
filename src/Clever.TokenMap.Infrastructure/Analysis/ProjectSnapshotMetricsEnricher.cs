@@ -151,7 +151,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
 
         var normalizedContent = NormalizeNewlines(content);
-        var lineMetrics = CountLineMetrics(normalizedContent);
+        var nonEmptyLineCount = CountNonEmptyLines(normalizedContent);
         long tokens = 0;
 
         try
@@ -170,9 +170,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         node.Metrics = new NodeMetrics(
             Tokens: tokens,
-            TotalLines: lineMetrics.TotalLines,
-            NonEmptyLines: lineMetrics.NonEmptyLines,
-            BlankLines: lineMetrics.BlankLines,
+            TotalLines: nonEmptyLineCount,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
@@ -203,8 +201,6 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         long tokens = 0;
         var totalLines = 0;
-        var nonEmptyLines = 0;
-        var blankLines = 0;
         long fileSizeBytes = 0;
         var descendantFileCount = 0;
         var descendantDirectoryCount = 0;
@@ -215,8 +211,6 @@ public sealed class ProjectSnapshotMetricsEnricher
             var metrics = childMetrics[index];
             tokens += metrics.Tokens;
             totalLines += metrics.TotalLines;
-            nonEmptyLines += metrics.NonEmptyLines;
-            blankLines += metrics.BlankLines;
             fileSizeBytes += metrics.FileSizeBytes;
             descendantFileCount += metrics.DescendantFileCount;
             descendantDirectoryCount += metrics.DescendantDirectoryCount;
@@ -230,8 +224,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         node.Metrics = new NodeMetrics(
             Tokens: tokens,
             TotalLines: totalLines,
-            NonEmptyLines: nonEmptyLines,
-            BlankLines: blankLines,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: descendantFileCount,
             DescendantDirectoryCount: descendantDirectoryCount);
@@ -259,8 +251,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         new(
             Tokens: 0,
             TotalLines: 0,
-            NonEmptyLines: 0,
-            BlankLines: 0,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
@@ -269,25 +259,23 @@ public sealed class ProjectSnapshotMetricsEnricher
         content.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
 
-    private static LineMetrics CountLineMetrics(string content)
+    private static int CountNonEmptyLines(string content)
     {
         if (string.IsNullOrEmpty(content))
         {
-            return new LineMetrics(0, 0, 0);
+            return 0;
         }
 
-        var totalLines = 0;
-        var blankLines = 0;
         var hasVisibleCharacters = false;
+        var nonEmptyLineCount = 0;
 
         foreach (var character in content)
         {
             if (character == '\n')
             {
-                totalLines++;
-                if (!hasVisibleCharacters)
+                if (hasVisibleCharacters)
                 {
-                    blankLines++;
+                    nonEmptyLineCount++;
                 }
 
                 hasVisibleCharacters = false;
@@ -300,16 +288,12 @@ public sealed class ProjectSnapshotMetricsEnricher
             }
         }
 
-        totalLines++;
-        if (!hasVisibleCharacters)
+        if (hasVisibleCharacters)
         {
-            blankLines++;
+            nonEmptyLineCount++;
         }
 
-        return new LineMetrics(
-            TotalLines: totalLines,
-            NonEmptyLines: totalLines - blankLines,
-            BlankLines: blankLines);
+        return nonEmptyLineCount;
     }
 
     private static bool IsRecoverableFileException(Exception exception) =>
@@ -388,8 +372,4 @@ public sealed class ProjectSnapshotMetricsEnricher
         public int ProcessedFileCount { get; set; }
     }
 
-    private readonly record struct LineMetrics(
-        int TotalLines,
-        int NonEmptyLines,
-        int BlankLines);
 }

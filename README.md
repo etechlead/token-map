@@ -10,14 +10,14 @@ TBD: replace this section with a real application screenshot after the current U
 
 - Local-only analysis: no cloud services, remote tokenizers, or browser-based rendering.
 - Synchronized inspection: selecting nodes in the tree updates the treemap, and treemap drill-down stays aligned with the tree.
-- Token-aware treemap: compare repository weight by tokens, total lines, or non-empty lines.
+- Token-aware treemap: compare repository weight by tokens or lines, where lines count only non-empty lines.
 - Configurable scan behavior: adjust ignore handling without leaving the main window.
 - Lightweight desktop shell: Avalonia UI with one custom-rendered treemap control instead of a control-per-rectangle surface.
 
 ## Architecture
 
 - `src/Clever.TokenMap.Core`: domain models, enums, contracts, scan options, and aggregation rules.
-- `src/Clever.TokenMap.Infrastructure`: scanner, ignore handling, local token counting, local line metrics, cache, settings storage, and logging.
+- `src/Clever.TokenMap.Infrastructure`: scanner, ignore handling, local token counting, local non-empty line metrics, cache, settings storage, and logging.
 - `src/Clever.TokenMap.Treemap`: treemap control, layout, color rules, and hit testing.
 - `src/Clever.TokenMap.App`: desktop shell, section views, view models, analysis session coordination, treemap navigation state, and settings coordination.
 

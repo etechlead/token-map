@@ -89,7 +89,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         lock (_syncLock)
         {
-            _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
+            _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(State.SelectedMetric);
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
@@ -171,6 +171,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         ArgumentNullException.ThrowIfNull(settings);
 
         _currentSettings = settings.Clone();
+        _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(_currentSettings.Analysis.SelectedMetric);
 
         _isApplyingSettings = true;
         try
@@ -193,4 +194,9 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         nameof(SettingsState.RespectGitIgnore) or
         nameof(SettingsState.UseDefaultExcludes) or
         nameof(SettingsState.SelectedThemePreference);
+
+    private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
+        selectedMetric == AnalysisMetric.NonEmptyLines
+            ? AnalysisMetric.TotalLines
+            : selectedMetric;
 }

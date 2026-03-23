@@ -58,7 +58,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.NonEmptyLines, settings.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.TotalLines, settings.Analysis.SelectedMetric);
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
