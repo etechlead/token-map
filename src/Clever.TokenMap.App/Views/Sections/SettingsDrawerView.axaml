@@ -60,10 +60,6 @@
                                       Content="Respect .gitignore"
                                       IsChecked="{Binding Toolbar.RespectGitIgnore}"
                                       IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                            <CheckBox Name="RespectIgnoreCheckBox"
-                                      Content="Respect .ignore"
-                                      IsChecked="{Binding Toolbar.RespectIgnore}"
-                                      IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                             <CheckBox Name="UseDefaultExcludesCheckBox"
                                       Content="Use default excludes"
                                       IsChecked="{Binding Toolbar.UseDefaultExcludes}"

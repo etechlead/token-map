@@ -13,7 +13,6 @@ public sealed class SettingsCoordinatorTests
         var settings = AppSettings.CreateDefault();
         settings.Analysis.SelectedMetric = AnalysisMetric.NonEmptyLines;
         settings.Analysis.RespectGitIgnore = false;
-        settings.Analysis.RespectIgnore = false;
         settings.Analysis.UseDefaultExcludes = false;
         settings.Appearance.ThemePreference = ThemePreference.Dark;
 
@@ -23,7 +22,6 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(AnalysisMetric.NonEmptyLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
-        Assert.False(coordinator.State.RespectIgnore);
         Assert.False(coordinator.State.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);

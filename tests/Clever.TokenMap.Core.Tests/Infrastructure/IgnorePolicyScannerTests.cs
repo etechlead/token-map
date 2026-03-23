@@ -12,7 +12,7 @@ public sealed class IgnorePolicyScannerTests
         "IgnorePolicyFixture");
 
     [Fact]
-    public async Task ScanAsync_RespectsIgnoreFilesAndDefaultExcludes()
+    public async Task ScanAsync_RespectsGitIgnoreAndDefaultExcludes()
     {
         var scanner = new FileSystemProjectScanner();
 
@@ -23,8 +23,8 @@ public sealed class IgnorePolicyScannerTests
         Assert.Contains("shadow.txt", relativePaths);
         Assert.Contains("nested", relativePaths);
         Assert.Contains("nested/keep.txt", relativePaths);
+        Assert.Contains("nested/shadow.txt", relativePaths);
         Assert.DoesNotContain("root-hidden.txt", relativePaths);
-        Assert.DoesNotContain("nested/shadow.txt", relativePaths);
         Assert.DoesNotContain(".git", relativePaths);
         Assert.DoesNotContain("node_modules", relativePaths);
         Assert.DoesNotContain("bin", relativePaths);
@@ -38,7 +38,6 @@ public sealed class IgnorePolicyScannerTests
         var options = new ScanOptions
         {
             RespectGitIgnore = false,
-            RespectDotIgnore = false,
             UseDefaultExcludes = false,
             UserExcludes = ["scripts", "keep-root.txt"],
         };
@@ -59,7 +58,6 @@ public sealed class IgnorePolicyScannerTests
         var options = new ScanOptions
         {
             RespectGitIgnore = false,
-            RespectDotIgnore = false,
             UseDefaultExcludes = false,
         };
 

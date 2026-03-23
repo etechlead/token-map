@@ -10,7 +10,7 @@ namespace Clever.TokenMap.Infrastructure.Scanning;
 
 public sealed class FileSystemProjectScanner : IProjectScanner
 {
-    private static readonly string[] IgnoreFileNames = [".gitignore", ".ignore"];
+    private const string GitIgnoreFileName = ".gitignore";
 
     private readonly IgnoreFileParser _ignoreFileParser = new();
     private readonly IAppLogger _logger;
@@ -256,33 +256,25 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         var additionalRules = new List<IgnoreRule>();
         var directoryRelativePath = _pathNormalizer.NormalizeRelativePath(normalizedRootPath, directoryInfo.FullName);
 
-        foreach (var ignoreFileName in IgnoreFileNames)
+        if (!options.RespectGitIgnore)
         {
-            if (ignoreFileName == ".gitignore" && !options.RespectGitIgnore)
-            {
-                continue;
-            }
+            return parentContext;
+        }
 
-            if (ignoreFileName == ".ignore" && !options.RespectDotIgnore)
-            {
-                continue;
-            }
+        var ignoreFilePath = Path.Combine(directoryInfo.FullName, GitIgnoreFileName);
+        if (!File.Exists(ignoreFilePath))
+        {
+            return parentContext;
+        }
 
-            var ignoreFilePath = Path.Combine(directoryInfo.FullName, ignoreFileName);
-            if (!File.Exists(ignoreFilePath))
-            {
-                continue;
-            }
-
-            try
-            {
-                additionalRules.AddRange(_ignoreFileParser.Parse(ignoreFilePath, directoryRelativePath));
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                warnings.Add($"Unable to read '{ignoreFilePath}': {exception.Message}");
-                _logger.LogWarning(exception, $"Unable to read ignore file '{ignoreFilePath}'.");
-            }
+        try
+        {
+            additionalRules.AddRange(_ignoreFileParser.Parse(ignoreFilePath, directoryRelativePath));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            warnings.Add($"Unable to read '{ignoreFilePath}': {exception.Message}");
+            _logger.LogWarning(exception, $"Unable to read ignore file '{ignoreFilePath}'.");
         }
 
         return additionalRules.Count == 0

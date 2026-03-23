@@ -32,8 +32,6 @@ public sealed class AnalysisSettings
 
     public bool RespectGitIgnore { get; set; } = true;
 
-    public bool RespectIgnore { get; set; } = true;
-
     public bool UseDefaultExcludes { get; set; } = true;
 
     public AnalysisSettings Clone() =>
@@ -41,7 +39,6 @@ public sealed class AnalysisSettings
         {
             SelectedMetric = SelectedMetric,
             RespectGitIgnore = RespectGitIgnore,
-            RespectIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
         };
 }

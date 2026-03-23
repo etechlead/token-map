@@ -91,7 +91,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
-            _currentSettings.Analysis.RespectIgnore = State.RespectIgnore;
             _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
             _settingsVersion++;
@@ -178,7 +177,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             State.SelectedMetric = _currentSettings.Analysis.SelectedMetric;
             State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
-            State.RespectIgnore = _currentSettings.Analysis.RespectIgnore;
             State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
             State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
@@ -193,7 +191,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private static bool IsPersistedStateProperty(string? propertyName) =>
         propertyName is nameof(SettingsState.SelectedMetric) or
         nameof(SettingsState.RespectGitIgnore) or
-        nameof(SettingsState.RespectIgnore) or
         nameof(SettingsState.UseDefaultExcludes) or
         nameof(SettingsState.SelectedThemePreference);
 }

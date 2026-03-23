@@ -89,12 +89,6 @@ public partial class ToolbarViewModel : ViewModelBase
         set => _settingsState.RespectGitIgnore = value;
     }
 
-    public bool RespectIgnore
-    {
-        get => _settingsState.RespectIgnore;
-        set => _settingsState.RespectIgnore = value;
-    }
-
     public bool UseDefaultExcludes
     {
         get => _settingsState.UseDefaultExcludes;
@@ -146,9 +140,6 @@ public partial class ToolbarViewModel : ViewModelBase
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
                 break;
-            case nameof(SettingsState.RespectIgnore):
-                OnPropertyChanged(nameof(RespectIgnore));
-                break;
             case nameof(SettingsState.UseDefaultExcludes):
                 OnPropertyChanged(nameof(UseDefaultExcludes));
                 break;
@@ -165,7 +156,6 @@ public partial class ToolbarViewModel : ViewModelBase
         new()
         {
             RespectGitIgnore = RespectGitIgnore,
-            RespectDotIgnore = RespectIgnore,
             UseDefaultExcludes = UseDefaultExcludes,
         };
 

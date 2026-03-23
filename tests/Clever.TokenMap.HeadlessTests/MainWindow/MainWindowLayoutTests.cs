@@ -450,7 +450,6 @@ public sealed class MainWindowLayoutTests
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
         var gitIgnoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectGitIgnoreCheckBox");
-        var ignoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectIgnoreCheckBox");
         var defaultExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseDefaultExcludesCheckBox");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
         var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
@@ -461,7 +460,6 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
         Assert.NotNull(gitIgnoreCheckBox);
-        Assert.NotNull(ignoreCheckBox);
         Assert.NotNull(defaultExcludesCheckBox);
         Assert.NotNull(rescanButton);
         Assert.NotNull(selectedFolderGroup);
@@ -475,7 +473,6 @@ public sealed class MainWindowLayoutTests
         Assert.False(themeDarkButton.IsChecked);
         Assert.Null(FindNamedDescendant<ComboBox>(window, "TokenizerComboBox"));
         Assert.True(gitIgnoreCheckBox.IsEnabled);
-        Assert.True(ignoreCheckBox.IsEnabled);
         Assert.True(defaultExcludesCheckBox.IsEnabled);
         Assert.False(rescanButton.IsVisible);
         Assert.False(selectedFolderGroup.IsVisible);

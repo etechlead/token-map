@@ -28,9 +28,6 @@ public sealed partial class SettingsState : ObservableObject
     private bool respectGitIgnore = true;
 
     [ObservableProperty]
-    private bool respectIgnore = true;
-
-    [ObservableProperty]
     private bool useDefaultExcludes = true;
 
     [ObservableProperty]

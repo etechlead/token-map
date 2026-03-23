@@ -6,8 +6,6 @@ public sealed class ScanOptions
 
     public bool RespectGitIgnore { get; init; } = true;
 
-    public bool RespectDotIgnore { get; init; } = true;
-
     public bool UseDefaultExcludes { get; init; } = true;
 
     public IReadOnlyList<string> UserExcludes { get; init; } = [];

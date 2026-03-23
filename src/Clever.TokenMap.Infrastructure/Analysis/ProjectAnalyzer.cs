@@ -41,7 +41,7 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
 
         var startedAt = DateTimeOffset.Now;
         _logger.LogInformation(
-            $"Analysis started for '{rootPath}' with respectGitIgnore={options.RespectGitIgnore}, respectIgnore={options.RespectDotIgnore}, useDefaultExcludes={options.UseDefaultExcludes}.");
+            $"Analysis started for '{rootPath}' with respectGitIgnore={options.RespectGitIgnore}, useDefaultExcludes={options.UseDefaultExcludes}.");
 
         var bufferedProgress = new BufferedAnalysisProgress(progress, _progressBatchSize);
 

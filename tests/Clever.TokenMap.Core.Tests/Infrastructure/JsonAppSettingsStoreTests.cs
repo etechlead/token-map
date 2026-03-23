@@ -20,7 +20,6 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
         Assert.True(settings.Analysis.RespectGitIgnore);
-        Assert.True(settings.Analysis.RespectIgnore);
         Assert.True(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
         Assert.Empty(settings.RecentFolderPaths);
@@ -38,7 +37,6 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
                 "selectedMetric": "NonEmptyLines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
-                "respectIgnore": false,
                 "useDefaultExcludes": false
               },
               "appearance": {
@@ -62,7 +60,6 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         Assert.Equal(AnalysisMetric.NonEmptyLines, settings.Analysis.SelectedMetric);
         Assert.False(settings.Analysis.RespectGitIgnore);
-        Assert.False(settings.Analysis.RespectIgnore);
         Assert.False(settings.Analysis.UseDefaultExcludes);
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
@@ -146,6 +143,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var persistedJson = File.ReadAllText(GetSettingsFilePath());
         Assert.DoesNotContain("selectedTokenProfile", persistedJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("respectIgnore", persistedJson, StringComparison.Ordinal);
 
         var reloaded = store.Load();
 

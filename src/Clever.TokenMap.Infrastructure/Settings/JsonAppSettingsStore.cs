@@ -106,11 +106,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 settings.Analysis.RespectGitIgnore = respectGitIgnore;
             }
 
-            if (analysis.RespectIgnore is { } respectIgnore)
-            {
-                settings.Analysis.RespectIgnore = respectIgnore;
-            }
-
             if (analysis.UseDefaultExcludes is { } useDefaultExcludes)
             {
                 settings.Analysis.UseDefaultExcludes = useDefaultExcludes;
@@ -183,9 +178,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? RespectGitIgnore { get; set; }
-
-        [JsonConverter(typeof(NullableBooleanConverter))]
-        public bool? RespectIgnore { get; set; }
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? UseDefaultExcludes { get; set; }
