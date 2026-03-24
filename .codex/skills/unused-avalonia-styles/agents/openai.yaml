@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unused Avalonia Styles"
+  short_description: "Scan Avalonia selectors for likely dead styles"
+  default_prompt: "Use $unused-avalonia-styles to scan this repository for likely unused Avalonia style selectors and summarize only actionable candidates."
