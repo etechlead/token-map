@@ -885,13 +885,13 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void ProjectTreeViewModel_ExpandSelectedNode_ShowsChildrenForSelectedDirectory()
+    public void ProjectTreeViewModel_MoveSelectionRight_ExpandsSelectedDirectory()
     {
         var viewModel = new ProjectTreeViewModel();
         viewModel.LoadRoot(CreateNestedSnapshot().Root);
         viewModel.SelectNodeById("src");
 
-        var changed = viewModel.ExpandSelectedNode();
+        var changed = viewModel.MoveSelectionRight();
 
         Assert.True(changed);
         Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
@@ -899,14 +899,28 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void ProjectTreeViewModel_CollapseSelectedNode_HidesChildrenForSelectedDirectory()
+    public void ProjectTreeViewModel_MoveSelectionRight_OnExpandedDirectory_SelectsFirstChild()
     {
         var viewModel = new ProjectTreeViewModel();
         viewModel.LoadRoot(CreateNestedSnapshot().Root);
         viewModel.SelectNodeById("src");
-        viewModel.ExpandSelectedNode();
+        viewModel.MoveSelectionRight();
 
-        var changed = viewModel.CollapseSelectedNode();
+        var changed = viewModel.MoveSelectionRight();
+
+        Assert.True(changed);
+        Assert.Equal("src/Program.cs", viewModel.SelectedNode?.Node.Id);
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_MoveSelectionLeft_CollapsesExpandedDirectory()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.SelectNodeById("src");
+        viewModel.MoveSelectionRight();
+
+        var changed = viewModel.MoveSelectionLeft();
 
         Assert.True(changed);
         Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
@@ -914,7 +928,49 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void ProjectTreePaneView_KeyDown_LeftAndRightToggleSelectedDirectoryExpansion()
+    public void ProjectTreeViewModel_MoveSelectionLeft_OnCollapsedDirectory_SelectsParent()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.SelectNodeById("src");
+
+        var changed = viewModel.MoveSelectionLeft();
+
+        Assert.True(changed);
+        Assert.Equal("/", viewModel.SelectedNode?.Node.Id);
+        Assert.DoesNotContain(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_MoveSelectionLeft_OnFile_SelectsParent()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.SelectNodeById("src/Program.cs");
+
+        var changed = viewModel.MoveSelectionLeft();
+
+        Assert.True(changed);
+        Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_MoveSelectionRight_OnFile_SelectsNextVisibleNode()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 20, 20, 1),
+            ("Beta.cs", 10, 10, 1)));
+        viewModel.SelectNodeById("Alpha.cs");
+
+        var changed = viewModel.MoveSelectionRight();
+
+        Assert.True(changed);
+        Assert.Equal("Beta.cs", viewModel.SelectedNode?.Node.Id);
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreePaneView_KeyDown_LeftAndRight_FollowIdeStyleDirectoryNavigation()
     {
         var viewModel = new MainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
@@ -938,7 +994,20 @@ public sealed class MainWindowLayoutTests
         keyDownMethod.Invoke(projectTreePane, [null, expandArgs]);
 
         Assert.True(expandArgs.Handled);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
         Assert.Contains(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var selectChildArgs = new KeyEventArgs
+        {
+            Key = Key.Right,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, selectChildArgs]);
+
+        Assert.True(selectChildArgs.Handled);
+        Assert.Equal("src/Program.cs", viewModel.Tree.SelectedNode?.Node.Id);
+
+        viewModel.Tree.SelectNodeById("src");
 
         var collapseArgs = new KeyEventArgs
         {
@@ -948,7 +1017,45 @@ public sealed class MainWindowLayoutTests
         keyDownMethod.Invoke(projectTreePane, [null, collapseArgs]);
 
         Assert.True(collapseArgs.Handled);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
         Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var selectParentArgs = new KeyEventArgs
+        {
+            Key = Key.Left,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, selectParentArgs]);
+
+        Assert.True(selectParentArgs.Handled);
+        Assert.Equal("/", viewModel.Tree.SelectedNode?.Node.Id);
+
+        viewModel.Tree.SelectNodeById("src/Program.cs");
+
+        var fileToParentArgs = new KeyEventArgs
+        {
+            Key = Key.Left,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, fileToParentArgs]);
+
+        Assert.True(fileToParentArgs.Handled);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
+
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 20, 20, 1),
+            ("Beta.cs", 10, 10, 1)));
+        viewModel.Tree.SelectNodeById("Alpha.cs");
+
+        var fileToNextArgs = new KeyEventArgs
+        {
+            Key = Key.Right,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, fileToNextArgs]);
+
+        Assert.True(fileToNextArgs.Handled);
+        Assert.Equal("Beta.cs", viewModel.Tree.SelectedNode?.Node.Id);
     }
 
     [AvaloniaFact]
@@ -981,7 +1088,22 @@ public sealed class MainWindowLayoutTests
 
         treeTable.RaiseEvent(expandArgs);
 
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
         Assert.Contains(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var selectChildArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = treeTable,
+            Key = Key.Right,
+            Handled = true,
+        };
+
+        treeTable.RaiseEvent(selectChildArgs);
+
+        Assert.Equal("src/Program.cs", viewModel.Tree.SelectedNode?.Node.Id);
+
+        viewModel.Tree.SelectNodeById("src");
 
         var collapseArgs = new KeyEventArgs
         {
@@ -993,7 +1115,34 @@ public sealed class MainWindowLayoutTests
 
         treeTable.RaiseEvent(collapseArgs);
 
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
         Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var selectParentArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = treeTable,
+            Key = Key.Left,
+            Handled = true,
+        };
+
+        treeTable.RaiseEvent(selectParentArgs);
+
+        Assert.Equal("/", viewModel.Tree.SelectedNode?.Node.Id);
+
+        viewModel.Tree.SelectNodeById("src/Program.cs");
+
+        var fileToParentArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = treeTable,
+            Key = Key.Left,
+            Handled = true,
+        };
+
+        treeTable.RaiseEvent(fileToParentArgs);
+
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
     }
 
     [AvaloniaFact]

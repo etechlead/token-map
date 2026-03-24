@@ -108,9 +108,61 @@ public partial class ProjectTreeViewModel : ViewModelBase
         RebuildVisibleNodes();
     }
 
-    public bool ExpandSelectedNode() => SetNodeExpansion(SelectedNode, isExpanded: true);
+    public bool MoveSelectionLeft()
+    {
+        if (SelectedNode is null)
+        {
+            return false;
+        }
 
-    public bool CollapseSelectedNode() => SetNodeExpansion(SelectedNode, isExpanded: false);
+        if (SelectedNode.HasChildren && _expandedNodeIds.Contains(SelectedNode.Node.Id))
+        {
+            return SetNodeExpansion(SelectedNode, isExpanded: false);
+        }
+
+        if (_parentNodeIdsById.TryGetValue(SelectedNode.Node.Id, out var parentNodeId) &&
+            !string.IsNullOrWhiteSpace(parentNodeId))
+        {
+            SelectNodeById(parentNodeId);
+            return true;
+        }
+
+        return false;
+    }
+
+    public bool MoveSelectionRight()
+    {
+        if (SelectedNode is null)
+        {
+            return false;
+        }
+
+        if (SelectedNode.HasChildren && !_expandedNodeIds.Contains(SelectedNode.Node.Id))
+        {
+            return SetNodeExpansion(SelectedNode, isExpanded: true);
+        }
+
+        if (SelectedNode.HasChildren)
+        {
+            var firstChild = GetSortedChildren(SelectedNode.Node).FirstOrDefault();
+            if (firstChild is null)
+            {
+                return false;
+            }
+
+            SelectNodeById(firstChild.Id);
+            return true;
+        }
+
+        var selectedIndex = VisibleNodes.IndexOf(SelectedNode);
+        if (selectedIndex < 0 || selectedIndex >= VisibleNodes.Count - 1)
+        {
+            return false;
+        }
+
+        SelectedNode = VisibleNodes[selectedIndex + 1];
+        return true;
+    }
 
     private void RegisterNode(ProjectNode node, string? parentNodeId)
     {

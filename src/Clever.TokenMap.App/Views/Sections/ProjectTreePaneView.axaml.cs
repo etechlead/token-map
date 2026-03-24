@@ -159,8 +159,8 @@ public partial class ProjectTreePaneView : UserControl
 
         var handled = e.Key switch
         {
-            Key.Left => viewModel.Tree.CollapseSelectedNode(),
-            Key.Right => viewModel.Tree.ExpandSelectedNode(),
+            Key.Left => viewModel.Tree.MoveSelectionLeft(),
+            Key.Right => viewModel.Tree.MoveSelectionRight(),
             _ => false,
         };
 
