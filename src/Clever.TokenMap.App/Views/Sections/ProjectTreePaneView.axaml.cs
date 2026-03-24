@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -17,8 +19,11 @@ namespace Clever.TokenMap.App.Views.Sections;
 
 public partial class ProjectTreePaneView : UserControl
 {
+    private static readonly TimeSpan ProjectTreeSingleClickSelectionDelay = TimeSpan.FromMilliseconds(250);
     private readonly Dictionary<DataGridColumn, string> _projectTreeTableBaseHeaders = [];
     private readonly ProjectNodeContextMenuController _projectNodeContextMenuController;
+    private CancellationTokenSource? _pendingProjectTreeSelectionSync;
+    private bool _projectTreeSelectionChangeTriggeredByPointer;
     private Geometry? _sortIconGeometry;
 
     public ProjectTreePaneView()
@@ -52,25 +57,34 @@ public partial class ProjectTreePaneView : UserControl
 
         var sourceElement = e.Source as StyledElement;
         var header = FindAncestor<DataGridColumnHeader>(sourceElement);
-        if (header is null || e.ClickCount != 1)
+        if (header is not null)
         {
+            if (e.ClickCount != 1)
+            {
+                return;
+            }
+
+            EnsureProjectTreeTableBaseHeaders(grid);
+
+            var clickedColumn = grid.Columns.FirstOrDefault(
+                column => Equals(column.Header, header.Content) ||
+                          string.Equals(column.Header?.ToString(), header.Content?.ToString(), StringComparison.Ordinal));
+
+            if (clickedColumn is null ||
+                !TryMapSortColumn(clickedColumn.SortMemberPath, out var sortColumn))
+            {
+                return;
+            }
+
+            ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn);
+            e.Handled = true;
             return;
         }
 
-        EnsureProjectTreeTableBaseHeaders(grid);
-
-        var clickedColumn = grid.Columns.FirstOrDefault(
-            column => Equals(column.Header, header.Content) ||
-                      string.Equals(column.Header?.ToString(), header.Content?.ToString(), StringComparison.Ordinal));
-
-        if (clickedColumn is null ||
-            !TryMapSortColumn(clickedColumn.SortMemberPath, out var sortColumn))
+        if (FindAncestor<DataGridRow>(sourceElement) is not null)
         {
-            return;
+            _projectTreeSelectionChangeTriggeredByPointer = true;
         }
-
-        ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn);
-        e.Handled = true;
     }
 
     private void ProjectTreeTable_OnContextRequested(object? sender, ContextRequestedEventArgs e)
@@ -120,22 +134,117 @@ public partial class ProjectTreePaneView : UserControl
             return;
         }
 
-        if (FindAncestor<DataGridRow>(sourceElement) is { DataContext: ProjectTreeNodeViewModel node } &&
-            node.HasChildren)
+        if (FindAncestor<DataGridRow>(sourceElement) is { DataContext: ProjectTreeNodeViewModel node })
         {
-            viewModel.Tree.ToggleNodeCommand.Execute(node);
-            e.Handled = true;
+            HandleProjectTreeRowDoubleTap(viewModel, node);
+            if (node.HasChildren)
+            {
+                e.Handled = true;
+            }
         }
     }
 
     private void ProjectTreeTable_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (sender is not DataGrid grid || grid.SelectedItem is null)
+        if (DataContext is not MainWindowViewModel viewModel ||
+            sender is not DataGrid grid)
         {
             return;
         }
 
+        if (grid.SelectedItem is not ProjectTreeNodeViewModel selectedNode)
+        {
+            _projectTreeSelectionChangeTriggeredByPointer = false;
+            CancelPendingProjectTreeSelectionSync();
+            return;
+        }
+
         ScheduleScrollSelectedProjectTreeRowIntoView(grid);
+
+        if (ReferenceEquals(viewModel.Tree.SelectedNode, selectedNode))
+        {
+            _projectTreeSelectionChangeTriggeredByPointer = false;
+            return;
+        }
+
+        if (_projectTreeSelectionChangeTriggeredByPointer)
+        {
+            _projectTreeSelectionChangeTriggeredByPointer = false;
+            ScheduleProjectTreeSelectionSync(viewModel, selectedNode);
+            return;
+        }
+
+        ApplyProjectTreeSelection(viewModel, selectedNode);
+    }
+
+    private void HandleProjectTreeRowDoubleTap(MainWindowViewModel viewModel, ProjectTreeNodeViewModel node)
+    {
+        CancelPendingProjectTreeSelectionSync();
+        ApplyProjectTreeSelection(viewModel, node);
+
+        if (node.HasChildren)
+        {
+            viewModel.Tree.ToggleNodeCommand.Execute(node);
+        }
+    }
+
+    private void ApplyProjectTreeSelection(MainWindowViewModel viewModel, ProjectTreeNodeViewModel node)
+    {
+        CancelPendingProjectTreeSelectionSync();
+
+        if (!ReferenceEquals(viewModel.Tree.SelectedNode, node))
+        {
+            viewModel.Tree.SelectedNode = node;
+        }
+    }
+
+    private void ScheduleProjectTreeSelectionSync(MainWindowViewModel viewModel, ProjectTreeNodeViewModel node)
+    {
+        CancelPendingProjectTreeSelectionSync();
+
+        var cancellationTokenSource = new CancellationTokenSource();
+        _pendingProjectTreeSelectionSync = cancellationTokenSource;
+        _ = ApplyProjectTreeSelectionAfterDelayAsync(viewModel, node, cancellationTokenSource);
+    }
+
+    private async Task ApplyProjectTreeSelectionAfterDelayAsync(
+        MainWindowViewModel viewModel,
+        ProjectTreeNodeViewModel node,
+        CancellationTokenSource cancellationTokenSource)
+    {
+        try
+        {
+            await Task.Delay(ProjectTreeSingleClickSelectionDelay, cancellationTokenSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (cancellationTokenSource.IsCancellationRequested ||
+                !ReferenceEquals(_pendingProjectTreeSelectionSync, cancellationTokenSource))
+            {
+                return;
+            }
+
+            _pendingProjectTreeSelectionSync = null;
+            ApplyProjectTreeSelection(viewModel, node);
+            cancellationTokenSource.Dispose();
+        });
+    }
+
+    private void CancelPendingProjectTreeSelectionSync()
+    {
+        if (_pendingProjectTreeSelectionSync is null)
+        {
+            return;
+        }
+
+        _pendingProjectTreeSelectionSync.Cancel();
+        _pendingProjectTreeSelectionSync.Dispose();
+        _pendingProjectTreeSelectionSync = null;
     }
 
     private void EnsureProjectTreeTableBaseHeaders(DataGrid grid)

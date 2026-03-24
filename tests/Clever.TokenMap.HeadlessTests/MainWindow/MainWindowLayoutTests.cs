@@ -833,6 +833,66 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public async Task ProjectTreePaneView_SingleClickSelectionSync_IsDelayedUntilDoubleClickWindowExpires()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 10, 10, 1),
+            ("Beta.cs", 20, 20, 1)));
+
+        var projectTreePane = new ProjectTreePaneView
+        {
+            DataContext = viewModel,
+        };
+        var targetNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Alpha.cs");
+        var scheduleMethod = typeof(ProjectTreePaneView).GetMethod(
+            "ScheduleProjectTreeSelectionSync",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(scheduleMethod);
+
+        scheduleMethod.Invoke(projectTreePane, [viewModel, targetNode]);
+
+        Assert.Equal("/", viewModel.SelectedNode?.Id);
+
+        await Task.Delay(350);
+
+        Assert.Equal("Alpha.cs", viewModel.SelectedNode?.Id);
+    }
+
+    [AvaloniaFact]
+    public async Task ProjectTreePaneView_DoubleTap_CancelsPendingSingleClickSelectionSync()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 10, 10, 1),
+            ("Beta.cs", 20, 20, 1)));
+
+        var projectTreePane = new ProjectTreePaneView
+        {
+            DataContext = viewModel,
+        };
+        var scheduledNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Alpha.cs");
+        var doubleTappedNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Beta.cs");
+        var scheduleMethod = typeof(ProjectTreePaneView).GetMethod(
+            "ScheduleProjectTreeSelectionSync",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+        var doubleTapMethod = typeof(ProjectTreePaneView).GetMethod(
+            "HandleProjectTreeRowDoubleTap",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(scheduleMethod);
+        Assert.NotNull(doubleTapMethod);
+
+        scheduleMethod.Invoke(projectTreePane, [viewModel, scheduledNode]);
+        doubleTapMethod.Invoke(projectTreePane, [viewModel, doubleTappedNode]);
+
+        await Task.Delay(350);
+
+        Assert.Equal("Beta.cs", viewModel.SelectedNode?.Id);
+    }
+
+    [AvaloniaFact]
     public void ProjectTreeViewModel_SelectNodeById_DoesNotRebuildVisibleRowsWhenTargetIsAlreadyVisible()
     {
         var viewModel = new ProjectTreeViewModel();

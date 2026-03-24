@@ -20,7 +20,7 @@
                       HeadersVisibility="Column"
                       IsReadOnly="True"
                       ItemsSource="{Binding Tree.VisibleNodes}"
-                      SelectedItem="{Binding Tree.SelectedNode, Mode=TwoWay}"
+                      SelectedItem="{Binding Tree.SelectedNode, Mode=OneWay}"
                       SelectionChanged="ProjectTreeTable_OnSelectionChanged"
                       ContextRequested="ProjectTreeTable_OnContextRequested"
                       DoubleTapped="ProjectTreeTable_OnDoubleTapped"
