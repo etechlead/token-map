@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App;
@@ -554,19 +555,70 @@ public sealed class MainWindowLayoutTests
 
         var drawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
         var drawerHost = FindNamedDescendant<Control>(window, "SettingsDrawerHost");
+        var backdrop = FindNamedDescendant<Control>(window, "SettingsBackdrop");
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
 
         Assert.NotNull(drawer);
         Assert.NotNull(drawerHost);
+        Assert.NotNull(backdrop);
         Assert.NotNull(startSurface);
         Assert.False(drawer.IsVisible);
+        Assert.False(backdrop.IsVisible);
         Assert.True(drawerHost.ZIndex > startSurface.ZIndex);
 
         viewModel.ToggleSettingsCommand.Execute(null);
         Assert.True(drawer.IsVisible);
+        Assert.True(backdrop.IsVisible);
 
         viewModel.ToggleSettingsCommand.Execute(null);
+        Assert.False(drawer.IsVisible);
+        Assert.False(backdrop.IsVisible);
+    }
+
+    [Fact]
+    public void MainWindowViewModel_CloseSettingsCommand_ClosesDrawerWithoutRetoggling()
+    {
+        var viewModel = new MainWindowViewModel
+        {
+            IsSettingsOpen = true,
+        };
+
+        viewModel.CloseSettingsCommand.Execute(null);
+
+        Assert.False(viewModel.IsSettingsOpen);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_SettingsBackdropPointerPress_ClosesDrawer()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel
+            {
+                IsSettingsOpen = true,
+            },
+        };
+
+        window.Show();
+
+        var backdrop = FindNamedDescendant<Control>(window, "SettingsBackdrop");
+        var drawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        var tapHandler = typeof(MainWindow).GetMethod(
+            "SettingsBackdrop_OnPointerPressed",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(backdrop);
+        Assert.NotNull(drawer);
+        Assert.NotNull(tapHandler);
+        Assert.True(backdrop.IsVisible);
+        Assert.True(drawer.IsVisible);
+
+        tapHandler.Invoke(window, [backdrop, null]);
+
+        Assert.False(viewModel.IsSettingsOpen);
+        Assert.False(backdrop.IsVisible);
         Assert.False(drawer.IsVisible);
     }
 
@@ -830,6 +882,118 @@ public sealed class MainWindowLayoutTests
 
         Assert.Equal(2, viewModel.VisibleNodes.Count);
         Assert.DoesNotContain(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_ExpandSelectedNode_ShowsChildrenForSelectedDirectory()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.SelectNodeById("src");
+
+        var changed = viewModel.ExpandSelectedNode();
+
+        Assert.True(changed);
+        Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
+        Assert.Contains(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_CollapseSelectedNode_HidesChildrenForSelectedDirectory()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.SelectNodeById("src");
+        viewModel.ExpandSelectedNode();
+
+        var changed = viewModel.CollapseSelectedNode();
+
+        Assert.True(changed);
+        Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
+        Assert.DoesNotContain(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreePaneView_KeyDown_LeftAndRightToggleSelectedDirectoryExpansion()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.Tree.SelectNodeById("src");
+
+        var projectTreePane = new ProjectTreePaneView
+        {
+            DataContext = viewModel,
+        };
+        var keyDownMethod = typeof(ProjectTreePaneView).GetMethod(
+            "ProjectTreeTable_OnKeyDown",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(keyDownMethod);
+
+        var expandArgs = new KeyEventArgs
+        {
+            Key = Key.Right,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, expandArgs]);
+
+        Assert.True(expandArgs.Handled);
+        Assert.Contains(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var collapseArgs = new KeyEventArgs
+        {
+            Key = Key.Left,
+        };
+
+        keyDownMethod.Invoke(projectTreePane, [null, collapseArgs]);
+
+        Assert.True(collapseArgs.Handled);
+        Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+    }
+
+    [AvaloniaFact]
+    public void ProjectTreePaneView_KeyDownHandler_RespondsEvenWhenDataGridAlreadyHandledArrowKey()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
+        viewModel.Tree.SelectNodeById("src");
+
+        var window = new Window
+        {
+            Content = new ProjectTreePaneView
+            {
+                DataContext = viewModel,
+            },
+        };
+
+        window.Show();
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        Assert.NotNull(treeTable);
+
+        var expandArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = treeTable,
+            Key = Key.Right,
+            Handled = true,
+        };
+
+        treeTable.RaiseEvent(expandArgs);
+
+        Assert.Contains(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
+
+        var collapseArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = treeTable,
+            Key = Key.Left,
+            Handled = true,
+        };
+
+        treeTable.RaiseEvent(collapseArgs);
+
+        Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
     }
 
     [AvaloniaFact]
@@ -1159,4 +1323,3 @@ public sealed class MainWindowLayoutTests
         }
     }
 }
-

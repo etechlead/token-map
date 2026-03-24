@@ -29,6 +29,11 @@ public partial class ProjectTreePaneView : UserControl
     public ProjectTreePaneView()
     {
         InitializeComponent();
+        this.FindControl<DataGrid>("ProjectTreeTable")?.AddHandler(
+            InputElement.KeyDownEvent,
+            ProjectTreeTable_OnKeyDown,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
         _projectNodeContextMenuController = new ProjectNodeContextMenuController(
             this,
             () => DataContext as MainWindowViewModel);
@@ -141,6 +146,27 @@ public partial class ProjectTreePaneView : UserControl
             {
                 e.Handled = true;
             }
+        }
+    }
+
+    private void ProjectTreeTable_OnKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel ||
+            e.KeyModifiers != KeyModifiers.None)
+        {
+            return;
+        }
+
+        var handled = e.Key switch
+        {
+            Key.Left => viewModel.Tree.CollapseSelectedNode(),
+            Key.Right => viewModel.Tree.ExpandSelectedNode(),
+            _ => false,
+        };
+
+        if (handled)
+        {
+            e.Handled = true;
         }
     }
 

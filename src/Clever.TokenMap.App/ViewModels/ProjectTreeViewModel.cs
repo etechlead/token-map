@@ -108,6 +108,10 @@ public partial class ProjectTreeViewModel : ViewModelBase
         RebuildVisibleNodes();
     }
 
+    public bool ExpandSelectedNode() => SetNodeExpansion(SelectedNode, isExpanded: true);
+
+    public bool CollapseSelectedNode() => SetNodeExpansion(SelectedNode, isExpanded: false);
+
     private void RegisterNode(ProjectNode node, string? parentNodeId)
     {
         _nodesById[node.Id] = node;
@@ -140,17 +144,28 @@ public partial class ProjectTreeViewModel : ViewModelBase
             return;
         }
 
-        if (_expandedNodeIds.Contains(node.Node.Id))
+        SetNodeExpansion(node, !_expandedNodeIds.Contains(node.Node.Id));
+    }
+
+    private bool SetNodeExpansion(ProjectTreeNodeViewModel? node, bool isExpanded)
+    {
+        if (node is null || !node.HasChildren)
         {
-            _expandedNodeIds.Remove(node.Node.Id);
-            if (IsSelectedNodeInsideCollapsedBranch(node.Node.Id))
-            {
-                _selectedNodeId = node.Node.Id;
-            }
+            return false;
         }
-        else
+
+        var changed = isExpanded
+            ? _expandedNodeIds.Add(node.Node.Id)
+            : _expandedNodeIds.Remove(node.Node.Id);
+
+        if (!changed)
         {
-            _expandedNodeIds.Add(node.Node.Id);
+            return false;
+        }
+
+        if (!isExpanded && IsSelectedNodeInsideCollapsedBranch(node.Node.Id))
+        {
+            _selectedNodeId = node.Node.Id;
         }
 
         RebuildVisibleNodes();
@@ -160,6 +175,8 @@ public partial class ProjectTreeViewModel : ViewModelBase
         {
             SelectedNode = selectedNode;
         }
+
+        return true;
     }
 
     private void RebuildVisibleNodes()

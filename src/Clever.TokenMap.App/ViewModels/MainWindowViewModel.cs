@@ -27,6 +27,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolders = [];
     private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolderFlyoutItems = [];
     private readonly RelayCommand _clearRecentFoldersCommand;
+    private readonly RelayCommand _closeSettingsCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly AsyncRelayCommand<RecentFolderItemViewModel?> _openRecentFolderCommand;
     private readonly RelayCommand<RecentFolderItemViewModel?> _removeRecentFolderCommand;
@@ -75,6 +76,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
         _clearRecentFoldersCommand = new RelayCommand(ClearRecentFolders);
+        _closeSettingsCommand = new RelayCommand(CloseSettings);
         _openRecentFolderCommand = new AsyncRelayCommand<RecentFolderItemViewModel?>(OpenRecentFolderAsync);
         _removeRecentFolderCommand = new RelayCommand<RecentFolderItemViewModel?>(RemoveRecentFolder);
         _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
@@ -140,6 +142,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public string TreemapScopeDisplay => _treemapNavigationState.TreemapScopeDisplay;
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
+
+    public IRelayCommand CloseSettingsCommand => _closeSettingsCommand;
 
     public IRelayCommand ClearRecentFoldersCommand => _clearRecentFoldersCommand;
 
@@ -236,6 +240,11 @@ public partial class MainWindowViewModel : ViewModelBase
     private void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
+    }
+
+    private void CloseSettings()
+    {
+        IsSettingsOpen = false;
     }
 
     private void NavigateToTreemapBreadcrumb(ProjectNode? node)

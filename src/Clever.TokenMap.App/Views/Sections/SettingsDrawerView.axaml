@@ -19,7 +19,7 @@
                 <Button Grid.Column="1"
                         Classes="close-button"
                         VerticalAlignment="Center"
-                        Command="{Binding ToggleSettingsCommand}"
+                        Command="{Binding CloseSettingsCommand}"
                         ToolTip.Tip="Close settings">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />

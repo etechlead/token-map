@@ -153,9 +153,18 @@
                 </Grid>
             </Border>
 
-            <sections:SettingsDrawerView Name="SettingsDrawerHost"
-                                         ZIndex="2" />
         </Grid>
+
+        <Border Name="SettingsBackdrop"
+                Grid.RowSpan="3"
+                Background="Transparent"
+                IsVisible="{Binding IsSettingsOpen}"
+                PointerPressed="SettingsBackdrop_OnPointerPressed"
+                ZIndex="1" />
+
+        <sections:SettingsDrawerView Name="SettingsDrawerHost"
+                                     Grid.Row="1"
+                                     ZIndex="2" />
 
         <Border Name="StatusStrip"
                 Grid.Row="2"
