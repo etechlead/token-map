@@ -273,19 +273,18 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 
         return additionalRules.Count == 0
             ? parentContext
-            : parentContext.Append(additionalRules);
+            : parentContext.AppendBetween(additionalRules);
     }
 
     private IgnoreDirectoryContext CreateInitialIgnoreContext(ScanOptions options)
     {
-        if (!options.UseGlobalExcludes)
-        {
-            return IgnoreDirectoryContext.Empty;
-        }
+        var globalRules = options.UseGlobalExcludes
+            ? _ignoreFileParser.ParseLines(options.GlobalExcludes, baseRelativePath: string.Empty)
+            : [];
+        var folderRules = options.UseFolderExcludes
+            ? _ignoreFileParser.ParseLines(options.FolderExcludes, baseRelativePath: string.Empty)
+            : [];
 
-        var rules = _ignoreFileParser.ParseLines(options.GlobalExcludes, baseRelativePath: string.Empty);
-        return rules.Count == 0
-            ? IgnoreDirectoryContext.Empty
-            : IgnoreDirectoryContext.Empty.Append(rules);
+        return new IgnoreDirectoryContext(globalRules, folderRules);
     }
 }

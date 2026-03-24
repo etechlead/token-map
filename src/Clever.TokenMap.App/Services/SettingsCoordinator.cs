@@ -5,9 +5,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Infrastructure.Logging;
+using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.App.Services;
 
@@ -16,68 +18,191 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private static readonly TimeSpan DefaultDebounceDelay = TimeSpan.FromMilliseconds(250);
 
     private readonly IAppSettingsStore _appSettingsStore;
+    private readonly IFolderSettingsStore _folderSettingsStore;
     private readonly IThemeService _themeService;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _debounceDelay;
+    private readonly PathNormalizer _pathNormalizer;
     private readonly Lock _syncLock = new();
+    private readonly Lock _folderSyncLock = new();
 
     private AppSettings _currentSettings = AppSettings.CreateDefault();
+    private FolderSettings _currentFolderSettings = FolderSettings.CreateDefault();
     private CancellationTokenSource? _saveDebounceCancellationTokenSource;
+    private CancellationTokenSource? _folderSaveDebounceCancellationTokenSource;
     private Task? _pendingSaveTask;
+    private Task? _pendingFolderSaveTask;
     private bool _isApplyingSettings;
+    private bool _isApplyingFolderSettings;
     private long _settingsVersion;
+    private long _folderSettingsVersion;
     private long _lastSavedVersion;
+    private long _lastSavedFolderSettingsVersion;
 
     public SettingsCoordinator(
         IAppSettingsStore appSettingsStore,
+        IFolderSettingsStore folderSettingsStore,
         IThemeService themeService,
         AppSettings? initialSettings = null,
         IAppLogger? logger = null,
-        TimeSpan? debounceDelay = null)
+        TimeSpan? debounceDelay = null,
+        PathNormalizer? pathNormalizer = null)
     {
         _appSettingsStore = appSettingsStore;
+        _folderSettingsStore = folderSettingsStore;
         _themeService = themeService;
         _logger = logger ?? NullAppLogger.Instance;
         _debounceDelay = debounceDelay ?? DefaultDebounceDelay;
+        _pathNormalizer = pathNormalizer ?? new PathNormalizer();
         State = new SettingsState();
+        CurrentFolderState = new CurrentFolderSettingsState();
         State.PropertyChanged += StateOnPropertyChanged;
         State.RecentFolderPathsChanged += StateRecentFolderPathsOnCollectionChanged;
+        CurrentFolderState.PropertyChanged += CurrentFolderStateOnPropertyChanged;
 
         LoadSettings(initialSettings ?? _appSettingsStore.Load());
+        CurrentFolderState.Reset();
     }
 
     public SettingsState State { get; }
 
+    public CurrentFolderSettingsState CurrentFolderState { get; }
+
     public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
-        Task? pendingSaveTask;
-        CancellationTokenSource? saveDebounceCancellationTokenSource;
-        long versionToSave;
+        Task? pendingAppSaveTask;
+        Task? pendingFolderSaveTask;
+        CancellationTokenSource? appSaveDebounceCancellationTokenSource;
+        CancellationTokenSource? folderSaveDebounceCancellationTokenSource;
+        long appVersionToSave;
+        long folderVersionToSave;
 
         lock (_syncLock)
         {
-            pendingSaveTask = _pendingSaveTask;
+            pendingAppSaveTask = _pendingSaveTask;
             _pendingSaveTask = null;
-            saveDebounceCancellationTokenSource = _saveDebounceCancellationTokenSource;
+            appSaveDebounceCancellationTokenSource = _saveDebounceCancellationTokenSource;
             _saveDebounceCancellationTokenSource = null;
-            versionToSave = _settingsVersion;
+            appVersionToSave = _settingsVersion;
         }
 
-        saveDebounceCancellationTokenSource?.Cancel();
-        saveDebounceCancellationTokenSource?.Dispose();
+        lock (_folderSyncLock)
+        {
+            pendingFolderSaveTask = _pendingFolderSaveTask;
+            _pendingFolderSaveTask = null;
+            folderSaveDebounceCancellationTokenSource = _folderSaveDebounceCancellationTokenSource;
+            _folderSaveDebounceCancellationTokenSource = null;
+            folderVersionToSave = _folderSettingsVersion;
+        }
 
-        if (pendingSaveTask is not null)
+        appSaveDebounceCancellationTokenSource?.Cancel();
+        appSaveDebounceCancellationTokenSource?.Dispose();
+        folderSaveDebounceCancellationTokenSource?.Cancel();
+        folderSaveDebounceCancellationTokenSource?.Dispose();
+
+        if (pendingAppSaveTask is not null)
         {
             try
             {
-                await pendingSaveTask.WaitAsync(cancellationToken);
+                await pendingAppSaveTask.WaitAsync(cancellationToken);
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
             }
         }
 
-        SaveIfNeeded(versionToSave);
+        if (pendingFolderSaveTask is not null)
+        {
+            try
+            {
+                await pendingFolderSaveTask.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+            }
+        }
+
+        SaveAppSettingsIfNeeded(appVersionToSave);
+        SaveFolderSettingsIfNeeded(folderVersionToSave);
+    }
+
+    public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions)
+    {
+        ArgumentNullException.ThrowIfNull(baseOptions);
+
+        if (string.IsNullOrWhiteSpace(rootPath))
+        {
+            return new ScanOptions
+            {
+                RespectGitIgnore = baseOptions.RespectGitIgnore,
+                UseGlobalExcludes = baseOptions.UseGlobalExcludes,
+                GlobalExcludes = [.. baseOptions.GlobalExcludes],
+                UseFolderExcludes = false,
+                FolderExcludes = [],
+            };
+        }
+
+        FolderSettings? folderSettings = null;
+        var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
+
+        lock (_folderSyncLock)
+        {
+            if (CurrentFolderState.HasActiveFolder &&
+                CurrentFolderState.ActiveRootPath is { } activeRootPath &&
+                PathComparison.Comparer.Equals(activeRootPath, normalizedRootPath))
+            {
+                folderSettings = _currentFolderSettings.Clone();
+            }
+        }
+
+        folderSettings ??= _folderSettingsStore.Load(normalizedRootPath);
+
+        return new ScanOptions
+        {
+            RespectGitIgnore = baseOptions.RespectGitIgnore,
+            UseGlobalExcludes = baseOptions.UseGlobalExcludes,
+            GlobalExcludes = [.. baseOptions.GlobalExcludes],
+            UseFolderExcludes = folderSettings.Scan.UseFolderExcludes,
+            FolderExcludes = [.. folderSettings.Scan.FolderExcludes],
+        };
+    }
+
+    public void SwitchActiveFolder(string? rootPath)
+    {
+        var normalizedRootPath = string.IsNullOrWhiteSpace(rootPath)
+            ? null
+            : _pathNormalizer.NormalizeRootPath(rootPath);
+
+        string? previousRootPath;
+        long folderVersionToSave;
+
+        lock (_folderSyncLock)
+        {
+            previousRootPath = string.IsNullOrWhiteSpace(_currentFolderSettings.RootPath)
+                ? null
+                : _currentFolderSettings.RootPath;
+            folderVersionToSave = _folderSettingsVersion;
+        }
+
+        if (PathComparison.Comparer.Equals(previousRootPath, normalizedRootPath))
+        {
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(previousRootPath) &&
+            !PathComparison.Comparer.Equals(previousRootPath, normalizedRootPath))
+        {
+            CancelPendingFolderSave();
+            SaveFolderSettingsIfNeeded(folderVersionToSave);
+        }
+
+        if (string.IsNullOrWhiteSpace(normalizedRootPath))
+        {
+            LoadFolderSettings(null, FolderSettings.CreateDefault());
+            return;
+        }
+
+        LoadFolderSettings(normalizedRootPath, _folderSettingsStore.Load(normalizedRootPath));
     }
 
     private void StateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -100,6 +225,23 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         _themeService.ApplyThemePreference(State.SelectedThemePreference);
         ScheduleSave();
+    }
+
+    private void CurrentFolderStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (_isApplyingFolderSettings || !IsPersistedFolderStateProperty(e.PropertyName))
+        {
+            return;
+        }
+
+        lock (_folderSyncLock)
+        {
+            _currentFolderSettings.Scan.UseFolderExcludes = CurrentFolderState.UseFolderExcludes;
+            _currentFolderSettings.Scan.FolderExcludes = [.. CurrentFolderState.FolderExcludes];
+            _folderSettingsVersion++;
+        }
+
+        ScheduleFolderSave();
     }
 
     private void StateRecentFolderPathsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -135,6 +277,28 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         }
     }
 
+    private void ScheduleFolderSave()
+    {
+        if (!CurrentFolderState.HasActiveFolder)
+        {
+            return;
+        }
+
+        CancellationTokenSource cancellationTokenSource;
+        long versionToSave;
+
+        lock (_folderSyncLock)
+        {
+            _folderSaveDebounceCancellationTokenSource?.Cancel();
+            _folderSaveDebounceCancellationTokenSource?.Dispose();
+
+            cancellationTokenSource = new CancellationTokenSource();
+            _folderSaveDebounceCancellationTokenSource = cancellationTokenSource;
+            versionToSave = _folderSettingsVersion;
+            _pendingFolderSaveTask = SaveFolderAfterDelayAsync(versionToSave, cancellationTokenSource.Token);
+        }
+    }
+
     private async Task SaveAfterDelayAsync(long versionToSave, CancellationToken cancellationToken)
     {
         try
@@ -146,10 +310,24 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             return;
         }
 
-        SaveIfNeeded(versionToSave);
+        SaveAppSettingsIfNeeded(versionToSave);
     }
 
-    private void SaveIfNeeded(long versionToSave)
+    private async Task SaveFolderAfterDelayAsync(long versionToSave, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(_debounceDelay, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        SaveFolderSettingsIfNeeded(versionToSave);
+    }
+
+    private void SaveAppSettingsIfNeeded(long versionToSave)
     {
         AppSettings? snapshot = null;
 
@@ -166,6 +344,33 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         _appSettingsStore.Save(snapshot);
         _logger.LogDebug("Persisted updated app settings to settings.json.");
+    }
+
+    private void SaveFolderSettingsIfNeeded(long versionToSave)
+    {
+        FolderSettings? snapshot = null;
+        string? rootPath = null;
+
+        lock (_folderSyncLock)
+        {
+            if (versionToSave <= _lastSavedFolderSettingsVersion || versionToSave != _folderSettingsVersion)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_currentFolderSettings.RootPath))
+            {
+                _lastSavedFolderSettingsVersion = versionToSave;
+                return;
+            }
+
+            snapshot = _currentFolderSettings.Clone();
+            rootPath = snapshot.RootPath;
+            _lastSavedFolderSettingsVersion = versionToSave;
+        }
+
+        _folderSettingsStore.Save(rootPath!, snapshot);
+        _logger.LogDebug($"Persisted updated folder settings for '{rootPath}'.");
     }
 
     private void LoadSettings(AppSettings settings)
@@ -194,6 +399,44 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         }
     }
 
+    private void LoadFolderSettings(string? normalizedRootPath, FolderSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+
+        var normalizedSettings = settings.Clone();
+        normalizedSettings.RootPath = string.IsNullOrWhiteSpace(normalizedRootPath)
+            ? string.Empty
+            : _pathNormalizer.NormalizeRootPath(normalizedRootPath);
+        normalizedSettings.Scan = FolderScanSettings.Normalize(normalizedSettings.Scan);
+
+        lock (_folderSyncLock)
+        {
+            _currentFolderSettings = normalizedSettings;
+            _folderSettingsVersion = 0;
+            _lastSavedFolderSettingsVersion = 0;
+        }
+
+        _isApplyingFolderSettings = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(normalizedSettings.RootPath))
+            {
+                CurrentFolderState.Reset();
+            }
+            else
+            {
+                CurrentFolderState.Load(
+                    normalizedSettings.RootPath,
+                    normalizedSettings.Scan.UseFolderExcludes,
+                    normalizedSettings.Scan.FolderExcludes);
+            }
+        }
+        finally
+        {
+            _isApplyingFolderSettings = false;
+        }
+    }
+
     private static bool IsPersistedStateProperty(string? propertyName) =>
         propertyName is nameof(SettingsState.SelectedMetric) or
         nameof(SettingsState.RespectGitIgnore) or
@@ -201,6 +444,10 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         nameof(SettingsState.GlobalExcludes) or
         nameof(SettingsState.SelectedThemePreference) or
         nameof(SettingsState.SelectedTreemapPalette);
+
+    private static bool IsPersistedFolderStateProperty(string? propertyName) =>
+        propertyName is nameof(CurrentFolderSettingsState.UseFolderExcludes) or
+        nameof(CurrentFolderSettingsState.FolderExcludes);
 
     private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
         selectedMetric == AnalysisMetric.NonEmptyLines
@@ -211,4 +458,19 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         Enum.IsDefined(selectedPalette)
             ? selectedPalette
             : TreemapPalette.Weighted;
+
+    private void CancelPendingFolderSave()
+    {
+        CancellationTokenSource? saveDebounceCancellationTokenSource;
+
+        lock (_folderSyncLock)
+        {
+            saveDebounceCancellationTokenSource = _folderSaveDebounceCancellationTokenSource;
+            _folderSaveDebounceCancellationTokenSource = null;
+            _pendingFolderSaveTask = null;
+        }
+
+        saveDebounceCancellationTokenSource?.Cancel();
+        saveDebounceCancellationTokenSource?.Dispose();
+    }
 }

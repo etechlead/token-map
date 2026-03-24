@@ -11,8 +11,9 @@
 
 - `MainWindowViewModel` is the shell coordinator for the desktop window.
 - `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
-- `SettingsState` is the app-layer source of truth for persisted analysis and appearance preferences.
-- `SettingsCoordinator` owns settings load/save behavior, maps persisted settings onto `SettingsState`, debounces persistence, and applies theme changes.
+- `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
+- `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.
+- `SettingsCoordinator` owns app-wide and current-folder settings load/save behavior, maps persisted settings onto app-layer state, debounces persistence, resolves scan options for a target root path, and applies theme changes.
 - `ProjectTreeViewModel` owns tree sort mode, expansion state, selection, and the visible-row projection built from the scanned `ProjectNode` tree.
 - `TreemapNavigationState` owns selected node state, treemap root scope, and breadcrumb rebuilding.
 - `MainWindow` composes section `UserControl`s for toolbar/summary, project tree, treemap, and settings drawer. Per-section UI behavior stays in section code-behind when it is strictly view-specific, such as `DataGrid` sorting headers and treemap drill-down event wiring.
@@ -20,7 +21,7 @@
 ## Sources Of Truth
 
 - The scanner defines the tree structure and the included path set.
-- Global excludes are a persisted settings-backed root rule list applied through the same ignore-rule engine as `.gitignore`.
+- Global excludes, directory `.gitignore` files, and folder-specific excludes all run through the same gitignore-style ignore-rule engine with this precedence order: global excludes, then `.gitignore`, then folder excludes.
 - Token counts come from the local `o200k_base` tokenizer pipeline.
 - Line metrics come from local file analysis for included text files and count only non-empty lines.
 - File details show extensions rather than inferred languages.
@@ -40,13 +41,14 @@
 
 ## User Settings
 
-- Per-user settings are stored in one lightweight `settings.json` file under the user data directory.
-- The app starts from defaults first, then best-effort applies values from `settings.json`.
-- Analysis preferences including global excludes, appearance preferences including theme mode, and recent folder history are stored in that settings file.
+- Per-user app-wide settings are stored in one lightweight `settings.json` file under the user data directory.
+- Folder-specific settings are stored separately under a sibling `folders/<folder-key>/settings.json` layout, one small file per committed root folder.
+- The app starts from defaults first, then best-effort applies values from `settings.json` and any requested folder settings file.
+- Analysis preferences including global excludes, appearance preferences including theme mode, and recent folder history are stored in the app-wide settings file; folder-specific excludes live only in the per-folder settings files.
 - `Clever.TokenMap.App` works against app-layer settings state and services; infrastructure settings types remain persistence details behind the settings store/coordinator boundary.
 - Settings use typed enum-backed values and persist as JSON strings.
 - Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.
-- Missing, unreadable, or malformed settings files must not block startup.
+- Missing, unreadable, malformed, or unwritable app-wide or folder settings files must not block startup, scanning, or UI interaction; the app falls back to defaults.
 - `Clever.TokenMap.App` uses a settings service/store rather than reading the settings file directly.
 - Logs and future cache data live next to that settings file in separate files/directories rather than inside the settings document.
 

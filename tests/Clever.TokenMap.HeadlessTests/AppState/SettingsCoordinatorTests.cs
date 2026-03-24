@@ -21,7 +21,7 @@ public sealed class SettingsCoordinatorTests
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
+        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Equal(AnalysisMetric.TotalLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
@@ -44,7 +44,7 @@ public sealed class SettingsCoordinatorTests
         settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
 
         var store = new RecordingAppSettingsStore(settings);
-        var coordinator = new SettingsCoordinator(store, new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(25));
+        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Collection(
             coordinator.State.RecentFolderPaths,
@@ -58,7 +58,7 @@ public sealed class SettingsCoordinatorTests
     {
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
+        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
 
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedMetric = AnalysisMetric.NonEmptyLines;
@@ -80,7 +80,7 @@ public sealed class SettingsCoordinatorTests
     public async Task RecentFolders_AreDebouncedIntoSingleSave()
     {
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
-        var coordinator = new SettingsCoordinator(store, new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
+        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
 
         coordinator.State.RecordRecentFolder("C:\\RepoA");
         coordinator.State.RecordRecentFolder("C:\\RepoB");
@@ -104,7 +104,7 @@ public sealed class SettingsCoordinatorTests
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, themeService, debounceDelay: TimeSpan.FromSeconds(5));
+        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
@@ -126,6 +126,82 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
         Assert.Empty(store.LastSavedSettings.RecentFolderPaths);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
+    }
+
+    [Fact]
+    public async Task SwitchActiveFolder_FlushesPreviousFolderAndLoadsNextFolderState()
+    {
+        var folderStore = new RecordingFolderSettingsStore();
+        folderStore.Seed(@"C:\RepoB", new FolderSettings
+        {
+            RootPath = @"C:\RepoB",
+            Scan = new FolderScanSettings
+            {
+                UseFolderExcludes = true,
+                FolderExcludes = ["/generated/"],
+            },
+        });
+
+        var coordinator = new SettingsCoordinator(
+            new RecordingAppSettingsStore(AppSettings.CreateDefault()),
+            folderStore,
+            new RecordingThemeService(),
+            debounceDelay: TimeSpan.FromSeconds(5));
+
+        coordinator.SwitchActiveFolder(@"C:\RepoA");
+        coordinator.CurrentFolderState.UseFolderExcludes = true;
+        coordinator.CurrentFolderState.ReplaceFolderExcludes(["/dist/"]);
+
+        coordinator.SwitchActiveFolder(@"C:\RepoB");
+
+        Assert.Equal(1, folderStore.SaveCallCount);
+        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
+        Assert.Collection(
+            folderStore.LastSavedSettings!.Scan.FolderExcludes,
+            entry => Assert.Equal("/dist/", entry));
+        Assert.Equal(@"C:\RepoB", coordinator.CurrentFolderState.ActiveRootPath);
+        Assert.True(coordinator.CurrentFolderState.UseFolderExcludes);
+        Assert.Collection(
+            coordinator.CurrentFolderState.FolderExcludes,
+            entry => Assert.Equal("/generated/", entry));
+
+        await coordinator.FlushAsync();
+    }
+
+    [Fact]
+    public void Resolve_UsesFolderSettingsForTargetRoot()
+    {
+        var folderStore = new RecordingFolderSettingsStore();
+        folderStore.Seed(@"C:\RepoB", new FolderSettings
+        {
+            RootPath = @"C:\RepoB",
+            Scan = new FolderScanSettings
+            {
+                UseFolderExcludes = true,
+                FolderExcludes = ["/generated/"],
+            },
+        });
+
+        var coordinator = new SettingsCoordinator(
+            new RecordingAppSettingsStore(AppSettings.CreateDefault()),
+            folderStore,
+            new RecordingThemeService(),
+            debounceDelay: TimeSpan.FromMilliseconds(25));
+        var baseOptions = new ScanOptions
+        {
+            RespectGitIgnore = false,
+            UseGlobalExcludes = true,
+            GlobalExcludes = [".git/"],
+        };
+
+        var resolved = coordinator.Resolve(@"C:\RepoB", baseOptions);
+
+        Assert.False(resolved.RespectGitIgnore);
+        Assert.True(resolved.UseGlobalExcludes);
+        Assert.True(resolved.UseFolderExcludes);
+        Assert.Collection(
+            resolved.FolderExcludes,
+            entry => Assert.Equal("/generated/", entry));
     }
 
     private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore
@@ -150,6 +226,37 @@ public sealed class SettingsCoordinatorTests
         public void ApplyThemePreference(ThemePreference themePreference)
         {
             LastAppliedThemePreference = themePreference;
+        }
+    }
+
+    private sealed class RecordingFolderSettingsStore : IFolderSettingsStore
+    {
+        private readonly Dictionary<string, FolderSettings> _settingsByPath = new(StringComparer.OrdinalIgnoreCase);
+
+        public int SaveCallCount { get; private set; }
+
+        public FolderSettings? LastSavedSettings { get; private set; }
+
+        public FolderSettings Load(string rootPath)
+        {
+            if (_settingsByPath.TryGetValue(rootPath, out var settings))
+            {
+                return settings.Clone();
+            }
+
+            return FolderSettings.CreateDefault(rootPath);
+        }
+
+        public void Save(string rootPath, FolderSettings settings)
+        {
+            SaveCallCount++;
+            LastSavedSettings = settings.Clone();
+            _settingsByPath[rootPath] = settings.Clone();
+        }
+
+        public void Seed(string rootPath, FolderSettings settings)
+        {
+            _settingsByPath[rootPath] = settings.Clone();
         }
     }
 }

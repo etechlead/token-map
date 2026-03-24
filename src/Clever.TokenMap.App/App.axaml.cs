@@ -33,12 +33,14 @@ public partial class App : Application
             DisableAvaloniaDataAnnotationValidation();
             var mainWindow = new MainWindow();
             var appSettingsStore = new JsonAppSettingsStore();
+            var folderSettingsStore = new JsonFolderSettingsStore();
             var appSettings = appSettingsStore.Load();
             var themeService = new ApplicationThemeService(this);
             var folderPathService = new FileSystemFolderPathService();
             var loggerFactory = new AppLoggerFactory(appSettings.Logging);
             var settingsCoordinator = new SettingsCoordinator(
                 appSettingsStore,
+                folderSettingsStore,
                 themeService,
                 appSettings,
                 loggerFactory.CreateLogger<SettingsCoordinator>());
@@ -59,7 +61,8 @@ public partial class App : Application
                 analyzer,
                 new WindowFolderPickerService(mainWindow),
                 folderPathService,
-                loggerFactory.CreateLogger<AnalysisSessionController>());
+                loggerFactory.CreateLogger<AnalysisSessionController>(),
+                settingsCoordinator);
             mainWindow.DataContext = new MainWindowViewModel(
                 analysisSessionController,
                 new TreemapNavigationState(),

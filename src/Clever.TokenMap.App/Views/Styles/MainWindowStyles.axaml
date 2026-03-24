@@ -1,4 +1,5 @@
 <Styles xmlns="https://github.com/avaloniaui"
+        xmlns:icons="using:FluentIcons.Avalonia"
         xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style Selector="Border.panel">
@@ -123,11 +124,10 @@
         <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="6" />
     </Style>
-    <Style Selector="Path.recent-folder-icon">
+    <Style Selector="icons|FluentIcon.recent-folder-icon">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Fill" Value="{DynamicResource TokenMapAccentBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
@@ -162,17 +162,16 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="0" />
     </Style>
-    <Style Selector="Path.tree-expander-icon">
+    <Style Selector="icons|FluentIcon.tree-expander-icon">
         <Setter Property="Width" Value="10" />
         <Setter Property="Height" Value="10" />
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Button.tree-expander:pointerover Path.tree-expander-icon">
-        <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
+    <Style Selector="Button.tree-expander:pointerover icons|FluentIcon.tree-expander-icon">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
     <Style Selector="Button.action-button">
         <Setter Property="Template">
@@ -232,24 +231,22 @@
         <Setter Property="Orientation" Value="Horizontal" />
         <Setter Property="Spacing" Value="8" />
     </Style>
-    <Style Selector="Path.action-button-icon">
+    <Style Selector="icons|FluentIcon.action-button-icon">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Path.context-menu-icon">
+    <Style Selector="icons|FluentIcon.context-menu-icon">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Button.action-button.primary Path.action-button-icon">
-        <Setter Property="Fill" Value="White" />
+    <Style Selector="Button.action-button.primary icons|FluentIcon.action-button-icon">
+        <Setter Property="Foreground" Value="White" />
     </Style>
     <Style Selector="SplitButton.action-split-button">
         <Setter Property="Foreground" Value="White" />
@@ -323,8 +320,8 @@
     <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader:pointerover">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
     </Style>
-    <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader Path.sort-icon">
-        <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
+    <Style Selector="DataGrid#ProjectTreeTable DataGridColumnHeader icons|FluentIcon.sort-icon">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridCell">
         <Setter Property="Background" Value="Transparent" />
@@ -582,24 +579,23 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Path.theme-mode-icon">
-        <Setter Property="Stretch" Value="Uniform" />
-        <Setter Property="Fill" Value="{DynamicResource TokenMapMutedTextBrush}" />
+    <Style Selector="icons|FluentIcon.theme-mode-icon">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
-    <Style Selector="Path.theme-mode-icon-filled">
+    <Style Selector="icons|FluentIcon.theme-mode-icon-filled">
         <Setter Property="IsVisible" Value="False" />
     </Style>
-    <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon-regular">
+    <Style Selector="ToggleButton.theme-mode-button:checked icons|FluentIcon.theme-mode-icon-regular">
         <Setter Property="IsVisible" Value="False" />
     </Style>
-    <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon-filled">
+    <Style Selector="ToggleButton.theme-mode-button:checked icons|FluentIcon.theme-mode-icon-filled">
         <Setter Property="IsVisible" Value="True" />
     </Style>
-    <Style Selector="ToggleButton.theme-mode-button:pointerover Path.theme-mode-icon">
-        <Setter Property="Fill" Value="{DynamicResource TokenMapTextBrush}" />
+    <Style Selector="ToggleButton.theme-mode-button:pointerover icons|FluentIcon.theme-mode-icon">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
-    <Style Selector="ToggleButton.theme-mode-button:checked Path.theme-mode-icon">
-        <Setter Property="Fill" Value="White" />
+    <Style Selector="ToggleButton.theme-mode-button:checked icons|FluentIcon.theme-mode-icon">
+        <Setter Property="Foreground" Value="White" />
     </Style>
 </Styles>

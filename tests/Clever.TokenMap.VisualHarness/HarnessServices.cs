@@ -36,4 +36,21 @@ internal sealed class NoOpPathShellService : IPathShellService
 internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettingsCoordinator
 {
     public SettingsState State { get; } = state;
+
+    public CurrentFolderSettingsState CurrentFolderState { get; } = new();
+
+    public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+    public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
+
+    public void SwitchActiveFolder(string? rootPath)
+    {
+        if (string.IsNullOrWhiteSpace(rootPath))
+        {
+            CurrentFolderState.Reset();
+            return;
+        }
+
+        CurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
+    }
 }

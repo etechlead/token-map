@@ -14,6 +14,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     private readonly IProjectAnalyzer _projectAnalyzer;
     private readonly IFolderPickerService _folderPickerService;
     private readonly IFolderPathService _folderPathService;
+    private readonly IScanOptionsResolver _scanOptionsResolver;
     private readonly IAppLogger _logger;
 
     private CancellationTokenSource? _analysisCancellationTokenSource;
@@ -24,11 +25,13 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         IProjectAnalyzer projectAnalyzer,
         IFolderPickerService folderPickerService,
         IFolderPathService folderPathService,
-        IAppLogger? logger = null)
+        IAppLogger? logger = null,
+        IScanOptionsResolver? scanOptionsResolver = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
         _folderPathService = folderPathService;
+        _scanOptionsResolver = scanOptionsResolver ?? new PassthroughScanOptionsResolver();
         _logger = logger ?? NullAppLogger.Instance;
     }
 
@@ -105,6 +108,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         ScanOptions options,
         bool commitSelectedFolderOnSuccess)
     {
+        var resolvedOptions = _scanOptionsResolver.Resolve(folderPath, options);
         var version = Interlocked.Increment(ref _analysisVersion);
         var cancellationTokenSource = new CancellationTokenSource();
 
@@ -138,7 +142,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         {
             var snapshot = await _projectAnalyzer.AnalyzeAsync(
                 folderPath,
-                options,
+                resolvedOptions,
                 progress,
                 cancellationTokenSource.Token);
 
@@ -194,5 +198,10 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     {
         State = value;
         StatusMessage = message;
+    }
+
+    private sealed class PassthroughScanOptionsResolver : IScanOptionsResolver
+    {
+        public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
     }
 }

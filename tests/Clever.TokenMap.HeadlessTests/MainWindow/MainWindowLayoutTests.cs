@@ -14,10 +14,10 @@ using Clever.TokenMap.App.Views.Sections;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using FluentIcons.Avalonia;
 using System.Collections.Specialized;
 using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
-using ShapePath = Avalonia.Controls.Shapes.Path;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -394,9 +394,9 @@ public sealed class MainWindowLayoutTests
         window.UpdateLayout();
         var linesHeader = FindProjectTreeHeader(window, "Lines");
         var tokensHeader = FindProjectTreeHeader(window, "Tokens");
-        var linesDescendingIcon = FindHeaderElement<ShapePath>(linesHeader, "SortIconDescending");
-        var linesAscendingIcon = FindHeaderElement<ShapePath>(linesHeader, "SortIconAscending");
-        var tokensDescendingIcon = FindHeaderElement<ShapePath>(tokensHeader, "SortIconDescending");
+        var linesDescendingIcon = FindHeaderElement<FluentIcon>(linesHeader, "SortIconDescending");
+        var linesAscendingIcon = FindHeaderElement<FluentIcon>(linesHeader, "SortIconAscending");
+        var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
         Assert.Equal("Lines", linesColumn.Header?.ToString());
         Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
@@ -443,9 +443,9 @@ public sealed class MainWindowLayoutTests
         window.UpdateLayout();
         var nameHeader = FindProjectTreeHeader(window, "Name");
         var tokensHeader = FindProjectTreeHeader(window, "Tokens");
-        var nameAscendingIcon = FindHeaderElement<ShapePath>(nameHeader, "SortIconAscending");
-        var nameDescendingIcon = FindHeaderElement<ShapePath>(nameHeader, "SortIconDescending");
-        var tokensDescendingIcon = FindHeaderElement<ShapePath>(tokensHeader, "SortIconDescending");
+        var nameAscendingIcon = FindHeaderElement<FluentIcon>(nameHeader, "SortIconAscending");
+        var nameDescendingIcon = FindHeaderElement<FluentIcon>(nameHeader, "SortIconDescending");
+        var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
         Assert.Equal("Name", nameColumn.Header?.ToString());
         Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
@@ -637,18 +637,21 @@ public sealed class MainWindowLayoutTests
 
         var globalExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseGlobalExcludesCheckBox");
         var editButton = FindNamedDescendant<Button>(window, "EditGlobalExcludesButton");
-        var rescanNotice = FindNamedDescendant<Control>(window, "GlobalExcludesRescanNotice");
+        var rescanNotice = FindNamedDescendant<Control>(window, "ScanSettingsRescanNotice");
+        var folderPanel = FindNamedDescendant<Control>(window, "CurrentFolderSettingsPanel");
 
         Assert.NotNull(globalExcludesCheckBox);
         Assert.NotNull(editButton);
         Assert.NotNull(rescanNotice);
+        Assert.NotNull(folderPanel);
         Assert.True(globalExcludesCheckBox.IsVisible);
         Assert.Equal("Edit", editButton.Content?.ToString());
         Assert.False(rescanNotice.IsVisible);
+        Assert.False(folderPanel.IsVisible);
     }
 
     [AvaloniaFact]
-    public void MainWindow_GlobalExcludesEditor_OpensResetsAndCancelsWithoutSaving()
+    public void MainWindow_GlobalExcludesEditor_OpensAndCancelsWithoutSaving()
     {
         var window = new MainWindow
         {
@@ -661,27 +664,26 @@ public sealed class MainWindowLayoutTests
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
-        var modal = FindNamedDescendant<Control>(window, "GlobalExcludesEditorModal");
-        var backdrop = FindNamedDescendant<Control>(window, "GlobalExcludesEditorBackdrop");
-        var editor = FindNamedDescendant<TextBox>(window, "GlobalExcludesEditorTextBox");
+        var modal = FindNamedDescendant<Control>(window, "ExcludesEditorModal");
+        var backdrop = FindNamedDescendant<Control>(window, "ExcludesEditorBackdrop");
+        var editor = FindNamedDescendant<TextBox>(window, "ExcludesEditorTextBox");
+        var saveButton = FindNamedDescendant<Button>(window, "SaveExcludesButton");
+        var saveAndRescanButton = FindNamedDescendant<Button>(window, "SaveAndRescanExcludesButton");
 
         Assert.NotNull(modal);
         Assert.NotNull(backdrop);
         Assert.NotNull(editor);
+        Assert.NotNull(saveButton);
+        Assert.NotNull(saveAndRescanButton);
         Assert.True(modal.IsVisible);
         Assert.True(backdrop.IsVisible);
         Assert.Equal(
             string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries).ReplaceLineEndings("\n"),
             editor.Text?.ReplaceLineEndings("\n"));
+        Assert.Equal("Save", saveButton.Content?.ToString());
+        Assert.Equal("Save and Rescan", saveAndRescanButton.Content?.ToString());
 
-        viewModel.GlobalExcludesEditorText = "bin/\nobj/";
-        viewModel.ResetGlobalExcludesEditorCommand.Execute(null);
-
-        Assert.Equal(
-            string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries).ReplaceLineEndings("\n"),
-            viewModel.GlobalExcludesEditorText.ReplaceLineEndings("\n"));
-
-        viewModel.CancelGlobalExcludesEditorCommand.Execute(null);
+        viewModel.CancelExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
         Assert.False(modal.IsVisible);
@@ -700,16 +702,16 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.GlobalExcludesEditorText = " node_modules\\\\ \n\n/src//generated/**\n!nested/scripts/";
-        viewModel.SaveGlobalExcludesEditorCommand.Execute(null);
+        viewModel.ExcludesEditorText = " node_modules\\\\ \n\n/src//generated/**\n!nested/scripts/";
+        viewModel.SaveExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
-        var notice = FindNamedDescendant<Control>(window, "GlobalExcludesRescanNotice");
-        var rescanButton = FindNamedDescendant<Button>(window, "GlobalExcludesRescanButton");
+        var notice = FindNamedDescendant<Control>(window, "ScanSettingsRescanNotice");
+        var rescanButton = FindNamedDescendant<Button>(window, "ScanSettingsRescanButton");
 
         Assert.NotNull(notice);
         Assert.NotNull(rescanButton);
-        Assert.True(viewModel.ShowGlobalExcludesRescanNotice);
+        Assert.True(viewModel.ShowScanSettingsRescanNotice);
         Assert.True(notice.IsVisible);
         Assert.Collection(
             viewModel.Toolbar.BuildScanOptions().GlobalExcludes,
@@ -718,19 +720,116 @@ public sealed class MainWindowLayoutTests
             entry => Assert.Equal("!nested/scripts/", entry));
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.GlobalExcludesEditorText += "\nobj/";
-        Assert.False(viewModel.ShowGlobalExcludesRescanNotice);
-        viewModel.CancelGlobalExcludesEditorCommand.Execute(null);
+        viewModel.ExcludesEditorText += "\nobj/";
+        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+        viewModel.CancelExcludesEditorCommand.Execute(null);
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.GlobalExcludesEditorText = "vendor/";
-        viewModel.SaveGlobalExcludesEditorCommand.Execute(null);
-        Assert.True(viewModel.ShowGlobalExcludesRescanNotice);
+        viewModel.ExcludesEditorText = "vendor/";
+        viewModel.SaveExcludesEditorCommand.Execute(null);
+        Assert.True(viewModel.ShowScanSettingsRescanNotice);
 
         await viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.ShowGlobalExcludesRescanNotice);
+        Assert.False(viewModel.ShowScanSettingsRescanNotice);
         Assert.False(notice.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_SettingsDrawer_ShowsCurrentFolderExcludesBlock_WhenFolderIsCommitted()
+    {
+        var window = new MainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        viewModel.ToggleSettingsCommand.Execute(null);
+        window.UpdateLayout();
+
+        var folderPanel = FindNamedDescendant<Control>(window, "CurrentFolderSettingsPanel");
+        var folderTitle = FindNamedDescendant<TextBlock>(window, "CurrentFolderSettingsTitle");
+        var folderCheckbox = FindNamedDescendant<CheckBox>(window, "UseFolderExcludesCheckBox");
+        var folderEditButton = FindNamedDescendant<Button>(window, "EditFolderExcludesButton");
+
+        Assert.NotNull(folderPanel);
+        Assert.NotNull(folderTitle);
+        Assert.NotNull(folderCheckbox);
+        Assert.NotNull(folderEditButton);
+        Assert.True(folderPanel.IsVisible);
+        Assert.Equal("Current folder: Demo", folderTitle.Text);
+        Assert.Equal("Edit", folderEditButton.Content?.ToString());
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_FolderExcludesSave_UsesSharedEditorAndShowsRescanNotice()
+    {
+        var window = new MainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        viewModel.OpenFolderExcludesEditorCommand.Execute(null);
+        viewModel.ExcludesEditorText = "/generated/\n!generated/keep.txt";
+        viewModel.SaveExcludesEditorCommand.Execute(null);
+        window.UpdateLayout();
+
+        Assert.True(viewModel.ShowScanSettingsRescanNotice);
+        Assert.True(viewModel.Toolbar.BuildScanOptions().UseFolderExcludes);
+        Assert.Collection(
+            viewModel.Toolbar.BuildScanOptions().FolderExcludes,
+            entry => Assert.Equal("/generated/", entry),
+            entry => Assert.Equal("!generated/keep.txt", entry));
+
+        await viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_SaveAndRescanExcludesEditor_RescansImmediately()
+    {
+        var analyzer = new CountingProjectAnalyzer(
+            HeadlessTestSupport.CreateSnapshot(),
+            HeadlessTestSupport.CreateSnapshot());
+        var viewModel = CreateMainWindowViewModel(analyzer);
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        viewModel.OpenFolderExcludesEditorCommand.Execute(null);
+        viewModel.ExcludesEditorText = "/generated/";
+        await viewModel.SaveAndRescanExcludesEditorCommand.ExecuteAsync(null);
+
+        Assert.Equal(2, analyzer.CallCount);
+        Assert.False(viewModel.IsExcludesEditorOpen);
+        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+    }
+
+    [Fact]
+    public async Task MainWindowViewModel_ExcludeNodeFromFolder_AppendsExactEntryAndOpensFolderEditor()
+    {
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        viewModel.ExcludeNodeFromFolderCommand.Execute(new ProjectNode
+        {
+            Id = "src",
+            Name = "src",
+            FullPath = "C:\\Demo\\src",
+            RelativePath = "src",
+            Kind = ProjectNodeKind.Directory,
+            Metrics = NodeMetrics.Empty,
+        });
+
+        Assert.True(viewModel.IsExcludesEditorOpen);
+        Assert.Equal("Excludes for Demo", viewModel.ExcludesEditorTitle);
+        Assert.Equal("/src/", viewModel.ExcludesEditorText.ReplaceLineEndings("\n"));
     }
 
     [AvaloniaFact]
@@ -1542,6 +1641,28 @@ public sealed class MainWindowLayoutTests
             await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
 
             throw new InvalidOperationException("This path should have been cancelled.");
+        }
+    }
+
+    private sealed class CountingProjectAnalyzer(params ProjectSnapshot[] snapshots) : IProjectAnalyzer
+    {
+        private readonly Queue<ProjectSnapshot> _snapshots = new(snapshots);
+
+        public int CallCount { get; private set; }
+
+        public Task<ProjectSnapshot> AnalyzeAsync(
+            string rootPath,
+            ScanOptions options,
+            IProgress<AnalysisProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            CallCount++;
+            if (_snapshots.Count == 0)
+            {
+                throw new InvalidOperationException("No more snapshots configured.");
+            }
+
+            return Task.FromResult(_snapshots.Dequeue());
         }
     }
 }

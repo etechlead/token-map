@@ -1,12 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
+using FluentIcons.Avalonia;
+using FluentIconGlyph = FluentIcons.Common.Icon;
+using FluentIconSize = FluentIcons.Common.IconSize;
+using FluentIconVariant = FluentIcons.Common.IconVariant;
 
 namespace Clever.TokenMap.App.Views;
 
@@ -16,6 +17,7 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Control _clipboardHost;
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
+    private MenuItem? _excludeItem;
     private MenuItem? _setAsTreemapRootItem;
     private ProjectNode? _currentNode;
 
@@ -53,87 +55,64 @@ internal sealed class ProjectNodeContextMenuController
         {
             Placement = PlacementMode.Pointer,
         };
-        menu.Items.Add(CreateMenuItem("Open", "FluentFolderOpen20Geometry", OpenItem_OnClick));
-        menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), "FluentDesktop20RegularGeometry", RevealItem_OnClick));
-        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", "FluentTargetArrow20Geometry", SetAsTreemapRootItem_OnClick);
+        menu.Items.Add(CreateMenuItem("Open", FluentIconGlyph.FolderOpen, OpenItem_OnClick));
+        menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), FluentIconGlyph.DesktopMac, RevealItem_OnClick));
+        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", FluentIconGlyph.TargetArrow, SetAsTreemapRootItem_OnClick);
         menu.Items.Add(_setAsTreemapRootItem);
+        _excludeItem = CreateMenuItem("Exclude from Scan", FluentIconGlyph.SubtractCircle, ExcludeItem_OnClick);
+        menu.Items.Add(_excludeItem);
         menu.Items.Add(new Separator());
-        menu.Items.Add(CreateMenuItem("Copy Full Path", "TokenMapCopy20Geometry", CopyFullPathItem_OnClick));
-        menu.Items.Add(CreateMenuItem("Copy Relative Path", iconResourceKey: null, CopyRelativePathItem_OnClick));
+        menu.Items.Add(CreateMenuItem("Copy Full Path", FluentIconGlyph.DocumentCopy, CopyFullPathItem_OnClick));
+        menu.Items.Add(CreateMenuItem("Copy Relative Path", icon: null, CopyRelativePathItem_OnClick));
         return menu;
     }
 
-    private MenuItem CreateMenuItem(string header, string? iconResourceKey, EventHandler<RoutedEventArgs> clickHandler)
+    private static MenuItem CreateMenuItem(string header, FluentIconGlyph iconGlyph, EventHandler<RoutedEventArgs> clickHandler) =>
+        CreateMenuItem(header, CreateMenuIcon(iconGlyph), clickHandler);
+
+    private static MenuItem CreateMenuItem(string header, Control? icon, EventHandler<RoutedEventArgs> clickHandler)
     {
         var item = new MenuItem
         {
             Header = header,
+            Icon = icon,
         };
-        if (!string.IsNullOrWhiteSpace(iconResourceKey))
-        {
-            item.Icon = CreateIcon(iconResourceKey);
-        }
 
         item.Click += clickHandler;
         return item;
     }
 
-    private Path CreateIcon(string iconResourceKey)
+    private static FluentIcon CreateMenuIcon(FluentIconGlyph iconGlyph)
     {
-        var icon = new Path
+        var icon = new FluentIcon
         {
-            Width = 16,
-            Height = 16,
-            Stretch = Stretch.Uniform,
+            Icon = iconGlyph,
+            IconVariant = FluentIconVariant.Regular,
+            IconSize = FluentIconSize.Size16,
+            Width = 18,
+            Height = 18,
             VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
             IsHitTestVisible = false,
         };
         icon.Classes.Add("context-menu-icon");
-        if (TryGetGeometryResource(iconResourceKey, out var geometry))
-        {
-            icon.Data = geometry;
-        }
-
         return icon;
-    }
-
-    private bool TryGetGeometryResource(string iconResourceKey, out Geometry geometry)
-    {
-        if (Application.Current?.TryGetResource(iconResourceKey, _clipboardHost.ActualThemeVariant, out var applicationResource) == true &&
-            applicationResource is Geometry applicationGeometry)
-        {
-            geometry = applicationGeometry;
-            return true;
-        }
-
-        if (_clipboardHost.TryGetResource(iconResourceKey, out var hostResource) &&
-            hostResource is Geometry hostGeometry)
-        {
-            geometry = hostGeometry;
-            return true;
-        }
-
-        if (_clipboardHost.TryGetResource(iconResourceKey, _clipboardHost.ActualThemeVariant, out var themedHostResource) &&
-            themedHostResource is Geometry themedHostGeometry)
-        {
-            geometry = themedHostGeometry;
-            return true;
-        }
-
-        geometry = default!;
-        return false;
     }
 
     private void UpdateMenuState()
     {
-        var canSetTreemapRoot = _viewModelAccessor()?.CanSetTreemapRoot(_currentNode) == true;
-        if (_setAsTreemapRootItem is null)
+        var viewModel = _viewModelAccessor();
+        var canSetTreemapRoot = viewModel?.CanSetTreemapRoot(_currentNode) == true;
+        var canExclude = viewModel?.CanExcludeNodeFromFolder(_currentNode) == true;
+
+        if (_setAsTreemapRootItem is null || _excludeItem is null)
         {
             return;
         }
 
         _setAsTreemapRootItem.IsVisible = canSetTreemapRoot;
         _setAsTreemapRootItem.IsEnabled = canSetTreemapRoot;
+        _excludeItem.IsVisible = canExclude;
+        _excludeItem.IsEnabled = canExclude;
     }
 
     private async void OpenItem_OnClick(object? sender, RoutedEventArgs e)
@@ -159,6 +138,11 @@ internal sealed class ProjectNodeContextMenuController
     private void SetAsTreemapRootItem_OnClick(object? sender, RoutedEventArgs e)
     {
         _viewModelAccessor()?.SetTreemapRoot(_currentNode);
+    }
+
+    private void ExcludeItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _viewModelAccessor()?.ExcludeNodeFromFolderCommand.Execute(_currentNode);
     }
 
     private async void CopyFullPathItem_OnClick(object? sender, RoutedEventArgs e)

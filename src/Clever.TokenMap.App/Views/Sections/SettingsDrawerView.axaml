@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:icons="using:FluentIcons.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.SettingsDrawerView"
@@ -105,16 +106,46 @@
                                             Content="Edit"
                                             IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 </Grid>
-                                <Border Name="GlobalExcludesRescanNotice"
-                                        Classes="settings-notice-panel"
-                                        IsVisible="{Binding ShowGlobalExcludesRescanNotice}">
+                                <Border Name="CurrentFolderSettingsDivider"
+                                        Height="1"
+                                        Margin="0,4,0,2"
+                                        Background="{DynamicResource TokenMapDividerBrush}"
+                                        IsVisible="{Binding Toolbar.HasCurrentFolderSettings}" />
+                                <StackPanel Name="CurrentFolderSettingsPanel"
+                                            Spacing="6"
+                                            IsVisible="{Binding Toolbar.HasCurrentFolderSettings}">
+                                    <TextBlock Name="CurrentFolderSettingsTitle"
+                                               Classes="toolbar-group-title"
+                                               Text="{Binding Toolbar.CurrentFolderSettingsTitle}" />
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
-                                        <TextBlock Name="GlobalExcludesRescanNoticeText"
+                                        <CheckBox Name="UseFolderExcludesCheckBox"
+                                                  Content="Use folder excludes"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding Toolbar.UseFolderExcludes}"
+                                                  IsEnabled="{Binding Toolbar.CanConfigureFolderExcludes}" />
+                                        <Button Name="EditFolderExcludesButton"
+                                                Grid.Column="1"
+                                                Classes="action-button"
+                                                VerticalAlignment="Center"
+                                                HorizontalAlignment="Right"
+                                                Padding="10,4"
+                                                MinHeight="28"
+                                                Command="{Binding OpenFolderExcludesEditorCommand}"
+                                                Content="Edit"
+                                                IsEnabled="{Binding Toolbar.CanConfigureFolderExcludes}" />
+                                    </Grid>
+                                </StackPanel>
+                                <Border Name="ScanSettingsRescanNotice"
+                                        Classes="settings-notice-panel"
+                                        IsVisible="{Binding ShowScanSettingsRescanNotice}">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <TextBlock Name="ScanSettingsRescanNoticeText"
                                                    Classes="settings-notice-text"
                                                    VerticalAlignment="Center"
-                                                   Text="Global excludes updated. Rescan to apply." />
-                                        <Button Name="GlobalExcludesRescanButton"
+                                                   Text="Scan settings updated. Rescan to apply." />
+                                        <Button Name="ScanSettingsRescanButton"
                                                 Grid.Column="1"
                                                 Classes="settings-link"
                                                 VerticalAlignment="Center"
@@ -149,10 +180,14 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentBrightnessHigh20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentBrightnessHigh20FilledGeometry}" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
+                                                          Icon="BrightnessHigh"
+                                                          IconVariant="Regular"
+                                                          IconSize="Size20" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
+                                                          Icon="BrightnessHigh"
+                                                          IconVariant="Filled"
+                                                          IconSize="Size20" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>
@@ -167,10 +202,14 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentDesktop20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentDesktop20FilledGeometry}" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
+                                                          Icon="DesktopMac"
+                                                          IconVariant="Regular"
+                                                          IconSize="Size20" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
+                                                          Icon="DesktopMac"
+                                                          IconVariant="Filled"
+                                                          IconSize="Size20" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>
@@ -185,10 +224,14 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentDarkTheme20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentDarkTheme20FilledGeometry}" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
+                                                          Icon="DarkTheme"
+                                                          IconVariant="Regular"
+                                                          IconSize="Size20" />
+                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
+                                                          Icon="DarkTheme"
+                                                          IconVariant="Filled"
+                                                          IconSize="Size20" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>

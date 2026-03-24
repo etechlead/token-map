@@ -128,6 +128,7 @@ public sealed class ToolbarViewModelTests
     {
         return new ToolbarViewModel(
             state,
+            new CurrentFolderSettingsState(),
             new AsyncRelayCommand(() => Task.CompletedTask),
             new AsyncRelayCommand(() => Task.CompletedTask),
             new RelayCommand(() => { }));

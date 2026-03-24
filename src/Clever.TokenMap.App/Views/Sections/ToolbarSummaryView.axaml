@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:icons="using:FluentIcons.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.ToolbarSummaryView"
@@ -24,8 +25,10 @@
                                      ToolTip.Tip="Open a folder for analysis">
                             <SplitButton.Content>
                                 <StackPanel Classes="action-button-content">
-                                    <Path Classes="action-button-icon"
-                                          Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                    <icons:FluentIcon Classes="action-button-icon"
+                                                      Icon="FolderOpen"
+                                                      IconVariant="Regular"
+                                                      IconSize="Size20" />
                                     <TextBlock VerticalAlignment="Center"
                                                Text="Open Folder" />
                                 </StackPanel>
@@ -55,8 +58,10 @@
                                                               HorizontalAlignment="Left">
                                                             <Border Classes="recent-folder-icon-host menu-item"
                                                                     IsVisible="{Binding ShowFolderIcon}">
-                                                                <Path Classes="recent-folder-icon"
-                                                                      Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                                                <icons:FluentIcon Classes="recent-folder-icon"
+                                                                                  Icon="FolderOpen"
+                                                                                  IconVariant="Regular"
+                                                                                  IconSize="Size20" />
                                                             </Border>
 
                                                             <StackPanel Grid.Column="1"
@@ -91,8 +96,10 @@
                                 IsVisible="{Binding HasSnapshot}"
                                 ToolTip.Tip="Run the scan again for the selected folder">
                             <StackPanel Classes="action-button-content">
-                                <Path Classes="action-button-icon"
-                                      Data="{StaticResource FluentArrowClockwise20Geometry}" />
+                                <icons:FluentIcon Classes="action-button-icon"
+                                                  Icon="ArrowClockwiseDashes"
+                                                  IconVariant="Regular"
+                                                  IconSize="Size20" />
                                 <TextBlock VerticalAlignment="Center"
                                            Text="Rescan" />
                             </StackPanel>
@@ -169,8 +176,10 @@
                         Command="{Binding ToggleSettingsCommand}"
                         ToolTip.Tip="Open settings">
                     <StackPanel Classes="action-button-content">
-                        <Path Classes="action-button-icon"
-                              Data="{StaticResource FluentAppsSettings20Geometry}" />
+                        <icons:FluentIcon Classes="action-button-icon"
+                                          Icon="AppsSettings"
+                                          IconVariant="Regular"
+                                          IconSize="Size20" />
                         <TextBlock VerticalAlignment="Center"
                                    Text="Settings" />
                     </StackPanel>

@@ -1,4 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
+        xmlns:icons="using:FluentIcons.Avalonia"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
         xmlns:sections="using:Clever.TokenMap.App.Views.Sections"
@@ -78,8 +79,10 @@
                                 HorizontalAlignment="Center"
                                 Command="{Binding Toolbar.OpenFolderCommand}">
                             <StackPanel Classes="action-button-content">
-                                <Path Classes="action-button-icon"
-                                      Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                <icons:FluentIcon Classes="action-button-icon"
+                                                  Icon="FolderOpen"
+                                                  IconVariant="Regular"
+                                                  IconSize="Size20" />
                                 <TextBlock VerticalAlignment="Center"
                                            Text="Open Folder" />
                             </StackPanel>
@@ -114,8 +117,10 @@
                                                   RowSpacing="6">
                                                 <Border Grid.RowSpan="2"
                                                         Classes="recent-folder-icon-host">
-                                                    <Path Classes="recent-folder-icon"
-                                                          Data="{StaticResource FluentFolderOpen20Geometry}" />
+                                                    <icons:FluentIcon Classes="recent-folder-icon"
+                                                                      Icon="FolderOpen"
+                                                                      IconVariant="Regular"
+                                                                      IconSize="Size20" />
                                                 </Border>
 
                                                 <StackPanel Grid.Column="1"
@@ -166,18 +171,18 @@
                                      Grid.Row="1"
                                      ZIndex="2" />
 
-        <Border Name="GlobalExcludesEditorBackdrop"
+        <Border Name="ExcludesEditorBackdrop"
                 Grid.RowSpan="3"
                 Background="#660B1016"
-                IsVisible="{Binding IsGlobalExcludesEditorOpen}"
+                IsVisible="{Binding IsExcludesEditorOpen}"
                 ZIndex="3" />
 
-        <Border Name="GlobalExcludesEditorModal"
+        <Border Name="ExcludesEditorModal"
                 Grid.RowSpan="3"
                 Classes="panel global-excludes-modal"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                IsVisible="{Binding IsGlobalExcludesEditorOpen}"
+                IsVisible="{Binding IsExcludesEditorOpen}"
                 ZIndex="4">
             <Grid RowDefinitions="Auto,Auto,*,Auto"
                   RowSpacing="12">
@@ -185,11 +190,11 @@
                       ColumnSpacing="8">
                     <TextBlock Classes="panel-title"
                                VerticalAlignment="Center"
-                               Text="Global excludes" />
+                               Text="{Binding ExcludesEditorTitle}" />
                     <Button Grid.Column="1"
                             Classes="close-button"
-                            Command="{Binding CancelGlobalExcludesEditorCommand}"
-                            ToolTip.Tip="Cancel editing global excludes">
+                            Command="{Binding CancelExcludesEditorCommand}"
+                            ToolTip.Tip="Cancel editing excludes">
                         <Path Classes="close-button-icon"
                               Data="{StaticResource FluentDismiss20Geometry}" />
                     </Button>
@@ -197,35 +202,36 @@
 
                 <TextBlock Grid.Row="1"
                            Classes="panel-body"
-                           Text="Use gitignore-style rules, one per line. Use / for project-root rules, ! for re-include rules, and # for comments."
+                           Text="{Binding ExcludesEditorHelperText}"
                            TextWrapping="Wrap" />
 
-                <TextBox Name="GlobalExcludesEditorTextBox"
+                <TextBox Name="ExcludesEditorTextBox"
                          Grid.Row="2"
                          Classes="global-excludes-editor"
                          AcceptsReturn="True"
                          HorizontalAlignment="Stretch"
                          VerticalAlignment="Stretch"
-                         Text="{Binding GlobalExcludesEditorText, Mode=TwoWay}"
+                         Text="{Binding ExcludesEditorText, Mode=TwoWay}"
                          TextWrapping="NoWrap" />
 
                 <Grid Grid.Row="3"
-                      ColumnDefinitions="Auto,*,Auto,Auto"
+                      ColumnDefinitions="*,Auto,Auto,Auto"
                       ColumnSpacing="8">
-                    <Button Name="ResetGlobalExcludesButton"
+                    <Button Name="CancelExcludesButton"
+                            Grid.Column="1"
                             Classes="action-button"
-                            Command="{Binding ResetGlobalExcludesEditorCommand}"
-                            Content="Reset to defaults" />
-                    <Button Name="CancelGlobalExcludesButton"
+                            Command="{Binding CancelExcludesEditorCommand}"
+                            Content="Cancel" />
+                    <Button Name="SaveExcludesButton"
                             Grid.Column="2"
                             Classes="action-button"
-                            Command="{Binding CancelGlobalExcludesEditorCommand}"
-                            Content="Cancel" />
-                    <Button Name="SaveGlobalExcludesButton"
+                            Command="{Binding SaveExcludesEditorCommand}"
+                            Content="Save" />
+                    <Button Name="SaveAndRescanExcludesButton"
                             Grid.Column="3"
                             Classes="action-button primary"
-                            Command="{Binding SaveGlobalExcludesEditorCommand}"
-                            Content="Save" />
+                            Command="{Binding SaveAndRescanExcludesEditorCommand}"
+                            Content="Save and Rescan" />
                 </Grid>
             </Grid>
         </Border>

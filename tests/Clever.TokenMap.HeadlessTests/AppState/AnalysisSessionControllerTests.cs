@@ -27,6 +27,29 @@ public sealed class AnalysisSessionControllerTests
     }
 
     [Fact]
+    public async Task OpenFolderAsync_UsesResolvedScanOptionsForFirstOpen()
+    {
+        var controller = new AnalysisSessionController(
+            new SequenceProjectAnalyzer((rootPath, options, _, _) =>
+            {
+                Assert.Equal(@"C:\Demo", rootPath);
+                Assert.True(options.UseFolderExcludes);
+                Assert.Collection(
+                    options.FolderExcludes,
+                    entry => Assert.Equal("/generated/", entry));
+                return Task.FromResult(CreateSnapshot("Resolved"));
+            }),
+            new FixedFolderPickerService(@"C:\Demo"),
+            new FixedFolderPathService(),
+            scanOptionsResolver: new FixedScanOptionsResolver());
+
+        await controller.OpenFolderAsync(ScanOptions.Default);
+
+        Assert.Equal(AnalysisState.Completed, controller.State);
+        Assert.Equal("Resolved", controller.CurrentSnapshot?.Root.Name);
+    }
+
+    [Fact]
     public async Task RescanAsync_ReplacesExistingSnapshot()
     {
         var first = CreateSnapshot("First");
@@ -268,5 +291,18 @@ public sealed class AnalysisSessionControllerTests
         {
             return _existingPaths.Count == 0 || _existingPaths.Contains(folderPath);
         }
+    }
+
+    private sealed class FixedScanOptionsResolver : IScanOptionsResolver
+    {
+        public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) =>
+            new()
+            {
+                RespectGitIgnore = baseOptions.RespectGitIgnore,
+                UseGlobalExcludes = baseOptions.UseGlobalExcludes,
+                GlobalExcludes = [.. baseOptions.GlobalExcludes],
+                UseFolderExcludes = true,
+                FolderExcludes = ["/generated/"],
+            };
     }
 }

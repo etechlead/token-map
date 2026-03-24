@@ -20,6 +20,9 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
+    private const string GlobalExcludesHelperText = "Use gitignore-style rules, one per line. Use / for project-root rules, ! for re-include rules, and # for comments.";
+    private const string FolderExcludesHelperText = "Use gitignore-style rules, one per line. These rules apply only to the current folder and override .gitignore. Use / for folder-root rules, ! for re-include rules, and # for comments.";
+
     private readonly IAnalysisSessionController _analysisSessionController;
     private readonly IFolderPathService _folderPathService;
     private readonly IPathShellService _pathShellService;
@@ -27,30 +30,45 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly TreemapNavigationState _treemapNavigationState;
     private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolders = [];
     private readonly ObservableCollection<RecentFolderItemViewModel> _recentFolderFlyoutItems = [];
+    private readonly RelayCommand _cancelExcludesEditorCommand;
     private readonly RelayCommand _clearRecentFoldersCommand;
     private readonly RelayCommand _closeSettingsCommand;
-    private readonly RelayCommand _cancelGlobalExcludesEditorCommand;
+    private readonly RelayCommand<ProjectNode?> _excludeNodeFromFolderCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
+    private readonly RelayCommand _openFolderExcludesEditorCommand;
     private readonly RelayCommand _openGlobalExcludesEditorCommand;
     private readonly AsyncRelayCommand<RecentFolderItemViewModel?> _openRecentFolderCommand;
-    private readonly RelayCommand _resetGlobalExcludesEditorCommand;
     private readonly RelayCommand<RecentFolderItemViewModel?> _removeRecentFolderCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
-    private readonly RelayCommand _saveGlobalExcludesEditorCommand;
+    private readonly AsyncRelayCommand _saveAndRescanExcludesEditorCommand;
+    private readonly RelayCommand _saveExcludesEditorCommand;
     private readonly RelayCommand _toggleSettingsCommand;
-    private bool _isLoadingGlobalExcludesEditorText;
+    private ExcludesEditorScope _activeExcludesEditorScope;
+    private bool _isLoadingExcludesEditorText;
+
+    private enum ExcludesEditorScope
+    {
+        Global,
+        Folder,
+    }
 
     [ObservableProperty]
     private bool isSettingsOpen;
 
     [ObservableProperty]
-    private bool isGlobalExcludesEditorOpen;
+    private bool isExcludesEditorOpen;
 
     [ObservableProperty]
-    private string globalExcludesEditorText = string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries);
+    private string excludesEditorText = string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries);
 
     [ObservableProperty]
-    private bool showGlobalExcludesRescanNotice;
+    private string excludesEditorTitle = "Global excludes";
+
+    [ObservableProperty]
+    private string excludesEditorHelperText = GlobalExcludesHelperText;
+
+    [ObservableProperty]
+    private bool showScanSettingsRescanNotice;
 
     public MainWindowViewModel()
         : this(
@@ -81,6 +99,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         Toolbar = new ToolbarViewModel(
             _settingsCoordinator.State,
+            _settingsCoordinator.CurrentFolderState,
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));
@@ -89,16 +108,18 @@ public partial class MainWindowViewModel : ViewModelBase
         Tree = new ProjectTreeViewModel();
         Summary = new SummaryViewModel();
 
+        _excludeNodeFromFolderCommand = new RelayCommand<ProjectNode?>(ExcludeNodeFromFolder, CanExcludeNodeFromFolder);
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
+        _cancelExcludesEditorCommand = new RelayCommand(CancelExcludesEditor);
         _clearRecentFoldersCommand = new RelayCommand(ClearRecentFolders);
-        _cancelGlobalExcludesEditorCommand = new RelayCommand(CancelGlobalExcludesEditor);
         _closeSettingsCommand = new RelayCommand(CloseSettings);
+        _openFolderExcludesEditorCommand = new RelayCommand(OpenFolderExcludesEditor, () => Toolbar.HasCurrentFolderSettings);
         _openRecentFolderCommand = new AsyncRelayCommand<RecentFolderItemViewModel?>(OpenRecentFolderAsync);
         _openGlobalExcludesEditorCommand = new RelayCommand(OpenGlobalExcludesEditor);
-        _resetGlobalExcludesEditorCommand = new RelayCommand(ResetGlobalExcludesEditor);
         _removeRecentFolderCommand = new RelayCommand<RecentFolderItemViewModel?>(RemoveRecentFolder);
         _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
-        _saveGlobalExcludesEditorCommand = new RelayCommand(SaveGlobalExcludesEditor);
+        _saveAndRescanExcludesEditorCommand = new AsyncRelayCommand(SaveAndRescanExcludesEditorAsync, CanSaveAndRescanExcludesEditor);
+        _saveExcludesEditorCommand = new RelayCommand(SaveExcludesEditor);
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
 
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
@@ -107,6 +128,8 @@ public partial class MainWindowViewModel : ViewModelBase
         _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
         RefreshRecentFolders();
 
+        _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
+        _openFolderExcludesEditorCommand.NotifyCanExecuteChanged();
         Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
         RefreshToolbarAvailability();
 
@@ -164,13 +187,17 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IRelayCommand CloseSettingsCommand => _closeSettingsCommand;
 
+    public IRelayCommand<ProjectNode?> ExcludeNodeFromFolderCommand => _excludeNodeFromFolderCommand;
+
     public IRelayCommand OpenGlobalExcludesEditorCommand => _openGlobalExcludesEditorCommand;
 
-    public IRelayCommand CancelGlobalExcludesEditorCommand => _cancelGlobalExcludesEditorCommand;
+    public IRelayCommand OpenFolderExcludesEditorCommand => _openFolderExcludesEditorCommand;
 
-    public IRelayCommand SaveGlobalExcludesEditorCommand => _saveGlobalExcludesEditorCommand;
+    public IRelayCommand CancelExcludesEditorCommand => _cancelExcludesEditorCommand;
 
-    public IRelayCommand ResetGlobalExcludesEditorCommand => _resetGlobalExcludesEditorCommand;
+    public IRelayCommand SaveExcludesEditorCommand => _saveExcludesEditorCommand;
+
+    public IAsyncRelayCommand SaveAndRescanExcludesEditorCommand => _saveAndRescanExcludesEditorCommand;
 
     public IRelayCommand ClearRecentFoldersCommand => _clearRecentFoldersCommand;
 
@@ -185,6 +212,8 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool CanRescan() => !_analysisSessionController.IsBusy && _analysisSessionController.HasSelectedFolder;
 
     private bool CanCancel() => _analysisSessionController.IsBusy;
+
+    private bool CanSaveAndRescanExcludesEditor() => !_analysisSessionController.IsBusy && _analysisSessionController.HasSelectedFolder;
 
     public void DrillIntoTreemap(ProjectNode? node)
     {
@@ -280,29 +309,73 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void OpenGlobalExcludesEditor()
     {
-        LoadGlobalExcludesEditorText(_settingsCoordinator.State.GlobalExcludes);
-        IsGlobalExcludesEditorOpen = true;
+        _activeExcludesEditorScope = ExcludesEditorScope.Global;
+        ExcludesEditorTitle = "Global excludes";
+        ExcludesEditorHelperText = GlobalExcludesHelperText;
+        LoadExcludesEditorText(_settingsCoordinator.State.GlobalExcludes);
+        DismissScanSettingsRescanNotice();
+        IsExcludesEditorOpen = true;
+        RefreshEditorCommandAvailability();
     }
 
-    private void CancelGlobalExcludesEditor()
+    private void OpenFolderExcludesEditor()
     {
-        IsGlobalExcludesEditorOpen = false;
+        OpenFolderExcludesEditorCore(entryToAppend: null);
     }
 
-    private void ResetGlobalExcludesEditor()
+    private void OpenFolderExcludesEditorCore(string? entryToAppend)
     {
-        GlobalExcludesEditorText = string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries);
+        if (!_settingsCoordinator.CurrentFolderState.HasActiveFolder)
+        {
+            return;
+        }
+
+        _activeExcludesEditorScope = ExcludesEditorScope.Folder;
+        ExcludesEditorTitle = $"Excludes for {GetFolderDisplayName(_settingsCoordinator.CurrentFolderState.ActiveRootPath)}";
+        ExcludesEditorHelperText = FolderExcludesHelperText;
+        var entries = _settingsCoordinator.CurrentFolderState.FolderExcludes.ToList();
+        if (!string.IsNullOrWhiteSpace(entryToAppend) &&
+            !entries.Contains(entryToAppend, StringComparer.Ordinal))
+        {
+            entries.Add(entryToAppend);
+        }
+
+        LoadExcludesEditorText(entries);
+        DismissScanSettingsRescanNotice();
+        IsExcludesEditorOpen = true;
+        RefreshEditorCommandAvailability();
     }
 
-    private void SaveGlobalExcludesEditor()
+    private void CancelExcludesEditor()
     {
-        var updatedEntries = ParseGlobalExcludeEditorText(GlobalExcludesEditorText);
-        var changed = !_settingsCoordinator.State.GlobalExcludes.SequenceEqual(updatedEntries, StringComparer.Ordinal);
+        IsExcludesEditorOpen = false;
+        RefreshEditorCommandAvailability();
+    }
 
-        _settingsCoordinator.State.ReplaceGlobalExcludes(updatedEntries);
-        IsGlobalExcludesEditorOpen = false;
+    private void SaveExcludesEditor()
+    {
+        var changed = SaveExcludesEditorInternal();
+        ShowScanSettingsRescanNotice = changed && _analysisSessionController.HasSelectedFolder;
+    }
 
-        ShowGlobalExcludesRescanNotice = changed && _analysisSessionController.HasSelectedFolder;
+    private async Task SaveAndRescanExcludesEditorAsync()
+    {
+        SaveExcludesEditorInternal();
+
+        if (_analysisSessionController.HasSelectedFolder && !_analysisSessionController.IsBusy)
+        {
+            await _analysisSessionController.RescanAsync(Toolbar.BuildScanOptions());
+        }
+    }
+
+    private bool SaveExcludesEditorInternal()
+    {
+        var updatedEntries = ParseExcludeEditorText(ExcludesEditorText);
+        var changed = SaveExcludesByScope(updatedEntries);
+
+        IsExcludesEditorOpen = false;
+        RefreshEditorCommandAvailability();
+        return changed;
     }
 
     private void NavigateToTreemapBreadcrumb(ProjectNode? node)
@@ -310,14 +383,40 @@ public partial class MainWindowViewModel : ViewModelBase
         _treemapNavigationState.NavigateToBreadcrumb(node);
     }
 
+    public bool CanExcludeNodeFromFolder(ProjectNode? node) =>
+        !_analysisSessionController.IsBusy &&
+        _settingsCoordinator.CurrentFolderState.HasActiveFolder &&
+        node is not null &&
+        !string.IsNullOrWhiteSpace(node.RelativePath) &&
+        node.Kind is not Core.Enums.ProjectNodeKind.Root;
+
+    private void ExcludeNodeFromFolder(ProjectNode? node)
+    {
+        if (!CanExcludeNodeFromFolder(node))
+        {
+            return;
+        }
+
+        OpenFolderExcludesEditorCore(BuildFolderExcludeEntry(node!));
+    }
+
     private void AnalysisSessionControllerOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
         {
             case nameof(IAnalysisSessionController.SelectedFolderPath):
+                _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
                 Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
                 OnPropertyChanged(nameof(WindowTitle));
-                DismissGlobalExcludesRescanNotice();
+                _openFolderExcludesEditorCommand.NotifyCanExecuteChanged();
+                _excludeNodeFromFolderCommand.NotifyCanExecuteChanged();
+                if (_activeExcludesEditorScope == ExcludesEditorScope.Folder && IsExcludesEditorOpen)
+                {
+                    IsExcludesEditorOpen = false;
+                    RefreshEditorCommandAvailability();
+                }
+
+                DismissScanSettingsRescanNotice();
                 RefreshToolbarAvailability();
                 break;
             case nameof(IAnalysisSessionController.CurrentSnapshot):
@@ -341,8 +440,9 @@ public partial class MainWindowViewModel : ViewModelBase
                 Summary.SetState(_analysisSessionController.State);
                 if (_analysisSessionController.State == AnalysisState.Scanning)
                 {
-                    DismissGlobalExcludesRescanNotice();
+                    DismissScanSettingsRescanNotice();
                 }
+                RefreshEditorCommandAvailability();
 
                 if (_analysisSessionController.State == AnalysisState.Completed &&
                     _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
@@ -407,36 +507,76 @@ public partial class MainWindowViewModel : ViewModelBase
         Toolbar.RefreshAvailability(
             _analysisSessionController.IsBusy,
             _analysisSessionController.HasSnapshot);
+        RefreshEditorCommandAvailability();
     }
 
-    partial void OnGlobalExcludesEditorTextChanged(string value)
+    partial void OnExcludesEditorTextChanged(string value)
     {
-        if (!_isLoadingGlobalExcludesEditorText)
+        if (!_isLoadingExcludesEditorText)
         {
-            DismissGlobalExcludesRescanNotice();
+            DismissScanSettingsRescanNotice();
         }
     }
 
-    private void LoadGlobalExcludesEditorText(IEnumerable<string> entries)
+    private void LoadExcludesEditorText(IEnumerable<string> entries)
     {
-        _isLoadingGlobalExcludesEditorText = true;
+        _isLoadingExcludesEditorText = true;
         try
         {
-            GlobalExcludesEditorText = string.Join(Environment.NewLine, entries);
+            ExcludesEditorText = string.Join(Environment.NewLine, entries);
         }
         finally
         {
-            _isLoadingGlobalExcludesEditorText = false;
+            _isLoadingExcludesEditorText = false;
         }
     }
 
-    private void DismissGlobalExcludesRescanNotice()
+    private void DismissScanSettingsRescanNotice()
     {
-        ShowGlobalExcludesRescanNotice = false;
+        ShowScanSettingsRescanNotice = false;
     }
 
-    private static IReadOnlyList<string> ParseGlobalExcludeEditorText(string? text) =>
+    private static IReadOnlyList<string> ParseExcludeEditorText(string? text) =>
         GlobalExcludeList.Normalize((text ?? string.Empty).ReplaceLineEndings("\n").Split('\n'));
+
+    private bool SaveExcludesByScope(IReadOnlyList<string> updatedEntries)
+    {
+        return _activeExcludesEditorScope switch
+        {
+            ExcludesEditorScope.Folder => SaveFolderExcludes(updatedEntries),
+            _ => SaveGlobalExcludes(updatedEntries),
+        };
+    }
+
+    private bool SaveGlobalExcludes(IReadOnlyList<string> updatedEntries)
+    {
+        var changed = !_settingsCoordinator.State.GlobalExcludes.SequenceEqual(updatedEntries, StringComparer.Ordinal);
+        _settingsCoordinator.State.ReplaceGlobalExcludes(updatedEntries);
+        return changed;
+    }
+
+    private bool SaveFolderExcludes(IReadOnlyList<string> updatedEntries)
+    {
+        if (!_settingsCoordinator.CurrentFolderState.HasActiveFolder)
+        {
+            return false;
+        }
+
+        var changed = !_settingsCoordinator.CurrentFolderState.FolderExcludes.SequenceEqual(updatedEntries, StringComparer.Ordinal);
+        if (!_settingsCoordinator.CurrentFolderState.UseFolderExcludes)
+        {
+            _settingsCoordinator.CurrentFolderState.UseFolderExcludes = true;
+            changed = true;
+        }
+
+        _settingsCoordinator.CurrentFolderState.ReplaceFolderExcludes(updatedEntries);
+        return changed;
+    }
+
+    private void RefreshEditorCommandAvailability()
+    {
+        _saveAndRescanExcludesEditorCommand.NotifyCanExecuteChanged();
+    }
 
     private void RefreshRecentFolders()
     {
@@ -496,6 +636,14 @@ public partial class MainWindowViewModel : ViewModelBase
             : displayName;
     }
 
+    private static string BuildFolderExcludeEntry(ProjectNode node)
+    {
+        var relativePath = node.RelativePath.Replace('\\', '/').Trim('/');
+        return node.Kind is Core.Enums.ProjectNodeKind.Directory
+            ? $"/{relativePath}/"
+            : $"/{relativePath}";
+    }
+
     private static AnalysisSessionController CreateAnalysisSessionController(
         IProjectAnalyzer projectAnalyzer,
         IFolderPickerService folderPickerService,
@@ -506,7 +654,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ArgumentNullException.ThrowIfNull(folderPickerService);
         ArgumentNullException.ThrowIfNull(folderPathService);
 
-        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger);
+        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger, scanOptionsResolver: null);
     }
 
     private sealed class NullFolderPickerService : IFolderPickerService
@@ -533,6 +681,16 @@ public partial class MainWindowViewModel : ViewModelBase
     private sealed class NullSettingsCoordinator : ISettingsCoordinator
     {
         public SettingsState State { get; } = new();
+
+        public CurrentFolderSettingsState CurrentFolderState { get; } = new();
+
+        public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
+
+        public void SwitchActiveFolder(string? rootPath)
+        {
+        }
     }
 
     private sealed class NullPathShellService : IPathShellService

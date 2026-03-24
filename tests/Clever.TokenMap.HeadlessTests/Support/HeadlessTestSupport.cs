@@ -149,6 +149,23 @@ internal static class HeadlessTestSupport
     {
         public SettingsState State { get; } = CreateState(recentFolderPaths);
 
+        public CurrentFolderSettingsState CurrentFolderState { get; } = new();
+
+        public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+        public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
+
+        public void SwitchActiveFolder(string? rootPath)
+        {
+            if (string.IsNullOrWhiteSpace(rootPath))
+            {
+                CurrentFolderState.Reset();
+                return;
+            }
+
+            CurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
+        }
+
         private static SettingsState CreateState(IEnumerable<string>? recentFolderPaths)
         {
             var state = new SettingsState();

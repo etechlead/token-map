@@ -13,19 +13,23 @@ public partial class ToolbarViewModel : ViewModelBase
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
+    private readonly CurrentFolderSettingsState _currentFolderSettingsState;
     private readonly SettingsState _settingsState;
 
     public ToolbarViewModel(
         SettingsState settingsState,
+        CurrentFolderSettingsState currentFolderSettingsState,
         IAsyncRelayCommand openFolderCommand,
         IAsyncRelayCommand rescanCommand,
         IRelayCommand cancelCommand)
     {
         _settingsState = settingsState;
+        _currentFolderSettingsState = currentFolderSettingsState;
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
         _settingsState.PropertyChanged += SettingsStateOnPropertyChanged;
+        _currentFolderSettingsState.PropertyChanged += CurrentFolderSettingsStateOnPropertyChanged;
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
@@ -120,6 +124,20 @@ public partial class ToolbarViewModel : ViewModelBase
         set => _settingsState.UseGlobalExcludes = value;
     }
 
+    public bool UseFolderExcludes
+    {
+        get => _currentFolderSettingsState.UseFolderExcludes;
+        set => _currentFolderSettingsState.UseFolderExcludes = value;
+    }
+
+    public bool HasCurrentFolderSettings => _currentFolderSettingsState.HasActiveFolder;
+
+    public bool CanConfigureFolderExcludes => CanConfigureScanOptions && HasCurrentFolderSettings;
+
+    public string CurrentFolderSettingsTitle => HasCurrentFolderSettings
+        ? $"Current folder: {GetFolderDisplayName(_currentFolderSettingsState.ActiveRootPath)}"
+        : "Current folder";
+
     public ThemePreference SelectedThemePreference
     {
         get => _settingsState.SelectedThemePreference;
@@ -186,6 +204,7 @@ public partial class ToolbarViewModel : ViewModelBase
         CanConfigureScanOptions = !isBusy;
         CanChangeMetric = hasSnapshot && !isBusy;
         IsStopVisible = isBusy;
+        OnPropertyChanged(nameof(CanConfigureFolderExcludes));
         OpenFolderCommand.NotifyCanExecuteChanged();
         RescanCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
@@ -229,11 +248,42 @@ public partial class ToolbarViewModel : ViewModelBase
         }
     }
 
+    private void CurrentFolderSettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(CurrentFolderSettingsState.ActiveRootPath):
+                OnPropertyChanged(nameof(HasCurrentFolderSettings));
+                OnPropertyChanged(nameof(CanConfigureFolderExcludes));
+                OnPropertyChanged(nameof(CurrentFolderSettingsTitle));
+                break;
+            case nameof(CurrentFolderSettingsState.UseFolderExcludes):
+                OnPropertyChanged(nameof(UseFolderExcludes));
+                break;
+        }
+    }
+
     public ScanOptions BuildScanOptions() =>
         new()
         {
             RespectGitIgnore = RespectGitIgnore,
             UseGlobalExcludes = UseGlobalExcludes,
             GlobalExcludes = [.. _settingsState.GlobalExcludes],
+            UseFolderExcludes = UseFolderExcludes,
+            FolderExcludes = [.. _currentFolderSettingsState.FolderExcludes],
         };
+
+    private static string GetFolderDisplayName(string? folderPath)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return string.Empty;
+        }
+
+        var trimmedPath = folderPath.Trim();
+        var displayName = System.IO.Path.GetFileName(trimmedPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
+        return string.IsNullOrWhiteSpace(displayName)
+            ? trimmedPath
+            : displayName;
+    }
 }
