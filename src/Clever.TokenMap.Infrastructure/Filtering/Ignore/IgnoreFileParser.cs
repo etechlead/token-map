@@ -10,9 +10,16 @@ internal sealed class IgnoreFileParser
 
     public IReadOnlyList<IgnoreRule> Parse(string ignoreFilePath, string baseRelativePath)
     {
+        return ParseLines(File.ReadLines(ignoreFilePath), baseRelativePath);
+    }
+
+    public IReadOnlyList<IgnoreRule> ParseLines(IEnumerable<string> rawLines, string baseRelativePath)
+    {
+        ArgumentNullException.ThrowIfNull(rawLines);
+
         var rules = new List<IgnoreRule>();
 
-        foreach (var rawLine in File.ReadLines(ignoreFilePath))
+        foreach (var rawLine in rawLines)
         {
             var line = rawLine.Trim();
 

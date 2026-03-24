@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.App.State;
@@ -14,6 +16,7 @@ public sealed partial class SettingsState : ObservableObject
     private static readonly StringComparer RecentFolderComparer = PathComparison.Comparer;
 
     private readonly ObservableCollection<string> _recentFolderPaths = [];
+    private List<string> _globalExcludes = [.. GlobalExcludeDefaults.DefaultEntries];
 
     public SettingsState()
     {
@@ -28,7 +31,7 @@ public sealed partial class SettingsState : ObservableObject
     private bool respectGitIgnore = true;
 
     [ObservableProperty]
-    private bool useDefaultExcludes = true;
+    private bool useGlobalExcludes = true;
 
     [ObservableProperty]
     private ThemePreference selectedThemePreference = ThemePreference.System;
@@ -37,6 +40,8 @@ public sealed partial class SettingsState : ObservableObject
     private TreemapPalette selectedTreemapPalette = TreemapPalette.Weighted;
 
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
+
+    public IReadOnlyList<string> GlobalExcludes => _globalExcludes;
 
     public event NotifyCollectionChangedEventHandler? RecentFolderPathsChanged;
 
@@ -89,6 +94,20 @@ public sealed partial class SettingsState : ObservableObject
         _recentFolderPaths.Clear();
     }
 
+    public void ReplaceGlobalExcludes(IEnumerable<string> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+
+        var normalizedEntries = GlobalExcludeList.Normalize(entries).ToList();
+        if (_globalExcludes.SequenceEqual(normalizedEntries, StringComparer.Ordinal))
+        {
+            return;
+        }
+
+        _globalExcludes = normalizedEntries;
+        OnPropertyChanged(nameof(GlobalExcludes));
+    }
+
     internal void ReplaceRecentFolderPaths(IEnumerable<string> folderPaths)
     {
         ArgumentNullException.ThrowIfNull(folderPaths);
@@ -98,6 +117,13 @@ public sealed partial class SettingsState : ObservableObject
         {
             _recentFolderPaths.Add(folderPath);
         }
+    }
+
+    internal void LoadGlobalExcludes(IEnumerable<string> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        _globalExcludes = GlobalExcludeList.Normalize(entries).ToList();
+        OnPropertyChanged(nameof(GlobalExcludes));
     }
 
     private static List<string> NormalizeRecentFolderPaths(IEnumerable<string> folderPaths)

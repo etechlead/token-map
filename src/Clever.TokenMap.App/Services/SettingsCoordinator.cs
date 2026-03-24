@@ -91,7 +91,8 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(State.SelectedMetric);
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
-            _currentSettings.Analysis.UseDefaultExcludes = State.UseDefaultExcludes;
+            _currentSettings.Analysis.UseGlobalExcludes = State.UseGlobalExcludes;
+            _currentSettings.Analysis.GlobalExcludes = [.. State.GlobalExcludes];
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
             _currentSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(State.SelectedTreemapPalette);
             _settingsVersion++;
@@ -180,7 +181,8 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             State.SelectedMetric = _currentSettings.Analysis.SelectedMetric;
             State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
-            State.UseDefaultExcludes = _currentSettings.Analysis.UseDefaultExcludes;
+            State.UseGlobalExcludes = _currentSettings.Analysis.UseGlobalExcludes;
+            State.LoadGlobalExcludes(_currentSettings.Analysis.GlobalExcludes);
             State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
             State.SelectedTreemapPalette = _currentSettings.Appearance.TreemapPalette;
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
@@ -195,7 +197,8 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private static bool IsPersistedStateProperty(string? propertyName) =>
         propertyName is nameof(SettingsState.SelectedMetric) or
         nameof(SettingsState.RespectGitIgnore) or
-        nameof(SettingsState.UseDefaultExcludes) or
+        nameof(SettingsState.UseGlobalExcludes) or
+        nameof(SettingsState.GlobalExcludes) or
         nameof(SettingsState.SelectedThemePreference) or
         nameof(SettingsState.SelectedTreemapPalette);
 

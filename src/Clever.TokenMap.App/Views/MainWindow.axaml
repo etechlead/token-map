@@ -166,6 +166,70 @@
                                      Grid.Row="1"
                                      ZIndex="2" />
 
+        <Border Name="GlobalExcludesEditorBackdrop"
+                Grid.RowSpan="3"
+                Background="#660B1016"
+                IsVisible="{Binding IsGlobalExcludesEditorOpen}"
+                ZIndex="3" />
+
+        <Border Name="GlobalExcludesEditorModal"
+                Grid.RowSpan="3"
+                Classes="panel global-excludes-modal"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                IsVisible="{Binding IsGlobalExcludesEditorOpen}"
+                ZIndex="4">
+            <Grid RowDefinitions="Auto,Auto,*,Auto"
+                  RowSpacing="12">
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="8">
+                    <TextBlock Classes="panel-title"
+                               VerticalAlignment="Center"
+                               Text="Global excludes" />
+                    <Button Grid.Column="1"
+                            Classes="close-button"
+                            Command="{Binding CancelGlobalExcludesEditorCommand}"
+                            ToolTip.Tip="Cancel editing global excludes">
+                        <Path Classes="close-button-icon"
+                              Data="{StaticResource FluentDismiss20Geometry}" />
+                    </Button>
+                </Grid>
+
+                <TextBlock Grid.Row="1"
+                           Classes="panel-body"
+                           Text="Use gitignore-style rules, one per line. Use / for project-root rules, ! for re-include rules, and # for comments."
+                           TextWrapping="Wrap" />
+
+                <TextBox Name="GlobalExcludesEditorTextBox"
+                         Grid.Row="2"
+                         Classes="global-excludes-editor"
+                         AcceptsReturn="True"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Stretch"
+                         Text="{Binding GlobalExcludesEditorText, Mode=TwoWay}"
+                         TextWrapping="NoWrap" />
+
+                <Grid Grid.Row="3"
+                      ColumnDefinitions="Auto,*,Auto,Auto"
+                      ColumnSpacing="8">
+                    <Button Name="ResetGlobalExcludesButton"
+                            Classes="action-button"
+                            Command="{Binding ResetGlobalExcludesEditorCommand}"
+                            Content="Reset to defaults" />
+                    <Button Name="CancelGlobalExcludesButton"
+                            Grid.Column="2"
+                            Classes="action-button"
+                            Command="{Binding CancelGlobalExcludesEditorCommand}"
+                            Content="Cancel" />
+                    <Button Name="SaveGlobalExcludesButton"
+                            Grid.Column="3"
+                            Classes="action-button primary"
+                            Command="{Binding SaveGlobalExcludesEditorCommand}"
+                            Content="Save" />
+                </Grid>
+            </Grid>
+        </Border>
+
         <Border Name="StatusStrip"
                 Grid.Row="2"
                 IsVisible="{Binding Summary.IsProgressVisible}">

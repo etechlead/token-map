@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
 
@@ -60,6 +62,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             var normalizedSettings = settings.Clone();
             normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
             normalizedSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(normalizedSettings.Appearance.TreemapPalette);
+            normalizedSettings.Analysis.GlobalExcludes = NormalizeGlobalExcludes(normalizedSettings.Analysis.GlobalExcludes);
             var json = JsonSerializer.Serialize(normalizedSettings, SerializerOptions);
             File.WriteAllText(tempFilePath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
             File.Move(tempFilePath, _settingsFilePath, overwrite: true);
@@ -109,9 +112,18 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 settings.Analysis.RespectGitIgnore = respectGitIgnore;
             }
 
-            if (analysis.UseDefaultExcludes is { } useDefaultExcludes)
+            if (analysis.UseGlobalExcludes is { } useGlobalExcludes)
             {
-                settings.Analysis.UseDefaultExcludes = useDefaultExcludes;
+                settings.Analysis.UseGlobalExcludes = useGlobalExcludes;
+            }
+            else if (analysis.UseDefaultExcludes is { } useDefaultExcludes)
+            {
+                settings.Analysis.UseGlobalExcludes = useDefaultExcludes;
+            }
+
+            if (analysis.GlobalExcludes is { } globalExcludes)
+            {
+                settings.Analysis.GlobalExcludes = NormalizeGlobalExcludes(globalExcludes);
             }
         }
 
@@ -178,6 +190,9 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         return normalizedPaths;
     }
 
+    private static List<string> NormalizeGlobalExcludes(IEnumerable<string?> persistedEntries) =>
+        [.. GlobalExcludeList.Normalize(persistedEntries.OfType<string>())];
+
     private sealed class PersistedAppSettings
     {
         public PersistedAnalysisSettings? Analysis { get; set; }
@@ -198,7 +213,12 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         public bool? RespectGitIgnore { get; set; }
 
         [JsonConverter(typeof(NullableBooleanConverter))]
+        public bool? UseGlobalExcludes { get; set; }
+
+        [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? UseDefaultExcludes { get; set; }
+
+        public List<string>? GlobalExcludes { get; set; }
     }
 
     private sealed class PersistedAppearanceSettings

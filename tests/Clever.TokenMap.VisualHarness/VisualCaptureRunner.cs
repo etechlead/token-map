@@ -163,8 +163,8 @@ internal static class VisualCaptureRunner
         var scanOptions = new ScanOptions
         {
             RespectGitIgnore = true,
-            UseDefaultExcludes = true,
-            UserExcludes = userExcludes,
+            UseGlobalExcludes = true,
+            GlobalExcludes = [.. GlobalExcludeDefaults.DefaultEntries, .. userExcludes],
         };
 
         Console.WriteLine($"Analyzing project for visual capture: {options.ProjectRoot}");

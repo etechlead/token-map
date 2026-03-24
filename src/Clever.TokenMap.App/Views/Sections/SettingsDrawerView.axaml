@@ -87,29 +87,40 @@
                                       IsChecked="{Binding Toolbar.RespectGitIgnore}"
                                       IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                             <StackPanel Spacing="6">
-                                <CheckBox Name="UseDefaultExcludesCheckBox"
-                                          Content="Use default excludes"
-                                          IsChecked="{Binding Toolbar.UseDefaultExcludes}"
-                                          IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
-                                <Button Name="DefaultExcludesDetailsButton"
-                                        Classes="settings-link"
-                                        HorizontalAlignment="Left"
-                                        Command="{Binding Toolbar.ToggleDefaultExcludesDetailsCommand}"
-                                        Content="{Binding Toolbar.DefaultExcludesDetailsToggleText}" />
-                                <Border Name="DefaultExcludesDetailsContainer"
-                                        Classes="settings-detail-panel"
-                                        IsVisible="{Binding Toolbar.IsDefaultExcludesDetailsVisible}">
-                                    <StackPanel Spacing="8">
-                                        <ScrollViewer Name="DefaultExcludesScrollViewer"
-                                                      HorizontalScrollBarVisibility="Auto"
-                                                      MaxHeight="160"
-                                                      VerticalScrollBarVisibility="Auto">
-                                            <TextBlock Name="DefaultExcludesTextBlock"
-                                                       Classes="settings-detail-text"
-                                                       Text="{Binding Toolbar.DefaultExcludesDetailsText, Mode=OneWay}"
-                                                       TextWrapping="NoWrap" />
-                                        </ScrollViewer>
-                                    </StackPanel>
+                                <Grid ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="8">
+                                    <CheckBox Name="UseGlobalExcludesCheckBox"
+                                              Content="Use global excludes"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding Toolbar.UseGlobalExcludes}"
+                                              IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                    <Button Name="EditGlobalExcludesButton"
+                                            Grid.Column="1"
+                                            Classes="action-button"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Right"
+                                            Padding="10,4"
+                                            MinHeight="28"
+                                            Command="{Binding OpenGlobalExcludesEditorCommand}"
+                                            Content="Edit"
+                                            IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
+                                </Grid>
+                                <Border Name="GlobalExcludesRescanNotice"
+                                        Classes="settings-notice-panel"
+                                        IsVisible="{Binding ShowGlobalExcludesRescanNotice}">
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="8">
+                                        <TextBlock Name="GlobalExcludesRescanNoticeText"
+                                                   Classes="settings-notice-text"
+                                                   VerticalAlignment="Center"
+                                                   Text="Global excludes updated. Rescan to apply." />
+                                        <Button Name="GlobalExcludesRescanButton"
+                                                Grid.Column="1"
+                                                Classes="settings-link"
+                                                VerticalAlignment="Center"
+                                                Command="{Binding Toolbar.RescanCommand}"
+                                                Content="Rescan now" />
+                                    </Grid>
                                 </Border>
                             </StackPanel>
                         </StackPanel>

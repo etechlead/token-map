@@ -2,6 +2,7 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -13,7 +14,8 @@ public sealed class SettingsCoordinatorTests
         var settings = AppSettings.CreateDefault();
         settings.Analysis.SelectedMetric = AnalysisMetric.NonEmptyLines;
         settings.Analysis.RespectGitIgnore = false;
-        settings.Analysis.UseDefaultExcludes = false;
+        settings.Analysis.UseGlobalExcludes = false;
+        settings.Analysis.GlobalExcludes = ["bin/", "obj/"];
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
 
@@ -23,7 +25,11 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(AnalysisMetric.TotalLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
-        Assert.False(coordinator.State.UseDefaultExcludes);
+        Assert.False(coordinator.State.UseGlobalExcludes);
+        Assert.Collection(
+            coordinator.State.GlobalExcludes,
+            entry => Assert.Equal("bin/", entry),
+            entry => Assert.Equal("obj/", entry));
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
         Assert.Equal(TreemapPalette.Weighted, coordinator.State.SelectedTreemapPalette);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
@@ -57,12 +63,17 @@ public sealed class SettingsCoordinatorTests
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedMetric = AnalysisMetric.NonEmptyLines;
         coordinator.State.SelectedTreemapPalette = TreemapPalette.Weighted;
+        coordinator.State.ReplaceGlobalExcludes(["bin/", "obj/"]);
 
         await Task.Delay(120);
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(TreemapPalette.Weighted, store.LastSavedSettings.Appearance.TreemapPalette);
+        Assert.Collection(
+            store.LastSavedSettings.Analysis.GlobalExcludes,
+            entry => Assert.Equal("bin/", entry),
+            entry => Assert.Equal("obj/", entry));
     }
 
     [Fact]
@@ -98,6 +109,7 @@ public sealed class SettingsCoordinatorTests
         coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
         coordinator.State.SelectedTreemapPalette = TreemapPalette.Studio;
+        coordinator.State.ReplaceGlobalExcludes(["vendor/"]);
 
         Assert.Equal(0, store.SaveCallCount);
 
@@ -108,6 +120,9 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, store.LastSavedSettings.Appearance.TreemapPalette);
+        Assert.Collection(
+            store.LastSavedSettings.Analysis.GlobalExcludes,
+            entry => Assert.Equal("vendor/", entry));
         Assert.Equal(AppLogLevel.Error, store.LastSavedSettings.Logging.MinLevel);
         Assert.Empty(store.LastSavedSettings.RecentFolderPaths);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);

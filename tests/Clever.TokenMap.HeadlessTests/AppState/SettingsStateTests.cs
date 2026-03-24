@@ -1,4 +1,5 @@
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.HeadlessTests;
 
@@ -10,6 +11,7 @@ public sealed class SettingsStateTests
         var state = new SettingsState();
 
         Assert.Equal(Clever.TokenMap.Core.Enums.TreemapPalette.Weighted, state.SelectedTreemapPalette);
+        Assert.Equal(GlobalExcludeDefaults.DefaultEntries, state.GlobalExcludes);
     }
 
     [Fact]
@@ -32,5 +34,19 @@ public sealed class SettingsStateTests
             state.RecentFolderPaths,
             path => Assert.Equal("/Users/demo/repo", path),
             path => Assert.Equal("/Users/demo/Repo", path));
+    }
+
+    [Fact]
+    public void ReplaceGlobalExcludes_PreservesGitIgnoreStyleRuleOrder()
+    {
+        var state = new SettingsState();
+
+        state.ReplaceGlobalExcludes(["  /src//generated/**  ", "", "# generated", "!nested/scripts/"]);
+
+        Assert.Collection(
+            state.GlobalExcludes,
+            entry => Assert.Equal("/src/generated/**", entry),
+            entry => Assert.Equal("# generated", entry),
+            entry => Assert.Equal("!nested/scripts/", entry));
     }
 }

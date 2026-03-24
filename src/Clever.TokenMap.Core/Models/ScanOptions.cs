@@ -6,7 +6,7 @@ public sealed class ScanOptions
 
     public bool RespectGitIgnore { get; init; } = true;
 
-    public bool UseDefaultExcludes { get; init; } = true;
+    public bool UseGlobalExcludes { get; init; } = true;
 
-    public IReadOnlyList<string> UserExcludes { get; init; } = [];
+    public IReadOnlyList<string> GlobalExcludes { get; init; } = GlobalExcludeDefaults.DefaultEntries;
 }

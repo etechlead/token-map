@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
@@ -32,14 +33,17 @@ public sealed class AnalysisSettings
 
     public bool RespectGitIgnore { get; set; } = true;
 
-    public bool UseDefaultExcludes { get; set; } = true;
+    public bool UseGlobalExcludes { get; set; } = true;
+
+    public List<string> GlobalExcludes { get; set; } = [.. GlobalExcludeDefaults.DefaultEntries];
 
     public AnalysisSettings Clone() =>
         new()
         {
             SelectedMetric = SelectedMetric,
             RespectGitIgnore = RespectGitIgnore,
-            UseDefaultExcludes = UseDefaultExcludes,
+            UseGlobalExcludes = UseGlobalExcludes,
+            GlobalExcludes = [.. GlobalExcludes],
         };
 }
 

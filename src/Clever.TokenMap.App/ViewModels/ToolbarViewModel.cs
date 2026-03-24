@@ -1,9 +1,7 @@
 using System;
 using System.ComponentModel;
-using System.Linq;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Filtering;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Clever.TokenMap.Core.Enums;
@@ -16,8 +14,6 @@ public partial class ToolbarViewModel : ViewModelBase
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
     private readonly SettingsState _settingsState;
-    private readonly string _defaultExcludesDetailsText;
-    private readonly RelayCommand _toggleDefaultExcludesDetailsCommand;
 
     public ToolbarViewModel(
         SettingsState settingsState,
@@ -30,13 +26,9 @@ public partial class ToolbarViewModel : ViewModelBase
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
         _settingsState.PropertyChanged += SettingsStateOnPropertyChanged;
-        _defaultExcludesDetailsText = string.Join(
-            Environment.NewLine,
-            DefaultExcludeMatcher.DefaultDirectoryNames);
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
-        _toggleDefaultExcludesDetailsCommand = new RelayCommand(ToggleDefaultExcludesDetails);
     }
 
     public IAsyncRelayCommand OpenFolderCommand { get; }
@@ -51,8 +43,6 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
 
-    public IRelayCommand ToggleDefaultExcludesDetailsCommand => _toggleDefaultExcludesDetailsCommand;
-
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
 
@@ -60,17 +50,10 @@ public partial class ToolbarViewModel : ViewModelBase
     private bool canChangeMetric;
 
     [ObservableProperty]
-    private bool isDefaultExcludesDetailsVisible;
-
-    [ObservableProperty]
     private bool isStopVisible;
 
     [ObservableProperty]
     private string selectedFolderDisplay = "No folder selected";
-
-    public string DefaultExcludesDetailsToggleText => IsDefaultExcludesDetailsVisible ? "Hide defaults" : "View defaults";
-
-    public string DefaultExcludesDetailsText => _defaultExcludesDetailsText;
 
     public string TreemapTitle => $"Treemap - {TreemapMetricDisplay}";
 
@@ -131,10 +114,10 @@ public partial class ToolbarViewModel : ViewModelBase
         set => _settingsState.RespectGitIgnore = value;
     }
 
-    public bool UseDefaultExcludes
+    public bool UseGlobalExcludes
     {
-        get => _settingsState.UseDefaultExcludes;
-        set => _settingsState.UseDefaultExcludes = value;
+        get => _settingsState.UseGlobalExcludes;
+        set => _settingsState.UseGlobalExcludes = value;
     }
 
     public ThemePreference SelectedThemePreference
@@ -213,16 +196,6 @@ public partial class ToolbarViewModel : ViewModelBase
         SelectedThemePreference = value;
     }
 
-    partial void OnIsDefaultExcludesDetailsVisibleChanged(bool value)
-    {
-        OnPropertyChanged(nameof(DefaultExcludesDetailsToggleText));
-    }
-
-    private void ToggleDefaultExcludesDetails()
-    {
-        IsDefaultExcludesDetailsVisible = !IsDefaultExcludesDetailsVisible;
-    }
-
     private void SettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
@@ -238,8 +211,8 @@ public partial class ToolbarViewModel : ViewModelBase
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
                 break;
-            case nameof(SettingsState.UseDefaultExcludes):
-                OnPropertyChanged(nameof(UseDefaultExcludes));
+            case nameof(SettingsState.UseGlobalExcludes):
+                OnPropertyChanged(nameof(UseGlobalExcludes));
                 break;
             case nameof(SettingsState.SelectedThemePreference):
                 OnPropertyChanged(nameof(SelectedThemePreference));
@@ -260,6 +233,7 @@ public partial class ToolbarViewModel : ViewModelBase
         new()
         {
             RespectGitIgnore = RespectGitIgnore,
-            UseDefaultExcludes = UseDefaultExcludes,
+            UseGlobalExcludes = UseGlobalExcludes,
+            GlobalExcludes = [.. _settingsState.GlobalExcludes],
         };
 }

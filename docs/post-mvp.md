@@ -9,7 +9,6 @@ This file is a candidate backlog for work that is outside the current MVP scope.
 
 ## Product Follow-Up
 - Live watch mode with debounced rescans.
-- Persisted settings such as saved excludes.
 - Plugin or extensibility hooks if the product later needs them.
 
 ## Engineering Follow-Up

@@ -16,7 +16,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private readonly IAppLogger _logger;
     private readonly IPathFilter _pathFilter;
     private readonly PathNormalizer _pathNormalizer;
-    private readonly UserExcludeMatcher _userExcludeMatcher = new();
     private int _processedNodeCount;
 
     public FileSystemProjectScanner(
@@ -52,7 +51,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         var rootNode = ScanDirectory(
             directoryInfo,
             normalizedRootPath,
-            IgnoreDirectoryContext.Empty,
+            CreateInitialIgnoreContext(options),
             isRoot: true,
             options,
             warnings,
@@ -127,11 +126,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 
             var entryRelativePath = _pathNormalizer.NormalizeRelativePath(normalizedRootPath, entry.FullName);
             var isDirectory = entry.Attributes.HasFlag(FileAttributes.Directory);
-
-            if (IsExcludedByBuiltInPolicy(options, entryRelativePath, isDirectory))
-            {
-                continue;
-            }
 
             if (!IgnoreFileEvaluator.IsIncluded(ignoreContext, entryRelativePath, isDirectory))
             {
@@ -282,14 +276,16 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             : parentContext.Append(additionalRules);
     }
 
-    private bool IsExcludedByBuiltInPolicy(ScanOptions options, string normalizedRelativePath, bool isDirectory)
+    private IgnoreDirectoryContext CreateInitialIgnoreContext(ScanOptions options)
     {
-        if (options.UseDefaultExcludes &&
-            DefaultExcludeMatcher.IsExcluded(normalizedRelativePath, isDirectory))
+        if (!options.UseGlobalExcludes)
         {
-            return true;
+            return IgnoreDirectoryContext.Empty;
         }
 
-        return _userExcludeMatcher.IsExcluded(options.UserExcludes, normalizedRelativePath, isDirectory);
+        var rules = _ignoreFileParser.ParseLines(options.GlobalExcludes, baseRelativePath: string.Empty);
+        return rules.Count == 0
+            ? IgnoreDirectoryContext.Empty
+            : IgnoreDirectoryContext.Empty.Append(rules);
     }
 }

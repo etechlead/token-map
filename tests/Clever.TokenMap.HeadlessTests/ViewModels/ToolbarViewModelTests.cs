@@ -103,6 +103,27 @@ public sealed class ToolbarViewModelTests
         Assert.True(viewModel.IsStudioTreemapPaletteSelected);
     }
 
+    [Fact]
+    public void BuildScanOptions_UsesGlobalExcludeSettings()
+    {
+        var state = new SettingsState
+        {
+            RespectGitIgnore = false,
+            UseGlobalExcludes = false,
+        };
+        state.ReplaceGlobalExcludes(["bin/", "src/generated/**"]);
+        var viewModel = CreateViewModel(state);
+
+        var options = viewModel.BuildScanOptions();
+
+        Assert.False(options.RespectGitIgnore);
+        Assert.False(options.UseGlobalExcludes);
+        Assert.Collection(
+            options.GlobalExcludes,
+            entry => Assert.Equal("bin/", entry),
+            entry => Assert.Equal("src/generated/**", entry));
+    }
+
     private static ToolbarViewModel CreateViewModel(SettingsState state)
     {
         return new ToolbarViewModel(

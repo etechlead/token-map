@@ -14,7 +14,6 @@ using Clever.TokenMap.App.Views.Sections;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Filtering;
 using System.Collections.Specialized;
 using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
@@ -508,7 +507,7 @@ public sealed class MainWindowLayoutTests
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
         var gitIgnoreCheckBox = FindNamedDescendant<CheckBox>(window, "RespectGitIgnoreCheckBox");
-        var defaultExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseDefaultExcludesCheckBox");
+        var globalExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseGlobalExcludesCheckBox");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
         var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
@@ -520,7 +519,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
         Assert.NotNull(gitIgnoreCheckBox);
-        Assert.NotNull(defaultExcludesCheckBox);
+        Assert.NotNull(globalExcludesCheckBox);
         Assert.NotNull(rescanButton);
         Assert.NotNull(selectedFolderGroup);
         Assert.NotNull(summaryGroup);
@@ -537,7 +536,7 @@ public sealed class MainWindowLayoutTests
         Assert.False(themeLightButton.IsChecked);
         Assert.False(themeDarkButton.IsChecked);
         Assert.True(gitIgnoreCheckBox.IsEnabled);
-        Assert.True(defaultExcludesCheckBox.IsEnabled);
+        Assert.True(globalExcludesCheckBox.IsEnabled);
         Assert.False(rescanButton.IsVisible);
         Assert.False(selectedFolderGroup.IsVisible);
         Assert.False(summaryGroup.IsVisible);
@@ -623,7 +622,7 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void MainWindow_SettingsDrawer_DefaultExcludesDetails_ShowCanonicalListWhenExpanded()
+    public void MainWindow_SettingsDrawer_ShowsGlobalExcludesEditorActionInline()
     {
         var window = new MainWindow
         {
@@ -636,28 +635,102 @@ public sealed class MainWindowLayoutTests
         viewModel.ToggleSettingsCommand.Execute(null);
         window.UpdateLayout();
 
-        var detailsButton = FindNamedDescendant<Button>(window, "DefaultExcludesDetailsButton");
-        var detailsContainer = FindNamedDescendant<Control>(window, "DefaultExcludesDetailsContainer");
-        var detailsTextBlock = FindNamedDescendant<TextBlock>(window, "DefaultExcludesTextBlock");
-        var detailsScrollViewer = FindNamedDescendant<ScrollViewer>(window, "DefaultExcludesScrollViewer");
+        var globalExcludesCheckBox = FindNamedDescendant<CheckBox>(window, "UseGlobalExcludesCheckBox");
+        var editButton = FindNamedDescendant<Button>(window, "EditGlobalExcludesButton");
+        var rescanNotice = FindNamedDescendant<Control>(window, "GlobalExcludesRescanNotice");
 
-        Assert.NotNull(detailsButton);
-        Assert.NotNull(detailsContainer);
-        Assert.NotNull(detailsTextBlock);
-        Assert.NotNull(detailsScrollViewer);
-        Assert.False(detailsContainer.IsVisible);
-        Assert.Equal("View defaults", detailsButton.Content?.ToString());
+        Assert.NotNull(globalExcludesCheckBox);
+        Assert.NotNull(editButton);
+        Assert.NotNull(rescanNotice);
+        Assert.True(globalExcludesCheckBox.IsVisible);
+        Assert.Equal("Edit", editButton.Content?.ToString());
+        Assert.False(rescanNotice.IsVisible);
+    }
 
-        viewModel.Toolbar.ToggleDefaultExcludesDetailsCommand.Execute(null);
+    [AvaloniaFact]
+    public void MainWindow_GlobalExcludesEditor_OpensResetsAndCancelsWithoutSaving()
+    {
+        var window = new MainWindow
+        {
+            DataContext = new MainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
-        var expectedText = string.Join(
-            Environment.NewLine,
-            DefaultExcludeMatcher.DefaultDirectoryNames);
+        var modal = FindNamedDescendant<Control>(window, "GlobalExcludesEditorModal");
+        var backdrop = FindNamedDescendant<Control>(window, "GlobalExcludesEditorBackdrop");
+        var editor = FindNamedDescendant<TextBox>(window, "GlobalExcludesEditorTextBox");
 
-        Assert.True(detailsContainer.IsVisible);
-        Assert.Equal("Hide defaults", detailsButton.Content?.ToString());
-        Assert.Equal(expectedText.ReplaceLineEndings("\n"), detailsTextBlock.Text?.ReplaceLineEndings("\n"));
+        Assert.NotNull(modal);
+        Assert.NotNull(backdrop);
+        Assert.NotNull(editor);
+        Assert.True(modal.IsVisible);
+        Assert.True(backdrop.IsVisible);
+        Assert.Equal(
+            string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries).ReplaceLineEndings("\n"),
+            editor.Text?.ReplaceLineEndings("\n"));
+
+        viewModel.GlobalExcludesEditorText = "bin/\nobj/";
+        viewModel.ResetGlobalExcludesEditorCommand.Execute(null);
+
+        Assert.Equal(
+            string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries).ReplaceLineEndings("\n"),
+            viewModel.GlobalExcludesEditorText.ReplaceLineEndings("\n"));
+
+        viewModel.CancelGlobalExcludesEditorCommand.Execute(null);
+        window.UpdateLayout();
+
+        Assert.False(modal.IsVisible);
+        Assert.False(backdrop.IsVisible);
+        Assert.Equal(GlobalExcludeDefaults.DefaultEntries, viewModel.Toolbar.BuildScanOptions().GlobalExcludes);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_GlobalExcludesSave_ShowsAndClearsRescanNotice()
+    {
+        var window = new MainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
+        viewModel.GlobalExcludesEditorText = " node_modules\\\\ \n\n/src//generated/**\n!nested/scripts/";
+        viewModel.SaveGlobalExcludesEditorCommand.Execute(null);
+        window.UpdateLayout();
+
+        var notice = FindNamedDescendant<Control>(window, "GlobalExcludesRescanNotice");
+        var rescanButton = FindNamedDescendant<Button>(window, "GlobalExcludesRescanButton");
+
+        Assert.NotNull(notice);
+        Assert.NotNull(rescanButton);
+        Assert.True(viewModel.ShowGlobalExcludesRescanNotice);
+        Assert.True(notice.IsVisible);
+        Assert.Collection(
+            viewModel.Toolbar.BuildScanOptions().GlobalExcludes,
+            entry => Assert.Equal("node_modules/", entry),
+            entry => Assert.Equal("/src/generated/**", entry),
+            entry => Assert.Equal("!nested/scripts/", entry));
+
+        viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
+        viewModel.GlobalExcludesEditorText += "\nobj/";
+        Assert.False(viewModel.ShowGlobalExcludesRescanNotice);
+        viewModel.CancelGlobalExcludesEditorCommand.Execute(null);
+
+        viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
+        viewModel.GlobalExcludesEditorText = "vendor/";
+        viewModel.SaveGlobalExcludesEditorCommand.Execute(null);
+        Assert.True(viewModel.ShowGlobalExcludesRescanNotice);
+
+        await viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.ShowGlobalExcludesRescanNotice);
+        Assert.False(notice.IsVisible);
     }
 
     [AvaloniaFact]

@@ -395,6 +395,21 @@
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
     </Style>
+    <Style Selector="TextBlock.settings-meta-text">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
+    <Style Selector="Border.settings-notice-panel">
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="8" />
+    </Style>
+    <Style Selector="TextBlock.settings-notice-text">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
     <Style Selector="TextBlock.breadcrumb-current">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
         <Setter Property="FontWeight" Value="Medium" />
@@ -482,6 +497,30 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="1" />
+    </Style>
+    <Style Selector="Border.global-excludes-modal">
+        <Setter Property="Width" Value="640" />
+        <Setter Property="MaxWidth" Value="760" />
+        <Setter Property="MinHeight" Value="420" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="TextBox.global-excludes-editor">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+        <Setter Property="MinHeight" Value="300" />
+        <Setter Property="Padding" Value="10" />
+    </Style>
+    <Style Selector="TextBox.global-excludes-editor:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
+    </Style>
+    <Style Selector="TextBox.global-excludes-editor:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
     <Style Selector="ToggleButton.theme-mode-button">
         <Setter Property="Background" Value="Transparent" />

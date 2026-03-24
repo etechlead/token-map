@@ -1,6 +1,7 @@
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.Core.Tests.Infrastructure;
 
@@ -20,7 +21,8 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
         Assert.True(settings.Analysis.RespectGitIgnore);
-        Assert.True(settings.Analysis.UseDefaultExcludes);
+        Assert.True(settings.Analysis.UseGlobalExcludes);
+        Assert.Equal(GlobalExcludeDefaults.DefaultEntries, settings.Analysis.GlobalExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
         Assert.Empty(settings.RecentFolderPaths);
@@ -38,7 +40,13 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
                 "selectedMetric": "NonEmptyLines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
-                "useDefaultExcludes": false
+                "useGlobalExcludes": false,
+                "globalExcludes": [
+                  " node_modules\\\\ ",
+                  "",
+                  "/src//generated/**",
+                  "!nested/scripts/"
+                ]
               },
               "appearance": {
                 "themePreference": "Dark",
@@ -62,7 +70,12 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         Assert.Equal(AnalysisMetric.TotalLines, settings.Analysis.SelectedMetric);
         Assert.False(settings.Analysis.RespectGitIgnore);
-        Assert.False(settings.Analysis.UseDefaultExcludes);
+        Assert.False(settings.Analysis.UseGlobalExcludes);
+        Assert.Collection(
+            settings.Analysis.GlobalExcludes,
+            entry => Assert.Equal("node_modules/", entry),
+            entry => Assert.Equal("/src/generated/**", entry),
+            entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, settings.Appearance.TreemapPalette);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
@@ -120,6 +133,27 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Load_ReadsLegacyUseDefaultExcludes_WhenNewFlagIsAbsent()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(
+            GetSettingsFilePath(),
+            """
+            {
+              "analysis": {
+                "useDefaultExcludes": false
+              }
+            }
+            """);
+
+        var store = CreateStore();
+
+        var settings = store.Load();
+
+        Assert.False(settings.Analysis.UseGlobalExcludes);
+    }
+
+    [Fact]
     public void Load_UsesCurrentPlatformPathComparer_ForRecentFolders()
     {
         Directory.CreateDirectory(_testRootPath);
@@ -159,6 +193,8 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         var settings = AppSettings.CreateDefault();
         settings.Analysis.SelectedMetric = AnalysisMetric.Size;
         settings.Analysis.RespectGitIgnore = false;
+        settings.Analysis.UseGlobalExcludes = false;
+        settings.Analysis.GlobalExcludes = [" node_modules\\ ", "", "/src//generated/**", "!nested/scripts/"];
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
         settings.Logging.MinLevel = AppLogLevel.Warning;
@@ -169,12 +205,21 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         var persistedJson = File.ReadAllText(GetSettingsFilePath());
         Assert.DoesNotContain("selectedTokenProfile", persistedJson, StringComparison.Ordinal);
         Assert.DoesNotContain("respectIgnore", persistedJson, StringComparison.Ordinal);
+        Assert.DoesNotContain("useDefaultExcludes", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""useGlobalExcludes"": false", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""globalExcludes"": [", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""treemapPalette"": ""Weighted""", persistedJson, StringComparison.Ordinal);
 
         var reloaded = store.Load();
 
         Assert.Equal(AnalysisMetric.Size, reloaded.Analysis.SelectedMetric);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
+        Assert.False(reloaded.Analysis.UseGlobalExcludes);
+        Assert.Collection(
+            reloaded.Analysis.GlobalExcludes,
+            entry => Assert.Equal("node_modules/", entry),
+            entry => Assert.Equal("/src/generated/**", entry),
+            entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Weighted, reloaded.Appearance.TreemapPalette);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);

@@ -12,7 +12,7 @@ public sealed class IgnorePolicyScannerTests
         "IgnorePolicyFixture");
 
     [Fact]
-    public async Task ScanAsync_RespectsGitIgnoreAndDefaultExcludes()
+    public async Task ScanAsync_RespectsGitIgnoreAndSourceControlDefaults()
     {
         var scanner = new FileSystemProjectScanner();
 
@@ -26,20 +26,20 @@ public sealed class IgnorePolicyScannerTests
         Assert.Contains("nested/shadow.txt", relativePaths);
         Assert.DoesNotContain("root-hidden.txt", relativePaths);
         Assert.DoesNotContain(".git", relativePaths);
-        Assert.DoesNotContain("node_modules", relativePaths);
+        Assert.Contains("node_modules", relativePaths);
         Assert.Contains("bin", relativePaths);
         Assert.Contains("obj", relativePaths);
     }
 
     [Fact]
-    public async Task ScanAsync_UserExcludesAreAppliedRelativeToRoot()
+    public async Task ScanAsync_GlobalExcludes_FollowGitIgnoreNameOnlyRules()
     {
         var scanner = new FileSystemProjectScanner();
         var options = new ScanOptions
         {
             RespectGitIgnore = false,
-            UseDefaultExcludes = false,
-            UserExcludes = ["scripts", "keep-root.txt"],
+            UseGlobalExcludes = true,
+            GlobalExcludes = ["scripts", "keep-root.txt"],
         };
 
         var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
@@ -47,8 +47,8 @@ public sealed class IgnorePolicyScannerTests
 
         Assert.DoesNotContain("scripts", relativePaths);
         Assert.DoesNotContain("keep-root.txt", relativePaths);
-        Assert.Contains("nested/scripts", relativePaths);
-        Assert.Contains("nested/scripts/nested-script.txt", relativePaths);
+        Assert.DoesNotContain("nested/scripts", relativePaths);
+        Assert.DoesNotContain("nested/scripts/nested-script.txt", relativePaths);
     }
 
     [Fact]
@@ -58,7 +58,7 @@ public sealed class IgnorePolicyScannerTests
         var options = new ScanOptions
         {
             RespectGitIgnore = false,
-            UseDefaultExcludes = false,
+            UseGlobalExcludes = false,
         };
 
         var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
@@ -70,6 +70,48 @@ public sealed class IgnorePolicyScannerTests
         Assert.Contains("node_modules", relativePaths);
         Assert.Contains("bin", relativePaths);
         Assert.Contains("obj", relativePaths);
+    }
+
+    [Fact]
+    public async Task ScanAsync_GlobalExcludes_SupportRootRelativeRules()
+    {
+        var scanner = new FileSystemProjectScanner();
+        var options = new ScanOptions
+        {
+            RespectGitIgnore = false,
+            UseGlobalExcludes = true,
+            GlobalExcludes = ["/scripts/"],
+        };
+
+        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var relativePaths = GetRelativePaths(snapshot.Root);
+
+        Assert.DoesNotContain("scripts", relativePaths);
+        Assert.Contains("nested/scripts", relativePaths);
+        Assert.Contains("nested/scripts/nested-script.txt", relativePaths);
+    }
+
+    [Fact]
+    public async Task ScanAsync_GlobalExcludes_SupportNegationRules()
+    {
+        var scanner = new FileSystemProjectScanner();
+        var options = new ScanOptions
+        {
+            RespectGitIgnore = false,
+            UseGlobalExcludes = true,
+            GlobalExcludes =
+            [
+                "scripts/",
+                "!nested/scripts/",
+            ],
+        };
+
+        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var relativePaths = GetRelativePaths(snapshot.Root);
+
+        Assert.DoesNotContain("scripts", relativePaths);
+        Assert.Contains("nested/scripts", relativePaths);
+        Assert.Contains("nested/scripts/nested-script.txt", relativePaths);
     }
 
     private static string FindRepositoryRoot()

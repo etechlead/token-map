@@ -20,6 +20,7 @@
 ## Sources Of Truth
 
 - The scanner defines the tree structure and the included path set.
+- Global excludes are a persisted settings-backed root rule list applied through the same ignore-rule engine as `.gitignore`.
 - Token counts come from the local `o200k_base` tokenizer pipeline.
 - Line metrics come from local file analysis for included text files and count only non-empty lines.
 - File details show extensions rather than inferred languages.
@@ -41,7 +42,7 @@
 
 - Per-user settings are stored in one lightweight `settings.json` file under the user data directory.
 - The app starts from defaults first, then best-effort applies values from `settings.json`.
-- Analysis preferences, appearance preferences including theme mode, and recent folder history are stored in that settings file.
+- Analysis preferences including global excludes, appearance preferences including theme mode, and recent folder history are stored in that settings file.
 - `Clever.TokenMap.App` works against app-layer settings state and services; infrastructure settings types remain persistence details behind the settings store/coordinator boundary.
 - Settings use typed enum-backed values and persist as JSON strings.
 - Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.
