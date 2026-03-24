@@ -16,6 +16,7 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Control _clipboardHost;
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
+    private MenuItem? _setAsTreemapRootItem;
     private ProjectNode? _currentNode;
 
     public ProjectNodeContextMenuController(
@@ -41,6 +42,7 @@ internal sealed class ProjectNodeContextMenuController
 
         _currentNode = node;
         _setSuppressedState?.Invoke(true);
+        UpdateMenuState();
         _menu.PlacementTarget = owner;
         _menu.Open(owner);
     }
@@ -53,6 +55,8 @@ internal sealed class ProjectNodeContextMenuController
         };
         menu.Items.Add(CreateMenuItem("Open", "FluentFolderOpen20Geometry", OpenItem_OnClick));
         menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), "FluentDesktop20RegularGeometry", RevealItem_OnClick));
+        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", "FluentTargetArrow20Geometry", SetAsTreemapRootItem_OnClick);
+        menu.Items.Add(_setAsTreemapRootItem);
         menu.Items.Add(new Separator());
         menu.Items.Add(CreateMenuItem("Copy Full Path", "TokenMapCopy20Geometry", CopyFullPathItem_OnClick));
         menu.Items.Add(CreateMenuItem("Copy Relative Path", iconResourceKey: null, CopyRelativePathItem_OnClick));
@@ -120,6 +124,18 @@ internal sealed class ProjectNodeContextMenuController
         return false;
     }
 
+    private void UpdateMenuState()
+    {
+        var canSetTreemapRoot = _viewModelAccessor()?.CanSetTreemapRoot(_currentNode) == true;
+        if (_setAsTreemapRootItem is null)
+        {
+            return;
+        }
+
+        _setAsTreemapRootItem.IsVisible = canSetTreemapRoot;
+        _setAsTreemapRootItem.IsEnabled = canSetTreemapRoot;
+    }
+
     private async void OpenItem_OnClick(object? sender, RoutedEventArgs e)
     {
         if (_viewModelAccessor() is not { } viewModel)
@@ -138,6 +154,11 @@ internal sealed class ProjectNodeContextMenuController
         }
 
         await viewModel.RevealNodeAsync(_currentNode);
+    }
+
+    private void SetAsTreemapRootItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _viewModelAccessor()?.SetTreemapRoot(_currentNode);
     }
 
     private async void CopyFullPathItem_OnClick(object? sender, RoutedEventArgs e)

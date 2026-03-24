@@ -39,6 +39,24 @@ public sealed class TreemapNavigationStateTests
     }
 
     [Fact]
+    public void CanSetTreemapRoot_RejectsCurrentRootAndFiles()
+    {
+        var snapshot = CreateNestedSnapshot();
+        var directory = Assert.Single(snapshot.Root.Children);
+        var file = Assert.Single(directory.Children);
+        var state = new TreemapNavigationState();
+        state.LoadSnapshot(snapshot);
+
+        Assert.False(state.CanSetTreemapRoot(snapshot.Root));
+        Assert.True(state.CanSetTreemapRoot(directory));
+        Assert.False(state.CanSetTreemapRoot(file));
+
+        state.SetTreemapRoot(directory);
+
+        Assert.False(state.CanSetTreemapRoot(directory));
+    }
+
+    [Fact]
     public void ResetAndBreadcrumbNavigation_RestoreOverviewWithoutClearingSelection()
     {
         var snapshot = CreateNestedSnapshot();

@@ -101,6 +101,32 @@ public sealed class MainWindowTreemapIntegrationTests
     }
 
     [AvaloniaFact]
+    public async Task MainWindow_SetTreemapRoot_ScopesTreemapAndSynchronizesTree()
+    {
+        var window = new MainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateNestedSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        var directoryNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.RelativePath == "src");
+
+        Assert.NotNull(control);
+        Assert.True(viewModel.CanSetTreemapRoot(directoryNode.Node));
+
+        var handled = viewModel.SetTreemapRoot(directoryNode.Node);
+
+        Assert.True(handled);
+        Assert.Equal("src", viewModel.TreemapRootNode?.RelativePath);
+        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.RelativePath);
+        Assert.Equal("src", viewModel.SelectedNode?.RelativePath);
+        Assert.Equal(2, viewModel.TreemapBreadcrumbs.Count);
+        Assert.All(control.NodeVisuals, item => Assert.StartsWith("src", item.Node.RelativePath));
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_TreemapBreadcrumbNavigation_RestoresGlobalTreemap()
     {
         var window = new MainWindow();
