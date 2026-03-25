@@ -2,12 +2,12 @@
 
 ## Responsibility Split
 
-- `Clever.TokenMap.Core` holds domain models, shared contracts, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
+- `Clever.TokenMap.Core` holds domain models, shared contracts, logging abstractions, path-normalization rules, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
 - `Clever.TokenMap.Core` also holds the shared persisted settings DTOs used by app-layer coordinators and infrastructure stores.
-- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, logging, and path normalization. It stays independent from Avalonia and desktop UI framework types.
+- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, and concrete logging/file-system implementations. It stays independent from Avalonia and desktop UI framework types.
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
-- `Clever.TokenMap.App.App` and `Clever.TokenMap.App.AppComposition` are the product composition roots that wire concrete infrastructure implementations; the rest of the app layer works through contracts and app/core state.
+- `Clever.TokenMap.App.AppComposition` is the runtime composition root. It builds the desktop service provider and wires concrete infrastructure implementations; `Clever.TokenMap.App.App` boots Avalonia, resolves the root window from that provider, and owns application-lifetime hooks only.
 - `tests/Clever.TokenMap.ArchitectureTests` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
 
 ## App-Layer State

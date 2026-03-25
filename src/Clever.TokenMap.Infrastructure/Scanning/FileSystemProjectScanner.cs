@@ -1,10 +1,10 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Infrastructure.Filtering;
 using Clever.TokenMap.Infrastructure.Filtering.Ignore;
-using Clever.TokenMap.Infrastructure.Logging;
-using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Scanning;
 

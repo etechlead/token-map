@@ -1,3 +1,5 @@
+using Clever.TokenMap.Core.Paths;
+
 namespace Clever.TokenMap.Infrastructure.Settings;
 
 public static class TokenMapAppDataPaths
@@ -22,9 +24,9 @@ public static class TokenMapAppDataPaths
     public static string GetFolderSettingsFilePath(
         string rootPath,
         string? folderSettingsRootPath = null,
-        Clever.TokenMap.Infrastructure.Paths.PathNormalizer? pathNormalizer = null)
+        PathNormalizer? pathNormalizer = null)
     {
-        var normalizer = pathNormalizer ?? new Clever.TokenMap.Infrastructure.Paths.PathNormalizer();
+        var normalizer = pathNormalizer ?? new PathNormalizer();
         var normalizedRootPath = normalizer.NormalizeRootPath(rootPath);
         var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath, normalizer);
         var folderRoot = string.IsNullOrWhiteSpace(folderSettingsRootPath)

@@ -1,8 +1,8 @@
 using System.Text;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Logging;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 

@@ -1,4 +1,4 @@
-namespace Clever.TokenMap.Infrastructure.Logging;
+namespace Clever.TokenMap.Core.Logging;
 
 public interface IAppLoggerFactory
 {

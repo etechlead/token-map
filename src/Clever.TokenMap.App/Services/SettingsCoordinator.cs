@@ -6,10 +6,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
-using Clever.TokenMap.Infrastructure.Logging;
-using Clever.TokenMap.Infrastructure.Paths;
 
 namespace Clever.TokenMap.App.Services;
 
@@ -22,7 +23,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private readonly IThemeService _themeService;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _debounceDelay;
-    private readonly PathNormalizer _pathNormalizer;
+    private readonly IPathNormalizer _pathNormalizer;
     private readonly Lock _syncLock = new();
     private readonly Lock _folderSyncLock = new();
 
@@ -48,7 +49,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         AppSettings? initialSettings = null,
         IAppLogger? logger = null,
         TimeSpan? debounceDelay = null,
-        PathNormalizer? pathNormalizer = null)
+        IPathNormalizer? pathNormalizer = null)
     {
         _appSettingsStore = appSettingsStore;
         _folderSettingsStore = folderSettingsStore;

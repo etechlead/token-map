@@ -1,3 +1,4 @@
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Settings;

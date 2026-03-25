@@ -11,6 +11,12 @@ public partial class MainWindow : Window
         InitializeComponent();
     }
 
+    public MainWindow(MainWindowViewModel viewModel)
+        : this()
+    {
+        DataContext = viewModel;
+    }
+
     private void SettingsBackdrop_OnPointerPressed(object? sender, PointerPressedEventArgs? e)
     {
         if (DataContext is MainWindowViewModel viewModel)

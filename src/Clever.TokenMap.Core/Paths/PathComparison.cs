@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace Clever.TokenMap.Infrastructure.Paths;
+namespace Clever.TokenMap.Core.Paths;
 
 public static class PathComparison
 {

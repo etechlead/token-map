@@ -1,6 +1,6 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Clever.TokenMap.Infrastructure.Paths;
+using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 

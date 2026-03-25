@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Paths;
+using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 

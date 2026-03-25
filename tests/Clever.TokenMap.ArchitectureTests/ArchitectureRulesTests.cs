@@ -6,13 +6,6 @@ using ArchUnitNET.xUnit;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Analysis;
-using Clever.TokenMap.Infrastructure.Caching;
-using Clever.TokenMap.Infrastructure.Logging;
-using Clever.TokenMap.Infrastructure.Paths;
-using Clever.TokenMap.Infrastructure.Scanning;
-using Clever.TokenMap.Infrastructure.Settings;
-using Clever.TokenMap.Infrastructure.Text;
-using Clever.TokenMap.Infrastructure.Tokenization;
 using Clever.TokenMap.Treemap;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using static ArchUnitNET.Fluent.Slices.SliceRuleDefinition;
@@ -113,19 +106,6 @@ public sealed class ArchitectureRulesTests
             .And().AreNot(AppCompositionRoots)
             .As("non-composition-root app types");
 
-    private static readonly IObjectProvider<IType> ConcreteInfrastructureTypes =
-        Types().That().Are(
-                typeof(ProjectAnalyzer),
-                typeof(FileSystemProjectScanner),
-                typeof(HeuristicTextFileDetector),
-                typeof(MicrosoftMlTokenCounter),
-                typeof(InMemoryCacheStore),
-                typeof(JsonAppSettingsStore),
-                typeof(JsonFolderSettingsStore),
-                typeof(FileSystemFolderPathService),
-                typeof(AppLoggerFactory))
-            .As("concrete infrastructure implementations");
-
     [Fact]
     public void Core_Should_Not_Depend_On_Other_Product_Assemblies() =>
         Types().That().Are(CoreAssembly).Should()
@@ -194,6 +174,14 @@ public sealed class ArchitectureRulesTests
             .Check(Architecture);
 
     [Fact]
+    public void App_Services_Should_Not_Depend_On_Infrastructure_Types() =>
+        Types().That().Are(AppServices).Should()
+            .NotDependOnAny(InfrastructureTypes)
+            .Because("app services should work through app/core contracts instead of infrastructure details")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
     public void Non_Ui_App_Services_Should_Not_Depend_On_Avalonia_Types() =>
         Types().That().Are(NonUiAppServices).Should()
             .NotDependOnAny(AvaloniaTypes)
@@ -210,10 +198,10 @@ public sealed class ArchitectureRulesTests
             .Check(Architecture);
 
     [Fact]
-    public void Non_Composition_Root_App_Types_Should_Not_Depend_On_Concrete_Infrastructure_Types() =>
+    public void Non_Composition_Root_App_Types_Should_Not_Depend_On_Infrastructure_Types() =>
         Types().That().Are(NonCompositionRootAppTypes).Should()
-            .NotDependOnAny(ConcreteInfrastructureTypes)
-            .Because("only the app composition root should wire concrete infrastructure implementations")
+            .NotDependOnAny(InfrastructureTypes)
+            .Because("only the app composition root should wire or mention infrastructure types")
             .WithoutRequiringPositiveResults()
             .Check(Architecture);
 

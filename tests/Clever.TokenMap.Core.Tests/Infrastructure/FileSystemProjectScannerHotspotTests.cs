@@ -1,6 +1,6 @@
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Paths;
+using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Infrastructure.Scanning;
 
 namespace Clever.TokenMap.Core.Tests.Infrastructure;

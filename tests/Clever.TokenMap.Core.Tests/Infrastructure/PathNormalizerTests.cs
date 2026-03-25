@@ -1,4 +1,4 @@
-using Clever.TokenMap.Infrastructure.Paths;
+using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Core.Tests.Infrastructure;
 

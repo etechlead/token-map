@@ -6,16 +6,18 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.Views;
-using Clever.TokenMap.Infrastructure.Logging;
-using Clever.TokenMap.Infrastructure.Paths;
-using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Core.Settings;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Clever.TokenMap.App;
 
 public partial class App : Application
 {
+    private IServiceProvider? _serviceProvider;
+
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
@@ -26,38 +28,21 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DisableAvaloniaDataAnnotationValidation();
-            var mainWindow = new MainWindow();
-            var appSettingsStore = new JsonAppSettingsStore();
-            var folderSettingsStore = new JsonFolderSettingsStore();
-            var appSettings = appSettingsStore.Load();
-            var themeService = new ApplicationThemeService(this);
-            var folderPathService = new FileSystemFolderPathService();
-            var loggerFactory = new AppLoggerFactory(appSettings.Logging);
-            var settingsCoordinator = new SettingsCoordinator(
-                appSettingsStore,
-                folderSettingsStore,
-                themeService,
-                appSettings,
-                loggerFactory.CreateLogger<SettingsCoordinator>());
+            var serviceProvider = AppComposition.CreateServiceProvider(this);
+            _serviceProvider = serviceProvider;
+            var mainWindow = serviceProvider.GetRequiredService<MainWindow>();
+            var appSettings = serviceProvider.GetRequiredService<AppSettings>();
+            var themeService = serviceProvider.GetRequiredService<ApplicationThemeService>();
+            var settingsCoordinator = serviceProvider.GetRequiredService<ISettingsCoordinator>();
+            var loggerFactory = serviceProvider.GetRequiredService<IAppLoggerFactory>();
             desktop.Exit += (_, _) =>
             {
                 Task.Run(() => settingsCoordinator.FlushAsync()).GetAwaiter().GetResult();
-                loggerFactory.Dispose();
+                (_serviceProvider as IDisposable)?.Dispose();
+                _serviceProvider = null;
             };
             loggerFactory.CreateLogger<App>().LogInformation(
                 $"Application starting. OS='{Environment.OSVersion}', framework='{Environment.Version}', logLevel='{appSettings.Logging.MinLevel}', themePreference='{appSettings.Appearance.ThemePreference}', systemTheme='{themeService.CurrentSystemTheme}'.");
-            var analyzer = AppComposition.CreateDefaultProjectAnalyzer(loggerFactory);
-            var analysisSessionController = AppComposition.CreateAnalysisSessionController(
-                analyzer,
-                new WindowFolderPickerService(mainWindow),
-                folderPathService,
-                settingsCoordinator,
-                loggerFactory);
-            mainWindow.DataContext = AppComposition.CreateMainWindowViewModel(
-                analysisSessionController,
-                settingsCoordinator,
-                folderPathService,
-                new PathShellService());
             desktop.MainWindow = mainWindow;
         }
 

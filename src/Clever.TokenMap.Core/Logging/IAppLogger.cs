@@ -1,6 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 
-namespace Clever.TokenMap.Infrastructure.Logging;
+namespace Clever.TokenMap.Core.Logging;
 
 public interface IAppLogger
 {
