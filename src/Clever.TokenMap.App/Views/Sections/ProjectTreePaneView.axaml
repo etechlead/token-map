@@ -9,8 +9,20 @@
             Classes="panel">
         <Grid RowDefinitions="Auto,*"
               RowSpacing="8">
-            <TextBlock Classes="panel-title"
-                       Text="Project Tree" />
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="12">
+                <TextBlock Name="ProjectTreeTitleText"
+                           Classes="panel-title"
+                           Text="Project Tree" />
+                <TextBlock Name="ProjectTreeSelectedFolderText"
+                           Grid.Column="1"
+                           Classes="panel-title"
+                           HorizontalAlignment="Right"
+                           IsVisible="{Binding HasSnapshot}"
+                           Text="{Binding ProjectTreeSelectedFolderText}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip.Tip="{Binding ProjectTreeSelectedFolderText}" />
+            </Grid>
             <DataGrid Name="ProjectTreeTable"
                       Grid.Row="1"
                       AutoGenerateColumns="False"

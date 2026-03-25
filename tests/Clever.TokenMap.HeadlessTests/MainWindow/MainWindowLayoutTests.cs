@@ -68,6 +68,8 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(statusStrip);
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
         var treemapTitle = FindNamedDescendant<TextBlock>(window, "TreemapTitleText");
+        var projectTreeTitle = FindNamedDescendant<TextBlock>(window, "ProjectTreeTitleText");
+        var projectTreeSelectedFolder = FindNamedDescendant<TextBlock>(window, "ProjectTreeSelectedFolderText");
         Assert.NotNull(FindNamedDescendant<DataGrid>(window, "ProjectTreeTable"));
         Assert.NotNull(FindNamedDescendant<ItemsControl>(window, "TreemapBreadcrumbsItemsControl"));
         Assert.Null(FindNamedDescendant<Control>(window, "DetailsPane"));
@@ -86,7 +88,11 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(settingsDrawer);
         Assert.False(settingsDrawer.IsVisible);
         Assert.NotNull(treemapTitle);
+        Assert.NotNull(projectTreeTitle);
+        Assert.NotNull(projectTreeSelectedFolder);
         Assert.Equal("Treemap - tokens", treemapTitle.Text);
+        Assert.Equal("Project Tree", projectTreeTitle.Text);
+        Assert.False(projectTreeSelectedFolder.IsVisible);
     }
 
     [AvaloniaFact]
@@ -153,19 +159,16 @@ public sealed class MainWindowLayoutTests
         var primaryGroup = FindNamedDescendant<Control>(window, "ToolbarPrimaryGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
         var settingsButton = FindNamedDescendant<Button>(window, "SettingsButton");
-        var selectedFolderValue = FindNamedDescendant<TextBlock>(window, "SelectedFolderValueText");
 
         Assert.NotNull(primaryGroup);
         Assert.NotNull(summaryGroup);
         Assert.NotNull(settingsButton);
-        Assert.NotNull(selectedFolderValue);
         Assert.True(
             primaryGroup.Bounds.Right <= summaryGroup.Bounds.Left,
             $"PrimaryGroup.Right={primaryGroup.Bounds.Right}, SummaryGroup.Left={summaryGroup.Bounds.Left}");
         Assert.True(
             summaryGroup.Bounds.Right <= settingsButton.Bounds.Left,
             $"SummaryGroup.Right={summaryGroup.Bounds.Right}, SettingsButton.Left={settingsButton.Bounds.Left}");
-        Assert.Equal(Avalonia.Media.TextTrimming.CharacterEllipsis, selectedFolderValue.TextTrimming);
     }
 
     [AvaloniaFact]
@@ -626,7 +629,7 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(gitIgnoreCheckBox);
         Assert.NotNull(globalExcludesCheckBox);
         Assert.NotNull(rescanButton);
-        Assert.NotNull(selectedFolderGroup);
+        Assert.Null(selectedFolderGroup);
         Assert.NotNull(summaryGroup);
         Assert.False(metricTokensRadioButton.IsEnabled);
         Assert.False(metricLinesRadioButton.IsEnabled);
@@ -643,7 +646,6 @@ public sealed class MainWindowLayoutTests
         Assert.True(gitIgnoreCheckBox.IsEnabled);
         Assert.True(globalExcludesCheckBox.IsEnabled);
         Assert.False(rescanButton.IsVisible);
-        Assert.False(selectedFolderGroup.IsVisible);
         Assert.False(summaryGroup.IsVisible);
     }
 
@@ -961,14 +963,18 @@ public sealed class MainWindowLayoutTests
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
         var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
+        var projectTreeTitle = FindNamedDescendant<TextBlock>(window, "ProjectTreeTitleText");
+        var projectTreeSelectedFolder = FindNamedDescendant<TextBlock>(window, "ProjectTreeSelectedFolderText");
 
         Assert.NotNull(treeTable);
         Assert.NotNull(statusStrip);
         Assert.NotNull(startSurface);
         Assert.NotNull(workspaceHost);
         Assert.NotNull(rescanButton);
-        Assert.NotNull(selectedFolderGroup);
+        Assert.Null(selectedFolderGroup);
         Assert.NotNull(summaryGroup);
+        Assert.NotNull(projectTreeTitle);
+        Assert.NotNull(projectTreeSelectedFolder);
         Assert.Single(viewModel.Tree.RootNodes);
         Assert.Equal(2, viewModel.Tree.VisibleNodes.Count);
         Assert.Equal(AnalysisState.Completed, viewModel.AnalysisState);
@@ -983,13 +989,15 @@ public sealed class MainWindowLayoutTests
         Assert.True(metricLinesRadioButton.IsEnabled);
         Assert.True(metricSizeRadioButton.IsEnabled);
         Assert.True(metricTokensRadioButton.IsChecked);
+        Assert.Equal("Project Tree", projectTreeTitle.Text);
+        Assert.Equal(@"C:\Demo", projectTreeSelectedFolder.Text);
         Assert.False(metricLinesRadioButton.IsChecked);
         Assert.False(metricSizeRadioButton.IsChecked);
         Assert.False(statusStrip.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(workspaceHost.IsVisible);
         Assert.True(rescanButton.IsVisible);
-        Assert.True(selectedFolderGroup.IsVisible);
+        Assert.True(projectTreeSelectedFolder.IsVisible);
         Assert.True(summaryGroup.IsVisible);
     }
 

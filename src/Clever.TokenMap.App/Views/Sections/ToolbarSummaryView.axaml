@@ -111,21 +111,6 @@
                                 IsVisible="{Binding Toolbar.IsStopVisible}"
                                 ToolTip.Tip="Stop the current scan" />
                     </StackPanel>
-
-                    <StackPanel Name="SelectedFolderGroup"
-                                MaxWidth="220"
-                                VerticalAlignment="Center"
-                                Spacing="2"
-                                IsVisible="{Binding HasSnapshot}">
-                        <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                                   FontSize="11"
-                                   Text="Selected folder" />
-                        <TextBlock Name="SelectedFolderValueText"
-                                   FontSize="13"
-                                   FontWeight="Medium"
-                                   TextTrimming="CharacterEllipsis"
-                                   Text="{Binding Toolbar.SelectedFolderDisplay}" />
-                    </StackPanel>
                 </StackPanel>
 
                 <Grid Name="ToolbarSummaryGroup"

@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
@@ -55,9 +54,6 @@ public partial class ToolbarViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool isStopVisible;
-
-    [ObservableProperty]
-    private string selectedFolderDisplay = "No folder selected";
 
     public string TreemapTitle => $"Treemap - {TreemapMetricDisplay}";
 
@@ -190,13 +186,6 @@ public partial class ToolbarViewModel : ViewModelBase
                 SelectedTreemapPalette = TreemapPalette.Studio;
             }
         }
-    }
-
-    public void UpdateFolder(string? folderPath)
-    {
-        SelectedFolderDisplay = string.IsNullOrWhiteSpace(folderPath)
-            ? "No folder selected"
-            : folderPath;
     }
 
     public void RefreshAvailability(bool isBusy, bool hasSnapshot)

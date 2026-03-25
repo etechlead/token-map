@@ -132,7 +132,6 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
         _openFolderExcludesEditorCommand.NotifyCanExecuteChanged();
-        Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
         RefreshToolbarAvailability();
 
         if (_analysisSessionController.CurrentSnapshot is { } snapshot)
@@ -148,6 +147,8 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     public string WindowTitle => BuildWindowTitle(_analysisSessionController.SelectedFolderPath);
+
+    public string ProjectTreeSelectedFolderText => _analysisSessionController.SelectedFolderPath?.Trim() ?? string.Empty;
 
     public ToolbarViewModel Toolbar { get; }
 
@@ -408,8 +409,8 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             case nameof(IAnalysisSessionController.SelectedFolderPath):
                 _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
-                Toolbar.UpdateFolder(_analysisSessionController.SelectedFolderPath);
                 OnPropertyChanged(nameof(WindowTitle));
+                OnPropertyChanged(nameof(ProjectTreeSelectedFolderText));
                 _openFolderExcludesEditorCommand.NotifyCanExecuteChanged();
                 _excludeNodeFromFolderCommand.NotifyCanExecuteChanged();
                 if (_activeExcludesEditorScope == ExcludesEditorScope.Folder && IsExcludesEditorOpen)
