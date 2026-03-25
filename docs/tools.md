@@ -1,5 +1,23 @@
 # Tools
 
+## Coverage Summary
+
+- Location: `scripts/run-coverage.ps1`
+- Purpose: run the repo verification flow with XPlat coverage collection, merge the per-test-project Cobertura reports, and emit one agent-readable JSON summary without streaming build/test noise to stdout.
+- Use it when you want a compact machine-readable view of line, branch, and method coverage, hotspot classes by uncovered lines, and stable artifact paths for follow-up inspection.
+
+### Command
+
+```powershell
+powershell -File scripts/run-coverage.ps1
+```
+
+### Outputs
+
+- Stdout: one JSON object with test totals, coverage summary, per-assembly coverage, zero-coverage classes, top uncovered classes, and artifact paths.
+- Files: `artifacts/coverage-agent/coverage-summary.json`, `artifacts/coverage-agent/report/Summary.json`, `artifacts/coverage-agent/report/Summary.txt`, `artifacts/coverage-agent/report/summary.html`.
+- Logs: step logs under `artifacts/coverage-agent/logs/` for tool restore, restore, build, test, and report generation.
+
 ## Visual Harness
 
 - Location: `tests/Clever.TokenMap.VisualHarness`

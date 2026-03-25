@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input.Platform;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
 using FluentIcons.Avalonia;
@@ -15,6 +16,7 @@ internal sealed class ProjectNodeContextMenuController
 {
     private readonly ContextMenu _menu;
     private readonly Control _clipboardHost;
+    private readonly Func<IClipboard?>? _clipboardAccessor;
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
     private MenuItem? _excludeItem;
@@ -24,9 +26,11 @@ internal sealed class ProjectNodeContextMenuController
     public ProjectNodeContextMenuController(
         Control clipboardHost,
         Func<MainWindowViewModel?> viewModelAccessor,
-        Action<bool>? setSuppressedState = null)
+        Action<bool>? setSuppressedState = null,
+        Func<IClipboard?>? clipboardAccessor = null)
     {
         _clipboardHost = clipboardHost;
+        _clipboardAccessor = clipboardAccessor;
         _viewModelAccessor = viewModelAccessor;
         _setSuppressedState = setSuppressedState;
         _menu = CreateMenu();
@@ -167,7 +171,7 @@ internal sealed class ProjectNodeContextMenuController
             return;
         }
 
-        var clipboard = TopLevel.GetTopLevel(_clipboardHost)?.Clipboard;
+        var clipboard = _clipboardAccessor?.Invoke() ?? TopLevel.GetTopLevel(_clipboardHost)?.Clipboard;
         if (clipboard is null)
         {
             return;
