@@ -150,7 +150,7 @@ internal static class VisualCaptureRunner
             userExcludes.Add(outputExclude);
         }
 
-        var analyzer = AppComposition.CreateDefaultProjectAnalyzer();
+        var analyzer = HarnessComposition.CreateDefaultProjectAnalyzer();
         var scanOptions = new ScanOptions
         {
             RespectGitIgnore = true,
@@ -209,14 +209,14 @@ internal static class VisualCaptureRunner
         var settingsCoordinator = new InlineSettingsCoordinator(settingsState);
         var folderPathService = new ExistingFolderPathService();
 
-        var analysisSessionController = AppComposition.CreateAnalysisSessionController(
+        var analysisSessionController = HarnessComposition.CreateAnalysisSessionController(
             new SnapshotProjectAnalyzer(snapshot),
             new FixedFolderPickerService(snapshot.RootPath),
             folderPathService,
             settingsCoordinator);
         await analysisSessionController.OpenFolderAsync(snapshot.RootPath, ScanOptions.Default);
 
-        var viewModel = AppComposition.CreateMainWindowViewModel(
+        var viewModel = HarnessComposition.CreateMainWindowViewModel(
             analysisSessionController,
             settingsCoordinator,
             folderPathService,

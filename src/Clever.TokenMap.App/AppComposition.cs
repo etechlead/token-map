@@ -49,7 +49,12 @@ public static class AppComposition
         services.AddSingleton<IAppLoggerFactory>(sp =>
             new AppLoggerFactory(sp.GetRequiredService<AppSettings>().Logging));
         services.AddSingleton<IProjectAnalyzer>(sp =>
-            CreateDefaultProjectAnalyzer(sp.GetRequiredService<IAppLoggerFactory>()));
+            new ProjectAnalyzer(
+                new FileSystemProjectScanner(logger: sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<FileSystemProjectScanner>()),
+                new HeuristicTextFileDetector(),
+                new MicrosoftMlTokenCounter(),
+                new InMemoryCacheStore(),
+                loggerFactory: sp.GetRequiredService<IAppLoggerFactory>()));
         services.AddSingleton<IFolderPickerService>(sp =>
             new WindowFolderPickerService(() => sp.GetRequiredService<MainWindow>()));
         services.AddSingleton<ISettingsCoordinator>(sp =>
@@ -62,14 +67,14 @@ public static class AppComposition
                 pathNormalizer: sp.GetRequiredService<IPathNormalizer>()));
         services.AddSingleton<TreemapNavigationState>();
         services.AddSingleton<IAnalysisSessionController>(sp =>
-            CreateAnalysisSessionController(
+            new AnalysisSessionController(
                 sp.GetRequiredService<IProjectAnalyzer>(),
                 sp.GetRequiredService<IFolderPickerService>(),
                 sp.GetRequiredService<IFolderPathService>(),
-                sp.GetRequiredService<ISettingsCoordinator>(),
-                sp.GetRequiredService<IAppLoggerFactory>()));
+                sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<AnalysisSessionController>(),
+                sp.GetRequiredService<ISettingsCoordinator>()));
         services.AddSingleton(sp =>
-            CreateMainWindowViewModel(
+            new MainWindowViewModel(
                 sp.GetRequiredService<IAnalysisSessionController>(),
                 sp.GetRequiredService<TreemapNavigationState>(),
                 sp.GetRequiredService<ISettingsCoordinator>(),
@@ -77,50 +82,4 @@ public static class AppComposition
                 sp.GetRequiredService<IPathShellService>()));
         services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainWindowViewModel>()));
     }
-
-    public static IProjectAnalyzer CreateDefaultProjectAnalyzer(IAppLoggerFactory? loggerFactory = null) =>
-        new ProjectAnalyzer(
-            new FileSystemProjectScanner(logger: loggerFactory?.CreateLogger<FileSystemProjectScanner>()),
-            new HeuristicTextFileDetector(),
-            new MicrosoftMlTokenCounter(),
-            new InMemoryCacheStore(),
-            loggerFactory: loggerFactory);
-
-    public static AnalysisSessionController CreateAnalysisSessionController(
-        IProjectAnalyzer projectAnalyzer,
-        IFolderPickerService folderPickerService,
-        IFolderPathService folderPathService,
-        ISettingsCoordinator? settingsCoordinator = null,
-        IAppLoggerFactory? loggerFactory = null) =>
-        new(
-            projectAnalyzer,
-            folderPickerService,
-            folderPathService,
-            loggerFactory?.CreateLogger<AnalysisSessionController>(),
-            settingsCoordinator);
-
-    public static MainWindowViewModel CreateMainWindowViewModel(
-        IAnalysisSessionController analysisSessionController,
-        ISettingsCoordinator settingsCoordinator,
-        IFolderPathService folderPathService,
-        IPathShellService pathShellService) =>
-        CreateMainWindowViewModel(
-            analysisSessionController,
-            treemapNavigationState: null,
-            settingsCoordinator,
-            folderPathService,
-            pathShellService);
-
-    public static MainWindowViewModel CreateMainWindowViewModel(
-        IAnalysisSessionController analysisSessionController,
-        TreemapNavigationState? treemapNavigationState,
-        ISettingsCoordinator settingsCoordinator,
-        IFolderPathService folderPathService,
-        IPathShellService pathShellService) =>
-        new(
-            analysisSessionController,
-            treemapNavigationState ?? new TreemapNavigationState(),
-            settingsCoordinator,
-            folderPathService,
-            pathShellService);
 }
