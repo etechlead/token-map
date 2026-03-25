@@ -18,19 +18,21 @@ public sealed class InMemoryCacheStore : ICacheStore
     }
 
     public ValueTask<NodeMetrics?> TryGetFileMetricsAsync(
-        string fullPath,
+        string rootPath,
+        string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc);
+        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc);
         return ValueTask.FromResult(_entries.TryGetValue(key, out var metrics) ? metrics : null);
     }
 
     public ValueTask SetFileMetricsAsync(
-        string fullPath,
+        string rootPath,
+        string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
         NodeMetrics metrics,
@@ -40,37 +42,42 @@ public sealed class InMemoryCacheStore : ICacheStore
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(fullPath, fileSizeBytes, lastWriteTimeUtc);
+        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc);
         _entries[key] = metrics;
 
         return ValueTask.CompletedTask;
     }
 
     private CacheKey CreateKey(
-        string fullPath,
+        string rootPath,
+        string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc) =>
         new(
-            _pathNormalizer.NormalizeFullPath(fullPath),
+            _pathNormalizer.NormalizeRootPath(rootPath),
+            PathNormalizer.NormalizeRelativePath(relativePath),
             fileSizeBytes,
             lastWriteTimeUtc);
 
     private readonly record struct CacheKey(
-        string FullPath,
+        string RootPath,
+        string RelativePath,
         long FileSizeBytes,
         DateTimeOffset LastWriteTimeUtc);
 
     private sealed class CacheKeyComparer(StringComparer pathComparer) : IEqualityComparer<CacheKey>
     {
         public bool Equals(CacheKey x, CacheKey y) =>
-            pathComparer.Equals(x.FullPath, y.FullPath) &&
+            pathComparer.Equals(x.RootPath, y.RootPath) &&
+            pathComparer.Equals(x.RelativePath, y.RelativePath) &&
             x.FileSizeBytes == y.FileSizeBytes &&
             x.LastWriteTimeUtc.Equals(y.LastWriteTimeUtc);
 
         public int GetHashCode([DisallowNull] CacheKey obj)
         {
             var hash = new HashCode();
-            hash.Add(obj.FullPath, pathComparer);
+            hash.Add(obj.RootPath, pathComparer);
+            hash.Add(obj.RelativePath, pathComparer);
             hash.Add(obj.FileSizeBytes);
             hash.Add(obj.LastWriteTimeUtc);
             return hash.ToHashCode();

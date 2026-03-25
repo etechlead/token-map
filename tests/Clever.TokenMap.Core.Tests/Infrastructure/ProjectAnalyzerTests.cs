@@ -34,6 +34,28 @@ public sealed class ProjectAnalyzerTests : IDisposable
     }
 
     [Fact]
+    public async Task AnalyzeAsync_DoesNotCrossPollinateCacheBetweenRootsWithSameRelativePath()
+    {
+        var rootA = Path.Combine(_rootPath, "RepoA");
+        var rootB = Path.Combine(_rootPath, "RepoB");
+        Directory.CreateDirectory(rootA);
+        Directory.CreateDirectory(rootB);
+        await File.WriteAllTextAsync(Path.Combine(rootA, "Program.cs"), "alpha");
+        await File.WriteAllTextAsync(Path.Combine(rootB, "Program.cs"), "beta gamma");
+
+        var tokenCounter = new RecordingTokenCounter();
+        var cacheStore = new InMemoryCacheStore();
+        var analyzer = CreateAnalyzer(tokenCounter, cacheStore);
+
+        var first = await analyzer.AnalyzeAsync(rootA, ScanOptions.Default, progress: null, CancellationToken.None);
+        var second = await analyzer.AnalyzeAsync(rootB, ScanOptions.Default, progress: null, CancellationToken.None);
+
+        Assert.Equal(2, tokenCounter.CallCount);
+        Assert.Equal(5, first.Root.Metrics.Tokens);
+        Assert.Equal(10, second.Root.Metrics.Tokens);
+    }
+
+    [Fact]
     public async Task AnalyzeAsync_InvalidatesCacheWhenFileChanges()
     {
         var filePath = Path.Combine(_rootPath, "Program.cs");

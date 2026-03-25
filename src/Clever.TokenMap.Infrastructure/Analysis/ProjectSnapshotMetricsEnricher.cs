@@ -39,6 +39,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         var totalFileCount = CountFileNodes(snapshot.Root);
         var progressState = new ProgressState();
         var enrichedRoot = await EnrichNodeAsync(
+            snapshot.RootPath,
             snapshot.Root,
             warnings,
             progress,
@@ -57,6 +58,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     }
 
     private async Task<ProjectNode> EnrichNodeAsync(
+        string rootPath,
         ProjectNode node,
         List<string> warnings,
         IProgress<AnalysisProgress>? progress,
@@ -68,7 +70,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.Kind == ProjectNodeKind.File)
         {
-            var enrichedFile = await EnrichFileNodeAsync(node, warnings, cancellationToken);
+            var enrichedFile = await EnrichFileNodeAsync(rootPath, node, warnings, cancellationToken);
             progressState.ProcessedFileCount++;
             progress?.Report(new AnalysisProgress(
                 Phase: "AnalyzingFiles",
@@ -82,6 +84,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         foreach (var child in node.Children)
         {
             enrichedChildren.Add(await EnrichNodeAsync(
+                rootPath,
                 child,
                 warnings,
                 progress,
@@ -95,6 +98,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     }
 
     private async Task<ProjectNode> EnrichFileNodeAsync(
+        string rootPath,
         ProjectNode node,
         List<string> warnings,
         CancellationToken cancellationToken)
@@ -109,7 +113,11 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (fileState.Exists && _cacheStore is not null)
         {
-            var cachedMetrics = await TryRestoreCachedMetricsAsync(node, fileState, cancellationToken);
+            var cachedMetrics = await TryRestoreCachedMetricsAsync(
+                rootPath,
+                node.RelativePath,
+                fileState,
+                cancellationToken);
             if (cachedMetrics is not null)
             {
                 _logger.LogTrace($"Restored cached metrics for '{node.FullPath}'.");
@@ -176,7 +184,8 @@ public sealed class ProjectSnapshotMetricsEnricher
         if (fileState.Exists && _cacheStore is not null)
         {
             await _cacheStore.SetFileMetricsAsync(
-                node.FullPath,
+                rootPath,
+                node.RelativePath,
                 fileState.FileSizeBytes,
                 fileState.LastWriteTimeUtc,
                 metrics,
@@ -322,12 +331,14 @@ public sealed class ProjectSnapshotMetricsEnricher
             or PathTooLongException;
 
     private async Task<NodeMetrics?> TryRestoreCachedMetricsAsync(
-        ProjectNode node,
+        string rootPath,
+        string relativePath,
         FileState fileState,
         CancellationToken cancellationToken)
     {
         var cachedMetrics = await _cacheStore!.TryGetFileMetricsAsync(
-            node.FullPath,
+            rootPath,
+            relativePath,
             fileState.FileSizeBytes,
             fileState.LastWriteTimeUtc,
             cancellationToken);

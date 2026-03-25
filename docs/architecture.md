@@ -35,7 +35,7 @@
 - Nodes carry both `FullPath` and `RelativePath`.
 - Internal merge keys use normalized relative paths in `/` form.
 - Windows-oriented comparisons use case-insensitive behavior where needed.
-- Scanner output, cache keys, and analysis results meet on the same normalized relative-path key space.
+- Scanner output, cache keys, and analysis results meet on the same normalized relative-path key space, partitioned by normalized root path.
 
 ## Treemap Model
 

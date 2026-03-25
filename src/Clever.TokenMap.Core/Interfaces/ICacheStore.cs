@@ -5,13 +5,15 @@ namespace Clever.TokenMap.Core.Interfaces;
 public interface ICacheStore
 {
     ValueTask<NodeMetrics?> TryGetFileMetricsAsync(
-        string fullPath,
+        string rootPath,
+        string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
         CancellationToken cancellationToken);
 
     ValueTask SetFileMetricsAsync(
-        string fullPath,
+        string rootPath,
+        string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
         NodeMetrics metrics,
