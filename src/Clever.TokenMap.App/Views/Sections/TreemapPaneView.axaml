@@ -9,14 +9,41 @@
             Classes="panel">
         <Grid RowDefinitions="Auto,*"
               RowSpacing="8">
-            <Grid ColumnDefinitions="Auto,*"
-                  ColumnSpacing="10">
+            <Grid ColumnDefinitions="Auto,Auto,*"
+                  ColumnSpacing="12">
                 <TextBlock Classes="panel-title"
                            Name="TreemapTitleText"
                            VerticalAlignment="Center"
-                           Text="{Binding Toolbar.TreemapTitle}" />
+                           Text="Treemap" />
+                <Border Grid.Column="1"
+                        Classes="segmented-toggle-panel treemap-metric-switcher"
+                        VerticalAlignment="Center">
+                    <Grid ColumnDefinitions="*,Auto,*,Auto,*">
+                        <ToggleButton Name="TreemapMetricTokensButton"
+                                      Classes="segmented-toggle-button treemap-metric-button start"
+                                      IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}"
+                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                      Content="Tokens" />
+                        <Border Grid.Column="1"
+                                Classes="segmented-toggle-divider" />
+                        <ToggleButton Name="TreemapMetricLinesButton"
+                                      Grid.Column="2"
+                                      Classes="segmented-toggle-button treemap-metric-button middle"
+                                      IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}"
+                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                      Content="Lines" />
+                        <Border Grid.Column="3"
+                                Classes="segmented-toggle-divider" />
+                        <ToggleButton Name="TreemapMetricSizeButton"
+                                      Grid.Column="4"
+                                      Classes="segmented-toggle-button treemap-metric-button end"
+                                      IsChecked="{Binding Toolbar.IsSizeMetricSelected, Mode=TwoWay}"
+                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                                      Content="Size" />
+                    </Grid>
+                </Border>
                 <ItemsControl Name="TreemapBreadcrumbsItemsControl"
-                              Grid.Column="1"
+                              Grid.Column="2"
                               HorizontalAlignment="Right"
                               VerticalAlignment="Center"
                               ItemsSource="{Binding TreemapBreadcrumbs}">

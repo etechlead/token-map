@@ -492,12 +492,83 @@
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
+    <Style Selector="Border.segmented-toggle-panel">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="1" />
+    </Style>
+    <Style Selector="Border.segmented-toggle-divider">
+        <Setter Property="Background" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="Width" Value="1" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="MinHeight" Value="40" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      RecognizesAccessKey="True"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button.start">
+        <Setter Property="CornerRadius" Value="4,0,0,4" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button.middle">
+        <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button.end">
+        <Setter Property="CornerRadius" Value="0,4,4,0" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TokenMapControlHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button:checked">
+        <Setter Property="Background" Value="{DynamicResource TokenMapAccentBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="ToggleButton.segmented-toggle-button:disabled">
+        <Setter Property="Opacity" Value="0.55" />
+    </Style>
     <Style Selector="Border.theme-switcher-panel">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Padding" Value="1" />
+    </Style>
+    <Style Selector="Border.treemap-metric-switcher">
+        <Setter Property="MinWidth" Value="194" />
+    </Style>
+    <Style Selector="ToggleButton.treemap-metric-button">
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="Border.global-excludes-modal">
         <Setter Property="Width" Value="640" />

@@ -55,16 +55,6 @@ public partial class ToolbarViewModel : ViewModelBase
     [ObservableProperty]
     private bool isStopVisible;
 
-    public string TreemapTitle => $"Treemap - {TreemapMetricDisplay}";
-
-    public string TreemapMetricDisplay =>
-        SelectedMetric switch
-        {
-            AnalysisMetric.Lines => "lines",
-            AnalysisMetric.Size => "size",
-            _ => "tokens",
-        };
-
     public bool IsTokensMetricSelected
     {
         get => SelectedMetric == AnalysisMetric.Tokens;
@@ -212,8 +202,6 @@ public partial class ToolbarViewModel : ViewModelBase
                 OnPropertyChanged(nameof(IsTokensMetricSelected));
                 OnPropertyChanged(nameof(IsLinesMetricSelected));
                 OnPropertyChanged(nameof(IsSizeMetricSelected));
-                OnPropertyChanged(nameof(TreemapMetricDisplay));
-                OnPropertyChanged(nameof(TreemapTitle));
                 break;
             case nameof(SettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));

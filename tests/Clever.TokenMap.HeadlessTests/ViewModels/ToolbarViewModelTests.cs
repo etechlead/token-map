@@ -8,7 +8,7 @@ namespace Clever.TokenMap.HeadlessTests;
 public sealed class ToolbarViewModelTests
 {
     [Fact]
-    public void DefaultMetricSelection_UsesTokensRadio()
+    public void DefaultMetricSelection_UsesTokens()
     {
         var viewModel = CreateViewModel(new SettingsState());
 
@@ -18,7 +18,6 @@ public sealed class ToolbarViewModelTests
         Assert.False(viewModel.IsClassicTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
-        Assert.Equal("Treemap - tokens", viewModel.TreemapTitle);
     }
 
     [Fact]
@@ -60,19 +59,6 @@ public sealed class ToolbarViewModelTests
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
         Assert.True(viewModel.IsSizeMetricSelected);
-    }
-
-    [Fact]
-    public void TreemapTitle_TracksSelectedMetric()
-    {
-        var state = new SettingsState();
-        var viewModel = CreateViewModel(state);
-
-        state.SelectedMetric = AnalysisMetric.Lines;
-        Assert.Equal("Treemap - lines", viewModel.TreemapTitle);
-
-        state.SelectedMetric = AnalysisMetric.Size;
-        Assert.Equal("Treemap - size", viewModel.TreemapTitle);
     }
 
     [Fact]

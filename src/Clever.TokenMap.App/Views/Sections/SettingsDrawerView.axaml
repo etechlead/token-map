@@ -38,28 +38,6 @@
                             <StackPanel Spacing="4">
                                 <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
                                            FontSize="11"
-                                           Text="Treemap metric" />
-                                <StackPanel Spacing="4">
-                                    <RadioButton Name="MetricTokensRadioButton"
-                                                 GroupName="TreemapMetric"
-                                                 Content="Tokens"
-                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                                 IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}" />
-                                    <RadioButton Name="MetricLinesRadioButton"
-                                                 GroupName="TreemapMetric"
-                                                 Content="Lines"
-                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                                 IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}" />
-                                    <RadioButton Name="MetricSizeRadioButton"
-                                                 GroupName="TreemapMetric"
-                                                 Content="Size"
-                                                 IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                                 IsChecked="{Binding Toolbar.IsSizeMetricSelected, Mode=TwoWay}" />
-                                </StackPanel>
-                            </StackPanel>
-                            <StackPanel Spacing="4">
-                                <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
-                                           FontSize="11"
                                            Text="Treemap palette" />
                                 <StackPanel Spacing="4">
                                     <RadioButton Name="TreemapPaletteWeightedRadioButton"
@@ -170,10 +148,10 @@
                                Text="Theme" />
                     <Border Grid.Row="1"
                             Grid.ColumnSpan="2"
-                            Classes="theme-switcher-panel">
+                            Classes="theme-switcher-panel segmented-toggle-panel">
                         <Grid ColumnDefinitions="*,Auto,*,Auto,*">
                             <ToggleButton Name="ThemeLightButton"
-                                          Classes="theme-mode-button start"
+                                          Classes="theme-mode-button segmented-toggle-button start"
                                           IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
                                           Command="{Binding Toolbar.SelectLightThemePreferenceCommand}"
                                           ToolTip.Tip="Use the light theme">
@@ -192,10 +170,10 @@
                                 </Viewbox>
                             </ToggleButton>
                             <Border Grid.Column="1"
-                                    Classes="theme-mode-divider" />
+                                    Classes="theme-mode-divider segmented-toggle-divider" />
                             <ToggleButton Name="ThemeSystemButton"
                                           Grid.Column="2"
-                                          Classes="theme-mode-button middle"
+                                          Classes="theme-mode-button segmented-toggle-button middle"
                                           IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
                                           Command="{Binding Toolbar.SelectSystemThemePreferenceCommand}"
                                           ToolTip.Tip="Follow the system theme">
@@ -214,10 +192,10 @@
                                 </Viewbox>
                             </ToggleButton>
                             <Border Grid.Column="3"
-                                    Classes="theme-mode-divider" />
+                                    Classes="theme-mode-divider segmented-toggle-divider" />
                             <ToggleButton Name="ThemeDarkButton"
                                           Grid.Column="4"
-                                          Classes="theme-mode-button end"
+                                          Classes="theme-mode-button segmented-toggle-button end"
                                           IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
                                           Command="{Binding Toolbar.SelectDarkThemePreferenceCommand}"
                                           ToolTip.Tip="Use the dark theme">

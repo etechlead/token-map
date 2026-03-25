@@ -82,6 +82,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
         Assert.Null(FindNamedDescendant<TextBlock>(window, "ProgressTextBlock"));
         Assert.Null(FindNamedDescendant<TextBlock>(window, "StatusValueText"));
+        Assert.NotNull(FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton"));
+        Assert.NotNull(FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton"));
+        Assert.NotNull(FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton"));
         Assert.False(statusStrip.IsVisible);
         Assert.NotNull(stopButton);
         Assert.False(stopButton.IsVisible);
@@ -90,13 +93,13 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(treemapTitle);
         Assert.NotNull(projectTreeTitle);
         Assert.NotNull(projectTreeSelectedFolder);
-        Assert.Equal("Treemap - tokens", treemapTitle.Text);
+        Assert.Equal("Treemap", treemapTitle.Text);
         Assert.Equal("Project Tree", projectTreeTitle.Text);
         Assert.False(projectTreeSelectedFolder.IsVisible);
     }
 
     [AvaloniaFact]
-    public void MainWindow_TreemapTitle_ReflectsSelectedMetric()
+    public void MainWindow_TreemapHeaderMetricButtons_ReflectSelectedMetric()
     {
         var viewModel = CreateMainWindowViewModel();
         var window = new MainWindow
@@ -107,17 +110,30 @@ public sealed class MainWindowLayoutTests
         window.Show();
 
         var treemapTitle = FindNamedDescendant<TextBlock>(window, "TreemapTitleText");
+        var tokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
+        var linesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
+        var sizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
 
         Assert.NotNull(treemapTitle);
-        Assert.Equal("Treemap - tokens", treemapTitle.Text);
+        Assert.NotNull(tokensButton);
+        Assert.NotNull(linesButton);
+        Assert.NotNull(sizeButton);
+        Assert.Equal("Treemap", treemapTitle.Text);
+        Assert.True(tokensButton.IsChecked);
+        Assert.False(linesButton.IsChecked);
+        Assert.False(sizeButton.IsChecked);
 
         viewModel.Toolbar.IsSizeMetricSelected = true;
         window.UpdateLayout();
-        Assert.Equal("Treemap - size", treemapTitle.Text);
+        Assert.False(tokensButton.IsChecked);
+        Assert.False(linesButton.IsChecked);
+        Assert.True(sizeButton.IsChecked);
 
         viewModel.Toolbar.IsLinesMetricSelected = true;
         window.UpdateLayout();
-        Assert.Equal("Treemap - lines", treemapTitle.Text);
+        Assert.False(tokensButton.IsChecked);
+        Assert.True(linesButton.IsChecked);
+        Assert.False(sizeButton.IsChecked);
     }
 
     [AvaloniaFact]
@@ -450,9 +466,9 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
-        var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
-        var metricSizeRadioButton = FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton");
+        var metricTokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
+        var metricLinesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
+        var metricSizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var themeLightButton = FindNamedDescendant<ToggleButton>(window, "ThemeLightButton");
         var themeDarkButton = FindNamedDescendant<ToggleButton>(window, "ThemeDarkButton");
@@ -462,9 +478,9 @@ public sealed class MainWindowLayoutTests
         var selectedFolderGroup = FindNamedDescendant<Control>(window, "SelectedFolderGroup");
         var summaryGroup = FindNamedDescendant<Control>(window, "ToolbarSummaryGroup");
 
-        Assert.NotNull(metricTokensRadioButton);
-        Assert.NotNull(metricLinesRadioButton);
-        Assert.NotNull(metricSizeRadioButton);
+        Assert.NotNull(metricTokensButton);
+        Assert.NotNull(metricLinesButton);
+        Assert.NotNull(metricSizeButton);
         Assert.NotNull(themeSystemButton);
         Assert.NotNull(themeLightButton);
         Assert.NotNull(themeDarkButton);
@@ -473,12 +489,15 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(rescanButton);
         Assert.Null(selectedFolderGroup);
         Assert.NotNull(summaryGroup);
-        Assert.False(metricTokensRadioButton.IsEnabled);
-        Assert.False(metricLinesRadioButton.IsEnabled);
-        Assert.False(metricSizeRadioButton.IsEnabled);
-        Assert.True(metricTokensRadioButton.IsChecked);
-        Assert.False(metricLinesRadioButton.IsChecked);
-        Assert.False(metricSizeRadioButton.IsChecked);
+        Assert.False(metricTokensButton.IsEnabled);
+        Assert.False(metricLinesButton.IsEnabled);
+        Assert.False(metricSizeButton.IsEnabled);
+        Assert.True(metricTokensButton.IsChecked);
+        Assert.False(metricLinesButton.IsChecked);
+        Assert.False(metricSizeButton.IsChecked);
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton"));
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton"));
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton"));
         Assert.True(themeSystemButton.IsEnabled);
         Assert.True(themeLightButton.IsEnabled);
         Assert.True(themeDarkButton.IsEnabled);
@@ -762,9 +781,9 @@ public sealed class MainWindowLayoutTests
         var lineSummaryText = FindNamedDescendant<TextBlock>(window, "LineSummaryValueText");
         var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
         var warningSummaryText = FindNamedDescendant<TextBlock>(window, "WarningSummaryValueText");
-        var metricTokensRadioButton = FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton");
-        var metricLinesRadioButton = FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton");
-        var metricSizeRadioButton = FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton");
+        var metricTokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
+        var metricLinesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
+        var metricSizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
@@ -794,17 +813,20 @@ public sealed class MainWindowLayoutTests
         Assert.Collection(
             viewModel.RecentFolders.Items,
             folder => Assert.Equal("Demo", folder.DisplayName));
-        Assert.NotNull(metricTokensRadioButton);
-        Assert.NotNull(metricLinesRadioButton);
-        Assert.NotNull(metricSizeRadioButton);
-        Assert.True(metricTokensRadioButton.IsEnabled);
-        Assert.True(metricLinesRadioButton.IsEnabled);
-        Assert.True(metricSizeRadioButton.IsEnabled);
-        Assert.True(metricTokensRadioButton.IsChecked);
+        Assert.NotNull(metricTokensButton);
+        Assert.NotNull(metricLinesButton);
+        Assert.NotNull(metricSizeButton);
+        Assert.True(metricTokensButton.IsEnabled);
+        Assert.True(metricLinesButton.IsEnabled);
+        Assert.True(metricSizeButton.IsEnabled);
+        Assert.True(metricTokensButton.IsChecked);
         Assert.Equal("Project Tree", projectTreeTitle.Text);
         Assert.Equal(@"C:\Demo", projectTreeSelectedFolder.Text);
-        Assert.False(metricLinesRadioButton.IsChecked);
-        Assert.False(metricSizeRadioButton.IsChecked);
+        Assert.False(metricLinesButton.IsChecked);
+        Assert.False(metricSizeButton.IsChecked);
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricTokensRadioButton"));
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricLinesRadioButton"));
+        Assert.Null(FindNamedDescendant<RadioButton>(window, "MetricSizeRadioButton"));
         Assert.False(statusStrip.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(workspaceHost.IsVisible);
