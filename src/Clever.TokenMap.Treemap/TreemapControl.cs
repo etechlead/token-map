@@ -39,6 +39,8 @@ public sealed class TreemapControl : Control
     private Point? _tooltipAnchorPoint;
     private static readonly IBrush SelectedAccentFallbackBrush = new SolidColorBrush(Color.Parse("#E7F2FF"));
     private static readonly IBrush HoverAccentFallbackBrush = new SolidColorBrush(Color.Parse("#8BC3FF"));
+    private static readonly IBrush DarkDirectoryBorderFallbackBrush = new SolidColorBrush(Color.Parse("#4A5565"));
+    private static readonly IBrush LightDirectoryBorderFallbackBrush = new SolidColorBrush(Color.Parse("#C9D1DA"));
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
     static TreemapControl()
@@ -368,9 +370,11 @@ public sealed class TreemapControl : Control
                     : new SolidColorBrush(Color.FromArgb(166, 255, 255, 255)),
                 1)
             : new Pen(
-                isDarkTheme
-                    ? new SolidColorBrush(Color.Parse("#3A4350"))
-                    : new SolidColorBrush(Color.Parse("#D7DCE2")),
+                GetThemeBrush(
+                    "TokenMapTreemapDirectoryBorderBrush",
+                    isDarkTheme
+                        ? DarkDirectoryBorderFallbackBrush
+                        : LightDirectoryBorderFallbackBrush),
                 1);
     }
 

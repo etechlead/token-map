@@ -29,6 +29,8 @@
                                      Color="#FCFCFD" />
                     <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
                                      Color="#C9D1DA" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryBorderBrush"
+                                     Color="#C9D1DA" />
                     <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
                                      Color="#0A5FC2" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
@@ -56,6 +58,8 @@
                     <SolidColorBrush x:Key="TokenMapControlHoverBrush"
                                      Color="#2A3038" />
                     <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
+                                     Color="#4A5565" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryBorderBrush"
                                      Color="#4A5565" />
                     <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
                                      Color="#8BC3FF" />

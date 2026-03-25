@@ -3,6 +3,9 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Treemap;
+using Avalonia.Media;
+using Avalonia.Styling;
+using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;
@@ -296,6 +299,31 @@ public sealed class TreemapControlHeadlessTests
         Assert.Equal("a.cs", largestByTokens.Node.RelativePath);
         Assert.Equal("b.cs", largestByLines.Node.RelativePath);
         Assert.Equal("c.cs", largestBySize.Node.RelativePath);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_DirectoryBorders_UseBrighterThemeSeparatorColor()
+    {
+        var control = CreateControl(CreateNestedSnapshot());
+        var window = CreateHostWindow(control);
+        window.RequestedThemeVariant = ThemeVariant.Dark;
+
+        window.Show();
+
+        var directoryNode = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src").Node;
+        var createBorderPenMethod = typeof(TreemapControl).GetMethod(
+            "CreateBorderPen",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(createBorderPenMethod);
+
+        var pen = (Pen?)createBorderPenMethod.Invoke(control, [directoryNode]);
+        var brush = Assert.IsType<SolidColorBrush>(pen?.Brush);
+
+        Assert.True(
+            brush.Color == Color.Parse("#4A5565") || brush.Color == Color.Parse("#C9D1DA"),
+            $"Unexpected directory border color: {brush.Color}.");
+        Assert.Equal(1, pen?.Thickness);
     }
 
     private static TreemapControl CreateControl(
