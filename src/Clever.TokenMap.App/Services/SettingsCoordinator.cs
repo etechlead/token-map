@@ -5,11 +5,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
+using Clever.TokenMap.Infrastructure.Settings;
 
 namespace Clever.TokenMap.App.Services;
 
@@ -151,7 +152,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             if (CurrentFolderState.HasActiveFolder &&
                 CurrentFolderState.ActiveRootPath is { } activeRootPath &&
-                PathComparison.Comparer.Equals(activeRootPath, normalizedRootPath))
+                _pathNormalizer.PathComparer.Equals(activeRootPath, normalizedRootPath))
             {
                 folderSettings = _currentFolderSettings.Clone();
             }
@@ -186,13 +187,13 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             folderVersionToSave = _folderSettingsVersion;
         }
 
-        if (PathComparison.Comparer.Equals(previousRootPath, normalizedRootPath))
+        if (_pathNormalizer.PathComparer.Equals(previousRootPath, normalizedRootPath))
         {
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(previousRootPath) &&
-            !PathComparison.Comparer.Equals(previousRootPath, normalizedRootPath))
+            !_pathNormalizer.PathComparer.Equals(previousRootPath, normalizedRootPath))
         {
             CancelPendingFolderSave();
             SaveFolderSettingsIfNeededAsync(folderVersionToSave).GetAwaiter().GetResult();

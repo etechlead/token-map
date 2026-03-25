@@ -1,4 +1,6 @@
 using System.Globalization;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Settings;
 using Serilog;
 using Serilog.Events;

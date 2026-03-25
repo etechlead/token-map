@@ -3,6 +3,7 @@
 ## Responsibility Split
 
 - `Clever.TokenMap.Core` holds domain models, shared contracts, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
+- `Clever.TokenMap.Core` also holds the shared persisted settings DTOs used by app-layer coordinators and infrastructure stores.
 - `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, logging, and path normalization.
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
@@ -45,7 +46,7 @@
 - Folder-specific settings are stored separately under a sibling `folders/<folder-key>/settings.json` layout, one small file per committed root folder.
 - The app starts from defaults first, then best-effort applies values from `settings.json` and any requested folder settings file.
 - Analysis preferences including global excludes, appearance preferences including theme mode, and recent folder history are stored in the app-wide settings file; folder-specific excludes live only in the per-folder settings files.
-- `Clever.TokenMap.App` works against app-layer settings state and services; infrastructure settings types remain persistence details behind the settings store/coordinator boundary.
+- `Clever.TokenMap.App` works against app-layer settings state and the shared settings DTOs from `Clever.TokenMap.Core`; infrastructure stores handle JSON persistence details behind the store boundary.
 - Settings use typed enum-backed values and persist as JSON strings.
 - Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.
 - Missing, unreadable, malformed, or unwritable app-wide or folder settings files must not block startup, scanning, or UI interaction; the app falls back to defaults.

@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Infrastructure.Settings;
+namespace Clever.TokenMap.Core.Settings;
 
 public sealed class AppSettings
 {

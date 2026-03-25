@@ -1,4 +1,4 @@
-namespace Clever.TokenMap.Infrastructure.Logging;
+namespace Clever.TokenMap.Core.Enums;
 
 public enum AppLogLevel
 {

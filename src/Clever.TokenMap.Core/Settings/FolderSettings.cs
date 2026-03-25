@@ -1,6 +1,6 @@
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.Infrastructure.Settings;
+namespace Clever.TokenMap.Core.Settings;
 
 public sealed class FolderSettings
 {

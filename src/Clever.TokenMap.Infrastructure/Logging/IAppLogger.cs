@@ -1,3 +1,5 @@
+using Clever.TokenMap.Core.Enums;
+
 namespace Clever.TokenMap.Infrastructure.Logging;
 
 public interface IAppLogger
