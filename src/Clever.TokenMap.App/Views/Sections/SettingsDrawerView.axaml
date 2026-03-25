@@ -1,5 +1,4 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:icons="using:FluentIcons.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.SettingsDrawerView"
@@ -148,7 +147,7 @@
                                Text="Theme" />
                     <Border Grid.Row="1"
                             Grid.ColumnSpan="2"
-                            Classes="theme-switcher-panel segmented-toggle-panel">
+                            Classes="segmented-toggle-panel">
                         <Grid ColumnDefinitions="*,Auto,*,Auto,*">
                             <ToggleButton Name="ThemeLightButton"
                                           Classes="theme-mode-button segmented-toggle-button start"
@@ -158,19 +157,15 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
-                                                          Icon="BrightnessHigh"
-                                                          IconVariant="Regular"
-                                                          IconSize="Size20" />
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
-                                                          Icon="BrightnessHigh"
-                                                          IconVariant="Filled"
-                                                          IconSize="Size20" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                              Data="{StaticResource FluentBrightnessHigh20RegularGeometry}" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                              Data="{StaticResource FluentBrightnessHigh20FilledGeometry}" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>
                             <Border Grid.Column="1"
-                                    Classes="theme-mode-divider segmented-toggle-divider" />
+                                    Classes="segmented-toggle-divider" />
                             <ToggleButton Name="ThemeSystemButton"
                                           Grid.Column="2"
                                           Classes="theme-mode-button segmented-toggle-button middle"
@@ -180,19 +175,15 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
-                                                          Icon="DesktopMac"
-                                                          IconVariant="Regular"
-                                                          IconSize="Size20" />
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
-                                                          Icon="DesktopMac"
-                                                          IconVariant="Filled"
-                                                          IconSize="Size20" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                              Data="{StaticResource FluentDesktopMac20RegularGeometry}" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                              Data="{StaticResource FluentDesktopMac20FilledGeometry}" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>
                             <Border Grid.Column="3"
-                                    Classes="theme-mode-divider segmented-toggle-divider" />
+                                    Classes="segmented-toggle-divider" />
                             <ToggleButton Name="ThemeDarkButton"
                                           Grid.Column="4"
                                           Classes="theme-mode-button segmented-toggle-button end"
@@ -202,14 +193,10 @@
                                 <Viewbox Classes="theme-mode-icon-host">
                                     <Grid Width="20"
                                           Height="20">
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-regular"
-                                                          Icon="DarkTheme"
-                                                          IconVariant="Regular"
-                                                          IconSize="Size20" />
-                                        <icons:FluentIcon Classes="theme-mode-icon theme-mode-icon-filled"
-                                                          Icon="DarkTheme"
-                                                          IconVariant="Filled"
-                                                          IconSize="Size20" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                              Data="{StaticResource FluentDarkTheme20RegularGeometry}" />
+                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                              Data="{StaticResource FluentDarkTheme20FilledGeometry}" />
                                     </Grid>
                                 </Viewbox>
                             </ToggleButton>

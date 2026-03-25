@@ -5,6 +5,9 @@
              RequestedThemeVariant="Default">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Clever.TokenMap.App/Views/Styles/IconResources.axaml" />
+            </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"

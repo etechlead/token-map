@@ -6,16 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.App.ViewModels;
-using FluentIcons.Avalonia;
-using FluentIconGlyph = FluentIcons.Common.Icon;
-using FluentIconSize = FluentIcons.Common.IconSize;
-using FluentIconVariant = FluentIcons.Common.IconVariant;
 
 namespace Clever.TokenMap.App.Views.Sections;
 
@@ -412,23 +409,17 @@ public partial class ProjectTreePaneView : UserControl
             return panel;
         }
 
-        var sortIcon = new FluentIcon
-        {
-            Name = direction == ListSortDirection.Ascending
-                ? "SortIconAscending"
-                : "SortIconDescending",
-            Icon = direction == ListSortDirection.Ascending
-                ? FluentIconGlyph.ArrowSortUp
-                : FluentIconGlyph.ArrowSortDown,
-            IconVariant = FluentIconVariant.Regular,
-            IconSize = FluentIconSize.Resizable,
-            FontSize = 14,
-            Margin = new Thickness(3, 0, 0, 0),
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-            IsHitTestVisible = false,
-        };
-        sortIcon.Classes.Add("sort-icon");
+        var sortIcon = FluentIconGeometry.CreatePathIcon(
+            direction == ListSortDirection.Ascending
+                ? FluentIconGeometry.ArrowSortUp16Regular
+                : FluentIconGeometry.ArrowSortDown16Regular,
+            "sort-icon",
+            14,
+            14,
+            new Thickness(3, 0, 0, 0));
+        sortIcon.Name = direction == ListSortDirection.Ascending
+            ? "SortIconAscending"
+            : "SortIconDescending";
         Grid.SetColumn(sortIcon, 1);
 
         panel.Children.Add(sortIcon);

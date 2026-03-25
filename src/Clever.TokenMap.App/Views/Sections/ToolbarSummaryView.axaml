@@ -1,5 +1,4 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:icons="using:FluentIcons.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.ToolbarSummaryView"
@@ -25,10 +24,8 @@
                                      ToolTip.Tip="Open a folder for analysis">
                             <SplitButton.Content>
                                 <StackPanel Classes="action-button-content">
-                                    <icons:FluentIcon Classes="action-button-icon"
-                                                      Icon="FolderOpen"
-                                                      IconVariant="Regular"
-                                                      IconSize="Size20" />
+                                    <Path Classes="action-button-icon"
+                                          Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                     <TextBlock Classes="action-button-label"
                                                VerticalAlignment="Center"
                                                Text="Open Folder" />
@@ -59,10 +56,8 @@
                                                               HorizontalAlignment="Left">
                                                             <Border Classes="recent-folder-icon-host menu-item"
                                                                     IsVisible="{Binding ShowFolderIcon}">
-                                                                <icons:FluentIcon Classes="recent-folder-icon"
-                                                                                  Icon="FolderOpen"
-                                                                                  IconVariant="Regular"
-                                                                                  IconSize="Size20" />
+                                                                <Path Classes="recent-folder-icon"
+                                                                      Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                                             </Border>
 
                                                             <StackPanel Grid.Column="1"
@@ -97,10 +92,8 @@
                                 IsVisible="{Binding HasSnapshot}"
                                 ToolTip.Tip="Run the scan again for the selected folder">
                             <StackPanel Classes="action-button-content">
-                                <icons:FluentIcon Classes="action-button-icon"
-                                                  Icon="ArrowClockwiseDashes"
-                                                  IconVariant="Regular"
-                                                  IconSize="Size20" />
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentArrowClockwiseDashes20RegularGeometry}" />
                                 <TextBlock VerticalAlignment="Center"
                                            Text="Rescan" />
                             </StackPanel>
@@ -162,10 +155,8 @@
                         Command="{Binding ToggleSettingsCommand}"
                         ToolTip.Tip="Open settings">
                     <StackPanel Classes="action-button-content">
-                        <icons:FluentIcon Classes="action-button-icon"
-                                          Icon="AppsSettings"
-                                          IconVariant="Regular"
-                                          IconSize="Size20" />
+                        <Path Classes="action-button-icon"
+                              Data="{StaticResource FluentAppsSettings20RegularGeometry}" />
                         <TextBlock VerticalAlignment="Center"
                                    Text="Settings" />
                     </StackPanel>

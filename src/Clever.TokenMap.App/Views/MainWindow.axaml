@@ -1,5 +1,4 @@
 <Window xmlns="https://github.com/avaloniaui"
-        xmlns:icons="using:FluentIcons.Avalonia"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
         xmlns:sections="using:Clever.TokenMap.App.Views.Sections"
@@ -79,10 +78,8 @@
                                 HorizontalAlignment="Center"
                                 Command="{Binding Toolbar.OpenFolderCommand}">
                             <StackPanel Classes="action-button-content">
-                                <icons:FluentIcon Classes="action-button-icon"
-                                                  Icon="FolderOpen"
-                                                  IconVariant="Regular"
-                                                  IconSize="Size20" />
+                                <Path Classes="action-button-icon"
+                                      Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                 <TextBlock VerticalAlignment="Center"
                                            Text="Open Folder" />
                             </StackPanel>
@@ -117,10 +114,8 @@
                                                   RowSpacing="6">
                                                 <Border Grid.RowSpan="2"
                                                         Classes="recent-folder-icon-host">
-                                                    <icons:FluentIcon Classes="recent-folder-icon"
-                                                                      Icon="FolderOpen"
-                                                                      IconVariant="Regular"
-                                                                      IconSize="Size20" />
+                                                    <Path Classes="recent-folder-icon"
+                                                          Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                                 </Border>
 
                                                 <StackPanel Grid.Column="1"

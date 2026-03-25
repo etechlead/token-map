@@ -1,5 +1,4 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:icons="using:FluentIcons.Avalonia"
              xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
@@ -61,16 +60,12 @@
                                             IsVisible="{Binding HasChildren}">
                                             <Grid Width="12"
                                               Height="12">
-                                                <icons:FluentIcon Classes="tree-expander-icon"
-                                                              Icon="ChevronRight"
-                                                              IconVariant="Regular"
-                                                              IconSize="Size16"
-                                                              IsVisible="{Binding IsCollapsed}" />
-                                                <icons:FluentIcon Classes="tree-expander-icon"
-                                                              Icon="ChevronDown"
-                                                              IconVariant="Regular"
-                                                              IconSize="Size16"
-                                                              IsVisible="{Binding IsExpanded}" />
+                                                <Path Classes="tree-expander-icon"
+                                                      Data="{StaticResource FluentChevronRight16RegularGeometry}"
+                                                      IsVisible="{Binding IsCollapsed}" />
+                                                <Path Classes="tree-expander-icon"
+                                                      Data="{StaticResource FluentChevronDown16RegularGeometry}"
+                                                      IsVisible="{Binding IsExpanded}" />
                                             </Grid>
                                         </Button>
                                         <svg:Svg Grid.Column="1"

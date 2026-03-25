@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
@@ -11,7 +12,7 @@ using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;
-using FluentIcons.Avalonia;
+using PathShape = Avalonia.Controls.Shapes.Path;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;
@@ -199,11 +200,11 @@ public sealed class MainWindowLayoutTests
                 .OfType<TextBlock>()
                 .Single(textBlock => string.Equals(textBlock.Text, "Open Folder", StringComparison.Ordinal));
             var openFolderIcon = splitButton.GetVisualDescendants()
-                .OfType<FluentIcon>()
+                .OfType<PathShape>()
                 .Single(icon => icon.Classes.Contains("action-button-icon"));
 
             var textBrush = Assert.IsAssignableFrom<ISolidColorBrush>(openFolderText.Foreground);
-            var iconBrush = Assert.IsAssignableFrom<ISolidColorBrush>(openFolderIcon.Foreground);
+            var iconBrush = Assert.IsAssignableFrom<ISolidColorBrush>(openFolderIcon.Fill);
 
             Assert.Equal(Colors.White, textBrush.Color);
             Assert.Equal(Colors.White, iconBrush.Color);

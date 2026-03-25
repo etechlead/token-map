@@ -1,14 +1,11 @@
 using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Interactivity;
 using Avalonia.Input.Platform;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
-using FluentIcons.Avalonia;
-using FluentIconGlyph = FluentIcons.Common.Icon;
-using FluentIconSize = FluentIcons.Common.IconSize;
-using FluentIconVariant = FluentIcons.Common.IconVariant;
 
 namespace Clever.TokenMap.App.Views;
 
@@ -59,20 +56,20 @@ internal sealed class ProjectNodeContextMenuController
         {
             Placement = PlacementMode.Pointer,
         };
-        menu.Items.Add(CreateMenuItem("Open", FluentIconGlyph.FolderOpen, OpenItem_OnClick));
-        menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), FluentIconGlyph.DesktopMac, RevealItem_OnClick));
-        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", FluentIconGlyph.TargetArrow, SetAsTreemapRootItem_OnClick);
+        menu.Items.Add(CreateMenuItem("Open", FluentIconGeometry.FolderOpen16Regular, OpenItem_OnClick));
+        menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), FluentIconGeometry.DesktopMac16Regular, RevealItem_OnClick));
+        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", FluentIconGeometry.TargetArrow16Regular, SetAsTreemapRootItem_OnClick);
         menu.Items.Add(_setAsTreemapRootItem);
-        _excludeItem = CreateMenuItem("Exclude from Scan", FluentIconGlyph.SubtractCircle, ExcludeItem_OnClick);
+        _excludeItem = CreateMenuItem("Exclude from Scan", FluentIconGeometry.SubtractCircle16Regular, ExcludeItem_OnClick);
         menu.Items.Add(_excludeItem);
         menu.Items.Add(new Separator());
-        menu.Items.Add(CreateMenuItem("Copy Full Path", FluentIconGlyph.DocumentCopy, CopyFullPathItem_OnClick));
+        menu.Items.Add(CreateMenuItem("Copy Full Path", FluentIconGeometry.DocumentCopy16Regular, CopyFullPathItem_OnClick));
         menu.Items.Add(CreateMenuItem("Copy Relative Path", icon: null, CopyRelativePathItem_OnClick));
         return menu;
     }
 
-    private static MenuItem CreateMenuItem(string header, FluentIconGlyph iconGlyph, EventHandler<RoutedEventArgs> clickHandler) =>
-        CreateMenuItem(header, CreateMenuIcon(iconGlyph), clickHandler);
+    private static MenuItem CreateMenuItem(string header, string iconResourceKey, EventHandler<RoutedEventArgs> clickHandler) =>
+        CreateMenuItem(header, CreateMenuIcon(iconResourceKey), clickHandler);
 
     private static MenuItem CreateMenuItem(string header, Control? icon, EventHandler<RoutedEventArgs> clickHandler)
     {
@@ -86,20 +83,9 @@ internal sealed class ProjectNodeContextMenuController
         return item;
     }
 
-    private static FluentIcon CreateMenuIcon(FluentIconGlyph iconGlyph)
+    private static Path CreateMenuIcon(string iconResourceKey)
     {
-        var icon = new FluentIcon
-        {
-            Icon = iconGlyph,
-            IconVariant = FluentIconVariant.Regular,
-            IconSize = FluentIconSize.Size16,
-            Width = 18,
-            Height = 18,
-            VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-            IsHitTestVisible = false,
-        };
-        icon.Classes.Add("context-menu-icon");
-        return icon;
+        return FluentIconGeometry.CreatePathIcon(iconResourceKey, "context-menu-icon", 18, 18);
     }
 
     private void UpdateMenuState()
