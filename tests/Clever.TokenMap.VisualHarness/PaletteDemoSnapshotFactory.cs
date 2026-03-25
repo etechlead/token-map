@@ -122,7 +122,7 @@ internal static class PaletteDemoSnapshotFactory
 
         var metrics = new NodeMetrics(
             Tokens: children.Sum(item => item.Metrics.Tokens),
-            TotalLines: children.Sum(item => item.Metrics.TotalLines),
+            NonEmptyLines: children.Sum(item => item.Metrics.NonEmptyLines),
             FileSizeBytes: children.Sum(item => item.Metrics.FileSizeBytes),
             DescendantFileCount: children.Sum(item => item.Kind == ProjectNodeKind.File ? 1 : item.Metrics.DescendantFileCount),
             DescendantDirectoryCount: children.Sum(item => item.Kind == ProjectNodeKind.Directory ? item.Metrics.DescendantDirectoryCount + 1 : 0));
@@ -152,7 +152,7 @@ internal static class PaletteDemoSnapshotFactory
             Kind = ProjectNodeKind.File,
             Metrics = new NodeMetrics(
                 Tokens: file.Tokens,
-                TotalLines: file.TotalLines,
+                NonEmptyLines: file.NonEmptyLines,
                 FileSizeBytes: file.FileSizeBytes,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -164,7 +164,7 @@ internal static class PaletteDemoSnapshotFactory
 
     private abstract record NodeSpec(string Name);
 
-    private sealed record FileSpec(string Name, long Tokens, int TotalLines, long FileSizeBytes) : NodeSpec(Name);
+    private sealed record FileSpec(string Name, long Tokens, int NonEmptyLines, long FileSizeBytes) : NodeSpec(Name);
 
     private sealed record DirectorySpec(string Name, IReadOnlyList<NodeSpec> Children) : NodeSpec(Name);
 }

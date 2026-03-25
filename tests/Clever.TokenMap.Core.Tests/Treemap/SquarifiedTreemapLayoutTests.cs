@@ -275,7 +275,7 @@ public sealed class SquarifiedTreemapLayoutTests
             Kind = kind,
             Metrics = new NodeMetrics(
                 Tokens: tokens,
-                TotalLines: codeLines,
+                NonEmptyLines: codeLines,
                 FileSizeBytes: fileSizeBytes ?? tokens,
                 DescendantFileCount: kind == ProjectNodeKind.File ? 1 : children.Sum(child => child.Metrics.DescendantFileCount),
                 DescendantDirectoryCount: kind == ProjectNodeKind.File ? 0 : children.Count(child => child.Kind != ProjectNodeKind.File)),

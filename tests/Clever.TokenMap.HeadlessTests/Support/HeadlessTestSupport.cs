@@ -28,7 +28,7 @@ internal static class HeadlessTestSupport
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
                     Tokens: 42,
-                    TotalLines: 11,
+                    NonEmptyLines: 11,
                     FileSizeBytes: 128,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),
@@ -43,7 +43,7 @@ internal static class HeadlessTestSupport
                         Kind = ProjectNodeKind.File,
                         Metrics = new NodeMetrics(
                             Tokens: 42,
-                            TotalLines: 11,
+                            NonEmptyLines: 11,
                             FileSizeBytes: 128,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -67,7 +67,7 @@ internal static class HeadlessTestSupport
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
                     Tokens: 42,
-                    TotalLines: 11,
+                    NonEmptyLines: 11,
                     FileSizeBytes: 128,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 1),
@@ -82,7 +82,7 @@ internal static class HeadlessTestSupport
                         Kind = ProjectNodeKind.Directory,
                         Metrics = new NodeMetrics(
                             Tokens: 42,
-                            TotalLines: 11,
+                            NonEmptyLines: 11,
                             FileSizeBytes: 128,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
@@ -97,7 +97,7 @@ internal static class HeadlessTestSupport
                                 Kind = ProjectNodeKind.File,
                                 Metrics = new NodeMetrics(
                                     Tokens: 42,
-                                    TotalLines: 11,
+                                    NonEmptyLines: 11,
                                     FileSizeBytes: 128,
                                     DescendantFileCount: 1,
                                     DescendantDirectoryCount: 0),

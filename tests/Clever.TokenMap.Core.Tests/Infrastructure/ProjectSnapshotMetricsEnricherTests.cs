@@ -41,22 +41,22 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(["one\n\n  \ntwo", "hello\nworld"], tokenCounter.SeenContents);
 
         Assert.Equal(11, programNode.Metrics.Tokens);
-        Assert.Equal(2, programNode.Metrics.TotalLines);
+        Assert.Equal(2, programNode.Metrics.NonEmptyLines);
 
         Assert.Equal(11, notesNode.Metrics.Tokens);
-        Assert.Equal(2, notesNode.Metrics.TotalLines);
+        Assert.Equal(2, notesNode.Metrics.NonEmptyLines);
 
         Assert.Equal(SkippedReason.Binary, imageNode.SkippedReason);
         Assert.Equal(0, imageNode.Metrics.Tokens);
-        Assert.Equal(0, imageNode.Metrics.TotalLines);
+        Assert.Equal(0, imageNode.Metrics.NonEmptyLines);
 
         Assert.Equal(22, enriched.Root.Metrics.Tokens);
-        Assert.Equal(4, enriched.Root.Metrics.TotalLines);
+        Assert.Equal(4, enriched.Root.Metrics.NonEmptyLines);
         Assert.Equal(3, enriched.Root.Metrics.DescendantFileCount);
         Assert.Equal(1, enriched.Root.Metrics.DescendantDirectoryCount);
 
         Assert.Equal(11, srcNode.Metrics.Tokens);
-        Assert.Equal(2, srcNode.Metrics.TotalLines);
+        Assert.Equal(2, srcNode.Metrics.NonEmptyLines);
         Assert.Equal(1, srcNode.Metrics.DescendantFileCount);
         Assert.Equal(0, srcNode.Metrics.DescendantDirectoryCount);
     }
@@ -82,7 +82,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Contains(enriched.Warnings, warning => warning.Contains("gone.txt", StringComparison.OrdinalIgnoreCase));
         Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
         Assert.Equal(0, enriched.Root.Metrics.Tokens);
-        Assert.Equal(0, enriched.Root.Metrics.TotalLines);
+        Assert.Equal(0, enriched.Root.Metrics.NonEmptyLines);
     }
 
     [Fact]
@@ -101,9 +101,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var sampleNode = Assert.Single(enriched.Root.Children, node => node.Name == "sample.txt");
         var emptyNode = Assert.Single(enriched.Root.Children, node => node.Name == "empty.txt");
 
-        Assert.Equal(2, sampleNode.Metrics.TotalLines);
+        Assert.Equal(2, sampleNode.Metrics.NonEmptyLines);
 
-        Assert.Equal(0, emptyNode.Metrics.TotalLines);
+        Assert.Equal(0, emptyNode.Metrics.NonEmptyLines);
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.NotSame(originalRoot, enriched.Root);
         Assert.NotSame(originalChild, enriched.Root.Children[0]);
         Assert.Equal(NodeMetrics.Empty, originalChild.Metrics);
-        Assert.Equal(2, enriched.Root.Metrics.TotalLines);
+        Assert.Equal(2, enriched.Root.Metrics.NonEmptyLines);
         Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
     }
 

@@ -517,7 +517,7 @@ public sealed class TreemapControl : Control
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatAnalysisMetric(node, node.Metrics.Tokens)}\nShare: {share}\nLines: {FormatAnalysisMetric(node, node.Metrics.TotalLines)}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatAnalysisMetric(node, node.Metrics.Tokens)}\nShare: {share}\nNon-empty lines: {FormatAnalysisMetric(node, node.Metrics.NonEmptyLines)}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
     }
 
     private void DrawTooltipOverlay(DrawingContext context)
@@ -645,7 +645,7 @@ public sealed class TreemapControl : Control
             ("Type", GetKindText(node)),
             ("Tokens", FormatAnalysisMetric(node, node.Metrics.Tokens)),
             ("Share", share),
-            ("Lines", FormatAnalysisMetric(node, node.Metrics.TotalLines)),
+            ("Non-empty lines", FormatAnalysisMetric(node, node.Metrics.NonEmptyLines)),
             ("Ext", extension),
             ("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
         ];
@@ -766,8 +766,8 @@ public sealed class TreemapControl : Control
     private double GetMetricValue(ProjectNode node) =>
         Metric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.TotalLines,
+            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };

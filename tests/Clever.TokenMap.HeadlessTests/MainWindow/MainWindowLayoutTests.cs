@@ -914,7 +914,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: 30,
-                TotalLines: 3,
+                NonEmptyLines: 3,
                 FileSizeBytes: 30,
                 DescendantFileCount: 2,
                 DescendantDirectoryCount: 0),
@@ -929,7 +929,7 @@ public sealed class MainWindowLayoutTests
                     Kind = ProjectNodeKind.File,
                     Metrics = new NodeMetrics(
                         Tokens: 10,
-                        TotalLines: 1,
+                        NonEmptyLines: 1,
                         FileSizeBytes: 10,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -943,7 +943,7 @@ public sealed class MainWindowLayoutTests
                     Kind = ProjectNodeKind.File,
                     Metrics = new NodeMetrics(
                         Tokens: 20,
-                        TotalLines: 2,
+                        NonEmptyLines: 2,
                         FileSizeBytes: 20,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -974,7 +974,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: 30,
-                TotalLines: 20,
+                NonEmptyLines: 20,
                 FileSizeBytes: 40,
                 DescendantFileCount: 3,
                 DescendantDirectoryCount: 0),
@@ -989,7 +989,7 @@ public sealed class MainWindowLayoutTests
                     Kind = ProjectNodeKind.File,
                     Metrics = new NodeMetrics(
                         Tokens: 20,
-                        TotalLines: 10,
+                        NonEmptyLines: 10,
                         FileSizeBytes: 10,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -1003,7 +1003,7 @@ public sealed class MainWindowLayoutTests
                     Kind = ProjectNodeKind.File,
                     Metrics = new NodeMetrics(
                         Tokens: 10,
-                        TotalLines: 10,
+                        NonEmptyLines: 10,
                         FileSizeBytes: 20,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -1018,7 +1018,7 @@ public sealed class MainWindowLayoutTests
                     SkippedReason = SkippedReason.Binary,
                     Metrics = new NodeMetrics(
                         Tokens: 0,
-                        TotalLines: 0,
+                        NonEmptyLines: 0,
                         FileSizeBytes: 10,
                         DescendantFileCount: 1,
                         DescendantDirectoryCount: 0),
@@ -1429,7 +1429,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: 100,
-                TotalLines: 50,
+                NonEmptyLines: 50,
                 FileSizeBytes: 171_801,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -1444,7 +1444,7 @@ public sealed class MainWindowLayoutTests
             SkippedReason = SkippedReason.Binary,
             Metrics = new NodeMetrics(
                 Tokens: 0,
-                TotalLines: 0,
+                NonEmptyLines: 0,
                 FileSizeBytes: 171_801,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -1471,7 +1471,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: 30,
-                TotalLines: 12,
+                NonEmptyLines: 12,
                 FileSizeBytes: 90,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -1485,7 +1485,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.File,
             Metrics = new NodeMetrics(
                 Tokens: 10,
-                TotalLines: 4,
+                NonEmptyLines: 4,
                 FileSizeBytes: 30,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
@@ -1575,7 +1575,7 @@ public sealed class MainWindowLayoutTests
             .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
     }
 
-    private static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)
+    private static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int NonEmptyLines)[] children)
     {
         var root = new ProjectNode
         {
@@ -1586,7 +1586,7 @@ public sealed class MainWindowLayoutTests
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
                 Tokens: children.Sum(item => item.Tokens),
-                TotalLines: children.Sum(item => item.TotalLines),
+                NonEmptyLines: children.Sum(item => item.NonEmptyLines),
                 FileSizeBytes: children.Sum(item => item.FileSizeBytes),
                 DescendantFileCount: children.Length,
                 DescendantDirectoryCount: 0),
@@ -1603,7 +1603,7 @@ public sealed class MainWindowLayoutTests
                 Kind = ProjectNodeKind.File,
                 Metrics = new NodeMetrics(
                     Tokens: item.Tokens,
-                    TotalLines: item.TotalLines,
+                    NonEmptyLines: item.NonEmptyLines,
                     FileSizeBytes: item.FileSizeBytes,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),

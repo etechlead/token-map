@@ -202,7 +202,7 @@ public sealed class ProjectTreePaneViewInteractionTests
                 Kind = ProjectNodeKind.File,
                 Metrics = new NodeMetrics(
                     Tokens: file.tokens,
-                    TotalLines: file.lines,
+                    NonEmptyLines: file.lines,
                     FileSizeBytes: file.size,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),

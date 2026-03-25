@@ -328,7 +328,7 @@ public sealed class AnalysisSessionControllerTests
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
                     Tokens: 42,
-                    TotalLines: 11,
+                    NonEmptyLines: 11,
                     FileSizeBytes: 128,
                     DescendantFileCount: 1,
                     DescendantDirectoryCount: 0),

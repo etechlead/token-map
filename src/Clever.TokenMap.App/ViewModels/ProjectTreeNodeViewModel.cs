@@ -47,7 +47,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
 
-    public string LinesText => FormatAnalysisMetric(Node.Metrics.TotalLines);
+    public string LinesText => FormatAnalysisMetric(Node.Metrics.NonEmptyLines);
 
     public string TokensText => FormatAnalysisMetric(Node.Metrics.Tokens);
 
@@ -183,7 +183,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
         return normalizedMetric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
+            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };

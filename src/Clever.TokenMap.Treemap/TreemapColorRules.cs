@@ -180,8 +180,8 @@ internal static class TreemapColorRules
     private static long GetMetricValue(ProjectNode node, AnalysisMetric metric) =>
         metric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.TotalLines,
+            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };

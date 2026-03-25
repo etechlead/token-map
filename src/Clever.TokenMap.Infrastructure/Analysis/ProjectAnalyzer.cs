@@ -75,7 +75,7 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
 
             var duration = DateTimeOffset.Now - startedAt;
             _logger.LogInformation(
-                $"Analysis completed for '{rootPath}' in {duration.TotalSeconds:F2}s. Files={enrichedSnapshot.Root.Metrics.DescendantFileCount:N0}, tokens={enrichedSnapshot.Root.Metrics.Tokens:N0}, non-empty lines={enrichedSnapshot.Root.Metrics.TotalLines:N0}, warnings={enrichedSnapshot.Warnings.Count:N0}.");
+                $"Analysis completed for '{rootPath}' in {duration.TotalSeconds:F2}s. Files={enrichedSnapshot.Root.Metrics.DescendantFileCount:N0}, tokens={enrichedSnapshot.Root.Metrics.Tokens:N0}, non-empty lines={enrichedSnapshot.Root.Metrics.NonEmptyLines:N0}, warnings={enrichedSnapshot.Warnings.Count:N0}.");
 
             return enrichedSnapshot;
         }

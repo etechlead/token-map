@@ -171,7 +171,7 @@ public sealed class TreemapColorRulesTests
             Kind = ProjectNodeKind.File,
             Metrics = new NodeMetrics(
                 Tokens: tokens,
-                TotalLines: totalLines,
+                NonEmptyLines: totalLines,
                 FileSizeBytes: fileSizeBytes,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),

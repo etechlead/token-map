@@ -159,7 +159,7 @@ public sealed class TreemapVisualRulesTests
             Kind = kind,
             Metrics = new NodeMetrics(
                 Tokens: 100,
-                TotalLines: 20,
+                NonEmptyLines: 20,
                 FileSizeBytes: 100,
                 DescendantFileCount: kind == ProjectNodeKind.File ? 1 : 0,
                 DescendantDirectoryCount: kind == ProjectNodeKind.Directory ? 1 : 0),

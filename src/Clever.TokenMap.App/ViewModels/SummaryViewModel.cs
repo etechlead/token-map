@@ -72,12 +72,12 @@ public partial class SummaryViewModel : ViewModelBase
             ? $"Analysis completed for {snapshot.Root.Name}."
             : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Warnings.Count:N0} warnings.";
         TotalsText =
-            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.TotalLines:N0} lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Warnings.Count:N0} warnings";
+            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.NonEmptyLines:N0} non-empty lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Warnings.Count:N0} warnings";
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
         TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
-        LineSummaryValue = snapshot.Root.Metrics.TotalLines.ToString("N0", CultureInfo.CurrentCulture);
+        LineSummaryValue = snapshot.Root.Metrics.NonEmptyLines.ToString("N0", CultureInfo.CurrentCulture);
         FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
         WarningSummaryValue = snapshot.Warnings.Count.ToString("N0", CultureInfo.CurrentCulture);
     }

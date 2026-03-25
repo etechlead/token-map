@@ -368,7 +368,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
         column switch
         {
             ProjectTreeSortColumn.Size => node.Metrics.FileSizeBytes,
-            ProjectTreeSortColumn.Lines => node.Metrics.TotalLines,
+            ProjectTreeSortColumn.Lines => node.Metrics.NonEmptyLines,
             ProjectTreeSortColumn.Tokens => node.Metrics.Tokens,
             _ => node.Name,
         };

@@ -176,7 +176,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         var metrics = new NodeMetrics(
             Tokens: tokens,
-            TotalLines: nonEmptyLineCount,
+            NonEmptyLines: nonEmptyLineCount,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
@@ -203,7 +203,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
 
         long tokens = 0;
-        var totalLines = 0;
+        var nonEmptyLines = 0;
         long fileSizeBytes = 0;
         var descendantFileCount = 0;
         var descendantDirectoryCount = 0;
@@ -211,7 +211,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         foreach (var child in children)
         {
             tokens += child.Metrics.Tokens;
-            totalLines += child.Metrics.TotalLines;
+            nonEmptyLines += child.Metrics.NonEmptyLines;
             fileSizeBytes += child.Metrics.FileSizeBytes;
             descendantFileCount += child.Metrics.DescendantFileCount;
             descendantDirectoryCount += child.Metrics.DescendantDirectoryCount;
@@ -224,7 +224,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         return new NodeMetrics(
             Tokens: tokens,
-            TotalLines: totalLines,
+            NonEmptyLines: nonEmptyLines,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: descendantFileCount,
             DescendantDirectoryCount: descendantDirectoryCount);
@@ -277,7 +277,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private static NodeMetrics CreateSkippedFileMetrics(long fileSizeBytes) =>
         new(
             Tokens: 0,
-            TotalLines: 0,
+            NonEmptyLines: 0,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
