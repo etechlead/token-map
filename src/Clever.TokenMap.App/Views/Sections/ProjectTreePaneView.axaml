@@ -76,15 +76,16 @@
                                     <Grid Width="{Binding ParentShareBlockWidth}"
                                           ClipToBounds="True"
                                           HorizontalAlignment="Right"
-                                          VerticalAlignment="Center">
+                                          VerticalAlignment="Center"
+                                          IsHitTestVisible="False">
                                         <Border Classes="tree-share-bar" />
                                         <Border Classes="tree-share-fill"
                                                 Width="{Binding ParentShareFillWidth}"
                                                 HorizontalAlignment="Left" />
-                                        <TextBlock Classes="tree-share-text"
-                                                   VerticalAlignment="Center"
-                                                   Text="{Binding ParentShareText}" />
                                     </Grid>
+                                    <TextBlock Classes="tree-share-text"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding ParentShareText}" />
                                 </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
