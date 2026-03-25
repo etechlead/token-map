@@ -224,11 +224,6 @@ public sealed class SettingsCoordinatorTests
 
         coordinator.SwitchActiveFolder(@"C:\RepoB");
 
-        Assert.Equal(1, folderStore.SaveCallCount);
-        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
-        Assert.Collection(
-            folderStore.LastSavedSettings!.Scan.FolderExcludes,
-            entry => Assert.Equal("/dist/", entry));
         Assert.Equal(@"C:\RepoB", coordinator.CurrentFolderState.ActiveRootPath);
         Assert.True(coordinator.CurrentFolderState.UseFolderExcludes);
         Assert.Collection(
@@ -236,6 +231,44 @@ public sealed class SettingsCoordinatorTests
             entry => Assert.Equal("/generated/", entry));
 
         await coordinator.FlushAsync();
+
+        Assert.Equal(1, folderStore.SaveCallCount);
+        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
+        Assert.Collection(
+            folderStore.LastSavedSettings!.Scan.FolderExcludes,
+            entry => Assert.Equal("/dist/", entry));
+    }
+
+    [Fact]
+    public async Task SwitchActiveFolder_DoesNotBlockOnQueuedFolderSave_AndFlushAwaitsIt()
+    {
+        var folderStore = new BlockingFolderSettingsStore();
+        var coordinator = new SettingsCoordinator(
+            new RecordingAppSettingsStore(AppSettings.CreateDefault()),
+            folderStore,
+            new RecordingThemeService(),
+            debounceDelay: TimeSpan.FromSeconds(5));
+
+        coordinator.SwitchActiveFolder(@"C:\RepoA");
+        coordinator.CurrentFolderState.UseFolderExcludes = true;
+        coordinator.CurrentFolderState.ReplaceFolderExcludes(["/dist/"]);
+
+        var switchTask = Task.Run(() => coordinator.SwitchActiveFolder(@"C:\RepoB"));
+
+        await folderStore.WaitForSaveStartedAsync();
+        await switchTask.WaitAsync(TimeSpan.FromSeconds(1));
+
+        var flushTask = coordinator.FlushAsync();
+        await Task.Delay(100);
+
+        Assert.False(flushTask.IsCompleted);
+        Assert.Equal(@"C:\RepoB", coordinator.CurrentFolderState.ActiveRootPath);
+
+        folderStore.ReleaseSave();
+
+        await flushTask.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(1, folderStore.SaveCallCount);
+        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
     }
 
     [Fact]
@@ -415,6 +448,35 @@ public sealed class SettingsCoordinatorTests
             }
 
             Assert.True(condition());
+        }
+    }
+
+    private sealed class BlockingFolderSettingsStore : IFolderSettingsStore
+    {
+        private readonly TaskCompletionSource<bool> _saveStarted =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource<bool> _releaseSave =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int SaveCallCount { get; private set; }
+
+        public FolderSettings? LastSavedSettings { get; private set; }
+
+        public FolderSettings Load(string rootPath) => FolderSettings.CreateDefault(rootPath);
+
+        public void Save(string rootPath, FolderSettings settings)
+        {
+            SaveCallCount++;
+            LastSavedSettings = settings.Clone();
+            _saveStarted.TrySetResult(true);
+            _releaseSave.Task.GetAwaiter().GetResult();
+        }
+
+        public Task WaitForSaveStartedAsync() => _saveStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        public void ReleaseSave()
+        {
+            _releaseSave.TrySetResult(true);
         }
     }
 

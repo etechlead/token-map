@@ -196,7 +196,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             !_pathNormalizer.PathComparer.Equals(previousRootPath, normalizedRootPath))
         {
             CancelPendingFolderSave();
-            SaveFolderSettingsIfNeededAsync(folderVersionToSave).GetAwaiter().GetResult();
+            QueueImmediateFolderSave(folderVersionToSave);
         }
 
         if (string.IsNullOrWhiteSpace(normalizedRootPath))
@@ -491,6 +491,16 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         saveDebounceCancellationTokenSource?.Cancel();
         saveDebounceCancellationTokenSource?.Dispose();
+    }
+
+    private void QueueImmediateFolderSave(long versionToSave)
+    {
+        var saveTask = SaveFolderSettingsIfNeededAsync(versionToSave);
+
+        lock (_folderSyncLock)
+        {
+            _pendingFolderSaveTask = saveTask;
+        }
     }
 
     private static async Task QueuePersistenceTask(Task previousTask, Action persistenceAction)
