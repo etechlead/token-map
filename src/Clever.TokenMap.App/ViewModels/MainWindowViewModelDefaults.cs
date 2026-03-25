@@ -5,7 +5,6 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Logging;
 
 namespace Clever.TokenMap.App.ViewModels;
 
@@ -25,8 +24,7 @@ internal static class MainWindowViewModelDefaults
             CreateAnalysisSessionController(
                 new NullProjectAnalyzer(),
                 new NullFolderPickerService(),
-                folderPathService,
-                NullAppLogger.Instance),
+                folderPathService),
             new TreemapNavigationState(),
             new NullSettingsCoordinator(),
             folderPathService,
@@ -36,14 +34,13 @@ internal static class MainWindowViewModelDefaults
     private static AnalysisSessionController CreateAnalysisSessionController(
         IProjectAnalyzer projectAnalyzer,
         IFolderPickerService folderPickerService,
-        IFolderPathService folderPathService,
-        IAppLogger? logger)
+        IFolderPathService folderPathService)
     {
         ArgumentNullException.ThrowIfNull(projectAnalyzer);
         ArgumentNullException.ThrowIfNull(folderPickerService);
         ArgumentNullException.ThrowIfNull(folderPathService);
 
-        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger, scanOptionsResolver: null);
+        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger: null, scanOptionsResolver: null);
     }
 
     private sealed class NullFolderPickerService : IFolderPickerService
