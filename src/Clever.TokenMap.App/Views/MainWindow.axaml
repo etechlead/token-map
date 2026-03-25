@@ -174,7 +174,7 @@
         <Border Name="ExcludesEditorBackdrop"
                 Grid.RowSpan="3"
                 Background="#660B1016"
-                IsVisible="{Binding IsExcludesEditorOpen}"
+                IsVisible="{Binding ExcludesEditor.IsOpen}"
                 ZIndex="3" />
 
         <Border Name="ExcludesEditorModal"
@@ -182,7 +182,7 @@
                 Classes="panel global-excludes-modal"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                IsVisible="{Binding IsExcludesEditorOpen}"
+                IsVisible="{Binding ExcludesEditor.IsOpen}"
                 ZIndex="4">
             <Grid RowDefinitions="Auto,Auto,*,Auto"
                   RowSpacing="12">
@@ -190,10 +190,10 @@
                       ColumnSpacing="8">
                     <TextBlock Classes="panel-title"
                                VerticalAlignment="Center"
-                               Text="{Binding ExcludesEditorTitle}" />
+                               Text="{Binding ExcludesEditor.Title}" />
                     <Button Grid.Column="1"
                             Classes="close-button"
-                            Command="{Binding CancelExcludesEditorCommand}"
+                            Command="{Binding ExcludesEditor.CancelCommand}"
                             ToolTip.Tip="Cancel editing excludes">
                         <Path Classes="close-button-icon"
                               Data="{StaticResource FluentDismiss20Geometry}" />
@@ -202,7 +202,7 @@
 
                 <TextBlock Grid.Row="1"
                            Classes="panel-body"
-                           Text="{Binding ExcludesEditorHelperText}"
+                           Text="{Binding ExcludesEditor.HelperText}"
                            TextWrapping="Wrap" />
 
                 <TextBox Name="ExcludesEditorTextBox"
@@ -211,7 +211,7 @@
                          AcceptsReturn="True"
                          HorizontalAlignment="Stretch"
                          VerticalAlignment="Stretch"
-                         Text="{Binding ExcludesEditorText, Mode=TwoWay}"
+                         Text="{Binding ExcludesEditor.Text, Mode=TwoWay}"
                          TextWrapping="NoWrap" />
 
                 <Grid Grid.Row="3"
@@ -220,17 +220,17 @@
                     <Button Name="CancelExcludesButton"
                             Grid.Column="1"
                             Classes="action-button"
-                            Command="{Binding CancelExcludesEditorCommand}"
+                            Command="{Binding ExcludesEditor.CancelCommand}"
                             Content="Cancel" />
                     <Button Name="SaveExcludesButton"
                             Grid.Column="2"
                             Classes="action-button"
-                            Command="{Binding SaveExcludesEditorCommand}"
+                            Command="{Binding ExcludesEditor.SaveCommand}"
                             Content="Save" />
                     <Button Name="SaveAndRescanExcludesButton"
                             Grid.Column="3"
                             Classes="action-button primary"
-                            Command="{Binding SaveAndRescanExcludesEditorCommand}"
+                            Command="{Binding ExcludesEditor.SaveAndRescanCommand}"
                             Content="Save and Rescan" />
                 </Grid>
             </Grid>

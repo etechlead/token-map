@@ -610,7 +610,7 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.ExcludesEditorText = " node_modules\\\\ \n\n/src//generated/**\n!nested/scripts/";
+        viewModel.ExcludesEditor.Text = " node_modules\\\\ \n\n/src//generated/**\n!nested/scripts/";
         viewModel.SaveExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
@@ -619,7 +619,7 @@ public sealed class MainWindowLayoutTests
 
         Assert.NotNull(notice);
         Assert.NotNull(rescanButton);
-        Assert.True(viewModel.ShowScanSettingsRescanNotice);
+        Assert.True(viewModel.ExcludesEditor.ShowRescanNotice);
         Assert.True(notice.IsVisible);
         Assert.Collection(
             viewModel.Toolbar.BuildScanOptions().GlobalExcludes,
@@ -628,18 +628,18 @@ public sealed class MainWindowLayoutTests
             entry => Assert.Equal("!nested/scripts/", entry));
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.ExcludesEditorText += "\nobj/";
-        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+        viewModel.ExcludesEditor.Text += "\nobj/";
+        Assert.False(viewModel.ExcludesEditor.ShowRescanNotice);
         viewModel.CancelExcludesEditorCommand.Execute(null);
 
         viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
-        viewModel.ExcludesEditorText = "vendor/";
+        viewModel.ExcludesEditor.Text = "vendor/";
         viewModel.SaveExcludesEditorCommand.Execute(null);
-        Assert.True(viewModel.ShowScanSettingsRescanNotice);
+        Assert.True(viewModel.ExcludesEditor.ShowRescanNotice);
 
         await viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+        Assert.False(viewModel.ExcludesEditor.ShowRescanNotice);
         Assert.False(notice.IsVisible);
     }
 
@@ -680,11 +680,11 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         viewModel.OpenFolderExcludesEditorCommand.Execute(null);
-        viewModel.ExcludesEditorText = "/generated/\n!generated/keep.txt";
+        viewModel.ExcludesEditor.Text = "/generated/\n!generated/keep.txt";
         viewModel.SaveExcludesEditorCommand.Execute(null);
         window.UpdateLayout();
 
-        Assert.True(viewModel.ShowScanSettingsRescanNotice);
+        Assert.True(viewModel.ExcludesEditor.ShowRescanNotice);
         Assert.True(viewModel.Toolbar.BuildScanOptions().UseFolderExcludes);
         Assert.Collection(
             viewModel.Toolbar.BuildScanOptions().FolderExcludes,
@@ -693,7 +693,7 @@ public sealed class MainWindowLayoutTests
 
         await viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
 
-        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+        Assert.False(viewModel.ExcludesEditor.ShowRescanNotice);
     }
 
     [AvaloniaFact]
@@ -712,12 +712,12 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         viewModel.OpenFolderExcludesEditorCommand.Execute(null);
-        viewModel.ExcludesEditorText = "/generated/";
+        viewModel.ExcludesEditor.Text = "/generated/";
         await viewModel.SaveAndRescanExcludesEditorCommand.ExecuteAsync(null);
 
         Assert.Equal(2, analyzer.CallCount);
-        Assert.False(viewModel.IsExcludesEditorOpen);
-        Assert.False(viewModel.ShowScanSettingsRescanNotice);
+        Assert.False(viewModel.ExcludesEditor.IsOpen);
+        Assert.False(viewModel.ExcludesEditor.ShowRescanNotice);
     }
 
     [Fact]
@@ -735,9 +735,9 @@ public sealed class MainWindowLayoutTests
             Metrics = NodeMetrics.Empty,
         });
 
-        Assert.True(viewModel.IsExcludesEditorOpen);
-        Assert.Equal("Excludes for Demo", viewModel.ExcludesEditorTitle);
-        Assert.Equal("/src/", viewModel.ExcludesEditorText.ReplaceLineEndings("\n"));
+        Assert.True(viewModel.ExcludesEditor.IsOpen);
+        Assert.Equal("Excludes for Demo", viewModel.ExcludesEditor.Title);
+        Assert.Equal("/src/", viewModel.ExcludesEditor.Text.ReplaceLineEndings("\n"));
     }
 
     [AvaloniaFact]

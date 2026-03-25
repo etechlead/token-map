@@ -102,7 +102,7 @@
                                             HorizontalAlignment="Right"
                                             Padding="10,4"
                                             MinHeight="28"
-                                            Command="{Binding OpenGlobalExcludesEditorCommand}"
+                                            Command="{Binding ExcludesEditor.OpenGlobalCommand}"
                                             Content="Edit"
                                             IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 </Grid>
@@ -131,14 +131,14 @@
                                                 HorizontalAlignment="Right"
                                                 Padding="10,4"
                                                 MinHeight="28"
-                                                Command="{Binding OpenFolderExcludesEditorCommand}"
+                                                Command="{Binding ExcludesEditor.OpenFolderCommand}"
                                                 Content="Edit"
                                                 IsEnabled="{Binding Toolbar.CanConfigureFolderExcludes}" />
                                     </Grid>
                                 </StackPanel>
                                 <Border Name="ScanSettingsRescanNotice"
                                         Classes="settings-notice-panel"
-                                        IsVisible="{Binding ShowScanSettingsRescanNotice}">
+                                        IsVisible="{Binding ExcludesEditor.ShowRescanNotice}">
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
                                         <TextBlock Name="ScanSettingsRescanNoticeText"
