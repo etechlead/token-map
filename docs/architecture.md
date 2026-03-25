@@ -4,17 +4,16 @@
 
 - `Clever.TokenMap.Core` holds domain models, shared contracts, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
 - `Clever.TokenMap.Core` also holds the shared persisted settings DTOs used by app-layer coordinators and infrastructure stores.
-- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, logging, and path normalization. It stays free of Avalonia and desktop UI framework types.
+- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, logging, and path normalization. It stays independent from Avalonia and desktop UI framework types.
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
-- `Clever.TokenMap.App.App` and `Clever.TokenMap.App.AppComposition` are the product composition roots that wire concrete infrastructure implementations; other app-layer code depends on contracts and app/core state.
-- `tests/Clever.TokenMap.ArchitectureTests` enforces the main static assembly and namespace boundary rules with ArchUnitNET in Debug test runs.
+- `Clever.TokenMap.App.App` and `Clever.TokenMap.App.AppComposition` are the product composition roots that wire concrete infrastructure implementations; the rest of the app layer works through contracts and app/core state.
+- `tests/Clever.TokenMap.ArchitectureTests` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
 
 ## App-Layer State
 
 - `MainWindowViewModel` is the shell coordinator for the desktop window.
-- `Clever.TokenMap.App.ViewModels` stay free of Avalonia UI types; view-specific layout objects are composed in XAML/views rather than viewmodels.
-- `Clever.TokenMap.App.State` stays free of Avalonia, view types, and infrastructure dependencies.
+- `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay UI-neutral and depend on app/core state rather than infrastructure details; view-specific layout objects are composed in XAML/views rather than viewmodels.
 - `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
 - `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
 - `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.
