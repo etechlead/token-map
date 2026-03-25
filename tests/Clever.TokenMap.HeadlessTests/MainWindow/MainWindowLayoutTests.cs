@@ -404,6 +404,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(tokensHeader);
         Assert.NotNull(linesDescendingIcon);
         Assert.True(linesDescendingIcon.IsVisible);
+        Assert.True(
+            linesDescendingIcon.Bounds.Width >= 16 && linesDescendingIcon.Bounds.Height >= 16,
+            $"Sort icon should keep a full 16x16 layout slot. Actual={linesDescendingIcon.Bounds}.");
         Assert.Null(linesAscendingIcon);
         Assert.Null(tokensDescendingIcon);
     }
