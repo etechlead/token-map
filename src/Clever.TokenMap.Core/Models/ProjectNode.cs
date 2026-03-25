@@ -14,9 +14,9 @@ public sealed class ProjectNode
 
     public required ProjectNodeKind Kind { get; init; }
 
-    public NodeMetrics Metrics { get; set; } = NodeMetrics.Empty;
+    public NodeMetrics Metrics { get; init; } = NodeMetrics.Empty;
 
-    public SkippedReason? SkippedReason { get; set; }
+    public SkippedReason? SkippedReason { get; init; }
 
     public List<ProjectNode> Children { get; } = [];
 }

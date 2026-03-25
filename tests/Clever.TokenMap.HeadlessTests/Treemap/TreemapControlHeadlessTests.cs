@@ -388,88 +388,112 @@ public sealed class TreemapControlHeadlessTests
 
     private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithSkippedBinaryFile()
     {
-        var snapshot = CreateSnapshot();
-        snapshot.Root.Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-            Tokens: 0,
-            TotalLines: 0,
-            FileSizeBytes: 171_801,
-            DescendantFileCount: 1,
-            DescendantDirectoryCount: 0);
-
-        snapshot.Root.Children.Clear();
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        return new Clever.TokenMap.Core.Models.ProjectSnapshot
         {
-            Id = "image.ico",
-            Name = "image.ico",
-            FullPath = "C:\\Demo\\image.ico",
-            RelativePath = "image.ico",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
-            SkippedReason = SkippedReason.Binary,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-                Tokens: 0,
-                TotalLines: 0,
-                FileSizeBytes: 171_801,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
-        });
-
-        return snapshot;
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = Clever.TokenMap.Core.Models.ScanOptions.Default,
+            Root = new Clever.TokenMap.Core.Models.ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Root,
+                Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                    Tokens: 0,
+                    TotalLines: 0,
+                    FileSizeBytes: 171_801,
+                    DescendantFileCount: 1,
+                    DescendantDirectoryCount: 0),
+                Children =
+                {
+                    new Clever.TokenMap.Core.Models.ProjectNode
+                    {
+                        Id = "image.ico",
+                        Name = "image.ico",
+                        FullPath = "C:\\Demo\\image.ico",
+                        RelativePath = "image.ico",
+                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        SkippedReason = SkippedReason.Binary,
+                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                            Tokens: 0,
+                            TotalLines: 0,
+                            FileSizeBytes: 171_801,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                },
+            },
+        };
     }
 
     private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateMetricSensitiveSnapshot()
     {
-        var snapshot = CreateSnapshot();
-        snapshot.Root.Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-            Tokens: 105,
-            TotalLines: 100,
-            FileSizeBytes: 350,
-            DescendantFileCount: 3,
-            DescendantDirectoryCount: 0);
-
-        snapshot.Root.Children.Clear();
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        return new Clever.TokenMap.Core.Models.ProjectSnapshot
         {
-            Id = "a.cs",
-            Name = "a.cs",
-            FullPath = "C:\\Demo\\a.cs",
-            RelativePath = "a.cs",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-                Tokens: 80,
-                TotalLines: 10,
-                FileSizeBytes: 50,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
-        });
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
-        {
-            Id = "b.cs",
-            Name = "b.cs",
-            FullPath = "C:\\Demo\\b.cs",
-            RelativePath = "b.cs",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-                Tokens: 20,
-                TotalLines: 90,
-                FileSizeBytes: 75,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
-        });
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
-        {
-            Id = "c.cs",
-            Name = "c.cs",
-            FullPath = "C:\\Demo\\c.cs",
-            RelativePath = "c.cs",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
-                Tokens: 5,
-                TotalLines: 0,
-                FileSizeBytes: 225,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
-        });
-
-        return snapshot;
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = Clever.TokenMap.Core.Models.ScanOptions.Default,
+            Root = new Clever.TokenMap.Core.Models.ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Root,
+                Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                    Tokens: 105,
+                    TotalLines: 100,
+                    FileSizeBytes: 350,
+                    DescendantFileCount: 3,
+                    DescendantDirectoryCount: 0),
+                Children =
+                {
+                    new Clever.TokenMap.Core.Models.ProjectNode
+                    {
+                        Id = "a.cs",
+                        Name = "a.cs",
+                        FullPath = "C:\\Demo\\a.cs",
+                        RelativePath = "a.cs",
+                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                            Tokens: 80,
+                            TotalLines: 10,
+                            FileSizeBytes: 50,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                    new Clever.TokenMap.Core.Models.ProjectNode
+                    {
+                        Id = "b.cs",
+                        Name = "b.cs",
+                        FullPath = "C:\\Demo\\b.cs",
+                        RelativePath = "b.cs",
+                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                            Tokens: 20,
+                            TotalLines: 90,
+                            FileSizeBytes: 75,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                    new Clever.TokenMap.Core.Models.ProjectNode
+                    {
+                        Id = "c.cs",
+                        Name = "c.cs",
+                        FullPath = "C:\\Demo\\c.cs",
+                        RelativePath = "c.cs",
+                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                            Tokens: 5,
+                            TotalLines: 0,
+                            FileSizeBytes: 225,
+                            DescendantFileCount: 1,
+                            DescendantDirectoryCount: 0),
+                    },
+                },
+            },
+        };
     }
 }

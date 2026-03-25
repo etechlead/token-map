@@ -23,6 +23,8 @@
 ## Sources Of Truth
 
 - The scanner defines the tree structure and the included path set.
+- `ProjectSnapshotMetricsEnricher` clones the scanned tree into a separate enriched snapshot instead of mutating the scanner output in place.
+- `ProjectNode.Metrics` and `ProjectNode.SkippedReason` are construction-time state; enrichment produces new nodes rather than rewriting existing ones.
 - Global excludes, directory `.gitignore` files, and folder-specific excludes all run through the same gitignore-style ignore-rule engine with this precedence order: global excludes, then `.gitignore`, then folder excludes.
 - Token counts come from the local `o200k_base` tokenizer pipeline.
 - Line metrics come from local file analysis for included text files and count only non-empty lines.

@@ -106,6 +106,32 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(0, emptyNode.Metrics.TotalLines);
     }
 
+    [Fact]
+    public async Task EnrichAsync_DoesNotMutateTheOriginalScannedTree()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "sample.txt"), "alpha\nbeta\n");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var originalRoot = snapshot.Root;
+        var originalChild = Assert.Single(originalRoot.Children);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter());
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+
+        Assert.Same(originalRoot, snapshot.Root);
+        Assert.Same(originalChild, snapshot.Root.Children[0]);
+        Assert.Equal(NodeMetrics.Empty, originalRoot.Metrics);
+        Assert.Null(originalChild.SkippedReason);
+        Assert.NotSame(originalRoot, enriched.Root);
+        Assert.NotSame(originalChild, enriched.Root.Children[0]);
+        Assert.Equal(NodeMetrics.Empty, originalChild.Metrics);
+        Assert.Equal(2, enriched.Root.Metrics.TotalLines);
+        Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))

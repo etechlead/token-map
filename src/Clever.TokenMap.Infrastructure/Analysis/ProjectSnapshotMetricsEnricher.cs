@@ -38,26 +38,25 @@ public sealed class ProjectSnapshotMetricsEnricher
         var warnings = new List<string>(snapshot.Warnings);
         var totalFileCount = CountFileNodes(snapshot.Root);
         var progressState = new ProgressState();
-        await EnrichNodeAsync(
+        var enrichedRoot = await EnrichNodeAsync(
             snapshot.Root,
             warnings,
             progress,
             totalFileCount,
             progressState,
             cancellationToken);
-        AggregateNode(snapshot.Root);
 
         return new ProjectSnapshot
         {
             RootPath = snapshot.RootPath,
             CapturedAtUtc = snapshot.CapturedAtUtc,
             Options = snapshot.Options,
-            Root = snapshot.Root,
+            Root = enrichedRoot,
             Warnings = warnings,
         };
     }
 
-    private async Task EnrichNodeAsync(
+    private async Task<ProjectNode> EnrichNodeAsync(
         ProjectNode node,
         List<string> warnings,
         IProgress<AnalysisProgress>? progress,
@@ -69,29 +68,33 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.Kind == ProjectNodeKind.File)
         {
-            await EnrichFileNodeAsync(node, warnings, cancellationToken);
+            var enrichedFile = await EnrichFileNodeAsync(node, warnings, cancellationToken);
             progressState.ProcessedFileCount++;
             progress?.Report(new AnalysisProgress(
                 Phase: "AnalyzingFiles",
                 ProcessedNodeCount: progressState.ProcessedFileCount,
                 TotalNodeCount: totalFileCount,
-                CurrentPath: node.RelativePath));
-            return;
+                CurrentPath: enrichedFile.RelativePath));
+            return enrichedFile;
         }
 
+        var enrichedChildren = new List<ProjectNode>(node.Children.Count);
         foreach (var child in node.Children)
         {
-            await EnrichNodeAsync(
+            enrichedChildren.Add(await EnrichNodeAsync(
                 child,
                 warnings,
                 progress,
                 totalFileCount,
                 progressState,
-                cancellationToken);
+                cancellationToken));
         }
+
+        var metrics = AggregateNode(enrichedChildren, node.Kind);
+        return CloneNode(node, metrics, node.SkippedReason, enrichedChildren);
     }
 
-    private async Task EnrichFileNodeAsync(
+    private async Task<ProjectNode> EnrichFileNodeAsync(
         ProjectNode node,
         List<string> warnings,
         CancellationToken cancellationToken)
@@ -101,16 +104,17 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.SkippedReason is not null)
         {
-            node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
-            return;
+            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), node.SkippedReason);
         }
 
-        if (fileState.Exists &&
-            _cacheStore is not null &&
-            await TryRestoreCachedMetricsAsync(node, fileState, cancellationToken))
+        if (fileState.Exists && _cacheStore is not null)
         {
-            _logger.LogTrace($"Restored cached metrics for '{node.FullPath}'.");
-            return;
+            var cachedMetrics = await TryRestoreCachedMetricsAsync(node, fileState, cancellationToken);
+            if (cachedMetrics is not null)
+            {
+                _logger.LogTrace($"Restored cached metrics for '{node.FullPath}'.");
+                return CloneNode(node, cachedMetrics, node.SkippedReason);
+            }
         }
 
         bool isText;
@@ -120,15 +124,12 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
-            return;
+            return ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
         }
 
         if (!isText)
         {
-            node.SkippedReason = SkippedReason.Binary;
-            node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
-            return;
+            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Binary);
         }
 
         string content;
@@ -138,16 +139,13 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
-            return;
+            return ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
         }
         catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
         {
-            node.SkippedReason = SkippedReason.Unsupported;
             warnings.Add($"Unable to decode '{node.FullPath}': {exception.Message}");
             _logger.LogWarning(exception, $"Unable to decode '{node.FullPath}'.");
-            node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
-            return;
+            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Unsupported);
         }
 
         var normalizedContent = NormalizeNewlines(content);
@@ -168,7 +166,7 @@ public sealed class ProjectSnapshotMetricsEnricher
             _logger.LogWarning(exception, $"Token counting failed for '{node.FullPath}'.");
         }
 
-        node.Metrics = new NodeMetrics(
+        var metrics = new NodeMetrics(
             Tokens: tokens,
             TotalLines: nonEmptyLineCount,
             FileSizeBytes: fileSizeBytes,
@@ -181,22 +179,18 @@ public sealed class ProjectSnapshotMetricsEnricher
                 node.FullPath,
                 fileState.FileSizeBytes,
                 fileState.LastWriteTimeUtc,
-                node.Metrics,
+                metrics,
                 cancellationToken);
         }
+
+        return CloneNode(node, metrics, node.SkippedReason);
     }
 
-    private static NodeMetrics AggregateNode(ProjectNode node)
+    private static NodeMetrics AggregateNode(IEnumerable<ProjectNode> children, ProjectNodeKind kind)
     {
-        if (node.Kind == ProjectNodeKind.File)
+        if (kind == ProjectNodeKind.File)
         {
-            return node.Metrics;
-        }
-
-        var childMetrics = new List<NodeMetrics>(node.Children.Count);
-        foreach (var child in node.Children)
-        {
-            childMetrics.Add(AggregateNode(child));
+            return NodeMetrics.Empty;
         }
 
         long tokens = 0;
@@ -205,15 +199,13 @@ public sealed class ProjectSnapshotMetricsEnricher
         var descendantFileCount = 0;
         var descendantDirectoryCount = 0;
 
-        for (var index = 0; index < node.Children.Count; index++)
+        foreach (var child in children)
         {
-            var child = node.Children[index];
-            var metrics = childMetrics[index];
-            tokens += metrics.Tokens;
-            totalLines += metrics.TotalLines;
-            fileSizeBytes += metrics.FileSizeBytes;
-            descendantFileCount += metrics.DescendantFileCount;
-            descendantDirectoryCount += metrics.DescendantDirectoryCount;
+            tokens += child.Metrics.Tokens;
+            totalLines += child.Metrics.TotalLines;
+            fileSizeBytes += child.Metrics.FileSizeBytes;
+            descendantFileCount += child.Metrics.DescendantFileCount;
+            descendantDirectoryCount += child.Metrics.DescendantDirectoryCount;
 
             if (child.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
             {
@@ -221,14 +213,40 @@ public sealed class ProjectSnapshotMetricsEnricher
             }
         }
 
-        node.Metrics = new NodeMetrics(
+        return new NodeMetrics(
             Tokens: tokens,
             TotalLines: totalLines,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: descendantFileCount,
             DescendantDirectoryCount: descendantDirectoryCount);
+    }
 
-        return node.Metrics;
+    private static ProjectNode CloneNode(
+        ProjectNode source,
+        NodeMetrics metrics,
+        SkippedReason? skippedReason,
+        IEnumerable<ProjectNode>? children = null)
+    {
+        var clone = new ProjectNode
+        {
+            Id = source.Id,
+            Name = source.Name,
+            FullPath = source.FullPath,
+            RelativePath = source.RelativePath,
+            Kind = source.Kind,
+            Metrics = metrics,
+            SkippedReason = skippedReason,
+        };
+
+        if (children is not null)
+        {
+            foreach (var child in children)
+            {
+                clone.Children.Add(child);
+            }
+        }
+
+        return clone;
     }
 
     private static int CountFileNodes(ProjectNode node)
@@ -303,7 +321,7 @@ public sealed class ProjectSnapshotMetricsEnricher
             or IOException
             or PathTooLongException;
 
-    private async Task<bool> TryRestoreCachedMetricsAsync(
+    private async Task<NodeMetrics?> TryRestoreCachedMetricsAsync(
         ProjectNode node,
         FileState fileState,
         CancellationToken cancellationToken)
@@ -316,29 +334,28 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (cachedMetrics is null)
         {
-            return false;
+            return null;
         }
 
-        node.Metrics = cachedMetrics;
-        return true;
+        return cachedMetrics;
     }
 
-    private static void ApplyRecoverableFileError(
+    private static ProjectNode ApplyRecoverableFileError(
         ProjectNode node,
         Exception exception,
         List<string> warnings,
         long fileSizeBytes,
         IAppLogger logger)
     {
-        node.SkippedReason = exception is FileNotFoundException or DirectoryNotFoundException
+        var skippedReason = exception is FileNotFoundException or DirectoryNotFoundException
             ? SkippedReason.MissingDuringScan
             : exception is UnauthorizedAccessException
                 ? SkippedReason.Inaccessible
                 : SkippedReason.Error;
-        node.Metrics = CreateSkippedFileMetrics(fileSizeBytes);
 
         warnings.Add($"Unable to analyze '{node.FullPath}': {exception.Message}");
         logger.LogWarning(exception, $"Unable to analyze '{node.FullPath}'.");
+        return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), skippedReason);
     }
 
     private static FileState TryGetFileState(string fullPath)
@@ -371,5 +388,4 @@ public sealed class ProjectSnapshotMetricsEnricher
     {
         public int ProcessedFileCount { get; set; }
     }
-
 }
