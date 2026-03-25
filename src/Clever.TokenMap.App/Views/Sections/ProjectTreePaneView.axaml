@@ -44,36 +44,40 @@
                                             Width="3*">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                <Grid Margin="{Binding IndentMargin}"
-                                      ColumnDefinitions="18,18,*"
-                                      ColumnSpacing="6">
-                                    <Button Grid.Column="0"
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Grid.Column="0"
+                                            Width="{Binding IndentOffset}" />
+                                    <Grid Grid.Column="1"
+                                          ColumnDefinitions="18,18,*"
+                                          ColumnSpacing="6">
+                                        <Button Grid.Column="0"
                                             Classes="tree-expander"
                                             HorizontalAlignment="Center"
                                             VerticalAlignment="Center"
                                             Click="ProjectTreeExpandCollapseButton_OnClick"
                                             IsVisible="{Binding HasChildren}">
-                                        <Grid Width="12"
+                                            <Grid Width="12"
                                               Height="12">
-                                            <icons:FluentIcon Classes="tree-expander-icon"
+                                                <icons:FluentIcon Classes="tree-expander-icon"
                                                               Icon="ChevronRight"
                                                               IconVariant="Regular"
                                                               IconSize="Size16"
                                                               IsVisible="{Binding IsCollapsed}" />
-                                            <icons:FluentIcon Classes="tree-expander-icon"
+                                                <icons:FluentIcon Classes="tree-expander-icon"
                                                               Icon="ChevronDown"
                                                               IconVariant="Regular"
                                                               IconSize="Size16"
                                                               IsVisible="{Binding IsExpanded}" />
-                                        </Grid>
-                                    </Button>
-                                    <svg:Svg Grid.Column="1"
+                                            </Grid>
+                                        </Button>
+                                        <svg:Svg Grid.Column="1"
                                              Classes="tree-file-icon"
                                              Path="{Binding IconPath}" />
-                                    <TextBlock Grid.Column="2"
+                                        <TextBlock Grid.Column="2"
                                                Classes="tree-table-name"
                                                VerticalAlignment="Center"
                                                Text="{Binding Name}" />
+                                    </Grid>
                                 </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

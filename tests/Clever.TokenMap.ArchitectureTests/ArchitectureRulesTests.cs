@@ -54,6 +54,10 @@ public sealed class ArchitectureRulesTests
             .Or().ResideInNamespace("Clever.TokenMap.App.ViewModels")
             .As("app state and viewmodels");
 
+    private static readonly IObjectProvider<IType> AppViewModels =
+        Types().That().ResideInNamespace("Clever.TokenMap.App.ViewModels")
+            .As("app viewmodels");
+
     private static readonly IObjectProvider<IType> AppLayer =
         Types().That().ResideInNamespace("Clever.TokenMap.App.State")
             .Or().ResideInNamespace("Clever.TokenMap.App.Services")
@@ -82,6 +86,10 @@ public sealed class ArchitectureRulesTests
             .Or().HaveFullName(typeof(FileInfo).FullName!)
             .Or().HaveFullName(typeof(DirectoryInfo).FullName!)
             .As("direct file system types");
+
+    private static readonly IObjectProvider<IType> AvaloniaTypes =
+        Types().That().HaveFullNameContaining("Avalonia.")
+            .As("Avalonia UI types");
 
     [Fact]
     public void Core_Should_Not_Depend_On_Other_Product_Assemblies() =>
@@ -115,6 +123,14 @@ public sealed class ArchitectureRulesTests
         Types().That().Are(AppStateAndViewModels).Should()
             .NotDependOnAny(LowLevelInfrastructureDetails)
             .Because("app-facing state and viewmodels should work through app/core contracts")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void App_ViewModels_Should_Not_Depend_On_Avalonia_Types() =>
+        Types().That().Are(AppViewModels).Should()
+            .NotDependOnAny(AvaloniaTypes)
+            .Because("viewmodels should expose neutral state instead of Avalonia-specific UI types")
             .WithoutRequiringPositiveResults()
             .Check(Architecture);
 

@@ -12,6 +12,7 @@
 ## App-Layer State
 
 - `MainWindowViewModel` is the shell coordinator for the desktop window.
+- `Clever.TokenMap.App.ViewModels` stay free of Avalonia UI types; view-specific layout objects are composed in XAML/views rather than viewmodels.
 - `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
 - `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
 - `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.

@@ -1514,8 +1514,8 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(childViewModel.ParentShareRatio);
         Assert.Equal(1d / 3d, childViewModel.ParentShareRatio.Value, 3);
         Assert.Equal("33.3%", childViewModel.ParentShareText);
-        Assert.Equal(0, rootViewModel.ParentShareIndentMargin.Left);
-        Assert.Equal(14, childViewModel.ParentShareIndentMargin.Left);
+        Assert.Equal(0, rootViewModel.IndentOffset);
+        Assert.Equal(14, childViewModel.IndentOffset);
         Assert.Equal(104, rootViewModel.ParentShareBlockWidth);
         Assert.Equal(90, childViewModel.ParentShareBlockWidth);
         Assert.Equal(104, rootViewModel.ParentShareFillWidth);

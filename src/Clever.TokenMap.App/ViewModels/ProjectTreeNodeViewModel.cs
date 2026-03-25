@@ -1,7 +1,6 @@
 using System;
 using System.Globalization;
 using System.IO;
-using Avalonia;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -39,7 +38,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public bool HasChildren => Node.Children.Count > 0;
 
-    public Thickness IndentMargin => new(Depth * TreeIndentStep, 0, 0, 0);
+    public double IndentOffset => Depth * TreeIndentStep;
 
     public string IconPath => $"avares://Clever.TokenMap.App/Assets/FileIcons/{GetIconFileName()}";
 
@@ -57,9 +56,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string ParentShareText { get; }
 
-    public Thickness ParentShareIndentMargin => new(Depth * TreeIndentStep, 0, 0, 0);
-
-    public double ParentShareBlockWidth => Math.Max(0d, ParentShareBaseWidth - ParentShareIndentMargin.Left);
+    public double ParentShareBlockWidth => Math.Max(0d, ParentShareBaseWidth - IndentOffset);
 
     public double ParentShareFillWidth => ParentShareBlockWidth * ParentShareDisplayValue;
 
