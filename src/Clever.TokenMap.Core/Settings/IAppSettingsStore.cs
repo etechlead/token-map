@@ -1,6 +1,4 @@
-using Clever.TokenMap.Core.Settings;
-
-namespace Clever.TokenMap.Infrastructure.Settings;
+namespace Clever.TokenMap.Core.Settings;
 
 public interface IAppSettingsStore
 {

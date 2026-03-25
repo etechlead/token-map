@@ -10,7 +10,6 @@ using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
-using Clever.TokenMap.Infrastructure.Settings;
 
 namespace Clever.TokenMap.App.Services;
 
