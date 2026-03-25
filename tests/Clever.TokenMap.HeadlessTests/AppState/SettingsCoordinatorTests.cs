@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Settings;
@@ -77,6 +78,28 @@ public sealed class SettingsCoordinatorTests
     }
 
     [Fact]
+    public async Task ToolbarChanges_DoNotRunAppStoreSaveOnCallerSynchronizationContext()
+    {
+        await RunOnSingleThreadSynchronizationContextAsync(async () =>
+        {
+            var store = new RecordingAppSettingsStore(AppSettings.CreateDefault(), saveDelay: TimeSpan.FromMilliseconds(50));
+            var callerThreadId = Environment.CurrentManagedThreadId;
+            var coordinator = new SettingsCoordinator(
+                store,
+                new RecordingFolderSettingsStore(),
+                new RecordingThemeService(),
+                debounceDelay: TimeSpan.FromMilliseconds(25));
+
+            coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+
+            await store.WaitForSaveAsync();
+
+            Assert.Equal(1, store.SaveCallCount);
+            Assert.NotEqual(callerThreadId, store.LastSaveThreadId);
+        });
+    }
+
+    [Fact]
     public async Task RecentFolders_AreDebouncedIntoSingleSave()
     {
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
@@ -94,6 +117,53 @@ public sealed class SettingsCoordinatorTests
             store.LastSavedSettings!.RecentFolderPaths,
             path => Assert.Equal("C:\\RepoA", path),
             path => Assert.Equal("C:\\RepoB", path));
+    }
+
+    [Fact]
+    public async Task FlushAsync_DoesNotRunAppStoreSaveOnCallerSynchronizationContext()
+    {
+        await RunOnSingleThreadSynchronizationContextAsync(async () =>
+        {
+            var store = new RecordingAppSettingsStore(AppSettings.CreateDefault(), saveDelay: TimeSpan.FromMilliseconds(50));
+            var callerThreadId = Environment.CurrentManagedThreadId;
+            var coordinator = new SettingsCoordinator(
+                store,
+                new RecordingFolderSettingsStore(),
+                new RecordingThemeService(),
+                debounceDelay: TimeSpan.FromSeconds(5));
+
+            coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+
+            await coordinator.FlushAsync();
+
+            Assert.Equal(1, store.SaveCallCount);
+            Assert.NotEqual(callerThreadId, store.LastSaveThreadId);
+        });
+    }
+
+    [Fact]
+    public async Task OverlappingAppSaves_PersistLatestSettingsLast()
+    {
+        var store = new SequencedDelayAppSettingsStore(
+            AppSettings.CreateDefault(),
+            firstSaveDelay: TimeSpan.FromMilliseconds(200));
+        var coordinator = new SettingsCoordinator(
+            store,
+            new RecordingFolderSettingsStore(),
+            new RecordingThemeService(),
+            debounceDelay: TimeSpan.FromMilliseconds(25));
+
+        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+        await store.WaitForSaveStartedAsync(1);
+
+        coordinator.State.SelectedThemePreference = ThemePreference.Dark;
+
+        await store.WaitForSaveCountAsync(2);
+
+        Assert.Equal(2, store.SaveCallCount);
+        Assert.NotNull(store.LastSavedSettings);
+        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
     }
 
     [Fact]
@@ -204,19 +274,51 @@ public sealed class SettingsCoordinatorTests
             entry => Assert.Equal("/generated/", entry));
     }
 
-    private sealed class RecordingAppSettingsStore(AppSettings initialSettings) : IAppSettingsStore
+    private static Task RunOnSingleThreadSynchronizationContextAsync(Func<Task> action)
     {
+        var previousContext = SynchronizationContext.Current;
+        using var synchronizationContext = new PumpingSynchronizationContext();
+        SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+
+        try
+        {
+            var task = action();
+            synchronizationContext.RunUntilCompleted(task);
+            return Task.CompletedTask;
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(previousContext);
+        }
+    }
+
+    private sealed class RecordingAppSettingsStore(AppSettings initialSettings, TimeSpan? saveDelay = null) : IAppSettingsStore
+    {
+        private readonly TaskCompletionSource<bool> _saveObserved =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
         public int SaveCallCount { get; private set; }
 
         public AppSettings? LastSavedSettings { get; private set; }
+
+        public int? LastSaveThreadId { get; private set; }
 
         public AppSettings Load() => initialSettings.Clone();
 
         public void Save(AppSettings settings)
         {
+            if (saveDelay is { } delay)
+            {
+                Thread.Sleep(delay);
+            }
+
             SaveCallCount++;
+            LastSaveThreadId = Environment.CurrentManagedThreadId;
             LastSavedSettings = settings.Clone();
+            _saveObserved.TrySetResult(true);
         }
+
+        public Task WaitForSaveAsync() => _saveObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
     }
 
     private sealed class RecordingThemeService : IThemeService
@@ -257,6 +359,90 @@ public sealed class SettingsCoordinatorTests
         public void Seed(string rootPath, FolderSettings settings)
         {
             _settingsByPath[rootPath] = settings.Clone();
+        }
+    }
+
+    private sealed class SequencedDelayAppSettingsStore : IAppSettingsStore
+    {
+        private readonly AppSettings _initialSettings;
+        private readonly TimeSpan _firstSaveDelay;
+        private int _startedSaveCount;
+
+        public SequencedDelayAppSettingsStore(AppSettings initialSettings, TimeSpan firstSaveDelay)
+        {
+            _initialSettings = initialSettings;
+            _firstSaveDelay = firstSaveDelay;
+        }
+
+        public int SaveCallCount { get; private set; }
+
+        public AppSettings? LastSavedSettings { get; private set; }
+
+        public AppSettings Load() => _initialSettings.Clone();
+
+        public void Save(AppSettings settings)
+        {
+            var startedSaveCount = Interlocked.Increment(ref _startedSaveCount);
+            if (startedSaveCount == 1 && _firstSaveDelay > TimeSpan.Zero)
+            {
+                Thread.Sleep(_firstSaveDelay);
+            }
+
+            SaveCallCount++;
+            LastSavedSettings = settings.Clone();
+        }
+
+        public async Task WaitForSaveStartedAsync(int expectedCount)
+        {
+            await WaitForAsync(() => Volatile.Read(ref _startedSaveCount) >= expectedCount);
+        }
+
+        public async Task WaitForSaveCountAsync(int expectedCount)
+        {
+            await WaitForAsync(() => SaveCallCount >= expectedCount);
+        }
+
+        private static async Task WaitForAsync(Func<bool> condition)
+        {
+            for (var attempt = 0; attempt < 200; attempt++)
+            {
+                if (condition())
+                {
+                    return;
+                }
+
+                await Task.Delay(10);
+            }
+
+            Assert.True(condition());
+        }
+    }
+
+    private sealed class PumpingSynchronizationContext : SynchronizationContext, IDisposable
+    {
+        private readonly BlockingCollection<(SendOrPostCallback Callback, object? State)> _workItems = [];
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            _workItems.Add((d, state));
+        }
+
+        public void RunUntilCompleted(Task task)
+        {
+            while (!task.IsCompleted || _workItems.Count > 0)
+            {
+                if (_workItems.TryTake(out var workItem, millisecondsTimeout: 50))
+                {
+                    workItem.Callback(workItem.State);
+                }
+            }
+
+            task.GetAwaiter().GetResult();
+        }
+
+        public void Dispose()
+        {
+            _workItems.Dispose();
         }
     }
 }

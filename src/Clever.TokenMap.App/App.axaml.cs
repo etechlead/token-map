@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
@@ -46,7 +47,7 @@ public partial class App : Application
                 loggerFactory.CreateLogger<SettingsCoordinator>());
             desktop.Exit += (_, _) =>
             {
-                settingsCoordinator.FlushAsync().GetAwaiter().GetResult();
+                Task.Run(() => settingsCoordinator.FlushAsync()).GetAwaiter().GetResult();
                 loggerFactory.Dispose();
             };
             loggerFactory.CreateLogger<App>().LogInformation(

@@ -32,6 +32,8 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     private CancellationTokenSource? _folderSaveDebounceCancellationTokenSource;
     private Task? _pendingSaveTask;
     private Task? _pendingFolderSaveTask;
+    private Task _appPersistenceTask = Task.CompletedTask;
+    private Task _folderPersistenceTask = Task.CompletedTask;
     private bool _isApplyingSettings;
     private bool _isApplyingFolderSettings;
     private long _settingsVersion;
@@ -104,7 +106,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             try
             {
-                await pendingAppSaveTask.WaitAsync(cancellationToken);
+                await pendingAppSaveTask.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
@@ -115,15 +117,15 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         {
             try
             {
-                await pendingFolderSaveTask.WaitAsync(cancellationToken);
+                await pendingFolderSaveTask.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
             {
             }
         }
 
-        SaveAppSettingsIfNeeded(appVersionToSave);
-        SaveFolderSettingsIfNeeded(folderVersionToSave);
+        await SaveAppSettingsIfNeededAsync(appVersionToSave).ConfigureAwait(false);
+        await SaveFolderSettingsIfNeededAsync(folderVersionToSave).ConfigureAwait(false);
     }
 
     public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions)
@@ -193,7 +195,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             !PathComparison.Comparer.Equals(previousRootPath, normalizedRootPath))
         {
             CancelPendingFolderSave();
-            SaveFolderSettingsIfNeeded(folderVersionToSave);
+            SaveFolderSettingsIfNeededAsync(folderVersionToSave).GetAwaiter().GetResult();
         }
 
         if (string.IsNullOrWhiteSpace(normalizedRootPath))
@@ -303,74 +305,90 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     {
         try
         {
-            await Task.Delay(_debounceDelay, cancellationToken);
+            await Task.Delay(_debounceDelay, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
             return;
         }
 
-        SaveAppSettingsIfNeeded(versionToSave);
+        await SaveAppSettingsIfNeededAsync(versionToSave).ConfigureAwait(false);
     }
 
     private async Task SaveFolderAfterDelayAsync(long versionToSave, CancellationToken cancellationToken)
     {
         try
         {
-            await Task.Delay(_debounceDelay, cancellationToken);
+            await Task.Delay(_debounceDelay, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
             return;
         }
 
-        SaveFolderSettingsIfNeeded(versionToSave);
+        await SaveFolderSettingsIfNeededAsync(versionToSave).ConfigureAwait(false);
     }
 
-    private void SaveAppSettingsIfNeeded(long versionToSave)
+    private Task SaveAppSettingsIfNeededAsync(long versionToSave)
     {
         AppSettings? snapshot = null;
+        Task queuedPersistenceTask;
 
         lock (_syncLock)
         {
             if (versionToSave <= _lastSavedVersion || versionToSave != _settingsVersion)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             snapshot = _currentSettings.Clone();
             _lastSavedVersion = versionToSave;
+            queuedPersistenceTask = QueuePersistenceTask(
+                _appPersistenceTask,
+                () =>
+                {
+                    _appSettingsStore.Save(snapshot);
+                    _logger.LogDebug("Persisted updated app settings to settings.json.");
+                });
+            _appPersistenceTask = queuedPersistenceTask;
         }
 
-        _appSettingsStore.Save(snapshot);
-        _logger.LogDebug("Persisted updated app settings to settings.json.");
+        return queuedPersistenceTask;
     }
 
-    private void SaveFolderSettingsIfNeeded(long versionToSave)
+    private Task SaveFolderSettingsIfNeededAsync(long versionToSave)
     {
         FolderSettings? snapshot = null;
         string? rootPath = null;
+        Task queuedPersistenceTask;
 
         lock (_folderSyncLock)
         {
             if (versionToSave <= _lastSavedFolderSettingsVersion || versionToSave != _folderSettingsVersion)
             {
-                return;
+                return Task.CompletedTask;
             }
 
             if (string.IsNullOrWhiteSpace(_currentFolderSettings.RootPath))
             {
                 _lastSavedFolderSettingsVersion = versionToSave;
-                return;
+                return Task.CompletedTask;
             }
 
             snapshot = _currentFolderSettings.Clone();
             rootPath = snapshot.RootPath;
             _lastSavedFolderSettingsVersion = versionToSave;
+            queuedPersistenceTask = QueuePersistenceTask(
+                _folderPersistenceTask,
+                () =>
+                {
+                    _folderSettingsStore.Save(rootPath, snapshot);
+                    _logger.LogDebug($"Persisted updated folder settings for '{rootPath}'.");
+                });
+            _folderPersistenceTask = queuedPersistenceTask;
         }
 
-        _folderSettingsStore.Save(rootPath!, snapshot);
-        _logger.LogDebug($"Persisted updated folder settings for '{rootPath}'.");
+        return queuedPersistenceTask;
     }
 
     private void LoadSettings(AppSettings settings)
@@ -472,5 +490,28 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
 
         saveDebounceCancellationTokenSource?.Cancel();
         saveDebounceCancellationTokenSource?.Dispose();
+    }
+
+    private static async Task QueuePersistenceTask(Task previousTask, Action persistenceAction)
+    {
+        ArgumentNullException.ThrowIfNull(previousTask);
+        ArgumentNullException.ThrowIfNull(persistenceAction);
+
+        try
+        {
+            await previousTask.ConfigureAwait(false);
+        }
+        catch
+        {
+        }
+
+        try
+        {
+            await Task.Run(persistenceAction).ConfigureAwait(false);
+        }
+        catch
+        {
+            throw;
+        }
     }
 }
