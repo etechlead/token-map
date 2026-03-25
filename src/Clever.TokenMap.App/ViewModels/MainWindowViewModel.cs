@@ -8,7 +8,6 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Logging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -29,16 +28,17 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool isSettingsOpen;
 
     public MainWindowViewModel()
+        : this(MainWindowViewModelDefaults.Create())
+    {
+    }
+
+    private MainWindowViewModel(MainWindowViewModelDependencies dependencies)
         : this(
-            CreateAnalysisSessionController(
-                new NullProjectAnalyzer(),
-                new NullFolderPickerService(),
-                new NullFolderPathService(),
-                NullAppLogger.Instance),
-            new TreemapNavigationState(),
-            new NullSettingsCoordinator(),
-            new NullFolderPathService(),
-            new NullPathShellService())
+            dependencies.AnalysisSessionController,
+            dependencies.TreemapNavigationState,
+            dependencies.SettingsCoordinator,
+            dependencies.FolderPathService,
+            dependencies.PathShellService)
     {
     }
 
@@ -337,63 +337,5 @@ public partial class MainWindowViewModel : ViewModelBase
         return string.IsNullOrWhiteSpace(displayName)
             ? trimmedPath
             : displayName;
-    }
-
-    private static AnalysisSessionController CreateAnalysisSessionController(
-        IProjectAnalyzer projectAnalyzer,
-        IFolderPickerService folderPickerService,
-        IFolderPathService folderPathService,
-        IAppLogger? logger)
-    {
-        ArgumentNullException.ThrowIfNull(projectAnalyzer);
-        ArgumentNullException.ThrowIfNull(folderPickerService);
-        ArgumentNullException.ThrowIfNull(folderPathService);
-
-        return new AnalysisSessionController(projectAnalyzer, folderPickerService, folderPathService, logger, scanOptionsResolver: null);
-    }
-
-    private sealed class NullFolderPickerService : IFolderPickerService
-    {
-        public Task<string?> PickFolderAsync(CancellationToken cancellationToken) =>
-            Task.FromResult<string?>(null);
-    }
-
-    private sealed class NullProjectAnalyzer : IProjectAnalyzer
-    {
-        public Task<ProjectSnapshot> AnalyzeAsync(
-            string rootPath,
-            ScanOptions options,
-            IProgress<AnalysisProgress>? progress,
-            CancellationToken cancellationToken) =>
-            throw new InvalidOperationException("Project analyzer is not configured.");
-    }
-
-    private sealed class NullFolderPathService : IFolderPathService
-    {
-        public bool Exists(string folderPath) => true;
-    }
-
-    private sealed class NullSettingsCoordinator : ISettingsCoordinator
-    {
-        public SettingsState State { get; } = new();
-
-        public CurrentFolderSettingsState CurrentFolderState { get; } = new();
-
-        public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
-
-        public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
-
-        public void SwitchActiveFolder(string? rootPath)
-        {
-        }
-    }
-
-    private sealed class NullPathShellService : IPathShellService
-    {
-        public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
-
-        public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
-            Task.FromResult(false);
     }
 }
