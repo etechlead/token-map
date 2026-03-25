@@ -174,9 +174,10 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void MainWindow_ShowsRecentFoldersEmptyState_WhenNoRecentFoldersAreLoaded()
     {
+        var viewModel = new MainWindowViewModel();
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = viewModel,
         };
 
         window.Show();
@@ -192,6 +193,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(emptyStateOpenButton);
         Assert.NotNull(workspaceHost);
         Assert.NotNull(recentFoldersItems);
+        Assert.True(viewModel.RecentFolders.ShowStartSurface);
+        Assert.False(viewModel.RecentFolders.HasRecentFolders);
+        Assert.True(viewModel.RecentFolders.ShowEmptyState);
         Assert.True(startSurface.IsVisible);
         Assert.True(emptyState.IsVisible);
         Assert.True(workspaceHost.IsVisible);
@@ -201,16 +205,17 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void MainWindow_ShowsRecentFoldersStartSurface_WhenRecentFoldersAreLoaded()
     {
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            selectedFolderPath: "C:\\Demo",
+            recentFolderPaths:
+            [
+                "C:\\RepoA",
+                "C:\\RepoB",
+            ]);
         var window = new MainWindow
         {
-            DataContext = CreateMainWindowViewModel(
-                new StubProjectAnalyzer(CreateSnapshot()),
-                selectedFolderPath: "C:\\Demo",
-                recentFolderPaths:
-                [
-                    "C:\\RepoA",
-                    "C:\\RepoB",
-                ]),
+            DataContext = viewModel,
         };
 
         window.Show();
@@ -226,6 +231,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(workspaceHost);
         Assert.NotNull(clearButton);
         Assert.NotNull(recentFoldersItems);
+        Assert.True(viewModel.RecentFolders.ShowStartSurface);
+        Assert.True(viewModel.RecentFolders.HasRecentFolders);
+        Assert.False(viewModel.RecentFolders.ShowEmptyState);
         Assert.True(startSurface.IsVisible);
         Assert.False(emptyState.IsVisible);
         Assert.True(clearButton.IsVisible);
@@ -292,9 +300,9 @@ public sealed class MainWindowLayoutTests
     {
         var viewModel = new MainWindowViewModel();
 
-        Assert.Single(viewModel.RecentFolderFlyoutItems);
-        Assert.False(viewModel.RecentFolderFlyoutItems[0].CanOpen);
-        Assert.Equal("No previous folders yet", viewModel.RecentFolderFlyoutItems[0].DisplayName);
+        Assert.Single(viewModel.RecentFolders.FlyoutItems);
+        Assert.False(viewModel.RecentFolders.FlyoutItems[0].CanOpen);
+        Assert.Equal("No previous folders yet", viewModel.RecentFolders.FlyoutItems[0].DisplayName);
     }
 
     [Fact]
@@ -308,12 +316,12 @@ public sealed class MainWindowLayoutTests
                 "C:\\RepoB",
             ]);
 
-        var folderToRemove = Assert.Single(viewModel.RecentFolders, folder => folder.DisplayName == "RepoB");
+        var folderToRemove = Assert.Single(viewModel.RecentFolders.Items, folder => folder.DisplayName == "RepoB");
 
-        viewModel.RemoveRecentFolderCommand.Execute(folderToRemove);
+        viewModel.RecentFolders.RemoveRecentFolderCommand.Execute(folderToRemove);
 
-        Assert.Single(viewModel.RecentFolders);
-        Assert.Equal("RepoA", viewModel.RecentFolders[0].DisplayName);
+        Assert.Single(viewModel.RecentFolders.Items);
+        Assert.Equal("RepoA", viewModel.RecentFolders.Items[0].DisplayName);
     }
 
     [Fact]
@@ -327,11 +335,11 @@ public sealed class MainWindowLayoutTests
                 "C:\\RepoB",
             ]);
 
-        viewModel.ClearRecentFoldersCommand.Execute(null);
+        viewModel.RecentFolders.ClearRecentFoldersCommand.Execute(null);
 
-        Assert.Empty(viewModel.RecentFolders);
-        Assert.Single(viewModel.RecentFolderFlyoutItems);
-        Assert.Equal("No previous folders yet", viewModel.RecentFolderFlyoutItems[0].DisplayName);
+        Assert.Empty(viewModel.RecentFolders.Items);
+        Assert.Single(viewModel.RecentFolders.FlyoutItems);
+        Assert.Equal("No previous folders yet", viewModel.RecentFolders.FlyoutItems[0].DisplayName);
     }
 
     [AvaloniaFact]
@@ -783,6 +791,11 @@ public sealed class MainWindowLayoutTests
         Assert.Equal("11", lineSummaryText?.Text);
         Assert.Equal("1", fileSummaryText?.Text);
         Assert.Null(warningSummaryText);
+        Assert.False(viewModel.RecentFolders.ShowStartSurface);
+        Assert.True(viewModel.RecentFolders.HasRecentFolders);
+        Assert.Collection(
+            viewModel.RecentFolders.Items,
+            folder => Assert.Equal("Demo", folder.DisplayName));
         Assert.NotNull(metricTokensRadioButton);
         Assert.NotNull(metricLinesRadioButton);
         Assert.NotNull(metricSizeRadioButton);

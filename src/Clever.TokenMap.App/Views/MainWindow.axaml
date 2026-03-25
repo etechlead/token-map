@@ -47,7 +47,7 @@
                     Margin="0,10,0,8"
                     Padding="24"
                     ZIndex="1"
-                    IsVisible="{Binding ShowRecentStartSurface}">
+                    IsVisible="{Binding RecentFolders.ShowStartSurface}">
                 <Grid RowDefinitions="Auto,*"
                       RowSpacing="18">
                     <Grid ColumnDefinitions="*,Auto"
@@ -59,8 +59,8 @@
                                 Grid.Column="1"
                                 Classes="recent-clear-button"
                                 VerticalAlignment="Center"
-                                IsVisible="{Binding HasRecentFolders}"
-                                Command="{Binding ClearRecentFoldersCommand}"
+                                IsVisible="{Binding RecentFolders.HasRecentFolders}"
+                                Command="{Binding RecentFolders.ClearRecentFoldersCommand}"
                                 Content="Clear" />
                     </Grid>
 
@@ -70,7 +70,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 Spacing="8"
-                                IsVisible="{Binding ShowRecentFoldersEmptyState}">
+                                IsVisible="{Binding RecentFolders.ShowEmptyState}">
                         <TextBlock Classes="panel-title"
                                    HorizontalAlignment="Center"
                                    Text="No previous folders yet" />
@@ -91,9 +91,9 @@
 
                     <ScrollViewer Grid.Row="1"
                                   VerticalScrollBarVisibility="Auto"
-                                  IsVisible="{Binding HasRecentFolders}">
+                                  IsVisible="{Binding RecentFolders.HasRecentFolders}">
                         <ItemsControl Name="RecentFoldersItemsControl"
-                                      ItemsSource="{Binding RecentFolders}">
+                                      ItemsSource="{Binding RecentFolders.Items}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <WrapPanel Orientation="Horizontal"
@@ -109,7 +109,7 @@
                                                 HorizontalAlignment="Stretch"
                                                 Margin="0"
                                                 Padding="14,13,40,13"
-                                                Command="{Binding DataContext.OpenRecentFolderCommand, ElementName=RootWindow}"
+                                                Command="{Binding DataContext.RecentFolders.OpenRecentFolderCommand, ElementName=RootWindow}"
                                                 CommandParameter="{Binding}">
                                             <Grid RowDefinitions="Auto,Auto"
                                                   ColumnDefinitions="Auto,*"
@@ -144,7 +144,7 @@
                                         <Button Classes="close-button recent-folder-remove-button"
                                                 HorizontalAlignment="Right"
                                                 VerticalAlignment="Top"
-                                                Command="{Binding DataContext.RemoveRecentFolderCommand, ElementName=RootWindow}"
+                                                Command="{Binding DataContext.RecentFolders.RemoveRecentFolderCommand, ElementName=RootWindow}"
                                                 CommandParameter="{Binding}"
                                                 ToolTip.Tip="Remove from recent folders">
                                             <Path Classes="close-button-icon"

@@ -15,6 +15,7 @@
 - `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
 - `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.
 - `SettingsCoordinator` owns app-wide and current-folder settings load/save behavior, maps persisted settings onto app-layer state, debounces persistence, resolves scan options for a target root path, and applies theme changes.
+- `RecentFoldersViewModel` owns recent-folder projection, the start-surface empty-state workflow, and recent-folder open/remove/clear commands.
 - `ProjectTreeViewModel` owns tree sort mode, expansion state, selection, and the visible-row projection built from the scanned `ProjectNode` tree.
 - `TreemapNavigationState` owns selected node state, treemap root scope, and breadcrumb rebuilding.
 - `MainWindow` composes section `UserControl`s for toolbar/summary, project tree, treemap, and settings drawer. Per-section UI behavior stays in section code-behind when it is strictly view-specific, such as `DataGrid` sorting headers and treemap drill-down event wiring.

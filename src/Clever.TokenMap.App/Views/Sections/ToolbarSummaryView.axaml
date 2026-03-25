@@ -34,7 +34,7 @@
                                 </StackPanel>
                             </SplitButton.Content>
                             <SplitButton.Flyout>
-                                <MenuFlyout ItemsSource="{Binding RecentFolderFlyoutItems}"
+                                <MenuFlyout ItemsSource="{Binding RecentFolders.FlyoutItems}"
                                             Placement="BottomEdgeAlignedLeft">
                                     <MenuFlyout.ItemContainerTheme>
                                         <ControlTheme TargetType="MenuItem"
@@ -43,7 +43,7 @@
                                             <Setter Property="IsEnabled"
                                                     Value="{Binding CanOpen}" />
                                             <Setter Property="Command"
-                                                    Value="{Binding DataContext.OpenRecentFolderCommand, ElementName=ToolbarHost}" />
+                                                    Value="{Binding DataContext.RecentFolders.OpenRecentFolderCommand, ElementName=ToolbarHost}" />
                                             <Setter Property="CommandParameter"
                                                     Value="{Binding}" />
                                             <Setter Property="Header"
