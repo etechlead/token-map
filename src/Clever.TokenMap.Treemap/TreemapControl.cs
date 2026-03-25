@@ -81,6 +81,7 @@ public sealed class TreemapControl : Control
     private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
     private bool _isTooltipSuppressed;
     private Size _layoutSize;
+    private MouseButton? _lastPressedMouseButton;
     private Point? _tooltipAnchorPoint;
     public event EventHandler<TreemapDrillDownRequestedEventArgs>? DrillDownRequested;
 
@@ -361,11 +362,14 @@ public sealed class TreemapControl : Control
         base.OnPointerPressed(e);
         var point = e.GetPosition(this);
         SelectNodeAt(point);
+        var pressedMouseButton = GetPressedMouseButton(e.GetCurrentPoint(this).Properties.PointerUpdateKind);
 
-        if (e.ClickCount == 2)
+        if (IsDrillDownGesture(e.Pointer.Type, e.ClickCount, pressedMouseButton, _lastPressedMouseButton))
         {
             RequestDrillDownAt(point);
         }
+
+        _lastPressedMouseButton = pressedMouseButton;
     }
 
     private void DrawPlaceholder(DrawingContext context, string message)
@@ -790,6 +794,32 @@ public sealed class TreemapControl : Control
 
     private static bool IsLeafNode(ProjectNode node) =>
         node.Kind == Core.Enums.ProjectNodeKind.File || node.Children.Count == 0;
+
+    internal static bool IsDrillDownGesture(
+        PointerType pointerType,
+        int clickCount,
+        MouseButton? currentMouseButton,
+        MouseButton? previousMouseButton)
+    {
+        if (clickCount != 2)
+        {
+            return false;
+        }
+
+        return pointerType != PointerType.Mouse ||
+               currentMouseButton is not null && currentMouseButton == previousMouseButton;
+    }
+
+    internal static MouseButton? GetPressedMouseButton(PointerUpdateKind pointerUpdateKind) =>
+        pointerUpdateKind switch
+        {
+            PointerUpdateKind.LeftButtonPressed => MouseButton.Left,
+            PointerUpdateKind.MiddleButtonPressed => MouseButton.Middle,
+            PointerUpdateKind.RightButtonPressed => MouseButton.Right,
+            PointerUpdateKind.XButton1Pressed => MouseButton.XButton1,
+            PointerUpdateKind.XButton2Pressed => MouseButton.XButton2,
+            _ => null,
+        };
 
     private static bool CanDrillDown(ProjectNode? node) =>
         node is not null &&

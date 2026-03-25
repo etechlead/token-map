@@ -1,6 +1,8 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Treemap;
 using Avalonia.Media;
@@ -108,6 +110,51 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Null(control.SelectedNode);
         Assert.Null(control.PressedNode);
+    }
+
+    [Fact]
+    public void TreemapControl_IsDrillDownGesture_RequiresSameMouseButton()
+    {
+        Assert.True(TreemapControl.IsDrillDownGesture(PointerType.Mouse, 2, MouseButton.Left, MouseButton.Left));
+        Assert.False(TreemapControl.IsDrillDownGesture(PointerType.Mouse, 2, MouseButton.Right, MouseButton.Left));
+        Assert.False(TreemapControl.IsDrillDownGesture(PointerType.Mouse, 2, MouseButton.Right, null));
+        Assert.True(TreemapControl.IsDrillDownGesture(PointerType.Touch, 2, null, null));
+    }
+
+    [Fact]
+    public void TreemapControl_GetPressedMouseButton_MapsPressedUpdateKinds()
+    {
+        Assert.Equal(MouseButton.Left, TreemapControl.GetPressedMouseButton(PointerUpdateKind.LeftButtonPressed));
+        Assert.Equal(MouseButton.Right, TreemapControl.GetPressedMouseButton(PointerUpdateKind.RightButtonPressed));
+        Assert.Equal(MouseButton.Middle, TreemapControl.GetPressedMouseButton(PointerUpdateKind.MiddleButtonPressed));
+        Assert.Equal(MouseButton.XButton1, TreemapControl.GetPressedMouseButton(PointerUpdateKind.XButton1Pressed));
+        Assert.Equal(MouseButton.XButton2, TreemapControl.GetPressedMouseButton(PointerUpdateKind.XButton2Pressed));
+        Assert.Null(TreemapControl.GetPressedMouseButton(PointerUpdateKind.Other));
+    }
+
+    [AvaloniaFact]
+    public async Task TreemapControl_MixedMouseButtons_DoNotTriggerDrillDown()
+    {
+        var control = CreateControl(CreateNestedSnapshot());
+        var window = CreateHostWindow(control);
+        var drillDownRequests = 0;
+        control.DrillDownRequested += (_, _) => drillDownRequests++;
+
+        window.Show();
+        await WaitForUiAsync(window);
+
+        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
+        var point = TranslateToWindow(window, control, new Point(directoryVisual.Bounds.X + 6, directoryVisual.Bounds.Y + 6));
+
+        window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
+        window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
+        window.MouseDown(point, MouseButton.Right, RawInputModifiers.None);
+        window.MouseUp(point, MouseButton.Right, RawInputModifiers.None);
+        await WaitForUiAsync(window);
+
+        Assert.Equal(0, drillDownRequests);
+        Assert.Equal("/", control.RootNode?.Id);
+        Assert.Equal("src", control.SelectedNode?.RelativePath);
     }
 
     [AvaloniaFact]
@@ -341,6 +388,18 @@ public sealed class TreemapControlHeadlessTests
         new(
             visual.Bounds.X + (visual.Bounds.Width / 2),
             visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+    private static Point TranslateToWindow(Window window, Control control, Point point)
+    {
+        return control.TranslatePoint(point, window)
+               ?? throw new InvalidOperationException("Unable to translate treemap point to window coordinates.");
+    }
+
+    private static async Task WaitForUiAsync(Window window)
+    {
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { }, Avalonia.Threading.DispatcherPriority.Loaded);
+        window.UpdateLayout();
+    }
 
     private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithEmptyDirectory()
     {
