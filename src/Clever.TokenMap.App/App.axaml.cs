@@ -7,16 +7,10 @@ using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
-using Clever.TokenMap.Infrastructure.Analysis;
-using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
-using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Settings;
-using Clever.TokenMap.Infrastructure.Text;
-using Clever.TokenMap.Infrastructure.Tokenization;
 
 namespace Clever.TokenMap.App;
 
@@ -52,21 +46,15 @@ public partial class App : Application
             };
             loggerFactory.CreateLogger<App>().LogInformation(
                 $"Application starting. OS='{Environment.OSVersion}', framework='{Environment.Version}', logLevel='{appSettings.Logging.MinLevel}', themePreference='{appSettings.Appearance.ThemePreference}', systemTheme='{themeService.CurrentSystemTheme}'.");
-            var analyzer = new ProjectAnalyzer(
-                new FileSystemProjectScanner(logger: loggerFactory.CreateLogger<FileSystemProjectScanner>()),
-                new HeuristicTextFileDetector(),
-                new MicrosoftMlTokenCounter(),
-                new InMemoryCacheStore(),
-                loggerFactory: loggerFactory);
-            var analysisSessionController = new AnalysisSessionController(
+            var analyzer = AppComposition.CreateDefaultProjectAnalyzer(loggerFactory);
+            var analysisSessionController = AppComposition.CreateAnalysisSessionController(
                 analyzer,
                 new WindowFolderPickerService(mainWindow),
                 folderPathService,
-                loggerFactory.CreateLogger<AnalysisSessionController>(),
-                settingsCoordinator);
-            mainWindow.DataContext = new MainWindowViewModel(
+                settingsCoordinator,
+                loggerFactory);
+            mainWindow.DataContext = AppComposition.CreateMainWindowViewModel(
                 analysisSessionController,
-                new TreemapNavigationState(),
                 settingsCoordinator,
                 folderPathService,
                 new PathShellService());

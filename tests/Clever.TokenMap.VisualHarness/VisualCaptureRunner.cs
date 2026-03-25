@@ -6,17 +6,12 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
+using Clever.TokenMap.App;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Infrastructure.Analysis;
-using Clever.TokenMap.Infrastructure.Caching;
-using Clever.TokenMap.Infrastructure.Scanning;
-using Clever.TokenMap.Infrastructure.Text;
-using Clever.TokenMap.Infrastructure.Tokenization;
 using Clever.TokenMap.Treemap;
 
 internal static class VisualCaptureRunner
@@ -155,11 +150,7 @@ internal static class VisualCaptureRunner
             userExcludes.Add(outputExclude);
         }
 
-        var analyzer = new ProjectAnalyzer(
-            new FileSystemProjectScanner(),
-            new HeuristicTextFileDetector(),
-            new MicrosoftMlTokenCounter(),
-            new InMemoryCacheStore());
+        var analyzer = AppComposition.CreateDefaultProjectAnalyzer();
         var scanOptions = new ScanOptions
         {
             RespectGitIgnore = true,
@@ -215,22 +206,22 @@ internal static class VisualCaptureRunner
             SelectedMetric = options.Metric,
             SelectedTreemapPalette = palette,
         };
+        var settingsCoordinator = new InlineSettingsCoordinator(settingsState);
+        var folderPathService = new ExistingFolderPathService();
 
-        var analysisSessionController = new AnalysisSessionController(
+        var analysisSessionController = AppComposition.CreateAnalysisSessionController(
             new SnapshotProjectAnalyzer(snapshot),
             new FixedFolderPickerService(snapshot.RootPath),
-            new ExistingFolderPathService());
+            folderPathService,
+            settingsCoordinator);
         await analysisSessionController.OpenFolderAsync(snapshot.RootPath, ScanOptions.Default);
 
-        var viewModel = new MainWindowViewModel(
+        var viewModel = AppComposition.CreateMainWindowViewModel(
             analysisSessionController,
-            new TreemapNavigationState(),
-            new InlineSettingsCoordinator(settingsState),
-            new ExistingFolderPathService(),
-            new NoOpPathShellService())
-        {
-            IsSettingsOpen = settingsOpen,
-        };
+            settingsCoordinator,
+            folderPathService,
+            new NoOpPathShellService());
+        viewModel.IsSettingsOpen = settingsOpen;
 
         var window = new MainWindow
         {
