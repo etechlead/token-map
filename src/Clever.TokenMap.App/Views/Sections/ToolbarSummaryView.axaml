@@ -29,7 +29,8 @@
                                                       Icon="FolderOpen"
                                                       IconVariant="Regular"
                                                       IconSize="Size20" />
-                                    <TextBlock VerticalAlignment="Center"
+                                    <TextBlock Classes="action-button-label"
+                                               VerticalAlignment="Center"
                                                Text="Open Folder" />
                                 </StackPanel>
                             </SplitButton.Content>

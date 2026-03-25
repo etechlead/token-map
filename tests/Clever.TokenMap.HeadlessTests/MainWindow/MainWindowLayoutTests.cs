@@ -1,9 +1,12 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App;
@@ -134,6 +137,29 @@ public sealed class MainWindowLayoutTests
         Assert.False(tokensButton.IsChecked);
         Assert.True(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_TreemapHeader_AlignsWithTreemapCanvasAndTreemapUsesFullPaneWidth()
+    {
+        var window = new MainWindow
+        {
+            DataContext = CreateMainWindowViewModel(),
+        };
+
+        window.Show();
+        window.UpdateLayout();
+
+        var treemapPane = FindNamedDescendant<Border>(window, "TreemapPane");
+        var treemapHeader = FindNamedDescendant<Grid>(window, "TreemapHeader");
+        var treemapControl = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+
+        Assert.NotNull(treemapPane);
+        Assert.NotNull(treemapHeader);
+        Assert.NotNull(treemapControl);
+        Assert.Equal(treemapPane.Bounds.Width, treemapControl.Bounds.Width, 3);
+        Assert.Equal(treemapControl.Bounds.Left + 6, treemapHeader.Bounds.Left, 3);
+        Assert.Equal(treemapControl.Bounds.Right - 6, treemapHeader.Bounds.Right, 3);
     }
 
     [AvaloniaFact]
@@ -309,6 +335,44 @@ public sealed class MainWindowLayoutTests
 
         Assert.NotNull(splitButton);
         Assert.NotNull(splitButton.Flyout);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_OpenFolderSplitButton_UsesWhiteContentInLightTheme()
+    {
+        var application = Application.Current!;
+        var previousThemeVariant = application.RequestedThemeVariant;
+        application.RequestedThemeVariant = ThemeVariant.Light;
+
+        try
+        {
+            var window = new MainWindow
+            {
+                DataContext = CreateMainWindowViewModel(),
+            };
+
+            window.Show();
+
+            var splitButton = FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton");
+            Assert.NotNull(splitButton);
+
+            var openFolderText = splitButton.GetVisualDescendants()
+                .OfType<TextBlock>()
+                .Single(textBlock => string.Equals(textBlock.Text, "Open Folder", StringComparison.Ordinal));
+            var openFolderIcon = splitButton.GetVisualDescendants()
+                .OfType<FluentIcon>()
+                .Single(icon => icon.Classes.Contains("action-button-icon"));
+
+            var textBrush = Assert.IsAssignableFrom<ISolidColorBrush>(openFolderText.Foreground);
+            var iconBrush = Assert.IsAssignableFrom<ISolidColorBrush>(openFolderIcon.Foreground);
+
+            Assert.Equal(Colors.White, textBrush.Color);
+            Assert.Equal(Colors.White, iconBrush.Color);
+        }
+        finally
+        {
+            application.RequestedThemeVariant = previousThemeVariant;
+        }
     }
 
     [Fact]

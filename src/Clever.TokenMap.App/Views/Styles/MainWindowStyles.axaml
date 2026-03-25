@@ -9,6 +9,9 @@
         <Setter Property="CornerRadius" Value="4" />
         <Setter Property="Padding" Value="12" />
     </Style>
+    <Style Selector="Border.treemap-pane">
+        <Setter Property="Padding" Value="0" />
+    </Style>
     <Style Selector="TextBlock.panel-title">
         <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -260,6 +263,21 @@
     <Style Selector="SplitButton.action-split-button:pressed">
         <Setter Property="Background" Value="{DynamicResource TokenMapAccentPressedBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button TextBlock.action-button-label">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button icons|FluentIcon.action-button-icon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button /template/ ToggleButton">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button /template/ PathIcon">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button /template/ Path">
+        <Setter Property="Fill" Value="White" />
     </Style>
     <Style Selector="TextBlock.tree-table-name">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />

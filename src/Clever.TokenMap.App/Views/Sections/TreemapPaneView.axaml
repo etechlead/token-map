@@ -6,10 +6,12 @@
              x:Name="TreemapPaneRoot"
              x:DataType="vm:MainWindowViewModel">
     <Border Name="TreemapPane"
-            Classes="panel">
+            Classes="panel treemap-pane">
         <Grid RowDefinitions="Auto,*"
               RowSpacing="8">
-            <Grid ColumnDefinitions="Auto,Auto,*"
+            <Grid Name="TreemapHeader"
+                  Margin="6,12,6,0"
+                  ColumnDefinitions="Auto,Auto,*"
                   ColumnSpacing="12">
                 <TextBlock Classes="panel-title"
                            Name="TreemapTitleText"
@@ -70,18 +72,12 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </Grid>
-            <Border Grid.Row="1"
-                    Background="Transparent"
-                    BorderBrush="Transparent"
-                    BorderThickness="0"
-                    CornerRadius="0"
-                    Padding="0">
-                <controls:TreemapControl Name="ProjectTreemapControl"
-                                         RootNode="{Binding TreemapRootNode}"
-                                         Metric="{Binding Toolbar.SelectedMetric}"
-                                         Palette="{Binding Toolbar.SelectedTreemapPalette}"
-                                         SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
-            </Border>
+            <controls:TreemapControl Grid.Row="1"
+                                     Name="ProjectTreemapControl"
+                                     RootNode="{Binding TreemapRootNode}"
+                                     Metric="{Binding Toolbar.SelectedMetric}"
+                                     Palette="{Binding Toolbar.SelectedTreemapPalette}"
+                                     SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
         </Grid>
     </Border>
 </UserControl>
