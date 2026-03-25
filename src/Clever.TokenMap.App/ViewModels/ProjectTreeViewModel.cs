@@ -18,6 +18,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
     private readonly HashSet<string> _expandedNodeIds = new(StringComparer.Ordinal);
     private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Tokens;
     private ListSortDirection _currentSortDirection = ListSortDirection.Descending;
+    private AnalysisMetric _shareMetric = AnalysisMetric.Tokens;
     private ProjectNode? _rootNode;
     private string? _selectedNodeId;
 
@@ -106,6 +107,20 @@ public partial class ProjectTreeViewModel : ViewModelBase
         _currentSortColumn = column;
         _currentSortDirection = direction;
         RebuildVisibleNodes();
+        RestoreSelectedNodeAfterRebuild();
+    }
+
+    public void SetShareMetric(AnalysisMetric metric)
+    {
+        var normalizedMetric = NormalizeShareMetric(metric);
+        if (_shareMetric == normalizedMetric)
+        {
+            return;
+        }
+
+        _shareMetric = normalizedMetric;
+        RebuildVisibleNodes();
+        RestoreSelectedNodeAfterRebuild();
     }
 
     public bool MoveSelectionLeft()
@@ -221,12 +236,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
         }
 
         RebuildVisibleNodes();
-
-        if (_selectedNodeId is { } selectedNodeId &&
-            _visibleNodesById.TryGetValue(selectedNodeId, out var selectedNode))
-        {
-            SelectedNode = selectedNode;
-        }
+        RestoreSelectedNodeAfterRebuild();
 
         return true;
     }
@@ -242,15 +252,17 @@ public partial class ProjectTreeViewModel : ViewModelBase
             return;
         }
 
-        AddVisibleNodeAndChildren(_rootNode, depth: 0);
+        AddVisibleNodeAndChildren(_rootNode, parentNode: null, depth: 0);
     }
 
-    private void AddVisibleNodeAndChildren(ProjectNode node, int depth)
+    private void AddVisibleNodeAndChildren(ProjectNode node, ProjectNode? parentNode, int depth)
     {
         var viewModel = new ProjectTreeNodeViewModel(
             node,
             depth,
-            isExpanded: _expandedNodeIds.Contains(node.Id));
+            isExpanded: _expandedNodeIds.Contains(node.Id),
+            parentNode: parentNode,
+            parentShareMetric: _shareMetric);
 
         if (depth == 0)
         {
@@ -267,7 +279,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
 
         foreach (var child in GetSortedChildren(node))
         {
-            AddVisibleNodeAndChildren(child, depth + 1);
+            AddVisibleNodeAndChildren(child, node, depth + 1);
         }
     }
 
@@ -276,6 +288,11 @@ public partial class ProjectTreeViewModel : ViewModelBase
         if (node.Children.Count == 0)
         {
             return [];
+        }
+
+        if (_currentSortColumn == ProjectTreeSortColumn.ParentShare)
+        {
+            return GetChildrenSortedByParentShare(node);
         }
 
         return _currentSortDirection == ListSortDirection.Ascending
@@ -310,27 +327,63 @@ public partial class ProjectTreeViewModel : ViewModelBase
         }
     }
 
+    private IEnumerable<ProjectNode> GetChildrenSortedByParentShare(ProjectNode parentNode)
+    {
+        var childrenWithShare = GetNodeChildrenWithShare(parentNode);
+        return _currentSortDirection == ListSortDirection.Ascending
+            ? childrenWithShare
+                .OrderByDescending(item => item.Share.HasValue)
+                .ThenBy(item => item.Share ?? double.PositiveInfinity)
+                .ThenBy(item => item.Child.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(item => item.Child)
+            : childrenWithShare
+                .OrderByDescending(item => item.Share.HasValue)
+                .ThenByDescending(item => item.Share ?? double.NegativeInfinity)
+                .ThenBy(item => item.Child.Name, StringComparer.OrdinalIgnoreCase)
+                .Select(item => item.Child);
+    }
+
+    private List<(ProjectNode Child, double? Share)> GetNodeChildrenWithShare(ProjectNode parentNode)
+    {
+        return parentNode.Children
+            .Select(child => (Child: child, Share: ProjectTreeNodeViewModel.TryCalculateParentShareRatio(child, parentNode, _shareMetric)))
+            .ToList();
+    }
+
+    private void RestoreSelectedNodeAfterRebuild()
+    {
+        if (_selectedNodeId is not { } selectedNodeId ||
+            !_visibleNodesById.TryGetValue(selectedNodeId, out var selectedNode))
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(SelectedNode, selectedNode))
+        {
+            SelectedNode = selectedNode;
+        }
+    }
+
     private static IComparable GetSortValue(ProjectNode node, ProjectTreeSortColumn column) =>
         column switch
         {
             ProjectTreeSortColumn.Size => node.Metrics.FileSizeBytes,
             ProjectTreeSortColumn.Lines => node.Metrics.TotalLines,
             ProjectTreeSortColumn.Tokens => node.Metrics.Tokens,
-            ProjectTreeSortColumn.Files => node.Kind switch
-            {
-                ProjectNodeKind.Directory => node.Metrics.DescendantFileCount,
-                ProjectNodeKind.Root => node.Metrics.DescendantFileCount,
-                _ => 0,
-            },
             _ => node.Name,
         };
+
+    private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) =>
+        metric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines
+            ? AnalysisMetric.TotalLines
+            : metric;
 }
 
 public enum ProjectTreeSortColumn
 {
     Name,
+    ParentShare,
     Size,
     Lines,
     Tokens,
-    Files,
 }

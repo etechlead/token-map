@@ -154,8 +154,8 @@
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
     <Style Selector="Button.tree-expander">
-        <Setter Property="Width" Value="14" />
-        <Setter Property="Height" Value="14" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
@@ -163,8 +163,8 @@
         <Setter Property="CornerRadius" Value="0" />
     </Style>
     <Style Selector="icons|FluentIcon.tree-expander-icon">
-        <Setter Property="Width" Value="10" />
-        <Setter Property="Height" Value="10" />
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="12" />
         <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
         <Setter Property="HorizontalAlignment" Value="Center" />
         <Setter Property="VerticalAlignment" Value="Center" />
@@ -270,6 +270,25 @@
         <Setter Property="Foreground" Value="{DynamicResource TokenMapSecondaryTextBrush}" />
         <Setter Property="HorizontalAlignment" Value="Right" />
         <Setter Property="TextAlignment" Value="Right" />
+    </Style>
+    <Style Selector="Border.tree-share-bar">
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="3" />
+    </Style>
+    <Style Selector="Border.tree-share-fill">
+        <Setter Property="Height" Value="20" />
+        <Setter Property="Background" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
+        <Setter Property="CornerRadius" Value="3" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
+    <Style Selector="TextBlock.tree-share-text">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+        <Setter Property="TextAlignment" Value="Right" />
+        <Setter Property="Margin" Value="0,0,6,0" />
     </Style>
     <Style Selector="svg|Svg.tree-file-icon">
         <Setter Property="Width" Value="16" />

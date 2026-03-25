@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.IO;
 using Avalonia;
@@ -9,13 +10,23 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class ProjectTreeNodeViewModel : ViewModelBase
 {
-    public ProjectTreeNodeViewModel(ProjectNode node, int depth = 0, bool isExpanded = false)
+    private const double TreeIndentStep = 14;
+    private const double ParentShareBaseWidth = 104;
+
+    public ProjectTreeNodeViewModel(
+        ProjectNode node,
+        int depth = 0,
+        bool isExpanded = false,
+        ProjectNode? parentNode = null,
+        AnalysisMetric parentShareMetric = AnalysisMetric.Tokens)
     {
         Node = node;
         Depth = depth;
         Name = node.Name;
         RelativePath = string.IsNullOrEmpty(node.RelativePath) ? "(root)" : node.RelativePath;
         IsExpanded = isExpanded;
+        ParentShareRatio = TryCalculateParentShareRatio(node, parentNode, parentShareMetric);
+        ParentShareText = FormatParentShare(ParentShareRatio);
     }
 
     public ProjectNode Node { get; }
@@ -28,7 +39,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public bool HasChildren => Node.Children.Count > 0;
 
-    public Thickness IndentMargin => new(Depth * 14, 0, 0, 0);
+    public Thickness IndentMargin => new(Depth * TreeIndentStep, 0, 0, 0);
 
     public string IconPath => $"avares://Clever.TokenMap.App/Assets/FileIcons/{GetIconFileName()}";
 
@@ -40,12 +51,17 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public string TokensText => FormatAnalysisMetric(Node.Metrics.Tokens);
 
-    public string FilesText => Node.Kind switch
-    {
-        ProjectNodeKind.Directory => $"{Node.Metrics.DescendantFileCount:N0}",
-        ProjectNodeKind.Root => $"{Node.Metrics.DescendantFileCount:N0}",
-        _ => string.Empty,
-    };
+    public double? ParentShareRatio { get; }
+
+    public double ParentShareDisplayValue => Math.Clamp(ParentShareRatio ?? 0d, 0d, 1d);
+
+    public string ParentShareText { get; }
+
+    public Thickness ParentShareIndentMargin => new(Depth * TreeIndentStep, 0, 0, 0);
+
+    public double ParentShareBlockWidth => Math.Max(0d, ParentShareBaseWidth - ParentShareIndentMargin.Left);
+
+    public double ParentShareFillWidth => ParentShareBlockWidth * ParentShareDisplayValue;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IconPath))]
@@ -127,4 +143,59 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         Node.SkippedReason is not null
             ? "n/a"
             : value.ToString("N0", CultureInfo.CurrentCulture);
+
+    internal static double? TryCalculateParentShareRatio(ProjectNode node, ProjectNode? parentNode, AnalysisMetric metric)
+    {
+        var normalizedMetric = NormalizeMetric(metric);
+
+        if (node.Kind == ProjectNodeKind.Root && parentNode is null)
+        {
+            return 1d;
+        }
+
+        if (parentNode is null)
+        {
+            return null;
+        }
+
+        var currentValue = TryGetMetricValue(node, normalizedMetric);
+        if (currentValue is null)
+        {
+            return null;
+        }
+
+        var parentValue = TryGetMetricValue(parentNode, normalizedMetric);
+        if (parentValue is null || parentValue.Value <= 0)
+        {
+            return null;
+        }
+
+        return currentValue.Value / parentValue.Value;
+    }
+
+    internal static double? TryGetMetricValue(ProjectNode node, AnalysisMetric metric)
+    {
+        var normalizedMetric = NormalizeMetric(metric);
+        if (normalizedMetric != AnalysisMetric.Size && node.SkippedReason is not null)
+        {
+            return null;
+        }
+
+        return normalizedMetric switch
+        {
+            AnalysisMetric.TotalLines => node.Metrics.TotalLines,
+            AnalysisMetric.Size => node.Metrics.FileSizeBytes,
+            _ => node.Metrics.Tokens,
+        };
+    }
+
+    private static string FormatParentShare(double? ratio) =>
+        ratio is null
+            ? "n/a"
+            : $"{(ratio.Value * 100d).ToString("N1", CultureInfo.CurrentCulture)}%";
+
+    private static AnalysisMetric NormalizeMetric(AnalysisMetric metric) =>
+        metric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines
+            ? AnalysisMetric.TotalLines
+            : metric;
 }

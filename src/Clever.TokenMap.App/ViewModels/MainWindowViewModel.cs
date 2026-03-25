@@ -106,6 +106,7 @@ public partial class MainWindowViewModel : ViewModelBase
         RecentFolders = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_recentFolders);
         RecentFolderFlyoutItems = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_recentFolderFlyoutItems);
         Tree = new ProjectTreeViewModel();
+        Tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
         Summary = new SummaryViewModel();
 
         _excludeNodeFromFolderCommand = new RelayCommand<ProjectNode?>(ExcludeNodeFromFolder, CanExcludeNodeFromFolder);
@@ -124,6 +125,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
+        _settingsCoordinator.State.PropertyChanged += SettingsStateOnPropertyChanged;
         _settingsCoordinator.State.RecentFolderPathsChanged += RecentFolderPathsOnCollectionChanged;
         _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
         RefreshRecentFolders();
@@ -472,6 +474,14 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasRecentFolders));
         OnPropertyChanged(nameof(ShowRecentStartSurface));
         OnPropertyChanged(nameof(ShowRecentFoldersEmptyState));
+    }
+
+    private void SettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(SettingsState.SelectedMetric))
+        {
+            Tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
+        }
     }
 
     private void TreemapNavigationStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

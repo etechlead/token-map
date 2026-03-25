@@ -454,6 +454,9 @@ public partial class ProjectTreePaneView : UserControl
     {
         switch (sortMemberPath)
         {
+            case "ParentShare":
+                column = ProjectTreeSortColumn.ParentShare;
+                return true;
             case "Size":
                 column = ProjectTreeSortColumn.Size;
                 return true;
@@ -462,9 +465,6 @@ public partial class ProjectTreePaneView : UserControl
                 return true;
             case "Tokens":
                 column = ProjectTreeSortColumn.Tokens;
-                return true;
-            case "Files":
-                column = ProjectTreeSortColumn.Files;
                 return true;
             case "Name":
                 column = ProjectTreeSortColumn.Name;

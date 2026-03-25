@@ -41,10 +41,10 @@
                                             VerticalAlignment="Center"
                                             Click="ProjectTreeExpandCollapseButton_OnClick"
                                             IsVisible="{Binding HasChildren}">
-                                        <Grid Width="10"
-                                              Height="10">
+                                        <Grid Width="12"
+                                              Height="12">
                                             <icons:FluentIcon Classes="tree-expander-icon"
-                                                              Icon="IosChevronRight"
+                                                              Icon="ChevronRight"
                                                               IconVariant="Regular"
                                                               IconSize="Size16"
                                                               IsVisible="{Binding IsCollapsed}" />
@@ -62,6 +62,29 @@
                                                Classes="tree-table-name"
                                                VerticalAlignment="Center"
                                                Text="{Binding Name}" />
+                                </Grid>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTemplateColumn Header="% Parent"
+                                            SortMemberPath="ParentShare"
+                                            Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
+                                <Grid ClipToBounds="True"
+                                      VerticalAlignment="Center">
+                                    <Grid Width="{Binding ParentShareBlockWidth}"
+                                          ClipToBounds="True"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Center">
+                                        <Border Classes="tree-share-bar" />
+                                        <Border Classes="tree-share-fill"
+                                                Width="{Binding ParentShareFillWidth}"
+                                                HorizontalAlignment="Left" />
+                                        <TextBlock Classes="tree-share-text"
+                                                   VerticalAlignment="Center"
+                                                   Text="{Binding ParentShareText}" />
+                                    </Grid>
                                 </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -96,17 +119,6 @@
                                 <TextBlock Classes="tree-table-number"
                                            VerticalAlignment="Center"
                                            Text="{Binding SizeText}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Files"
-                                            SortMemberPath="Files"
-                                            Width="60">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                <TextBlock Classes="tree-table-number"
-                                           VerticalAlignment="Center"
-                                           Text="{Binding FilesText}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

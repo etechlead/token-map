@@ -347,10 +347,10 @@ public sealed class MainWindowLayoutTests
         Assert.Collection(
             treeTable.Columns.Select(column => column.Header?.ToString()),
             header => Assert.Equal("Name", header),
+            header => Assert.Equal("% Parent", header),
             header => Assert.Equal("Tokens", header),
             header => Assert.Equal("Lines", header),
-            header => Assert.Equal("Size", header),
-            header => Assert.Equal("Files", header));
+            header => Assert.Equal("Size", header));
 
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[0]);
         Assert.IsType<DataGridTemplateColumn>(treeTable.Columns[1]);
@@ -399,13 +399,115 @@ public sealed class MainWindowLayoutTests
         var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
         Assert.Equal("Lines", linesColumn.Header?.ToString());
-        Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
+        Assert.Equal("Tokens", treeTable.Columns[2].Header?.ToString());
         Assert.NotNull(linesHeader);
         Assert.NotNull(tokensHeader);
         Assert.NotNull(linesDescendingIcon);
         Assert.True(linesDescendingIcon.IsVisible);
         Assert.Null(linesAscendingIcon);
         Assert.Null(tokensDescendingIcon);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_ProjectTreeTable_FirstParentShareSort_UsesDescendingOrder_AndKeepsNaRowsLast()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Tree.LoadRoot(new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: 30,
+                TotalLines: 20,
+                FileSizeBytes: 40,
+                DescendantFileCount: 3,
+                DescendantDirectoryCount: 0),
+            Children =
+            {
+                new ProjectNode
+                {
+                    Id = "Alpha.cs",
+                    Name = "Alpha.cs",
+                    FullPath = "C:\\Demo\\Alpha.cs",
+                    RelativePath = "Alpha.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 20,
+                        TotalLines: 10,
+                        FileSizeBytes: 10,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+                new ProjectNode
+                {
+                    Id = "Beta.cs",
+                    Name = "Beta.cs",
+                    FullPath = "C:\\Demo\\Beta.cs",
+                    RelativePath = "Beta.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 10,
+                        TotalLines: 10,
+                        FileSizeBytes: 20,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+                new ProjectNode
+                {
+                    Id = "binary.dat",
+                    Name = "binary.dat",
+                    FullPath = "C:\\Demo\\binary.dat",
+                    RelativePath = "binary.dat",
+                    Kind = ProjectNodeKind.File,
+                    SkippedReason = SkippedReason.Binary,
+                    Metrics = new NodeMetrics(
+                        Tokens: 0,
+                        TotalLines: 0,
+                        FileSizeBytes: 10,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+            },
+        });
+
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
+
+        Assert.NotNull(treeTable);
+        Assert.NotNull(projectTreePane);
+
+        var parentShareColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "ParentShare");
+
+        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, parentShareColumn, ProjectTreeSortColumn.ParentShare);
+
+        Assert.Equal(ProjectTreeSortColumn.ParentShare, viewModel.Tree.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.Tree.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Alpha.cs", name),
+            name => Assert.Equal("Beta.cs", name),
+            name => Assert.Equal("binary.dat", name));
+        window.UpdateLayout();
+        var parentShareHeader = FindProjectTreeHeader(window, "% Parent");
+        var parentShareDescendingIcon = FindHeaderElement<FluentIcon>(parentShareHeader, "SortIconDescending");
+        var parentShareAscendingIcon = FindHeaderElement<FluentIcon>(parentShareHeader, "SortIconAscending");
+
+        Assert.Equal("% Parent", parentShareColumn.Header?.ToString());
+        Assert.NotNull(parentShareHeader);
+        Assert.NotNull(parentShareDescendingIcon);
+        Assert.True(parentShareDescendingIcon.IsVisible);
+        Assert.Null(parentShareAscendingIcon);
     }
 
     [AvaloniaFact]
@@ -448,7 +550,7 @@ public sealed class MainWindowLayoutTests
         var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
         Assert.Equal("Name", nameColumn.Header?.ToString());
-        Assert.Equal("Tokens", treeTable.Columns[1].Header?.ToString());
+        Assert.Equal("Tokens", treeTable.Columns[2].Header?.ToString());
         Assert.NotNull(nameHeader);
         Assert.NotNull(tokensHeader);
         Assert.NotNull(nameAscendingIcon);
@@ -473,12 +575,12 @@ public sealed class MainWindowLayoutTests
             .ToList();
 
         var sizeHeader = headers.First(header => string.Equals(header.Content?.ToString(), "Size", StringComparison.Ordinal));
-        var filesHeader = headers.First(header => string.Equals(header.Content?.ToString(), "Files", StringComparison.Ordinal));
+        var linesHeader = headers.First(header => string.Equals(header.Content?.ToString(), "Lines", StringComparison.Ordinal));
 
         var sizeContentPresenter = sizeHeader.GetVisualDescendants()
             .OfType<ContentPresenter>()
             .First(control => string.Equals(control.Name, "PART_ContentPresenter", StringComparison.Ordinal));
-        var filesContentPresenter = filesHeader.GetVisualDescendants()
+        var linesContentPresenter = linesHeader.GetVisualDescendants()
             .OfType<ContentPresenter>()
             .First(control => string.Equals(control.Name, "PART_ContentPresenter", StringComparison.Ordinal));
 
@@ -486,8 +588,8 @@ public sealed class MainWindowLayoutTests
             sizeContentPresenter.Bounds.Width >= 70,
             $"Size header content width should use the available column width. Actual={sizeContentPresenter.Bounds.Width}.");
         Assert.True(
-            filesContentPresenter.Bounds.Width >= 44,
-            $"Files header content width should use the available column width. Actual={filesContentPresenter.Bounds.Width}.");
+            linesContentPresenter.Bounds.Width >= 56,
+            $"Lines header content width should use the available column width. Actual={linesContentPresenter.Bounds.Width}.");
     }
 
     [AvaloniaFact]
@@ -1034,6 +1136,34 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("A.cs", name));
     }
 
+    [Fact]
+    public async Task MainWindowViewModel_SelectedMetric_UpdatesParentShareWithoutReanalysis()
+    {
+        var snapshot = new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = CreateRootWithChildren(
+                ("Alpha.cs", 10, 20, 10),
+                ("Beta.cs", 20, 10, 20)),
+        };
+        var analyzer = new CountingProjectAnalyzer(snapshot);
+        var viewModel = CreateMainWindowViewModel(analyzer);
+
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var alphaByTokens = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
+        Assert.Equal("66.7%", alphaByTokens.ParentShareText);
+        Assert.Equal(1, analyzer.CallCount);
+
+        viewModel.Toolbar.IsSizeMetricSelected = true;
+
+        var alphaBySize = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
+        Assert.Equal("33.3%", alphaBySize.ParentShareText);
+        Assert.Equal(1, analyzer.CallCount);
+    }
+
     [AvaloniaFact]
     public void ProjectTreeViewModel_ToggleNodeCommand_ShowsAndHidesChildrenInVisibleRows()
     {
@@ -1505,6 +1635,20 @@ public sealed class MainWindowLayoutTests
     [Fact]
     public void ProjectTreeNodeViewModel_ShowsNaForSkippedAnalysisMetrics()
     {
+        var parentNode = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: 100,
+                TotalLines: 50,
+                FileSizeBytes: 171_801,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        };
         var skippedFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
             Id = "image.ico",
@@ -1519,11 +1663,81 @@ public sealed class MainWindowLayoutTests
                 FileSizeBytes: 171_801,
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
-        });
+        },
+        parentNode: parentNode,
+        parentShareMetric: AnalysisMetric.Tokens);
 
         Assert.Equal("n/a", skippedFileNode.TokensText);
         Assert.Equal("n/a", skippedFileNode.LinesText);
         Assert.Equal("167.8 KB", skippedFileNode.SizeText);
+        Assert.Equal("n/a", skippedFileNode.ParentShareText);
+        Assert.Null(skippedFileNode.ParentShareRatio);
+    }
+
+    [Fact]
+    public void ProjectTreeNodeViewModel_ParentShare_UsesImmediateParentMetric()
+    {
+        var rootNode = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: 30,
+                TotalLines: 12,
+                FileSizeBytes: 90,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        };
+        var childNode = new ProjectNode
+        {
+            Id = "Alpha.cs",
+            Name = "Alpha.cs",
+            FullPath = "C:\\Demo\\Alpha.cs",
+            RelativePath = "Alpha.cs",
+            Kind = ProjectNodeKind.File,
+            Metrics = new NodeMetrics(
+                Tokens: 10,
+                TotalLines: 4,
+                FileSizeBytes: 30,
+                DescendantFileCount: 1,
+                DescendantDirectoryCount: 0),
+        };
+        var rootViewModel = new ProjectTreeNodeViewModel(rootNode);
+        var childViewModel = new ProjectTreeNodeViewModel(
+            childNode,
+            depth: 1,
+            parentNode: rootNode,
+            parentShareMetric: AnalysisMetric.Tokens);
+        var zeroMetricParent = new ProjectNode
+        {
+            Id = "/zero",
+            Name = "Zero",
+            FullPath = "C:\\Zero",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = NodeMetrics.Empty,
+        };
+        var childWithZeroParent = new ProjectTreeNodeViewModel(
+            childNode,
+            parentNode: zeroMetricParent,
+            parentShareMetric: AnalysisMetric.Tokens);
+
+        Assert.Equal("100.0%", rootViewModel.ParentShareText);
+        Assert.NotNull(childViewModel.ParentShareRatio);
+        Assert.Equal(1d / 3d, childViewModel.ParentShareRatio.Value, 3);
+        Assert.Equal("33.3%", childViewModel.ParentShareText);
+        Assert.Equal(0, rootViewModel.ParentShareIndentMargin.Left);
+        Assert.Equal(14, childViewModel.ParentShareIndentMargin.Left);
+        Assert.Equal(104, rootViewModel.ParentShareBlockWidth);
+        Assert.Equal(90, childViewModel.ParentShareBlockWidth);
+        Assert.Equal(104, rootViewModel.ParentShareFillWidth);
+        Assert.Equal(30, childViewModel.ParentShareFillWidth, 3);
+        Assert.Equal(0, childWithZeroParent.ParentShareFillWidth);
+        Assert.Equal("n/a", childWithZeroParent.ParentShareText);
+        Assert.Null(childWithZeroParent.ParentShareRatio);
     }
 
     [AvaloniaFact]
