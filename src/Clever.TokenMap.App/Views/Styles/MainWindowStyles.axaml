@@ -381,21 +381,6 @@
     <Style Selector="Button.settings-link:pointerover">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
-    <Style Selector="Border.settings-detail-panel">
-        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="4" />
-        <Setter Property="Padding" Value="8" />
-    </Style>
-    <Style Selector="TextBlock.settings-detail-text">
-        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
-        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
-    </Style>
-    <Style Selector="TextBlock.settings-meta-text">
-        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
-        <Setter Property="FontSize" Value="11" />
-    </Style>
     <Style Selector="Border.settings-notice-panel">
         <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
