@@ -16,6 +16,11 @@ Use these rules for `TokenMap` UI changes.
 - Keep one icon language per UI layer instead of mixing unrelated styles in the same surface.
 - Current baseline: app-shell command icons use `Fluent UI System Icons`; project tree file and folder icons use the vendored `Material Icon Theme` subset.
 
+## Controls
+
+- Default to Avalonia's own controls when adding new UI behavior or surfaces.
+- Treat built-in Avalonia controls as the first choice; reach for third-party or custom controls only when the built-in set cannot cover the required behavior cleanly.
+
 ## Themes
 
 - UI changes must work in both light and dark theme without losing hierarchy, affordance, or readability.
