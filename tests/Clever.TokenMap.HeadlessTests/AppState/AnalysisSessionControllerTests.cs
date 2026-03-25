@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using Clever.TokenMap.App;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
@@ -187,6 +189,80 @@ public sealed class AnalysisSessionControllerTests
     }
 
     [Fact]
+    public async Task OpenFolderAsync_ReturnsPromptly_WhenAnalyzerDoesHeavySynchronousWorkBeforeReturningTask()
+    {
+        var controller = new AnalysisSessionController(
+            new SequenceProjectAnalyzer((_, _, _, _) =>
+            {
+                Thread.Sleep(600);
+                return Task.FromResult(CreateSnapshot("Heavy"));
+            }),
+            new FixedFolderPickerService("C:\\Ignored"),
+            new FixedFolderPathService());
+
+        var stopwatch = Stopwatch.StartNew();
+        var openTask = controller.OpenFolderAsync("C:\\Demo", ScanOptions.Default);
+        stopwatch.Stop();
+
+        Assert.True(
+            stopwatch.Elapsed < TimeSpan.FromMilliseconds(250),
+            $"OpenFolderAsync blocked for {stopwatch.Elapsed.TotalMilliseconds:N0} ms.");
+        Assert.Equal(AnalysisState.Scanning, controller.State);
+        Assert.False(openTask.IsCompleted);
+
+        await openTask;
+        Assert.Equal(AnalysisState.Completed, controller.State);
+        Assert.Equal("Heavy", controller.CurrentSnapshot?.Root.Name);
+    }
+
+    [Fact]
+    public async Task OpenFolderAsync_MarshalsProgressAndCompletionBackToCallerSynchronizationContext()
+    {
+        await RunOnSingleThreadSynchronizationContextAsync(async () =>
+        {
+            var progressObserved = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var callerThreadId = Environment.CurrentManagedThreadId;
+            var progressThreadId = 0;
+            var completionThreadId = 0;
+
+            var controller = new AnalysisSessionController(
+                new SequenceProjectAnalyzer(async (_, _, progress, cancellationToken) =>
+                {
+                    progress?.Report(new AnalysisProgress("ScanningTree", 1, 2, "src"));
+                    await Task.Delay(25, cancellationToken);
+                    return CreateSnapshot("Marshaled");
+                }),
+                new FixedFolderPickerService("C:\\Ignored"),
+                new FixedFolderPathService());
+
+            controller.PropertyChanged += (_, e) =>
+            {
+                if (e.PropertyName == nameof(AnalysisSessionController.CurrentProgress) &&
+                    controller.CurrentProgress is not null)
+                {
+                    progressThreadId = Environment.CurrentManagedThreadId;
+                    progressObserved.TrySetResult(true);
+                }
+
+                if (e.PropertyName == nameof(AnalysisSessionController.State) &&
+                    controller.State == AnalysisState.Completed)
+                {
+                    completionThreadId = Environment.CurrentManagedThreadId;
+                }
+            };
+
+            var openTask = controller.OpenFolderAsync("C:\\Demo", ScanOptions.Default);
+
+            await progressObserved.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await openTask;
+
+            Assert.Equal(callerThreadId, progressThreadId);
+            Assert.Equal(callerThreadId, completionThreadId);
+            Assert.Equal("Marshaled", controller.CurrentSnapshot?.Root.Name);
+        });
+    }
+
+    [Fact]
     public async Task OpenFolderAsync_MissingFolder_KeepsPreviousCommittedSelectionAndSnapshot()
     {
         var initial = CreateSnapshot("Initial", rootPath: "C:\\RepoA");
@@ -217,6 +293,24 @@ public sealed class AnalysisSessionControllerTests
         }
 
         Assert.Equal(expectedState, controller.State);
+    }
+
+    private static Task RunOnSingleThreadSynchronizationContextAsync(Func<Task> action)
+    {
+        var previousContext = SynchronizationContext.Current;
+        using var synchronizationContext = new PumpingSynchronizationContext();
+        SynchronizationContext.SetSynchronizationContext(synchronizationContext);
+
+        try
+        {
+            var task = action();
+            synchronizationContext.RunUntilCompleted(task);
+            return Task.CompletedTask;
+        }
+        finally
+        {
+            SynchronizationContext.SetSynchronizationContext(previousContext);
+        }
     }
 
     private static ProjectSnapshot CreateSnapshot(string name, string rootPath = "C:\\Demo") =>
@@ -304,5 +398,33 @@ public sealed class AnalysisSessionControllerTests
                 UseFolderExcludes = true,
                 FolderExcludes = ["/generated/"],
             };
+    }
+
+    private sealed class PumpingSynchronizationContext : SynchronizationContext, IDisposable
+    {
+        private readonly BlockingCollection<(SendOrPostCallback Callback, object? State)> _workItems = [];
+
+        public override void Post(SendOrPostCallback d, object? state)
+        {
+            _workItems.Add((d, state));
+        }
+
+        public void RunUntilCompleted(Task task)
+        {
+            while (!task.IsCompleted || _workItems.Count > 0)
+            {
+                if (_workItems.TryTake(out var workItem, millisecondsTimeout: 50))
+                {
+                    workItem.Callback(workItem.State);
+                }
+            }
+
+            task.GetAwaiter().GetResult();
+        }
+
+        public void Dispose()
+        {
+            _workItems.Dispose();
+        }
     }
 }

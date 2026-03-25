@@ -140,7 +140,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
 
         try
         {
-            var snapshot = await _projectAnalyzer.AnalyzeAsync(
+            var snapshot = await RunProjectAnalysisAsync(
                 folderPath,
                 resolvedOptions,
                 progress,
@@ -198,6 +198,18 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     {
         State = value;
         StatusMessage = message;
+    }
+
+    private Task<ProjectSnapshot> RunProjectAnalysisAsync(
+        string folderPath,
+        ScanOptions options,
+        IProgress<AnalysisProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        // Keep the scanner and metrics pipeline off the caller thread so the UI stays responsive.
+        return Task.Run(
+            () => _projectAnalyzer.AnalyzeAsync(folderPath, options, progress, cancellationToken),
+            CancellationToken.None);
     }
 
     private sealed class PassthroughScanOptionsResolver : IScanOptionsResolver
