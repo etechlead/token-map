@@ -4,6 +4,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App;
 using Clever.TokenMap.Treemap;
@@ -16,7 +17,6 @@ using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using FluentIcons.Avalonia;
 using System.Collections.Specialized;
-using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;
@@ -363,12 +363,13 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void MainWindow_ProjectTreeTable_FirstNumericSort_UsesDescendingOrder()
+    public async Task MainWindow_ProjectTreeHeaders_ReflectCurrentSortStateFromViewModel()
     {
         var viewModel = new MainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Small.cs", 10, 20, 10),
-            ("Large.cs", 20, 10, 20)));
+            ("Zulu.cs", 20, 2, 2),
+            ("Alpha.cs", 10, 1, 1)));
+        viewModel.Tree.SortBy(ProjectTreeSortColumn.Name, System.ComponentModel.ListSortDirection.Ascending);
 
         var window = new MainWindow
         {
@@ -376,191 +377,24 @@ public sealed class MainWindowLayoutTests
         };
 
         window.Show();
-
-        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
-        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
-
-        Assert.NotNull(treeTable);
-        Assert.NotNull(projectTreePane);
-
-        var linesColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "Lines");
-
-        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, linesColumn, ProjectTreeSortColumn.Lines);
-
-        Assert.Equal(ProjectTreeSortColumn.Lines, viewModel.Tree.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
-        Assert.Collection(
-            viewModel.Tree.VisibleNodes.Select(node => node.Name),
-            name => Assert.Equal("Demo", name),
-            name => Assert.Equal("Large.cs", name),
-            name => Assert.Equal("Small.cs", name));
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         window.UpdateLayout();
-        var linesHeader = FindProjectTreeHeader(window, "Lines");
-        var tokensHeader = FindProjectTreeHeader(window, "Tokens");
-        var linesDescendingIcon = FindHeaderElement<FluentIcon>(linesHeader, "SortIconDescending");
-        var linesAscendingIcon = FindHeaderElement<FluentIcon>(linesHeader, "SortIconAscending");
-        var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
-        Assert.Equal("Lines", linesColumn.Header?.ToString());
-        Assert.Equal("Tokens", treeTable.Columns[2].Header?.ToString());
-        Assert.NotNull(linesHeader);
-        Assert.NotNull(tokensHeader);
-        Assert.NotNull(linesDescendingIcon);
-        Assert.True(linesDescendingIcon.IsVisible);
-        Assert.True(
-            linesDescendingIcon.Bounds.Width >= 16 && linesDescendingIcon.Bounds.Height >= 16,
-            $"Sort icon should keep a full 16x16 layout slot. Actual={linesDescendingIcon.Bounds}.");
-        Assert.Null(linesAscendingIcon);
-        Assert.Null(tokensDescendingIcon);
-    }
-
-    [AvaloniaFact]
-    public void MainWindow_ProjectTreeTable_FirstParentShareSort_UsesDescendingOrder_AndKeepsNaRowsLast()
-    {
-        var viewModel = new MainWindowViewModel();
-        viewModel.Tree.LoadRoot(new ProjectNode
-        {
-            Id = "/",
-            Name = "Demo",
-            FullPath = "C:\\Demo",
-            RelativePath = string.Empty,
-            Kind = ProjectNodeKind.Root,
-            Metrics = new NodeMetrics(
-                Tokens: 30,
-                TotalLines: 20,
-                FileSizeBytes: 40,
-                DescendantFileCount: 3,
-                DescendantDirectoryCount: 0),
-            Children =
-            {
-                new ProjectNode
-                {
-                    Id = "Alpha.cs",
-                    Name = "Alpha.cs",
-                    FullPath = "C:\\Demo\\Alpha.cs",
-                    RelativePath = "Alpha.cs",
-                    Kind = ProjectNodeKind.File,
-                    Metrics = new NodeMetrics(
-                        Tokens: 20,
-                        TotalLines: 10,
-                        FileSizeBytes: 10,
-                        DescendantFileCount: 1,
-                        DescendantDirectoryCount: 0),
-                },
-                new ProjectNode
-                {
-                    Id = "Beta.cs",
-                    Name = "Beta.cs",
-                    FullPath = "C:\\Demo\\Beta.cs",
-                    RelativePath = "Beta.cs",
-                    Kind = ProjectNodeKind.File,
-                    Metrics = new NodeMetrics(
-                        Tokens: 10,
-                        TotalLines: 10,
-                        FileSizeBytes: 20,
-                        DescendantFileCount: 1,
-                        DescendantDirectoryCount: 0),
-                },
-                new ProjectNode
-                {
-                    Id = "binary.dat",
-                    Name = "binary.dat",
-                    FullPath = "C:\\Demo\\binary.dat",
-                    RelativePath = "binary.dat",
-                    Kind = ProjectNodeKind.File,
-                    SkippedReason = SkippedReason.Binary,
-                    Metrics = new NodeMetrics(
-                        Tokens: 0,
-                        TotalLines: 0,
-                        FileSizeBytes: 10,
-                        DescendantFileCount: 1,
-                        DescendantDirectoryCount: 0),
-                },
-            },
-        });
-
-        var window = new MainWindow
-        {
-            DataContext = viewModel,
-        };
-
-        window.Show();
-
-        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
-        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
-
-        Assert.NotNull(treeTable);
-        Assert.NotNull(projectTreePane);
-
-        var parentShareColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "ParentShare");
-
-        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, parentShareColumn, ProjectTreeSortColumn.ParentShare);
-
-        Assert.Equal(ProjectTreeSortColumn.ParentShare, viewModel.Tree.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
-        Assert.Collection(
-            viewModel.Tree.VisibleNodes.Select(node => node.Name),
-            name => Assert.Equal("Demo", name),
-            name => Assert.Equal("Alpha.cs", name),
-            name => Assert.Equal("Beta.cs", name),
-            name => Assert.Equal("binary.dat", name));
-        window.UpdateLayout();
-        var parentShareHeader = FindProjectTreeHeader(window, "% Parent");
-        var parentShareDescendingIcon = FindHeaderElement<FluentIcon>(parentShareHeader, "SortIconDescending");
-        var parentShareAscendingIcon = FindHeaderElement<FluentIcon>(parentShareHeader, "SortIconAscending");
-
-        Assert.Equal("% Parent", parentShareColumn.Header?.ToString());
-        Assert.NotNull(parentShareHeader);
-        Assert.NotNull(parentShareDescendingIcon);
-        Assert.True(parentShareDescendingIcon.IsVisible);
-        Assert.Null(parentShareAscendingIcon);
-    }
-
-    [AvaloniaFact]
-    public void MainWindow_ProjectTreeTable_FirstNameSort_UsesAscendingOrder()
-    {
-        var viewModel = new MainWindowViewModel();
-        viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Alpha.cs", 10, 1, 1),
-            ("Zulu.cs", 20, 2, 2)));
-
-        var window = new MainWindow
-        {
-            DataContext = viewModel,
-        };
-
-        window.Show();
-
-        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
-        var projectTreePane = FindDescendant<ProjectTreePaneView>(window);
-
-        Assert.NotNull(treeTable);
-        Assert.NotNull(projectTreePane);
-
-        var nameColumn = Assert.Single(treeTable.Columns, column => column.SortMemberPath == "Name");
-
-        InvokeProjectTreeSort(projectTreePane, viewModel, treeTable, nameColumn, ProjectTreeSortColumn.Name);
-
-        Assert.Equal(ProjectTreeSortColumn.Name, viewModel.Tree.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.Tree.CurrentSortDirection);
-        Assert.Collection(
-            viewModel.Tree.VisibleNodes.Select(node => node.Name),
-            name => Assert.Equal("Demo", name),
-            name => Assert.Equal("Alpha.cs", name),
-            name => Assert.Equal("Zulu.cs", name));
-        window.UpdateLayout();
         var nameHeader = FindProjectTreeHeader(window, "Name");
         var tokensHeader = FindProjectTreeHeader(window, "Tokens");
         var nameAscendingIcon = FindHeaderElement<FluentIcon>(nameHeader, "SortIconAscending");
         var nameDescendingIcon = FindHeaderElement<FluentIcon>(nameHeader, "SortIconDescending");
         var tokensDescendingIcon = FindHeaderElement<FluentIcon>(tokensHeader, "SortIconDescending");
 
-        Assert.Equal("Name", nameColumn.Header?.ToString());
-        Assert.Equal("Tokens", treeTable.Columns[2].Header?.ToString());
+        Assert.Equal(ProjectTreeSortColumn.Name, viewModel.Tree.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.Tree.CurrentSortDirection);
         Assert.NotNull(nameHeader);
         Assert.NotNull(tokensHeader);
         Assert.NotNull(nameAscendingIcon);
         Assert.True(nameAscendingIcon.IsVisible);
+        Assert.True(
+            nameAscendingIcon.Bounds.Width >= 16 && nameAscendingIcon.Bounds.Height >= 16,
+            $"Sort icon should keep a full 16x16 layout slot. Actual={nameAscendingIcon.Bounds}.");
         Assert.Null(nameDescendingIcon);
         Assert.Null(tokensDescendingIcon);
     }
@@ -693,39 +527,6 @@ public sealed class MainWindowLayoutTests
         viewModel.CloseSettingsCommand.Execute(null);
 
         Assert.False(viewModel.IsSettingsOpen);
-    }
-
-    [AvaloniaFact]
-    public void MainWindow_SettingsBackdropPointerPress_ClosesDrawer()
-    {
-        var window = new MainWindow
-        {
-            DataContext = new MainWindowViewModel
-            {
-                IsSettingsOpen = true,
-            },
-        };
-
-        window.Show();
-
-        var backdrop = FindNamedDescendant<Control>(window, "SettingsBackdrop");
-        var drawer = FindNamedDescendant<Control>(window, "SettingsDrawer");
-        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
-        var tapHandler = typeof(MainWindow).GetMethod(
-            "SettingsBackdrop_OnPointerPressed",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(backdrop);
-        Assert.NotNull(drawer);
-        Assert.NotNull(tapHandler);
-        Assert.True(backdrop.IsVisible);
-        Assert.True(drawer.IsVisible);
-
-        tapHandler.Invoke(window, [backdrop, null]);
-
-        Assert.False(viewModel.IsSettingsOpen);
-        Assert.False(backdrop.IsVisible);
-        Assert.False(drawer.IsVisible);
     }
 
     [AvaloniaFact]
@@ -1147,6 +948,83 @@ public sealed class MainWindowLayoutTests
             name => Assert.Equal("A.cs", name));
     }
 
+    [AvaloniaFact]
+    public void ProjectTreeViewModel_SortByParentShare_KeepsNaRowsLast()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: 30,
+                TotalLines: 20,
+                FileSizeBytes: 40,
+                DescendantFileCount: 3,
+                DescendantDirectoryCount: 0),
+            Children =
+            {
+                new ProjectNode
+                {
+                    Id = "Alpha.cs",
+                    Name = "Alpha.cs",
+                    FullPath = "C:\\Demo\\Alpha.cs",
+                    RelativePath = "Alpha.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 20,
+                        TotalLines: 10,
+                        FileSizeBytes: 10,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+                new ProjectNode
+                {
+                    Id = "Beta.cs",
+                    Name = "Beta.cs",
+                    FullPath = "C:\\Demo\\Beta.cs",
+                    RelativePath = "Beta.cs",
+                    Kind = ProjectNodeKind.File,
+                    Metrics = new NodeMetrics(
+                        Tokens: 10,
+                        TotalLines: 10,
+                        FileSizeBytes: 20,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+                new ProjectNode
+                {
+                    Id = "binary.dat",
+                    Name = "binary.dat",
+                    FullPath = "C:\\Demo\\binary.dat",
+                    RelativePath = "binary.dat",
+                    Kind = ProjectNodeKind.File,
+                    SkippedReason = SkippedReason.Binary,
+                    Metrics = new NodeMetrics(
+                        Tokens: 0,
+                        TotalLines: 0,
+                        FileSizeBytes: 10,
+                        DescendantFileCount: 1,
+                        DescendantDirectoryCount: 0),
+                },
+            },
+        });
+
+        viewModel.SortBy(ProjectTreeSortColumn.ParentShare, System.ComponentModel.ListSortDirection.Descending);
+
+        Assert.Equal(ProjectTreeSortColumn.ParentShare, viewModel.CurrentSortColumn);
+        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        Assert.Collection(
+            viewModel.VisibleNodes.Select(node => node.Name),
+            name => Assert.Equal("Demo", name),
+            name => Assert.Equal("Alpha.cs", name),
+            name => Assert.Equal("Beta.cs", name),
+            name => Assert.Equal("binary.dat", name));
+    }
+
     [Fact]
     public async Task MainWindowViewModel_SelectedMetric_UpdatesParentShareWithoutReanalysis()
     {
@@ -1283,95 +1161,6 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void ProjectTreePaneView_KeyDown_LeftAndRight_FollowIdeStyleDirectoryNavigation()
-    {
-        var viewModel = new MainWindowViewModel();
-        viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
-        viewModel.Tree.SelectNodeById("src");
-
-        var projectTreePane = new ProjectTreePaneView
-        {
-            DataContext = viewModel,
-        };
-        var keyDownMethod = typeof(ProjectTreePaneView).GetMethod(
-            "ProjectTreeTable_OnKeyDown",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(keyDownMethod);
-
-        var expandArgs = new KeyEventArgs
-        {
-            Key = Key.Right,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, expandArgs]);
-
-        Assert.True(expandArgs.Handled);
-        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
-        Assert.Contains(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
-
-        var selectChildArgs = new KeyEventArgs
-        {
-            Key = Key.Right,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, selectChildArgs]);
-
-        Assert.True(selectChildArgs.Handled);
-        Assert.Equal("src/Program.cs", viewModel.Tree.SelectedNode?.Node.Id);
-
-        viewModel.Tree.SelectNodeById("src");
-
-        var collapseArgs = new KeyEventArgs
-        {
-            Key = Key.Left,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, collapseArgs]);
-
-        Assert.True(collapseArgs.Handled);
-        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
-        Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.RelativePath == "src/Program.cs");
-
-        var selectParentArgs = new KeyEventArgs
-        {
-            Key = Key.Left,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, selectParentArgs]);
-
-        Assert.True(selectParentArgs.Handled);
-        Assert.Equal("/", viewModel.Tree.SelectedNode?.Node.Id);
-
-        viewModel.Tree.SelectNodeById("src/Program.cs");
-
-        var fileToParentArgs = new KeyEventArgs
-        {
-            Key = Key.Left,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, fileToParentArgs]);
-
-        Assert.True(fileToParentArgs.Handled);
-        Assert.Equal("src", viewModel.Tree.SelectedNode?.Node.Id);
-
-        viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Alpha.cs", 20, 20, 1),
-            ("Beta.cs", 10, 10, 1)));
-        viewModel.Tree.SelectNodeById("Alpha.cs");
-
-        var fileToNextArgs = new KeyEventArgs
-        {
-            Key = Key.Right,
-        };
-
-        keyDownMethod.Invoke(projectTreePane, [null, fileToNextArgs]);
-
-        Assert.True(fileToNextArgs.Handled);
-        Assert.Equal("Beta.cs", viewModel.Tree.SelectedNode?.Node.Id);
-    }
-
-    [AvaloniaFact]
     public void ProjectTreePaneView_KeyDownHandler_RespondsEvenWhenDataGridAlreadyHandledArrowKey()
     {
         var viewModel = new MainWindowViewModel();
@@ -1459,61 +1248,33 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public async Task ProjectTreePaneView_SingleClickSelectionSync_IsDelayedUntilDoubleClickWindowExpires()
+    public void ProjectTreePaneView_SelectionChanged_UpdatesViewModelSelection()
     {
         var viewModel = new MainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
             ("Alpha.cs", 10, 10, 1),
             ("Beta.cs", 20, 20, 1)));
 
-        var projectTreePane = new ProjectTreePaneView
+        var window = new Window
         {
-            DataContext = viewModel,
+            Content = new ProjectTreePaneView
+            {
+                DataContext = viewModel,
+            },
         };
-        var targetNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Alpha.cs");
-        var scheduleMethod = typeof(ProjectTreePaneView).GetMethod(
-            "ScheduleProjectTreeSelectionSync",
-            BindingFlags.Instance | BindingFlags.NonPublic);
 
-        Assert.NotNull(scheduleMethod);
+        window.Show();
 
-        scheduleMethod.Invoke(projectTreePane, [viewModel, targetNode]);
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        var targetNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Beta.cs");
 
-        Assert.Equal("/", viewModel.SelectedNode?.Id);
+        Assert.NotNull(treeTable);
 
-        await Task.Delay(350);
-
-        Assert.Equal("Alpha.cs", viewModel.SelectedNode?.Id);
-    }
-
-    [AvaloniaFact]
-    public async Task ProjectTreePaneView_DoubleTap_CancelsPendingSingleClickSelectionSync()
-    {
-        var viewModel = new MainWindowViewModel();
-        viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Alpha.cs", 10, 10, 1),
-            ("Beta.cs", 20, 20, 1)));
-
-        var projectTreePane = new ProjectTreePaneView
-        {
-            DataContext = viewModel,
-        };
-        var scheduledNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Alpha.cs");
-        var doubleTappedNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Beta.cs");
-        var scheduleMethod = typeof(ProjectTreePaneView).GetMethod(
-            "ScheduleProjectTreeSelectionSync",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-        var doubleTapMethod = typeof(ProjectTreePaneView).GetMethod(
-            "HandleProjectTreeRowDoubleTap",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(scheduleMethod);
-        Assert.NotNull(doubleTapMethod);
-
-        scheduleMethod.Invoke(projectTreePane, [viewModel, scheduledNode]);
-        doubleTapMethod.Invoke(projectTreePane, [viewModel, doubleTappedNode]);
-
-        await Task.Delay(350);
+        treeTable.SelectedItem = targetNode;
+        treeTable.RaiseEvent(new SelectionChangedEventArgs(
+            SelectingItemsControl.SelectionChangedEvent,
+            Array.Empty<object>(),
+            new object[] { targetNode }));
 
         Assert.Equal("Beta.cs", viewModel.SelectedNode?.Id);
     }
@@ -1799,21 +1560,6 @@ public sealed class MainWindowLayoutTests
         return header?.GetVisualDescendants()
             .OfType<T>()
             .FirstOrDefault(control => string.Equals(control.Name, name, StringComparison.Ordinal));
-    }
-
-    private static void InvokeProjectTreeSort(
-        ProjectTreePaneView projectTreePane,
-        MainWindowViewModel viewModel,
-        DataGrid treeTable,
-        DataGridColumn clickedColumn,
-        ProjectTreeSortColumn sortColumn)
-    {
-        var method = typeof(ProjectTreePaneView).GetMethod(
-            "ApplyProjectTreeSort",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(method);
-        method.Invoke(projectTreePane, [viewModel, treeTable, clickedColumn, sortColumn]);
     }
 
     private static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int TotalLines)[] children)

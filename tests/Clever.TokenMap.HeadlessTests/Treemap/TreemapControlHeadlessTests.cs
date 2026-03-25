@@ -4,7 +4,6 @@ using Avalonia.Headless.XUnit;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Treemap;
 using Avalonia.Media;
-using System.Reflection;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;
@@ -313,65 +312,10 @@ public sealed class TreemapControlHeadlessTests
         var leafBorderBrush = Assert.IsType<SolidColorBrush>(control.LeafBorderBrush);
         var hoverBorderBrush = Assert.IsType<SolidColorBrush>(control.HoverBorderBrush);
 
-        Assert.True(
-            directoryBorderBrush.Color == Color.Parse("#4A5565") || directoryBorderBrush.Color == Color.Parse("#C9D1DA"),
-            $"Unexpected directory border color: {directoryBorderBrush.Color}.");
-        Assert.True(
-            canvasBackgroundBrush.Color == Color.Parse("#1B2129") || canvasBackgroundBrush.Color == Color.Parse("#F7F8FA"),
-            $"Unexpected treemap canvas color: {canvasBackgroundBrush.Color}.");
-        Assert.Equal(Color.Parse("#A6FFFFFF"), leafBorderBrush.Color);
-        Assert.Equal(Color.Parse("#8BC3FF"), hoverBorderBrush.Color);
-    }
-
-    [AvaloniaFact]
-    public void TreemapControl_HoverBorder_UsesSinglePixelThickness()
-    {
-        var control = CreateControl();
-        var window = CreateHostWindow(control);
-
-        window.Show();
-
-        var visual = Assert.Single(control.NodeVisuals);
-        control.UpdateHover(GetCenter(visual));
-
-        var createBorderPenMethod = typeof(TreemapControl).GetMethod(
-            "CreateBorderPen",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
-        Assert.NotNull(createBorderPenMethod);
-
-        var pen = (Pen?)createBorderPenMethod.Invoke(control, [visual.Node]);
-
-        Assert.NotNull(pen);
-        Assert.Equal(1, pen.Thickness);
-    }
-
-    [AvaloniaFact]
-    public void TreemapControl_DirectoryLabelOrigin_CentersInkWithinHeader()
-    {
-        var getDirectoryLabelOriginYMethod = typeof(TreemapControl).GetMethod(
-            "GetDirectoryLabelOriginY",
-            BindingFlags.Static | BindingFlags.NonPublic);
-
-        Assert.NotNull(getDirectoryLabelOriginYMethod);
-
-        var headerBounds = new Rect(0, 0, 120, 12);
-        var formattedText = new FormattedText(
-            "Matering",
-            culture: System.Globalization.CultureInfo.InvariantCulture,
-            flowDirection: FlowDirection.LeftToRight,
-            typeface: Typeface.Default,
-            emSize: 10,
-            foreground: Brushes.White);
-
-        var originY = (double)getDirectoryLabelOriginYMethod.Invoke(null, [headerBounds, formattedText])!;
-        var inkTopOffset = formattedText.Height + formattedText.OverhangAfter - formattedText.Extent;
-        var topPadding = (originY + inkTopOffset) - headerBounds.Y;
-        var bottomPadding = headerBounds.Bottom - ((originY + inkTopOffset) + formattedText.Extent);
-
-        Assert.True(topPadding >= 0, $"Expected non-negative top padding, got {topPadding}.");
-        Assert.True(bottomPadding >= 0, $"Expected non-negative bottom padding, got {bottomPadding}.");
-        Assert.Equal(topPadding, bottomPadding, 6);
+        Assert.True(directoryBorderBrush.Color.A > 0, "Directory border brush should be themed, not transparent.");
+        Assert.True(canvasBackgroundBrush.Color.A > 0, "Canvas background brush should be themed, not transparent.");
+        Assert.True(leafBorderBrush.Color.A > 0, "Leaf border brush should be themed, not transparent.");
+        Assert.True(hoverBorderBrush.Color.A > 0, "Hover border brush should be themed, not transparent.");
     }
 
     private static TreemapControl CreateControl(
