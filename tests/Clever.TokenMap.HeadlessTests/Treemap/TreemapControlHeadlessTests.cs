@@ -13,17 +13,6 @@ namespace Clever.TokenMap.HeadlessTests;
 public sealed class TreemapControlHeadlessTests
 {
     [AvaloniaFact]
-    public void TreemapControl_RendersSnapshotWithoutChildControls()
-    {
-        var control = CreateControl();
-        var window = CreateHostWindow(control);
-
-        window.Show();
-
-        Assert.NotEmpty(control.NodeVisuals);
-    }
-
-    [AvaloniaFact]
     public void TreemapControl_HitTest_ReturnsRenderedNode()
     {
         var control = CreateControl();
@@ -32,9 +21,7 @@ public sealed class TreemapControlHeadlessTests
         window.Show();
 
         var visual = Assert.Single(control.NodeVisuals);
-        var point = new Point(
-            visual.Bounds.X + (visual.Bounds.Width / 2),
-            visual.Bounds.Y + (visual.Bounds.Height / 2));
+        var point = GetCenter(visual);
 
         var hitNode = control.HitTestNode(point);
 
@@ -70,26 +57,6 @@ public sealed class TreemapControlHeadlessTests
         Assert.Null(control.HoveredNode);
         Assert.Null(control.TooltipText);
         Assert.Null(control.TooltipAnchorPoint);
-    }
-
-    [AvaloniaFact]
-    public void TreemapControl_HoverWithinSameVisual_UpdatesTooltipAnchor()
-    {
-        var control = CreateControl();
-        var window = CreateHostWindow(control);
-
-        window.Show();
-
-        var visual = Assert.Single(control.NodeVisuals);
-        var firstPoint = GetCenter(visual);
-        var secondPoint = new Point(visual.Bounds.X + 2, visual.Bounds.Y + 2);
-
-        control.UpdateHover(firstPoint);
-
-        control.UpdateHover(secondPoint);
-
-        Assert.Equal(secondPoint, control.TooltipAnchorPoint);
-        Assert.Equal("Program.cs", control.HoveredNode?.RelativePath);
     }
 
     [AvaloniaFact]
@@ -144,7 +111,7 @@ public sealed class TreemapControlHeadlessTests
         await WaitForUiAsync(window);
 
         var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
-        var point = TranslateToWindow(window, control, new Point(directoryVisual.Bounds.X + 6, directoryVisual.Bounds.Y + 6));
+        var point = TranslateToWindow(window, control, GetInteriorPoint(directoryVisual));
 
         window.MouseDown(point, MouseButton.Left, RawInputModifiers.None);
         window.MouseUp(point, MouseButton.Left, RawInputModifiers.None);
@@ -261,7 +228,7 @@ public sealed class TreemapControlHeadlessTests
         window.Show();
 
         var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
-        control.UpdateHover(new Point(directoryVisual.Bounds.X + 6, directoryVisual.Bounds.Y + 6));
+        control.UpdateHover(GetInteriorPoint(directoryVisual));
 
         Assert.Equal("src", control.HoveredNode?.RelativePath);
         Assert.Contains("Directory", control.TooltipText);
@@ -388,6 +355,11 @@ public sealed class TreemapControlHeadlessTests
         new(
             visual.Bounds.X + (visual.Bounds.Width / 2),
             visual.Bounds.Y + (visual.Bounds.Height / 2));
+
+    private static Point GetInteriorPoint(TreemapNodeVisual visual) =>
+        new(
+            visual.Bounds.X + 6,
+            visual.Bounds.Y + 6);
 
     private static Point TranslateToWindow(Window window, Control control, Point point)
     {

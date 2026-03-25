@@ -108,6 +108,44 @@ internal static class HeadlessTestSupport
             },
         };
 
+    internal static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int NonEmptyLines)[] children)
+    {
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Metrics = new NodeMetrics(
+                Tokens: children.Sum(item => item.Tokens),
+                NonEmptyLines: children.Sum(item => item.NonEmptyLines),
+                FileSizeBytes: children.Sum(item => item.FileSizeBytes),
+                DescendantFileCount: children.Length,
+                DescendantDirectoryCount: 0),
+        };
+
+        foreach (var item in children)
+        {
+            root.Children.Add(new ProjectNode
+            {
+                Id = item.Name,
+                Name = item.Name,
+                FullPath = Path.Combine("C:\\Demo", item.Name),
+                RelativePath = item.Name,
+                Kind = ProjectNodeKind.File,
+                Metrics = new NodeMetrics(
+                    Tokens: item.Tokens,
+                    NonEmptyLines: item.NonEmptyLines,
+                    FileSizeBytes: item.FileSizeBytes,
+                    DescendantFileCount: 1,
+                    DescendantDirectoryCount: 0),
+            });
+        }
+
+        return root;
+    }
+
     internal static MainWindowViewModel CreateMainWindowViewModel(
         string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,

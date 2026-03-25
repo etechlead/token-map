@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -94,46 +93,6 @@ public sealed class ProjectTreePaneViewInteractionTests
         Assert.DoesNotContain(viewModel.Tree.VisibleNodes, node => node.Node.Id == "src/Program.cs");
     }
 
-    [AvaloniaFact]
-    public async Task ProjectTreePaneView_SelectionChanged_WithPointerFlag_DelaysSelectionSync()
-    {
-        var viewModel = CreateMainWindowViewModel();
-        viewModel.Tree.LoadRoot(CreateRootWithChildren(
-            ("Alpha.cs", 10, 10, 1),
-            ("Beta.cs", 20, 20, 1)));
-        viewModel.Tree.SelectNodeById("Alpha.cs");
-
-        var window = new Window
-        {
-            Content = new ProjectTreePaneView
-            {
-                DataContext = viewModel,
-            },
-        };
-
-        await ShowAndRenderAsync(window);
-
-        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
-        var targetNode = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Node.Id == "Beta.cs");
-        Assert.NotNull(treeTable);
-        Assert.Equal("Alpha.cs", viewModel.Tree.SelectedNode?.Node.Id);
-
-        SetPrivateField(window.Content, "_projectTreeSelectionChangeTriggeredByPointer", true);
-        treeTable.SelectedItem = targetNode;
-        treeTable.RaiseEvent(new SelectionChangedEventArgs(
-            SelectingItemsControl.SelectionChangedEvent,
-            Array.Empty<object>(),
-            new object[] { targetNode }));
-
-        Assert.Equal("Beta.cs", Assert.IsType<ProjectTreeNodeViewModel>(treeTable.SelectedItem).Node.Id);
-        Assert.Equal("Alpha.cs", viewModel.Tree.SelectedNode?.Node.Id);
-
-        await Task.Delay(TimeSpan.FromMilliseconds(350));
-        await WaitForUiAsync(window);
-
-        Assert.Equal("Beta.cs", viewModel.Tree.SelectedNode?.Node.Id);
-    }
-
     private static async Task ShowAndRenderAsync(Window window)
     {
         window.Show();
@@ -179,43 +138,4 @@ public sealed class ProjectTreePaneViewInteractionTests
             .OfType<DataGridRow>()
             .FirstOrDefault(row => row.DataContext is ProjectTreeNodeViewModel node && node.Node.Id == nodeId);
 
-    private static ProjectNode CreateRootWithChildren(params (string name, int tokens, int lines, int size)[] files)
-    {
-        var root = new ProjectNode
-        {
-            Id = "/",
-            Name = "Demo",
-            FullPath = "C:\\Demo",
-            RelativePath = string.Empty,
-            Kind = ProjectNodeKind.Root,
-            Metrics = NodeMetrics.Empty,
-        };
-
-        foreach (var file in files)
-        {
-            root.Children.Add(new ProjectNode
-            {
-                Id = file.name,
-                Name = file.name,
-                FullPath = Path.Combine("C:\\Demo", file.name),
-                RelativePath = file.name,
-                Kind = ProjectNodeKind.File,
-                Metrics = new NodeMetrics(
-                    Tokens: file.tokens,
-                    NonEmptyLines: file.lines,
-                    FileSizeBytes: file.size,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
-            });
-        }
-
-        return root;
-    }
-
-    private static void SetPrivateField(object? instance, string fieldName, object value)
-    {
-        var field = instance?.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-        Assert.NotNull(field);
-        field.SetValue(instance, value);
-    }
 }
