@@ -36,6 +36,7 @@ Maintain `TokenMap` as a local desktop app for source-tree analysis with synchro
   - `dotnet restore`
   - `dotnet build Clever.TokenMap.sln`
   - `dotnet test Clever.TokenMap.sln --no-build`
+- If `dotnet build` or `dotnet test` hits a file lock from a running app process, first stop the currently running `Clever.TokenMap.App` instance and then rerun the blocked verification step.
 - If the change adds headless or UI tests, run them too.
 
 ## If Blocked
