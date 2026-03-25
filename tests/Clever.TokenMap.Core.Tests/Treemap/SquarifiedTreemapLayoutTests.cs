@@ -47,7 +47,7 @@ public sealed class SquarifiedTreemapLayoutTests
         var layout = new SquarifiedTreemapLayout();
 
         var tokenVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Tokens);
-        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.TotalLines);
+        var codeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Lines);
         var sizeVisuals = layout.Calculate(root, new Rect(0, 0, 240, 120), AnalysisMetric.Size);
 
         var tokensLargest = tokenVisuals

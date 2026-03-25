@@ -22,6 +22,7 @@ Maintain `TokenMap` as a local desktop app for source-tree analysis with synchro
 ## Change Rules
 - Do not make unrelated refactors.
 - Do not change architecture decisions without updating the current-state docs.
+- Keep one canonical representation per concept; do not retain legacy aliases, compatibility shims, or historical fallback paths unless the user explicitly requires backward compatibility.
 - In PowerShell, do not use `&&`; use compatible command separation.
 - Follow `docs/commit-policy.md` for commit strategy and git safety.
 

@@ -374,9 +374,12 @@ public partial class ProjectTreeViewModel : ViewModelBase
         };
 
     private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) =>
-        metric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines
-            ? AnalysisMetric.TotalLines
-            : metric;
+        metric switch
+        {
+            AnalysisMetric.Lines => AnalysisMetric.Lines,
+            AnalysisMetric.Size => AnalysisMetric.Size,
+            _ => AnalysisMetric.Tokens,
+        };
 }
 
 public enum ProjectTreeSortColumn

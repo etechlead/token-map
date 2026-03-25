@@ -180,7 +180,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
         return normalizedMetric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };
@@ -192,7 +192,10 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
             : $"{(ratio.Value * 100d).ToString("N1", CultureInfo.CurrentCulture)}%";
 
     private static AnalysisMetric NormalizeMetric(AnalysisMetric metric) =>
-        metric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines
-            ? AnalysisMetric.TotalLines
-            : metric;
+        metric switch
+        {
+            AnalysisMetric.Lines => AnalysisMetric.Lines,
+            AnalysisMetric.Size => AnalysisMetric.Size,
+            _ => AnalysisMetric.Tokens,
+        };
 }

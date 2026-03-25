@@ -29,7 +29,8 @@
 - The scanner defines the tree structure and the included path set.
 - `ProjectSnapshotMetricsEnricher` clones the scanned tree into a separate enriched snapshot instead of mutating the scanner output in place.
 - `ProjectNode.Metrics` and `ProjectNode.SkippedReason` are construction-time state; enrichment produces new nodes rather than rewriting existing ones.
-- `NodeMetrics.NonEmptyLines` is the line-count value used by analysis, treemap, and summary UI.
+- `NodeMetrics.NonEmptyLines` is the internal line-count value used by analysis, treemap, and summary UI; the user-facing metric selector exposes this as `Lines`.
+- Text-file metrics use bounded-memory analysis; files above the large-file threshold are read sequentially in fixed-size chunks instead of loading the whole text into memory at once.
 - Global excludes, directory `.gitignore` files, and folder-specific excludes all run through the same gitignore-style ignore-rule engine with this precedence order: global excludes, then `.gitignore`, then folder excludes.
 - Token counts come from the local `o200k_base` tokenizer pipeline.
 - Line metrics come from local file analysis for included text files and count only non-empty lines.
@@ -45,7 +46,7 @@
 ## Treemap Model
 
 - The treemap is one custom-rendered control, not a control tree of rectangles.
-- Treemap weighting can switch between tokens, non-empty lines, and file size.
+- Treemap weighting can switch between tokens, lines, and file size; the `Lines` selector is backed by `NodeMetrics.NonEmptyLines`.
 - Layout, rendering, and hit testing are handled on the control's own computed rectangle data.
 
 ## User Settings

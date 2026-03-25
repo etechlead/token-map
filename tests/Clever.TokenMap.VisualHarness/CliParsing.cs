@@ -43,7 +43,7 @@ internal static class CliParsing
         value.ToLowerInvariant() switch
         {
             "tokens" => AnalysisMetric.Tokens,
-            "lines" => AnalysisMetric.TotalLines,
+            "lines" => AnalysisMetric.Lines,
             "size" => AnalysisMetric.Size,
             _ => throw new InvalidOperationException($"Unsupported metric '{value}'. Expected tokens, lines, or size."),
         };

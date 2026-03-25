@@ -8,7 +8,12 @@ namespace Clever.TokenMap.Infrastructure.Analysis;
 
 public sealed class ProjectSnapshotMetricsEnricher
 {
+    private const long LargeFileTokenizationThresholdBytes = 1024L * 1024L;
+    private const int LargeFileChunkSizeChars = 256 * 1024;
+
     private readonly ICacheStore? _cacheStore;
+    private readonly int _largeFileChunkSizeChars;
+    private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
@@ -17,9 +22,17 @@ public sealed class ProjectSnapshotMetricsEnricher
         ITextFileDetector textFileDetector,
         ITokenCounter tokenCounter,
         ICacheStore? cacheStore = null,
-        IAppLogger? logger = null)
+        IAppLogger? logger = null,
+        long largeFileTokenizationThresholdBytes = LargeFileTokenizationThresholdBytes,
+        int largeFileChunkSizeChars = LargeFileChunkSizeChars)
     {
         _cacheStore = cacheStore;
+        _largeFileChunkSizeChars = largeFileChunkSizeChars > 0
+            ? largeFileChunkSizeChars
+            : throw new ArgumentOutOfRangeException(nameof(largeFileChunkSizeChars));
+        _largeFileTokenizationThresholdBytes = largeFileTokenizationThresholdBytes >= 0
+            ? largeFileTokenizationThresholdBytes
+            : throw new ArgumentOutOfRangeException(nameof(largeFileTokenizationThresholdBytes));
         _logger = logger ?? NullAppLogger.Instance;
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
@@ -140,10 +153,12 @@ public sealed class ProjectSnapshotMetricsEnricher
             return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Binary);
         }
 
-        string content;
+        TextAnalysisResult textAnalysis;
         try
         {
-            content = await File.ReadAllTextAsync(node.FullPath, cancellationToken);
+            textAnalysis = fileState.FileSizeBytes > _largeFileTokenizationThresholdBytes
+                ? await AnalyzeLargeTextFileAsync(node.FullPath, warnings, cancellationToken).ConfigureAwait(false)
+                : await AnalyzeSmallTextFileAsync(node.FullPath, warnings, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
@@ -156,27 +171,9 @@ public sealed class ProjectSnapshotMetricsEnricher
             return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Unsupported);
         }
 
-        var normalizedContent = NormalizeNewlines(content);
-        var nonEmptyLineCount = CountNonEmptyLines(normalizedContent);
-        long tokens = 0;
-
-        try
-        {
-            tokens = await _tokenCounter.CountTokensAsync(normalizedContent, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            warnings.Add($"Unable to count tokens for '{node.FullPath}': {exception.Message}");
-            _logger.LogWarning(exception, $"Token counting failed for '{node.FullPath}'.");
-        }
-
         var metrics = new NodeMetrics(
-            Tokens: tokens,
-            NonEmptyLines: nonEmptyLineCount,
+            Tokens: textAnalysis.Tokens,
+            NonEmptyLines: textAnalysis.NonEmptyLineCount,
             FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
@@ -282,6 +279,92 @@ public sealed class ProjectSnapshotMetricsEnricher
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
 
+    private async Task<TextAnalysisResult> AnalyzeSmallTextFileAsync(
+        string fullPath,
+        List<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        var content = await File.ReadAllTextAsync(fullPath, cancellationToken).ConfigureAwait(false);
+        var normalizedContent = NormalizeNewlines(content);
+        var nonEmptyLineCount = CountNonEmptyLines(normalizedContent);
+        var tokens = await CountTokensWithWarningAsync(fullPath, normalizedContent, warnings, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new TextAnalysisResult(tokens ?? 0, nonEmptyLineCount);
+    }
+
+    private async Task<TextAnalysisResult> AnalyzeLargeTextFileAsync(
+        string fullPath,
+        List<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(
+            fullPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite | FileShare.Delete,
+            bufferSize: 16 * 1024,
+            options: FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var reader = new StreamReader(
+            stream,
+            encoding: Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true,
+            bufferSize: _largeFileChunkSizeChars,
+            leaveOpen: false);
+
+        var lineCounter = new StreamingNonEmptyLineCounter();
+        var readBuffer = new char[_largeFileChunkSizeChars];
+        long totalTokens = 0;
+        var tokenCountingFailed = false;
+
+        while (true)
+        {
+            var charsRead = await reader.ReadAsync(readBuffer.AsMemory(0, readBuffer.Length), cancellationToken)
+                .ConfigureAwait(false);
+            if (charsRead == 0)
+            {
+                break;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var normalizedChunk = lineCounter.NormalizeChunk(readBuffer.AsSpan(0, charsRead));
+            if (tokenCountingFailed || normalizedChunk.Length == 0)
+            {
+                continue;
+            }
+
+            var chunkTokens = await CountTokensWithWarningAsync(fullPath, normalizedChunk, warnings, cancellationToken)
+                .ConfigureAwait(false);
+            if (chunkTokens is null)
+            {
+                totalTokens = 0;
+                tokenCountingFailed = true;
+                continue;
+            }
+
+            totalTokens += chunkTokens.Value;
+        }
+
+        var finalChunk = lineCounter.Complete();
+        if (!tokenCountingFailed && finalChunk.Length > 0)
+        {
+            var chunkTokens = await CountTokensWithWarningAsync(fullPath, finalChunk, warnings, cancellationToken)
+                .ConfigureAwait(false);
+            if (chunkTokens is null)
+            {
+                totalTokens = 0;
+                tokenCountingFailed = true;
+            }
+            else
+            {
+                totalTokens += chunkTokens.Value;
+            }
+        }
+
+        return new TextAnalysisResult(totalTokens, lineCounter.NonEmptyLineCount);
+    }
+
     private static string NormalizeNewlines(string content) =>
         content.Replace("\r\n", "\n", StringComparison.Ordinal)
             .Replace('\r', '\n');
@@ -329,6 +412,28 @@ public sealed class ProjectSnapshotMetricsEnricher
             or UnauthorizedAccessException
             or IOException
             or PathTooLongException;
+
+    private async Task<long?> CountTokensWithWarningAsync(
+        string fullPath,
+        string content,
+        List<string> warnings,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _tokenCounter.CountTokensAsync(content, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            warnings.Add($"Unable to count tokens for '{fullPath}': {exception.Message}");
+            _logger.LogWarning(exception, $"Token counting failed for '{fullPath}'.");
+            return null;
+        }
+    }
 
     private async Task<NodeMetrics?> TryRestoreCachedMetricsAsync(
         string rootPath,
@@ -395,8 +500,90 @@ public sealed class ProjectSnapshotMetricsEnricher
         long FileSizeBytes,
         DateTimeOffset LastWriteTimeUtc);
 
+    private readonly record struct TextAnalysisResult(
+        long Tokens,
+        int NonEmptyLineCount);
+
     private sealed class ProgressState
     {
         public int ProcessedFileCount { get; set; }
+    }
+
+    private sealed class StreamingNonEmptyLineCounter
+    {
+        private readonly StringBuilder _normalizedChunkBuilder = new();
+        private bool _hasVisibleCharacters;
+        private bool _pendingCarriageReturn;
+
+        public int NonEmptyLineCount { get; private set; }
+
+        public string NormalizeChunk(ReadOnlySpan<char> rawChunk)
+        {
+            _normalizedChunkBuilder.Clear();
+
+            foreach (var character in rawChunk)
+            {
+                if (_pendingCarriageReturn)
+                {
+                    AppendNormalizedNewline();
+                    _pendingCarriageReturn = false;
+
+                    if (character == '\n')
+                    {
+                        continue;
+                    }
+                }
+
+                if (character == '\r')
+                {
+                    _pendingCarriageReturn = true;
+                    continue;
+                }
+
+                if (character == '\n')
+                {
+                    AppendNormalizedNewline();
+                    continue;
+                }
+
+                _normalizedChunkBuilder.Append(character);
+                if (!char.IsWhiteSpace(character))
+                {
+                    _hasVisibleCharacters = true;
+                }
+            }
+
+            return _normalizedChunkBuilder.ToString();
+        }
+
+        public string Complete()
+        {
+            _normalizedChunkBuilder.Clear();
+
+            if (_pendingCarriageReturn)
+            {
+                AppendNormalizedNewline();
+                _pendingCarriageReturn = false;
+            }
+
+            if (_hasVisibleCharacters)
+            {
+                NonEmptyLineCount++;
+                _hasVisibleCharacters = false;
+            }
+
+            return _normalizedChunkBuilder.ToString();
+        }
+
+        private void AppendNormalizedNewline()
+        {
+            _normalizedChunkBuilder.Append('\n');
+            if (_hasVisibleCharacters)
+            {
+                NonEmptyLineCount++;
+            }
+
+            _hasVisibleCharacters = false;
+        }
     }
 }

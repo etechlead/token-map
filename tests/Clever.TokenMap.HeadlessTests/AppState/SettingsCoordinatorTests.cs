@@ -13,7 +13,7 @@ public sealed class SettingsCoordinatorTests
     public void Constructor_AppliesPersistedSettingsToStateWithoutSaving()
     {
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        settings.Analysis.SelectedMetric = AnalysisMetric.Lines;
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.UseGlobalExcludes = false;
         settings.Analysis.GlobalExcludes = ["bin/", "obj/"];
@@ -24,7 +24,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        Assert.Equal(AnalysisMetric.TotalLines, coordinator.State.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
         Assert.False(coordinator.State.UseGlobalExcludes);
         Assert.Collection(
@@ -61,15 +61,14 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
-        coordinator.State.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
         coordinator.State.SelectedTreemapPalette = TreemapPalette.Weighted;
         coordinator.State.ReplaceGlobalExcludes(["bin/", "obj/"]);
 
         await Task.Delay(120);
 
         Assert.Equal(1, store.SaveCallCount);
-        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(TreemapPalette.Weighted, store.LastSavedSettings.Appearance.TreemapPalette);
         Assert.Collection(
             store.LastSavedSettings.Analysis.GlobalExcludes,
@@ -90,7 +89,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromMilliseconds(25));
 
-            coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+            coordinator.State.SelectedMetric = AnalysisMetric.Lines;
 
             await store.WaitForSaveAsync();
 
@@ -132,7 +131,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromSeconds(5));
 
-            coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+            coordinator.State.SelectedMetric = AnalysisMetric.Lines;
 
             await coordinator.FlushAsync();
 
@@ -153,7 +152,7 @@ public sealed class SettingsCoordinatorTests
             new RecordingThemeService(),
             debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
         await store.WaitForSaveStartedAsync(1);
 
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
@@ -162,7 +161,7 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(2, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
     }
 
@@ -176,7 +175,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.TotalLines;
+        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
         coordinator.State.SelectedThemePreference = ThemePreference.Dark;
         coordinator.State.SelectedTreemapPalette = TreemapPalette.Studio;
         coordinator.State.ReplaceGlobalExcludes(["vendor/"]);
@@ -187,7 +186,7 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(AnalysisMetric.TotalLines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, store.LastSavedSettings.Appearance.TreemapPalette);
         Assert.Collection(

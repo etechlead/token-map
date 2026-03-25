@@ -37,7 +37,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             """
             {
               "analysis": {
-                "selectedMetric": "NonEmptyLines",
+                "selectedMetric": "Lines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
                 "useGlobalExcludes": false,
@@ -68,7 +68,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.TotalLines, settings.Analysis.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, settings.Analysis.SelectedMetric);
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.UseGlobalExcludes);
         Assert.Collection(
@@ -86,7 +86,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Load_FallsBackToDefaults_ForLegacyAliasValues()
+    public void Load_FallsBackToDefaults_ForUnknownLineMetricAliasValues()
     {
         Directory.CreateDirectory(_testRootPath);
         File.WriteAllText(
@@ -227,6 +227,20 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             reloaded.RecentFolderPaths,
             path => Assert.Equal("C:\\RepoA", path),
             path => Assert.Equal("C:\\RepoB", path));
+    }
+
+    [Fact]
+    public void Save_PersistsCanonicalLinesMetricName()
+    {
+        var store = CreateStore();
+        var settings = AppSettings.CreateDefault();
+        settings.Analysis.SelectedMetric = AnalysisMetric.Lines;
+
+        store.Save(settings);
+
+        var persistedJson = File.ReadAllText(GetSettingsFilePath());
+
+        Assert.Contains(@"""selectedMetric"": ""Lines""", persistedJson, StringComparison.Ordinal);
     }
 
     public void Dispose()

@@ -132,6 +132,54 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
     }
 
+    [Fact]
+    public async Task EnrichAsync_ProcessesLargeFilesInChunks_WhilePreservingNormalizedContent()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "sample.txt"), "ab\r\ncd\r\nef");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var tokenCounter = new RecordingTokenCounter();
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            tokenCounter,
+            largeFileTokenizationThresholdBytes: 1,
+            largeFileChunkSizeChars: 3);
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var sampleNode = Assert.Single(enriched.Root.Children);
+
+        Assert.True(tokenCounter.SeenContents.Count > 1);
+        Assert.All(tokenCounter.SeenContents, chunk => Assert.True(chunk.Length <= 3));
+        Assert.Equal("ab\ncd\nef", string.Concat(tokenCounter.SeenContents));
+        Assert.Equal(8, sampleNode.Metrics.Tokens);
+        Assert.Equal(3, sampleNode.Metrics.NonEmptyLines);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_ProcessesSingleLongLineAcrossChunks_AsOneNonEmptyLine()
+    {
+        const string content = "abcdefghijklmnopqrstuvwxyz";
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "sample.txt"), content);
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var tokenCounter = new RecordingTokenCounter();
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            tokenCounter,
+            largeFileTokenizationThresholdBytes: 1,
+            largeFileChunkSizeChars: 5);
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var sampleNode = Assert.Single(enriched.Root.Children);
+
+        Assert.True(tokenCounter.SeenContents.Count > 1);
+        Assert.Equal(content, string.Concat(tokenCounter.SeenContents));
+        Assert.Equal(content.Length, sampleNode.Metrics.Tokens);
+        Assert.Equal(1, sampleNode.Metrics.NonEmptyLines);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))
@@ -151,4 +199,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         }
     }
 
+    private sealed class AlwaysTextDetector : ITextFileDetector
+    {
+        public ValueTask<bool> IsTextAsync(string fullPath, CancellationToken cancellationToken) =>
+            ValueTask.FromResult(true);
+    }
 }

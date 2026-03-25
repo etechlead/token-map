@@ -305,7 +305,7 @@ public sealed class TreemapControlHeadlessTests
     public void TreemapControl_Hover_UsesSelectedMetricForShare()
     {
         var snapshot = CreateMetricSensitiveSnapshot();
-        var control = CreateControl(snapshot, AnalysisMetric.TotalLines);
+        var control = CreateControl(snapshot, AnalysisMetric.Lines);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -329,7 +329,7 @@ public sealed class TreemapControlHeadlessTests
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
             .First();
 
-        control.Metric = AnalysisMetric.TotalLines;
+        control.Metric = AnalysisMetric.Lines;
 
         var largestByLines = control.NodeVisuals
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)

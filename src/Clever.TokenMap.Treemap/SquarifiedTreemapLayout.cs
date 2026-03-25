@@ -173,8 +173,7 @@ public sealed class SquarifiedTreemapLayout
     private static double GetWeight(ProjectNode node, AnalysisMetric metric) =>
         metric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };

@@ -29,17 +29,17 @@ public sealed class ToolbarViewModelTests
 
         viewModel.IsLinesMetricSelected = true;
 
-        Assert.Equal(AnalysisMetric.TotalLines, state.SelectedMetric);
+        Assert.Equal(AnalysisMetric.Lines, state.SelectedMetric);
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.True(viewModel.IsLinesMetricSelected);
     }
 
     [Fact]
-    public void LegacyNonEmptyLinesMetric_StillMapsToLinesRadio()
+    public void CanonicalLinesMetric_MapsToLinesRadio()
     {
         var state = new SettingsState
         {
-            SelectedMetric = AnalysisMetric.NonEmptyLines,
+            SelectedMetric = AnalysisMetric.Lines,
         };
         var viewModel = CreateViewModel(state);
 
@@ -68,7 +68,7 @@ public sealed class ToolbarViewModelTests
         var state = new SettingsState();
         var viewModel = CreateViewModel(state);
 
-        state.SelectedMetric = AnalysisMetric.NonEmptyLines;
+        state.SelectedMetric = AnalysisMetric.Lines;
         Assert.Equal("Treemap - lines", viewModel.TreemapTitle);
 
         state.SelectedMetric = AnalysisMetric.Size;

@@ -88,7 +88,7 @@ public sealed class TreemapColorRulesTests
         var first = CreateFile("src/app/a.cs", tokens: 900, totalLines: 50, fileSizeBytes: 50);
         var second = CreateFile("src/app/b.cs", tokens: 60, totalLines: 600, fileSizeBytes: 600);
         var tokensContext = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
-        var linesContext = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.TotalLines);
+        var linesContext = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Lines);
 
         var tokensColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Weighted, tokensContext);
         var linesColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Weighted, linesContext);

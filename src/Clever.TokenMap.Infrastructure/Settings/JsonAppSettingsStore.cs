@@ -152,9 +152,12 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         => TokenMapAppDataPaths.GetSettingsFilePath();
 
     private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
-        selectedMetric == AnalysisMetric.NonEmptyLines
-            ? AnalysisMetric.TotalLines
-            : selectedMetric;
+        selectedMetric switch
+        {
+            AnalysisMetric.Lines => AnalysisMetric.Lines,
+            AnalysisMetric.Size => AnalysisMetric.Size,
+            _ => AnalysisMetric.Tokens,
+        };
 
     private static TreemapPalette NormalizeTreemapPalette(TreemapPalette treemapPalette) =>
         Enum.IsDefined(treemapPalette)

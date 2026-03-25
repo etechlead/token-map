@@ -770,8 +770,7 @@ public sealed class TreemapControl : Control
     private double GetMetricValue(ProjectNode node) =>
         Metric switch
         {
-            AnalysisMetric.TotalLines => node.Metrics.NonEmptyLines,
-            AnalysisMetric.NonEmptyLines => node.Metrics.NonEmptyLines,
+            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
             AnalysisMetric.Size => node.Metrics.FileSizeBytes,
             _ => node.Metrics.Tokens,
         };

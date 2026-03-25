@@ -60,8 +60,7 @@ public partial class ToolbarViewModel : ViewModelBase
     public string TreemapMetricDisplay =>
         SelectedMetric switch
         {
-            AnalysisMetric.TotalLines => "lines",
-            AnalysisMetric.NonEmptyLines => "lines",
+            AnalysisMetric.Lines => "lines",
             AnalysisMetric.Size => "size",
             _ => "tokens",
         };
@@ -80,12 +79,12 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public bool IsLinesMetricSelected
     {
-        get => SelectedMetric is AnalysisMetric.TotalLines or AnalysisMetric.NonEmptyLines;
+        get => SelectedMetric == AnalysisMetric.Lines;
         set
         {
             if (value)
             {
-                SelectedMetric = AnalysisMetric.TotalLines;
+                SelectedMetric = AnalysisMetric.Lines;
             }
         }
     }
