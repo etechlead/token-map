@@ -421,10 +421,9 @@ public partial class ProjectTreePaneView : UserControl
                 ? FluentIconGlyph.ArrowSortUp
                 : FluentIconGlyph.ArrowSortDown,
             IconVariant = FluentIconVariant.Regular,
-            IconSize = FluentIconSize.Size16,
-            Width = 16,
-            Height = 16,
-            Margin = new Thickness(4, 0, 0, 0),
+            IconSize = FluentIconSize.Resizable,
+            FontSize = 14,
+            Margin = new Thickness(3, 0, 0, 0),
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             IsHitTestVisible = false,
