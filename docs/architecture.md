@@ -7,6 +7,7 @@
 - `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, logging, and path normalization.
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
+- `tests/Clever.TokenMap.ArchitectureTests` enforces the main static assembly and namespace boundary rules with ArchUnitNET in Debug test runs.
 
 ## App-Layer State
 
