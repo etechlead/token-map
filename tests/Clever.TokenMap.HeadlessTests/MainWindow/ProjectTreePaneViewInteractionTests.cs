@@ -21,7 +21,7 @@ public sealed class ProjectTreePaneViewInteractionTests
     [AvaloniaFact]
     public async Task ProjectTreePaneView_HeaderClick_SortsByNameAndTogglesDirection()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
             ("Zulu.cs", 20, 2, 2),
             ("Alpha.cs", 10, 1, 1)));
@@ -63,7 +63,7 @@ public sealed class ProjectTreePaneViewInteractionTests
     [AvaloniaFact]
     public async Task ProjectTreePaneView_DoubleClickOnDirectory_TogglesExpansion()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
 
         var window = new Window
@@ -97,7 +97,7 @@ public sealed class ProjectTreePaneViewInteractionTests
     [AvaloniaFact]
     public async Task ProjectTreePaneView_SelectionChanged_WithPointerFlag_DelaysSelectionSync()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
             ("Alpha.cs", 10, 10, 1),
             ("Beta.cs", 20, 20, 1)));

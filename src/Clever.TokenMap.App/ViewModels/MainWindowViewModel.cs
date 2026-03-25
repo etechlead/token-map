@@ -27,21 +27,6 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private bool isSettingsOpen;
 
-    public MainWindowViewModel()
-        : this(MainWindowViewModelDefaults.Create())
-    {
-    }
-
-    private MainWindowViewModel(MainWindowViewModelDependencies dependencies)
-        : this(
-            dependencies.AnalysisSessionController,
-            dependencies.TreemapNavigationState,
-            dependencies.SettingsCoordinator,
-            dependencies.FolderPathService,
-            dependencies.PathShellService)
-    {
-    }
-
     public MainWindowViewModel(
         IAnalysisSessionController analysisSessionController,
         TreemapNavigationState treemapNavigationState,

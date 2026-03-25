@@ -28,7 +28,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -54,7 +54,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -98,7 +98,7 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void MainWindow_TreemapTitle_ReflectsSelectedMetric()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         var window = new MainWindow
         {
             DataContext = viewModel,
@@ -125,7 +125,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -174,7 +174,7 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void MainWindow_ShowsRecentFoldersEmptyState_WhenNoRecentFoldersAreLoaded()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         var window = new MainWindow
         {
             DataContext = viewModel,
@@ -284,7 +284,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -298,7 +298,7 @@ public sealed class MainWindowLayoutTests
     [Fact]
     public void MainWindowViewModel_ProvidesFlyoutPlaceholder_WhenNoRecentFoldersExist()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
 
         Assert.Single(viewModel.RecentFolders.FlyoutItems);
         Assert.False(viewModel.RecentFolders.FlyoutItems[0].CanOpen);
@@ -347,7 +347,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -373,7 +373,7 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public async Task MainWindow_ProjectTreeHeaders_ReflectCurrentSortStateFromViewModel()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
             ("Zulu.cs", 20, 2, 2),
             ("Alpha.cs", 10, 1, 1)));
@@ -412,7 +412,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -445,7 +445,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -496,7 +496,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -527,10 +527,8 @@ public sealed class MainWindowLayoutTests
     [Fact]
     public void MainWindowViewModel_CloseSettingsCommand_ClosesDrawerWithoutRetoggling()
     {
-        var viewModel = new MainWindowViewModel
-        {
-            IsSettingsOpen = true,
-        };
+        var viewModel = CreateMainWindowViewModel();
+        viewModel.IsSettingsOpen = true;
 
         viewModel.CloseSettingsCommand.Execute(null);
 
@@ -542,7 +540,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -571,7 +569,7 @@ public sealed class MainWindowLayoutTests
     {
         var window = new MainWindow
         {
-            DataContext = new MainWindowViewModel(),
+            DataContext = CreateMainWindowViewModel(),
         };
 
         window.Show();
@@ -1176,7 +1174,7 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void ProjectTreePaneView_KeyDownHandler_RespondsEvenWhenDataGridAlreadyHandledArrowKey()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateNestedSnapshot().Root);
         viewModel.Tree.SelectNodeById("src");
 
@@ -1263,7 +1261,7 @@ public sealed class MainWindowLayoutTests
     [AvaloniaFact]
     public void ProjectTreePaneView_SelectionChanged_UpdatesViewModelSelection()
     {
-        var viewModel = new MainWindowViewModel();
+        var viewModel = CreateMainWindowViewModel();
         viewModel.Tree.LoadRoot(CreateRootWithChildren(
             ("Alpha.cs", 10, 10, 1),
             ("Beta.cs", 20, 20, 1)));

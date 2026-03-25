@@ -109,6 +109,16 @@ internal static class HeadlessTestSupport
         };
 
     internal static MainWindowViewModel CreateMainWindowViewModel(
+        string? selectedFolderPath = null,
+        IEnumerable<string>? recentFolderPaths = null,
+        IPathShellService? pathShellService = null) =>
+        CreateMainWindowViewModel(
+            new StubProjectAnalyzer(CreateSnapshot()),
+            selectedFolderPath,
+            recentFolderPaths,
+            pathShellService);
+
+    internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
         string? selectedFolderPath = "C:\\Demo",
         IEnumerable<string>? recentFolderPaths = null,
