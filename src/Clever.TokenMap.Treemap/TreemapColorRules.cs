@@ -77,12 +77,10 @@ internal static class TreemapColorRules
         };
     }
 
-    public static Color GetLeafLabelColor(Color fillColor)
+    public static bool ShouldUseDarkLeafLabel(Color fillColor)
     {
         var perceivedBrightness = (fillColor.R * 299) + (fillColor.G * 587) + (fillColor.B * 114);
-        return perceivedBrightness >= 160_000
-            ? Color.Parse("#18212B")
-            : Colors.White;
+        return perceivedBrightness >= 160_000;
     }
 
     public static string GetParentDirectorySeed(ProjectNode node)

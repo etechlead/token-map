@@ -34,9 +34,9 @@ public sealed class TreemapVisualRulesTests
 
         var labelBounds = TreemapVisualRules.GetLabelBounds(node, new Rect(10, 20, 160, 80));
 
-        Assert.Equal(14, labelBounds.X);
+        Assert.Equal(15, labelBounds.X);
         Assert.Equal(22, labelBounds.Y);
-        Assert.Equal(152, labelBounds.Width);
+        Assert.Equal(150, labelBounds.Width);
         Assert.Equal(16, labelBounds.Height);
     }
 
@@ -56,8 +56,8 @@ public sealed class TreemapVisualRulesTests
         var directory = CreateNode("src", ProjectNodeKind.Directory);
         var file = CreateNode("file.cs", ProjectNodeKind.File);
 
-        Assert.Equal(14, TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 80, 30)));
-        Assert.Equal(18, TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 110, 42)));
+        Assert.Equal(12, TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 80, 30)));
+        Assert.Equal(16, TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 110, 42)));
         Assert.Equal(0, TreemapVisualRules.GetDirectoryHeaderHeight(file, new Rect(0, 0, 110, 42)));
     }
 
@@ -68,9 +68,9 @@ public sealed class TreemapVisualRulesTests
 
         var contentBounds = TreemapVisualRules.GetContentBounds(directory, new Rect(10, 20, 80, 30));
 
-        Assert.Equal(11, contentBounds.X);
-        Assert.Equal(35, contentBounds.Y);
-        Assert.Equal(78, contentBounds.Width);
+        Assert.Equal(12, contentBounds.X);
+        Assert.Equal(34, contentBounds.Y);
+        Assert.Equal(76, contentBounds.Width);
         Assert.Equal(14, contentBounds.Height);
     }
 
@@ -105,6 +105,19 @@ public sealed class TreemapVisualRulesTests
 
         Assert.True(TreemapVisualRules.CanDrawLabel(directory, new Rect(0, 0, 80, 30)));
         Assert.True(TreemapVisualRules.CanDrawLabel(file, new Rect(0, 0, 74, 24)));
+    }
+
+    [Fact]
+    public void GetHeaderBounds_UsesReducedDirectoryHeaderSlot()
+    {
+        var directory = CreateNode("src", ProjectNodeKind.Directory);
+
+        var headerBounds = TreemapVisualRules.GetHeaderBounds(directory, new Rect(10, 20, 80, 30));
+
+        Assert.Equal(12, headerBounds.X);
+        Assert.Equal(22, headerBounds.Y);
+        Assert.Equal(76, headerBounds.Width);
+        Assert.Equal(12, headerBounds.Height);
     }
 
     [Fact]

@@ -7,10 +7,11 @@ namespace Clever.TokenMap.Treemap;
 internal static class TreemapVisualRules
 {
     private const double NodeInset = 1;
+    private const double DirectoryInset = 2;
     private const double FileLabelInsetX = 4;
     private const double FileLabelInsetY = 3;
     private const double DirectoryLabelInsetX = 3;
-    private const double DirectoryLabelInsetY = 1;
+    private const double DirectoryLabelInsetY = 0;
 
     public static double GetDirectoryHeaderHeight(ProjectNode node, Rect bounds)
     {
@@ -21,12 +22,12 @@ internal static class TreemapVisualRules
 
         if (bounds.Width >= 110 && bounds.Height >= 42)
         {
-            return 18;
+            return 16;
         }
 
         if (bounds.Width >= 80 && bounds.Height >= 30)
         {
-            return 14;
+            return 12;
         }
 
         return 0;
@@ -34,7 +35,7 @@ internal static class TreemapVisualRules
 
     public static Rect GetContentBounds(ProjectNode node, Rect bounds)
     {
-        var innerBounds = Inset(bounds, NodeInset);
+        var innerBounds = Inset(bounds, GetNodeInset(node));
         var headerHeight = GetDirectoryHeaderHeight(node, bounds);
         if (headerHeight <= 0)
         {
@@ -54,7 +55,7 @@ internal static class TreemapVisualRules
             return default;
         }
 
-        var innerBounds = Inset(bounds, NodeInset);
+        var innerBounds = Inset(bounds, GetNodeInset(node));
         return new Rect(innerBounds.X, innerBounds.Y, innerBounds.Width, headerHeight);
     }
 
@@ -88,7 +89,7 @@ internal static class TreemapVisualRules
         }
 
         return node.Kind == ProjectNodeKind.Directory
-            ? labelBounds.Width >= 72 && labelBounds.Height >= 10
+            ? labelBounds.Width >= 70 && labelBounds.Height >= 10
             : labelBounds.Width >= 64 && labelBounds.Height >= 16;
     }
 
@@ -99,5 +100,9 @@ internal static class TreemapVisualRules
         rect.Width <= inset * 2 || rect.Height <= inset * 2
             ? rect
             : new Rect(rect.X + inset, rect.Y + inset, rect.Width - inset * 2, rect.Height - inset * 2);
-}
 
+    private static double GetNodeInset(ProjectNode node) =>
+        node.Kind == ProjectNodeKind.Directory
+            ? DirectoryInset
+            : NodeInset;
+}

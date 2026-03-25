@@ -1,0 +1,20 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:controls="using:Clever.TokenMap.Treemap">
+    <Style Selector="controls|TreemapControl">
+        <Setter Property="CanvasBackgroundBrush" Value="{DynamicResource TokenMapTreemapCanvasBrush}" />
+        <Setter Property="DirectoryFillBrush" Value="{DynamicResource TokenMapTreemapDirectoryFillBrush}" />
+        <Setter Property="DirectoryHeaderBrush" Value="{DynamicResource TokenMapTreemapDirectoryHeaderBrush}" />
+        <Setter Property="DirectoryBorderBrush" Value="{DynamicResource TokenMapTreemapDirectoryBorderBrush}" />
+        <Setter Property="DirectoryLabelBrush" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="LeafBorderBrush" Value="{DynamicResource TokenMapTreemapLeafBorderBrush}" />
+        <Setter Property="LeafLightLabelBrush" Value="{DynamicResource TokenMapTreemapLeafLightLabelBrush}" />
+        <Setter Property="LeafDarkLabelBrush" Value="{DynamicResource TokenMapTreemapLeafDarkLabelBrush}" />
+        <Setter Property="PlaceholderForegroundBrush" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="TooltipLabelBrush" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="TooltipValueBrush" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="TooltipBackgroundBrush" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="TooltipBorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="SelectedBorderBrush" Value="{DynamicResource TokenMapAccentStrongBrush}" />
+        <Setter Property="HoverBorderBrush" Value="{DynamicResource TokenMapTreemapHoverBorderBrush}" />
+    </Style>
+</Styles>

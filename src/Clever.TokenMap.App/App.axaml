@@ -29,8 +29,22 @@
                                      Color="#FCFCFD" />
                     <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
                                      Color="#C9D1DA" />
+                    <SolidColorBrush x:Key="TokenMapTreemapCanvasBrush"
+                                     Color="#F7F8FA" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryFillBrush"
+                                     Color="#F1F3F5" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryHeaderBrush"
+                                     Color="#E7EBF0" />
                     <SolidColorBrush x:Key="TokenMapTreemapDirectoryBorderBrush"
                                      Color="#C9D1DA" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafBorderBrush"
+                                     Color="#A6FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafLightLabelBrush"
+                                     Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafDarkLabelBrush"
+                                     Color="#18212B" />
+                    <SolidColorBrush x:Key="TokenMapTreemapHoverBorderBrush"
+                                     Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
                                      Color="#0A5FC2" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
@@ -59,8 +73,22 @@
                                      Color="#2A3038" />
                     <SolidColorBrush x:Key="TokenMapControlHoverBorderBrush"
                                      Color="#4A5565" />
+                    <SolidColorBrush x:Key="TokenMapTreemapCanvasBrush"
+                                     Color="#1B2129" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryFillBrush"
+                                     Color="#242B34" />
+                    <SolidColorBrush x:Key="TokenMapTreemapDirectoryHeaderBrush"
+                                     Color="#313845" />
                     <SolidColorBrush x:Key="TokenMapTreemapDirectoryBorderBrush"
                                      Color="#4A5565" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafBorderBrush"
+                                     Color="#A6FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafLightLabelBrush"
+                                     Color="#FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapTreemapLeafDarkLabelBrush"
+                                     Color="#18212B" />
+                    <SolidColorBrush x:Key="TokenMapTreemapHoverBorderBrush"
+                                     Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
                                      Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
@@ -85,6 +113,7 @@
                                               Accent="#0F6CBD" />
             </FluentTheme.Palettes>
         </FluentTheme>
+        <StyleInclude Source="avares://Clever.TokenMap.App/Views/Styles/TreemapControlStyles.axaml" />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
     </Application.Styles>
 </Application>
