@@ -20,7 +20,7 @@ powershell -File scripts/run-coverage.ps1
 
 ## Visual Harness
 
-- Location: `tests/Clever.TokenMap.VisualHarness`
+- Location: `tools/Clever.TokenMap.VisualHarness`
 - Purpose: internal headless Avalonia harness for rendering app surfaces to PNG, saving machine-readable reports, and diffing screenshots between palettes or branches.
 - Use it when tuning treemap colors, checking layout changes, investigating visual regressions, or comparing the same UI state across code revisions.
 
@@ -44,9 +44,9 @@ powershell -File scripts/run-coverage.ps1
 ### Common Commands
 
 ```powershell
-dotnet run --project tests/Clever.TokenMap.VisualHarness -c Release -- capture-palettes --source repo --project-root . --metric size
-dotnet run --project tests/Clever.TokenMap.VisualHarness -c Release -- capture --source repo --surface settings --palette studio --metric size
-dotnet run --project tests/Clever.TokenMap.VisualHarness -c Release -- compare --left artifacts\visual-harness\example-a.png --right artifacts\visual-harness\example-b.png
+dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- capture-palettes --source repo --project-root . --metric size
+dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- capture --source repo --surface settings --palette studio --metric size
+dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- compare --left artifacts\visual-harness\example-a.png --right artifacts\visual-harness\example-b.png
 ```
 
 ### Notes

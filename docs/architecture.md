@@ -8,7 +8,7 @@
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
 - `Clever.TokenMap.App.AppComposition` is the runtime composition root only. It builds the desktop service provider and wires concrete infrastructure implementations; `Clever.TokenMap.App.App` boots Avalonia, resolves the root window from that provider, and owns application-lifetime hooks only. Test and harness composition stays outside the app assembly.
-- `tests/Clever.TokenMap.ArchitectureTests` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
+- `tests/Clever.TokenMap.Tests` holds the xUnit suite; `Clever.TokenMap.Tests.Architecture` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
 
 ## App-Layer State
 
@@ -61,4 +61,3 @@
 - Missing, unreadable, malformed, or unwritable app-wide or folder settings files must not block startup, scanning, or UI interaction; the app falls back to defaults.
 - `Clever.TokenMap.App` uses a settings service/store rather than reading the settings file directly.
 - Logs and future cache data live next to that settings file in separate files/directories rather than inside the settings document.
-
