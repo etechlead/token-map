@@ -20,6 +20,7 @@
 - For most implementation tasks, read `architecture.md` and `workflow.md`.
 - Read `tools.md` when the request touches internal harnesses, screenshot capture, visual diffs, or repo tooling.
 - Read `ui-principles.md` only for UI-facing changes.
+- Read `versioning.md` when the request touches application version display, release tags, GitHub Releases, or packaged artifact naming.
 - Read `commit-policy.md` only when the user asks for a commit or commit message.
 - Read `post-mvp.md` only when the request touches deferred scope or backlog questions.
 
@@ -28,6 +29,7 @@
 - `post-mvp.md`: inactive backlog candidates outside the current MVP scope.
 - `tools.md`: internal repo tools and harnesses that are useful for implementation and debugging work.
 - `ui-principles.md`: current UI constraints and interaction principles.
+- `versioning.md`: canonical versioning, tagging, release, and artifact-naming policy.
 - `workflow.md`: the concise workflow for turning a request into code and docs.
 - `commit-policy.md`: commit format, grouping, and git safety rules.
 
