@@ -61,3 +61,98 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+const
+  PurgeUserDataFlag = '/PURGEUSERDATA';
+
+function GetUserDataRootPath(): string;
+begin
+  Result := ExpandConstant('{localappdata}\Clever\TokenMap');
+end;
+
+function GetUserDataVendorRootPath(): string;
+begin
+  Result := ExpandConstant('{localappdata}\Clever');
+end;
+
+procedure RemoveUserData();
+var
+  userDataRootPath: string;
+  userDataVendorRootPath: string;
+begin
+  userDataRootPath := GetUserDataRootPath();
+  if not DirExists(userDataRootPath) then
+  begin
+    Exit;
+  end;
+
+  if DelTree(userDataRootPath, True, True, True) then
+  begin
+    userDataVendorRootPath := GetUserDataVendorRootPath();
+    if DirExists(userDataVendorRootPath) then
+    begin
+      RemoveDir(userDataVendorRootPath);
+    end;
+  end
+  else
+  begin
+    SuppressibleMsgBox(
+      'TokenMap settings and logs could not be removed completely.'#13#10#13#10 +
+      'You can delete "' + userDataRootPath + '" manually later.',
+      mbInformation,
+      MB_OK,
+      IDOK);
+  end;
+end;
+
+function HasCommandLineFlag(const expectedFlag: string): Boolean;
+var
+  parameterIndex: Integer;
+begin
+  Result := False;
+
+  for parameterIndex := 1 to ParamCount() do
+  begin
+    if CompareText(ParamStr(parameterIndex), expectedFlag) = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep <> usPostUninstall then
+  begin
+    Exit;
+  end;
+
+  if not DirExists(GetUserDataRootPath()) then
+  begin
+    Exit;
+  end;
+
+  if HasCommandLineFlag(PurgeUserDataFlag) then
+  begin
+    RemoveUserData();
+    Exit;
+  end;
+
+  if UninstallSilent() then
+  begin
+    Exit;
+  end;
+
+  if SuppressibleMsgBox(
+    'Remove TokenMap settings, folder history, and logs from your user profile?'#13#10#13#10 +
+    'This will delete:'#13#10 +
+    GetUserDataRootPath(),
+    mbConfirmation,
+    MB_YESNO or MB_DEFBUTTON2,
+    IDNO) = IDYES then
+  begin
+    RemoveUserData();
+  end;
+end;

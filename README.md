@@ -79,6 +79,8 @@ Build a per-user Windows installer:
 
 The script writes `artifacts\windows-installer\installer\TokenMap-Setup-win-x64.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
 
+Silent uninstall keeps user data by default. To remove `%LOCALAPPDATA%\Clever\TokenMap` during uninstall, pass `/PURGEUSERDATA` to the uninstaller in addition to the normal Inno silent switches.
+
 ## Repository Quality
 
 - `README`, `LICENSE`, `.editorconfig`, analyzer policy, and GitHub Actions are part of the repo baseline.
