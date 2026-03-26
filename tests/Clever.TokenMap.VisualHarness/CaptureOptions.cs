@@ -40,7 +40,7 @@ internal sealed record CaptureOptions(
     {
         return Parse(
             args,
-            defaultPalettes: [TreemapPalette.Weighted, TreemapPalette.Studio, TreemapPalette.Classic],
+            defaultPalettes: [TreemapPalette.Weighted, TreemapPalette.Studio, TreemapPalette.Plain],
             defaultSurfaces: [CaptureSurface.Main, CaptureSurface.Treemap],
             generateComparisonsByDefault: true);
     }

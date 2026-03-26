@@ -17,28 +17,28 @@ public sealed class TreemapColorRulesTests
     }
 
     [Fact]
-    public void GetLeafColor_ClassicPalette_ReturnsSameColor_ForSiblingsUnderSameParent()
+    public void GetLeafColor_PlainPalette_ReturnsSameColor_ForSiblingsUnderSameParent()
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("src/app/b.cs");
         var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
 
-        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Classic, context);
-        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Classic, context);
+        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
+        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
 
         Assert.Equal("src/app", TreemapColorRules.GetParentDirectorySeed(first));
         Assert.Equal(firstColor, secondColor);
     }
 
     [Fact]
-    public void GetLeafColor_ClassicPalette_ReturnsDifferentColor_ForDifferentParents()
+    public void GetLeafColor_PlainPalette_ReturnsDifferentColor_ForDifferentParents()
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("tests/app/a.cs");
         var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
 
-        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Classic, context);
-        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Classic, context);
+        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
+        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
 
         Assert.NotEqual(TreemapColorRules.GetParentDirectorySeed(first), TreemapColorRules.GetParentDirectorySeed(second));
         Assert.NotEqual(firstColor, secondColor);
@@ -55,14 +55,14 @@ public sealed class TreemapColorRulesTests
     }
 
     [Fact]
-    public void GetLeafColor_ClassicPalette_ReturnsSameColor_ForEquivalentSlashStyles()
+    public void GetLeafColor_PlainPalette_ReturnsSameColor_ForEquivalentSlashStyles()
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("src\\app\\b.cs");
         var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
 
-        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Classic, context);
-        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Classic, context);
+        var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
+        var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
 
         Assert.Equal(firstColor, secondColor);
     }

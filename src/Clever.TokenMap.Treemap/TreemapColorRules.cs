@@ -71,9 +71,10 @@ internal static class TreemapColorRules
     {
         return palette switch
         {
+            TreemapPalette.Plain => GetPlainLeafColor(node),
             TreemapPalette.Weighted => GetWeightedLeafColor(node, context),
             TreemapPalette.Studio => GetStudioLeafColor(node, context),
-            _ => GetClassicLeafColor(node),
+            _ => GetPlainLeafColor(node),
         };
     }
 
@@ -97,7 +98,7 @@ internal static class TreemapColorRules
             : relativePath[..separatorIndex];
     }
 
-    private static Color GetClassicLeafColor(ProjectNode node)
+    private static Color GetPlainLeafColor(ProjectNode node)
     {
         var groupSeed = GetParentDirectorySeed(node);
         var hue = GetStableHash(groupSeed) % 360;

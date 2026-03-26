@@ -43,8 +43,8 @@ internal static class VisualHarnessProgram
     private static void PrintUsage()
     {
         Console.WriteLine("Usage:");
-        Console.WriteLine("  dotnet run --project tests/Clever.TokenMap.VisualHarness -- capture [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette classic|weighted|studio|all] [--compare] [--window-width N] [--window-height N] [--treemap-width N] [--treemap-height N]");
-        Console.WriteLine("  dotnet run --project tests/Clever.TokenMap.VisualHarness -- capture-palettes [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette classic|weighted|studio|all] [--skip-compare]");
+        Console.WriteLine("  dotnet run --project tests/Clever.TokenMap.VisualHarness -- capture [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette plain|weighted|studio|all] [--compare] [--window-width N] [--window-height N] [--treemap-width N] [--treemap-height N]");
+        Console.WriteLine("  dotnet run --project tests/Clever.TokenMap.VisualHarness -- capture-palettes [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette plain|weighted|studio|all] [--skip-compare]");
         Console.WriteLine("  dotnet run --project tests/Clever.TokenMap.VisualHarness -- compare --left FILE --right FILE [--output-dir DIR]");
     }
 }

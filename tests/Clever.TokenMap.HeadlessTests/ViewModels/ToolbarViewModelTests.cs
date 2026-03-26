@@ -15,7 +15,7 @@ public sealed class ToolbarViewModelTests
         Assert.True(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
         Assert.False(viewModel.IsSizeMetricSelected);
-        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
     }
@@ -70,7 +70,7 @@ public sealed class ToolbarViewModelTests
         viewModel.IsWeightedTreemapPaletteSelected = true;
 
         Assert.Equal(TreemapPalette.Weighted, state.SelectedTreemapPalette);
-        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
     }
@@ -84,7 +84,7 @@ public sealed class ToolbarViewModelTests
         viewModel.IsStudioTreemapPaletteSelected = true;
 
         Assert.Equal(TreemapPalette.Studio, state.SelectedTreemapPalette);
-        Assert.False(viewModel.IsClassicTreemapPaletteSelected);
+        Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.False(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.True(viewModel.IsStudioTreemapPaletteSelected);
     }

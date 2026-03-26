@@ -47,10 +47,10 @@
                                                  GroupName="TreemapPalette"
                                                  Content="Studio"
                                                  IsChecked="{Binding Toolbar.IsStudioTreemapPaletteSelected, Mode=TwoWay}" />
-                                    <RadioButton Name="TreemapPaletteClassicRadioButton"
+                                    <RadioButton Name="TreemapPalettePlainRadioButton"
                                                  GroupName="TreemapPalette"
-                                                 Content="Classic"
-                                                 IsChecked="{Binding Toolbar.IsClassicTreemapPaletteSelected, Mode=TwoWay}" />
+                                                 Content="Plain"
+                                                 IsChecked="{Binding Toolbar.IsPlainTreemapPaletteSelected, Mode=TwoWay}" />
                                 </StackPanel>
                             </StackPanel>
                         </StackPanel>

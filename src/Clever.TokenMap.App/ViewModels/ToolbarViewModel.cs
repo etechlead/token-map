@@ -141,14 +141,14 @@ public partial class ToolbarViewModel : ViewModelBase
 
     public bool IsDarkThemeSelected => SelectedThemePreference == ThemePreference.Dark;
 
-    public bool IsClassicTreemapPaletteSelected
+    public bool IsPlainTreemapPaletteSelected
     {
-        get => SelectedTreemapPalette == TreemapPalette.Classic;
+        get => SelectedTreemapPalette == TreemapPalette.Plain;
         set
         {
             if (value)
             {
-                SelectedTreemapPalette = TreemapPalette.Classic;
+                SelectedTreemapPalette = TreemapPalette.Plain;
             }
         }
     }
@@ -217,7 +217,7 @@ public partial class ToolbarViewModel : ViewModelBase
                 break;
             case nameof(SettingsState.SelectedTreemapPalette):
                 OnPropertyChanged(nameof(SelectedTreemapPalette));
-                OnPropertyChanged(nameof(IsClassicTreemapPaletteSelected));
+                OnPropertyChanged(nameof(IsPlainTreemapPaletteSelected));
                 OnPropertyChanged(nameof(IsWeightedTreemapPaletteSelected));
                 OnPropertyChanged(nameof(IsStudioTreemapPaletteSelected));
                 break;

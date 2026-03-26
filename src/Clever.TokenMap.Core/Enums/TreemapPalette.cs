@@ -2,7 +2,7 @@ namespace Clever.TokenMap.Core.Enums;
 
 public enum TreemapPalette
 {
-    Classic = 0,
+    Plain = 0,
     Weighted = 1,
     Studio = 2,
 }

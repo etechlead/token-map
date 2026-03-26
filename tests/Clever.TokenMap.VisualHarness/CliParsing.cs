@@ -7,7 +7,7 @@ internal static class CliParsing
     [
         TreemapPalette.Weighted,
         TreemapPalette.Studio,
-        TreemapPalette.Classic,
+        TreemapPalette.Plain,
     ];
 
     public static string? GetOptionValue(string[] args, string optionName)
@@ -123,9 +123,9 @@ internal static class CliParsing
     private static TreemapPalette ParsePalette(string value) =>
         value.ToLowerInvariant() switch
         {
-            "classic" => TreemapPalette.Classic,
+            "plain" => TreemapPalette.Plain,
             "weighted" => TreemapPalette.Weighted,
             "studio" => TreemapPalette.Studio,
-            _ => throw new InvalidOperationException($"Unsupported palette '{value}'. Expected classic, weighted, studio, or all."),
+            _ => throw new InvalidOperationException($"Unsupported palette '{value}'. Expected plain, weighted, studio, or all."),
         };
 }
