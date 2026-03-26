@@ -2,64 +2,31 @@
 
 ## Responsibility Split
 
-- `Clever.TokenMap.Core` holds domain models, shared contracts, logging abstractions, path-normalization rules, enums, scan options, and aggregation rules. It stays free of Avalonia and UI types.
-- `Clever.TokenMap.Core` also holds the shared persisted settings DTOs used by app-layer coordinators and infrastructure stores.
-- `Clever.TokenMap.Infrastructure` holds scanner, ignore handling, token counting, local non-empty line counting, cache, settings storage, and concrete logging/file-system implementations. It stays independent from Avalonia and desktop UI framework types.
-- `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
-- `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
-- `Clever.TokenMap.App.AppComposition` is the runtime composition root only. It builds the desktop service provider and wires concrete infrastructure implementations; `Clever.TokenMap.App.App` boots Avalonia, resolves the root window from that provider, and owns application-lifetime hooks only. Test and harness composition stays outside the app assembly.
-- `MainWindowViewModelFactory` is the shared shell-graph builder used by runtime, design-time, headless tests, and harness code so the window-level composition stays consistent across execution modes.
-- `tests/Clever.TokenMap.Tests` holds the xUnit suite; `Clever.TokenMap.Tests.Architecture` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
+- `Clever.TokenMap.Core` holds domain models, shared contracts, settings DTOs, enums, scan options, aggregation rules, and path-normalization rules. It stays free of Avalonia and UI types.
+- `Clever.TokenMap.Infrastructure` holds scanning, ignore evaluation, local metrics/token analysis, caching, settings persistence, and concrete file-system/logging implementations. It stays independent from Avalonia and desktop UI framework types.
+- `Clever.TokenMap.Treemap` holds the treemap control and its layout/rendering logic.
+- `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer state, and app-layer services that bind UI workflows to analysis and settings boundaries.
+- `Clever.TokenMap.App.AppComposition` is the runtime composition root only. Test, design-time, and harness composition stay outside the app assembly.
+- `MainWindowViewModelFactory` is the shared shell-graph builder used across runtime, design-time, headless tests, and harness code.
+- The statically enforceable subset of these boundaries lives in [ArchitectureRulesTests.cs](/Z:/Projects/My/tokenmap/src/tests/Clever.TokenMap.Tests/Architecture/ArchitectureRulesTests.cs).
 
-## App-Layer State
+## App-Layer Ownership
 
-- `MainWindowViewModel` is the shell facade for the desktop window.
-- `MainWindowWorkspacePresenter` owns cross-section projection sync between analysis/session state, the project tree projection, summary projection, and treemap navigation.
-- `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay UI-neutral and depend on app/core state rather than infrastructure details; view-specific layout objects are composed in XAML/views rather than viewmodels.
-- `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
-- `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
-- `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.
-- `SettingsCoordinator` is the app-layer facade for settings workflows; it composes separate app-settings and current-folder settings sessions, exposes read-only settings state views to consumers, resolves scan options for a target root path, and coordinates flush-on-shutdown behavior.
-- `Clever.TokenMap.App.Services` stay UI-agnostic except for the small platform-adapter services that wrap Avalonia folder picking and theme APIs.
-- `RecentFoldersViewModel` owns recent-folder projection, the start-surface empty-state workflow, and recent-folder open/remove/clear commands.
-- `ProjectTreeViewModel` owns tree sort mode, expansion state, selection, and the visible-row projection built from the scanned `ProjectNode` tree.
-- `TreemapNavigationState` owns selected node state, treemap root scope, and breadcrumb rebuilding.
-- `MainWindow` composes section `UserControl`s for toolbar/summary, project tree, treemap, and settings drawer. Per-section UI behavior stays in section code-behind when it is strictly view-specific, such as `DataGrid` sorting headers and treemap drill-down event wiring.
+- `MainWindowViewModel` stays a shell facade for the desktop window.
+- `MainWindowWorkspacePresenter` owns workspace-level projection sync between analysis/session state, tree projection, summary projection, and treemap navigation.
+- `AnalysisSessionController` owns committed folder selection, current snapshot, analysis state, progress, and open/rescan/cancel flow.
+- `SettingsState` is the source of truth for app-wide analysis and appearance preferences.
+- `CurrentFolderSettingsState` is the source of truth for the committed root folder's folder-specific scan preferences.
+- `SettingsCoordinator` is the app-layer facade for settings workflows. It exposes read-only settings state views to consumers and keeps writes behind explicit commands.
+- `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay independent from infrastructure implementations.
+- `Clever.TokenMap.App.Services` stay UI-agnostic except for small platform-adapter services that wrap desktop framework APIs.
 
 ## Sources Of Truth
 
-- The scanner defines the tree structure and the included path set.
-- `ProjectSnapshotMetricsEnricher` clones the scanned tree into a separate enriched snapshot instead of mutating the scanner output in place.
-- `ProjectNode.Metrics` and `ProjectNode.SkippedReason` are construction-time state; enrichment produces new nodes rather than rewriting existing ones.
-- `NodeMetrics.NonEmptyLines` is the internal line-count value used by analysis, treemap, and summary UI; the user-facing metric selector exposes this as `Lines`.
-- Text-file metrics use bounded-memory analysis; files above the large-file threshold are read sequentially in fixed-size chunks instead of loading the whole text into memory at once.
-- Global excludes, directory `.gitignore` files, and folder-specific excludes all run through the same gitignore-style ignore-rule engine with this precedence order: global excludes, then `.gitignore`, then folder excludes.
-- Token counts come from the local `o200k_base` tokenizer pipeline.
-- Line metrics come from local file analysis for included text files and count only non-empty lines.
-- File details show extensions rather than inferred languages.
-
-## Path Handling
-
-- Nodes carry both `FullPath` and `RelativePath`.
-- Internal merge keys use normalized relative paths in `/` form.
-- Windows-oriented comparisons use case-insensitive behavior where needed.
-- Scanner output, cache keys, and analysis results meet on the same normalized relative-path key space, partitioned by normalized root path.
-
-## Treemap Model
-
-- The treemap is one custom-rendered control, not a control tree of rectangles.
-- Treemap weighting can switch between tokens, lines, and file size; the `Lines` selector is backed by `NodeMetrics.NonEmptyLines`.
-- Layout, rendering, and hit testing are handled on the control's own computed rectangle data.
-
-## User Settings
-
-- Per-user app-wide settings are stored in one lightweight `settings.json` file under the user data directory.
-- Folder-specific settings are stored separately under a sibling `folders/<folder-key>/settings.json` layout, one small file per committed root folder.
-- The app starts from defaults first, then best-effort applies values from `settings.json` and any requested folder settings file.
-- Analysis preferences including global excludes, appearance preferences including theme mode, and recent folder history are stored in the app-wide settings file; folder-specific excludes live only in the per-folder settings files.
-- `Clever.TokenMap.App` works against app-layer settings state and the shared settings DTOs from `Clever.TokenMap.Core`; infrastructure stores handle JSON persistence details behind the store boundary.
-- Settings use typed enum-backed values and persist as JSON strings.
-- Unknown or legacy persisted enum values fall back to defaults instead of keeping compatibility aliases forever.
-- Missing, unreadable, malformed, or unwritable app-wide or folder settings files must not block startup, scanning, or UI interaction; the app falls back to defaults.
-- `Clever.TokenMap.App` uses a settings service/store rather than reading the settings file directly.
-- Logs and future cache data live next to that settings file in separate files/directories rather than inside the settings document.
+- The scanner defines the included tree structure and analyzed path set.
+- Enrichment produces a separate snapshot rather than mutating scanner output in place.
+- Global excludes, `.gitignore`, and folder-specific excludes flow through one ignore-rule pipeline.
+- Token counting stays local behind `ITokenCounter`.
+- Line metrics stay local in the analysis pipeline for included text files.
+- The treemap remains one custom-rendered control, not a control-per-rectangle surface.
+- `Clever.TokenMap.App` works through app-layer services and state; it does not read the file system or settings files directly.
