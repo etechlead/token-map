@@ -210,10 +210,10 @@
                          TextWrapping="NoWrap" />
 
                 <Grid Grid.Row="3"
-                      ColumnDefinitions="*,Auto,Auto,Auto"
+                      ColumnDefinitions="Auto,*,Auto,Auto"
                       ColumnSpacing="8">
                     <Button Name="CancelExcludesButton"
-                            Grid.Column="1"
+                            Grid.Column="0"
                             Classes="action-button"
                             Command="{Binding ExcludesEditor.CancelCommand}"
                             Content="Cancel" />
