@@ -82,7 +82,7 @@ $infoPlist = @"
     <key>CFBundleExecutable</key>
     <string>$($metadata.AssemblyName)</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.clever.tokenmap</string>
+    <string>pro.clever.tokenmap</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

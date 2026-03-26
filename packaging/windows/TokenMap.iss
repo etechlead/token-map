@@ -13,7 +13,7 @@
 #define MyAppPublisher GetEnv("TOKENMAP_APP_PUBLISHER")
 #if MyAppPublisher == ""
   #undef MyAppPublisher
-  #define MyAppPublisher "Clever"
+  #define MyAppPublisher "Clever.pro"
 #endif
 
 #define MyAppExeName GetEnv("TOKENMAP_APP_EXE")

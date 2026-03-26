@@ -11,7 +11,7 @@ runtime_identifier="${RUNTIME_IDENTIFIER:-osx-arm64}"
 bundle_name="${BUNDLE_NAME:-TokenMap}"
 output_root="${OUTPUT_ROOT:-artifacts/macos-arm64}"
 artifact_name="${ARTIFACT_NAME:-TokenMap-macos-arm64}"
-bundle_identifier="${BUNDLE_IDENTIFIER:-dev.clever.tokenmap}"
+bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
 bundle_version="${BUNDLE_VERSION:-1.0.0}"
 
 project_full_path="${repo_root}/${project_path}"
