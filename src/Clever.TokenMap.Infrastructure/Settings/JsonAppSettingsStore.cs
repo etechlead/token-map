@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clever.TokenMap.Core.Enums;
@@ -27,21 +25,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     public AppSettings Load()
     {
         var settings = AppSettings.CreateDefault();
-        if (!File.Exists(_settingsFilePath))
-        {
-            return settings;
-        }
-
-        try
-        {
-            using var stream = File.OpenRead(_settingsFilePath);
-            var persistedSettings = JsonSerializer.Deserialize<PersistedAppSettings>(stream, SerializerOptions);
-            ApplySettings(settings, persistedSettings);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Trace.TraceWarning($"Unable to load app settings from '{_settingsFilePath}': {exception.Message}");
-        }
+        var persistedSettings = JsonSettingsFileHelper.TryLoad<PersistedAppSettings>(
+            _settingsFilePath,
+            SerializerOptions,
+            "app settings");
+        ApplySettings(settings, persistedSettings);
 
         return settings;
     }
@@ -49,51 +37,22 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     public void Save(AppSettings settings)
     {
         ArgumentNullException.ThrowIfNull(settings);
-        var tempFilePath = $"{_settingsFilePath}.tmp";
 
-        try
-        {
-            var directoryPath = Path.GetDirectoryName(_settingsFilePath);
-            if (!string.IsNullOrWhiteSpace(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-            }
+        var normalizedSettings = settings.Clone();
+        normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
+        normalizedSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(normalizedSettings.Appearance.TreemapPalette);
+        normalizedSettings.Analysis.GlobalExcludes = NormalizeGlobalExcludes(normalizedSettings.Analysis.GlobalExcludes);
 
-            var normalizedSettings = settings.Clone();
-            normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
-            normalizedSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(normalizedSettings.Appearance.TreemapPalette);
-            normalizedSettings.Analysis.GlobalExcludes = NormalizeGlobalExcludes(normalizedSettings.Analysis.GlobalExcludes);
-            var json = JsonSerializer.Serialize(normalizedSettings, SerializerOptions);
-            File.WriteAllText(tempFilePath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            File.Move(tempFilePath, _settingsFilePath, overwrite: true);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            Trace.TraceWarning($"Unable to save app settings to '{_settingsFilePath}': {exception.Message}");
-        }
-        finally
-        {
-            if (File.Exists(tempFilePath))
-            {
-                try
-                {
-                    File.Delete(tempFilePath);
-                }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                {
-                    Trace.TraceWarning($"Unable to clean up temporary app settings file '{tempFilePath}': {exception.Message}");
-                }
-            }
-        }
+        JsonSettingsFileHelper.TrySave(
+            _settingsFilePath,
+            normalizedSettings,
+            SerializerOptions,
+            "app settings");
     }
 
     private static JsonSerializerOptions CreateSerializerOptions()
     {
-        var options = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true,
-        };
+        var options = JsonSettingsFileHelper.CreateSerializerOptions();
         options.Converters.Add(new JsonStringEnumConverter());
         return options;
     }

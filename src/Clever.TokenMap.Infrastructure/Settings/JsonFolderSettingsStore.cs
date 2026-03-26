@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Text;
 using System.Text.Json;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Core.Models;
@@ -9,11 +7,7 @@ namespace Clever.TokenMap.Infrastructure.Settings;
 
 public sealed class JsonFolderSettingsStore : IFolderSettingsStore
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-    };
+    private static readonly JsonSerializerOptions SerializerOptions = JsonSettingsFileHelper.CreateSerializerOptions();
 
     private readonly PathNormalizer _pathNormalizer;
     private readonly string _folderSettingsRootPath;
@@ -33,22 +27,11 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
         var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
         var settings = FolderSettings.CreateDefault(normalizedRootPath);
         var settingsFilePath = GetSettingsFilePath(normalizedRootPath);
-
-        if (!File.Exists(settingsFilePath))
-        {
-            return settings;
-        }
-
-        try
-        {
-            using var stream = File.OpenRead(settingsFilePath);
-            var persistedSettings = JsonSerializer.Deserialize<PersistedFolderSettings>(stream, SerializerOptions);
-            ApplySettings(settings, normalizedRootPath, persistedSettings);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
-        {
-            Trace.TraceWarning($"Unable to load folder settings from '{settingsFilePath}': {exception.Message}");
-        }
+        var persistedSettings = JsonSettingsFileHelper.TryLoad<PersistedFolderSettings>(
+            settingsFilePath,
+            SerializerOptions,
+            "folder settings");
+        ApplySettings(settings, normalizedRootPath, persistedSettings);
 
         return settings;
     }
@@ -60,37 +43,15 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
 
         var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
         var settingsFilePath = GetSettingsFilePath(normalizedRootPath);
-        var tempFilePath = $"{settingsFilePath}.tmp";
+        var normalizedSettings = settings.Clone();
+        normalizedSettings.RootPath = normalizedRootPath;
+        normalizedSettings.Scan = FolderScanSettings.Normalize(normalizedSettings.Scan);
 
-        try
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
-            var normalizedSettings = settings.Clone();
-            normalizedSettings.RootPath = normalizedRootPath;
-            normalizedSettings.Scan = FolderScanSettings.Normalize(normalizedSettings.Scan);
-
-            var json = JsonSerializer.Serialize(normalizedSettings, SerializerOptions);
-            File.WriteAllText(tempFilePath, json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            File.Move(tempFilePath, settingsFilePath, overwrite: true);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            Trace.TraceWarning($"Unable to save folder settings to '{settingsFilePath}': {exception.Message}");
-        }
-        finally
-        {
-            if (File.Exists(tempFilePath))
-            {
-                try
-                {
-                    File.Delete(tempFilePath);
-                }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                {
-                    Trace.TraceWarning($"Unable to clean up temporary folder settings file '{tempFilePath}': {exception.Message}");
-                }
-            }
-        }
+        JsonSettingsFileHelper.TrySave(
+            settingsFilePath,
+            normalizedSettings,
+            SerializerOptions,
+            "folder settings");
     }
 
     private void ApplySettings(FolderSettings settings, string normalizedRootPath, PersistedFolderSettings? persistedSettings)
