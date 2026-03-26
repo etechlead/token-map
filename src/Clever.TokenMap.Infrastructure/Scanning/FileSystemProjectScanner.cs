@@ -12,7 +12,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 {
     private const string GitIgnoreFileName = ".gitignore";
 
-    private readonly IgnoreFileParser _ignoreFileParser = new();
     private readonly IAppLogger _logger;
     private readonly IPathFilter _pathFilter;
     private readonly PathNormalizer _pathNormalizer;
@@ -263,7 +262,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 
         try
         {
-            additionalRules.AddRange(_ignoreFileParser.Parse(ignoreFilePath, directoryRelativePath));
+            additionalRules.AddRange(IgnoreFileParser.Parse(ignoreFilePath, directoryRelativePath));
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
@@ -276,13 +275,13 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             : parentContext.AppendBetween(additionalRules);
     }
 
-    private IgnoreDirectoryContext CreateInitialIgnoreContext(ScanOptions options)
+    private static IgnoreDirectoryContext CreateInitialIgnoreContext(ScanOptions options)
     {
         var globalRules = options.UseGlobalExcludes
-            ? _ignoreFileParser.ParseLines(options.GlobalExcludes, baseRelativePath: string.Empty)
+            ? IgnoreFileParser.ParseLines(options.GlobalExcludes, baseRelativePath: string.Empty)
             : [];
         var folderRules = options.UseFolderExcludes
-            ? _ignoreFileParser.ParseLines(options.FolderExcludes, baseRelativePath: string.Empty)
+            ? IgnoreFileParser.ParseLines(options.FolderExcludes, baseRelativePath: string.Empty)
             : [];
 
         return new IgnoreDirectoryContext(globalRules, folderRules);

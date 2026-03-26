@@ -1,42 +1,30 @@
+using GitIgnoreRule = global::Ignore.IgnoreRule;
+
 namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 
-internal sealed class IgnoreRule(
-    string baseRelativePath,
-    System.Text.RegularExpressions.Regex regex,
-    bool isNegated,
-    bool directoryOnly,
-    bool matchFileNameOnly)
+internal sealed class IgnoreRule(string baseRelativePath, string rawPattern)
 {
+    private readonly GitIgnoreRule _rule = new(rawPattern);
+    private readonly bool _directoryOnly = IsDirectoryOnly(rawPattern);
+
     public string BaseRelativePath { get; } = baseRelativePath;
 
-    public System.Text.RegularExpressions.Regex Regex { get; } = regex;
-
-    public bool IsNegated { get; } = isNegated;
-
-    public bool DirectoryOnly { get; } = directoryOnly;
-
-    public bool MatchFileNameOnly { get; } = matchFileNameOnly;
+    public bool IsNegated => _rule.Negate;
 
     public bool IsMatch(string normalizedRelativePath, bool isDirectory)
     {
-        if (DirectoryOnly && !isDirectory)
-        {
-            return false;
-        }
-
         var candidatePath = GetCandidatePath(normalizedRelativePath);
         if (candidatePath is null)
         {
             return false;
         }
 
-        if (MatchFileNameOnly)
-        {
-            var segments = candidatePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            return segments.Any(segment => Regex.IsMatch(segment));
-        }
+        var candidateForMatch = isDirectory && candidatePath.Length > 0
+            && _directoryOnly
+            ? candidatePath + "/"
+            : candidatePath;
 
-        return Regex.IsMatch(candidatePath);
+        return _rule.IsMatch(candidateForMatch);
     }
 
     private string? GetCandidatePath(string normalizedRelativePath)
@@ -55,5 +43,23 @@ internal sealed class IgnoreRule(
         return normalizedRelativePath.StartsWith(prefix, StringComparison.Ordinal)
             ? normalizedRelativePath[prefix.Length..]
             : null;
+    }
+
+    private static bool IsDirectoryOnly(string rawPattern)
+    {
+        var pattern = rawPattern.TrimEnd();
+
+        if (pattern.StartsWith(@"\!", StringComparison.Ordinal) ||
+            pattern.StartsWith(@"\#", StringComparison.Ordinal))
+        {
+            pattern = pattern[1..];
+        }
+        else if (pattern.StartsWith('!'))
+        {
+            pattern = pattern[1..];
+        }
+
+        return pattern.EndsWith('/') &&
+               !pattern.EndsWith("\\/", StringComparison.Ordinal);
     }
 }

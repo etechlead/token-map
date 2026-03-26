@@ -142,6 +142,75 @@ public sealed class IgnorePolicyScannerTests
     }
 
     [Fact]
+    public async Task ScanAsync_OuterRoot_AppliesNestedDirectoryGitIgnore()
+    {
+        using var tempProject = TemporaryProject.Create();
+        tempProject.WriteFile(".git/config", "[core]\n");
+        tempProject.WriteFile("repo-a/.git/config", "[core]\n");
+        tempProject.WriteFile("repo-a/.gitignore", "ignored-from-nested.txt\n");
+        tempProject.WriteFile("repo-a/ignored-from-nested.txt", "skip");
+        tempProject.WriteFile("repo-a/keep.txt", "keep");
+
+        var scanner = new FileSystemProjectScanner();
+
+        var snapshot = await scanner.ScanAsync(tempProject.RootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var relativePaths = GetRelativePaths(snapshot.Root);
+
+        Assert.Contains("repo-a", relativePaths);
+        Assert.Contains("repo-a/keep.txt", relativePaths);
+        Assert.DoesNotContain("repo-a/ignored-from-nested.txt", relativePaths);
+    }
+
+    [Fact]
+    public async Task ScanAsync_SelectedNestedRoot_UsesOnlyNestedRootGitIgnoreChain()
+    {
+        using var tempProject = TemporaryProject.Create();
+        tempProject.WriteFile(".git/config", "[core]\n");
+        tempProject.WriteFile(".gitignore", "repo-a/ignored-by-parent.txt\n");
+        tempProject.WriteFile("repo-a/.git/config", "[core]\n");
+        tempProject.WriteFile("repo-a/.gitignore", "ignored-by-nested.txt\n");
+        tempProject.WriteFile("repo-a/ignored-by-parent.txt", "keep when repo-a is selected");
+        tempProject.WriteFile("repo-a/ignored-by-nested.txt", "skip");
+        tempProject.WriteFile("repo-a/keep.txt", "keep");
+
+        var scanner = new FileSystemProjectScanner();
+
+        var snapshot = await scanner.ScanAsync(
+            Path.Combine(tempProject.RootPath, "repo-a"),
+            ScanOptions.Default,
+            progress: null,
+            CancellationToken.None);
+        var relativePaths = GetRelativePaths(snapshot.Root);
+
+        Assert.Contains("ignored-by-parent.txt", relativePaths);
+        Assert.Contains("keep.txt", relativePaths);
+        Assert.DoesNotContain("ignored-by-nested.txt", relativePaths);
+    }
+
+    [Fact]
+    public async Task ScanAsync_GitIgnoreBracketClasses_MatchDirectoryNames()
+    {
+        using var tempProject = TemporaryProject.Create();
+        tempProject.WriteFile(".gitignore", "[Bb]in/\n[Oo]bj/\n");
+        tempProject.WriteFile("src/Project/bin/output.dll", "skip");
+        tempProject.WriteFile("src/Project/obj/output.g.cs", "skip");
+        tempProject.WriteFile("src/Project/keep.txt", "keep");
+
+        var scanner = new FileSystemProjectScanner();
+
+        var snapshot = await scanner.ScanAsync(tempProject.RootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var relativePaths = GetRelativePaths(snapshot.Root);
+
+        Assert.Contains("src", relativePaths);
+        Assert.Contains("src/Project", relativePaths);
+        Assert.Contains("src/Project/keep.txt", relativePaths);
+        Assert.DoesNotContain("src/Project/bin", relativePaths);
+        Assert.DoesNotContain("src/Project/bin/output.dll", relativePaths);
+        Assert.DoesNotContain("src/Project/obj", relativePaths);
+        Assert.DoesNotContain("src/Project/obj/output.g.cs", relativePaths);
+    }
+
+    [Fact]
     public async Task ScanAsync_DisabledFolderExcludes_DoNotApply()
     {
         using var tempProject = TemporaryProject.Create();
