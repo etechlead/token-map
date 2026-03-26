@@ -10,6 +10,7 @@ using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
 using Clever.TokenMap.Infrastructure.Tokenization;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.VisualHarness;
 
@@ -41,12 +42,13 @@ internal static class HarnessComposition
         ISettingsCoordinator settingsCoordinator,
         IFolderPathService folderPathService,
         IPathShellService pathShellService) =>
-        new(
-            analysisSessionController,
-            new TreemapNavigationState(),
-            settingsCoordinator,
-            folderPathService,
-            pathShellService);
+        MainWindowViewModelFactory.Create(
+                new MainWindowViewModelFactoryDependencies(
+                    analysisSessionController,
+                    settingsCoordinator,
+                    folderPathService,
+                    pathShellService))
+            .MainWindowViewModel;
 }
 
 internal sealed class SnapshotProjectAnalyzer(ProjectSnapshot snapshot) : IProjectAnalyzer
@@ -83,9 +85,13 @@ internal sealed class NoOpPathShellService : IPathShellService
 
 internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettingsCoordinator
 {
-    public SettingsState State { get; } = state;
+    private SettingsState MutableState { get; } = state;
 
-    public CurrentFolderSettingsState CurrentFolderState { get; } = new();
+    private CurrentFolderSettingsState MutableCurrentFolderState { get; } = new();
+
+    public IReadOnlySettingsState State => MutableState;
+
+    public IReadOnlyCurrentFolderSettingsState CurrentFolderState => MutableCurrentFolderState;
 
     public ScanOptions BuildCurrentScanOptions() =>
         new()
@@ -101,36 +107,36 @@ internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettings
 
     public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-    public void SetSelectedMetric(AnalysisMetric metric) => State.SelectedMetric = metric;
+    public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
 
-    public void SetRespectGitIgnore(bool value) => State.RespectGitIgnore = value;
+    public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 
-    public void SetUseGlobalExcludes(bool value) => State.UseGlobalExcludes = value;
+    public void SetUseGlobalExcludes(bool value) => MutableState.UseGlobalExcludes = value;
 
-    public void ReplaceGlobalExcludes(IEnumerable<string> entries) => State.ReplaceGlobalExcludes(entries);
+    public void ReplaceGlobalExcludes(IEnumerable<string> entries) => MutableState.ReplaceGlobalExcludes(entries);
 
-    public void SetThemePreference(ThemePreference preference) => State.SelectedThemePreference = preference;
+    public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
 
-    public void SetTreemapPalette(TreemapPalette palette) => State.SelectedTreemapPalette = palette;
+    public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
-    public void RecordRecentFolder(string folderPath) => State.RecordRecentFolder(folderPath);
+    public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
-    public void RemoveRecentFolder(string folderPath) => State.RemoveRecentFolder(folderPath);
+    public void RemoveRecentFolder(string folderPath) => MutableState.RemoveRecentFolder(folderPath);
 
-    public void ClearRecentFolders() => State.ClearRecentFolders();
+    public void ClearRecentFolders() => MutableState.ClearRecentFolders();
 
-    public void SetUseFolderExcludes(bool value) => CurrentFolderState.UseFolderExcludes = value;
+    public void SetUseFolderExcludes(bool value) => MutableCurrentFolderState.UseFolderExcludes = value;
 
-    public void ReplaceFolderExcludes(IEnumerable<string> entries) => CurrentFolderState.ReplaceFolderExcludes(entries);
+    public void ReplaceFolderExcludes(IEnumerable<string> entries) => MutableCurrentFolderState.ReplaceFolderExcludes(entries);
 
     public void SwitchActiveFolder(string? rootPath)
     {
         if (string.IsNullOrWhiteSpace(rootPath))
         {
-            CurrentFolderState.Reset();
+            MutableCurrentFolderState.Reset();
             return;
         }
 
-        CurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
+        MutableCurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
     }
 }

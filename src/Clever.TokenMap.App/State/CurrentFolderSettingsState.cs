@@ -6,7 +6,7 @@ using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.App.State;
 
-public sealed partial class CurrentFolderSettingsState : ObservableObject
+public sealed partial class CurrentFolderSettingsState : ObservableObject, IReadOnlyCurrentFolderSettingsState
 {
     private List<string> _folderExcludes = [];
 

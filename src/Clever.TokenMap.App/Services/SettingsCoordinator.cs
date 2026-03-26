@@ -44,9 +44,13 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
             effectiveDebounceDelay);
     }
 
-    public SettingsState State => _appSettingsSession.State;
+    private SettingsState MutableState => _appSettingsSession.State;
 
-    public CurrentFolderSettingsState CurrentFolderState => _folderSettingsSession.CurrentFolderState;
+    private CurrentFolderSettingsState MutableCurrentFolderState => _folderSettingsSession.CurrentFolderState;
+
+    public IReadOnlySettingsState State => MutableState;
+
+    public IReadOnlyCurrentFolderSettingsState CurrentFolderState => MutableCurrentFolderState;
 
     public ScanOptions BuildCurrentScanOptions() =>
         new()
@@ -68,37 +72,37 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         _folderSettingsSession.Resolve(rootPath, baseOptions);
 
     public void SetSelectedMetric(AnalysisMetric metric) =>
-        State.SelectedMetric = metric;
+        MutableState.SelectedMetric = metric;
 
     public void SetRespectGitIgnore(bool value) =>
-        State.RespectGitIgnore = value;
+        MutableState.RespectGitIgnore = value;
 
     public void SetUseGlobalExcludes(bool value) =>
-        State.UseGlobalExcludes = value;
+        MutableState.UseGlobalExcludes = value;
 
     public void ReplaceGlobalExcludes(IEnumerable<string> entries) =>
-        State.ReplaceGlobalExcludes(entries);
+        MutableState.ReplaceGlobalExcludes(entries);
 
     public void SetThemePreference(ThemePreference preference) =>
-        State.SelectedThemePreference = preference;
+        MutableState.SelectedThemePreference = preference;
 
     public void SetTreemapPalette(TreemapPalette palette) =>
-        State.SelectedTreemapPalette = palette;
+        MutableState.SelectedTreemapPalette = palette;
 
     public void RecordRecentFolder(string folderPath) =>
-        State.RecordRecentFolder(folderPath);
+        MutableState.RecordRecentFolder(folderPath);
 
     public void RemoveRecentFolder(string folderPath) =>
-        State.RemoveRecentFolder(folderPath);
+        MutableState.RemoveRecentFolder(folderPath);
 
     public void ClearRecentFolders() =>
-        State.ClearRecentFolders();
+        MutableState.ClearRecentFolders();
 
     public void SetUseFolderExcludes(bool value) =>
-        CurrentFolderState.UseFolderExcludes = value;
+        MutableCurrentFolderState.UseFolderExcludes = value;
 
     public void ReplaceFolderExcludes(IEnumerable<string> entries) =>
-        CurrentFolderState.ReplaceFolderExcludes(entries);
+        MutableCurrentFolderState.ReplaceFolderExcludes(entries);
 
     public void SwitchActiveFolder(string? rootPath) =>
         _folderSettingsSession.SwitchActiveFolder(rootPath);

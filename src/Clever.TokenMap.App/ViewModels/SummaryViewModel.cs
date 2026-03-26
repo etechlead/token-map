@@ -6,7 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
 
-public partial class SummaryViewModel : ViewModelBase
+public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 {
     private bool _acceptProgressUpdates;
 

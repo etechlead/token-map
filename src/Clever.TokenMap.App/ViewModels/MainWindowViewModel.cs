@@ -1,24 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-    private readonly IAnalysisSessionController _analysisSessionController;
     private readonly IPathShellService _pathShellService;
-    private readonly ISettingsCoordinator _settingsCoordinator;
-    private readonly TreemapNavigationState _treemapNavigationState;
+    private readonly MainWindowWorkspacePresenter _workspacePresenter;
     private readonly RelayCommand _closeSettingsCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
@@ -28,63 +24,34 @@ public partial class MainWindowViewModel : ViewModelBase
     private bool isSettingsOpen;
 
     public MainWindowViewModel(
-        IAnalysisSessionController analysisSessionController,
-        TreemapNavigationState treemapNavigationState,
-        ISettingsCoordinator settingsCoordinator,
-        IFolderPathService folderPathService,
+        MainWindowWorkspacePresenter workspacePresenter,
+        ToolbarViewModel toolbar,
+        ExcludesEditorViewModel excludesEditor,
+        RecentFoldersViewModel recentFolders,
+        ProjectTreeViewModel tree,
+        SummaryViewModel summary,
         IPathShellService pathShellService)
     {
-        _analysisSessionController = analysisSessionController;
-        _treemapNavigationState = treemapNavigationState;
-        _settingsCoordinator = settingsCoordinator;
+        _workspacePresenter = workspacePresenter;
         _pathShellService = pathShellService;
 
-        Toolbar = new ToolbarViewModel(
-            _settingsCoordinator,
-            new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
-            new AsyncRelayCommand(RescanAsync, CanRescan),
-            new RelayCommand(CancelAnalysis, CanCancel));
-        ExcludesEditor = new ExcludesEditorViewModel(
-            _settingsCoordinator,
-            _analysisSessionController,
-            Toolbar.BuildScanOptions);
-        RecentFolders = new RecentFoldersViewModel(
-            _analysisSessionController,
-            _settingsCoordinator,
-            folderPathService,
-            Toolbar.BuildScanOptions);
-        Tree = new ProjectTreeViewModel();
-        Tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
-        Summary = new SummaryViewModel();
+        Toolbar = toolbar;
+        ExcludesEditor = excludesEditor;
+        RecentFolders = recentFolders;
+        Tree = tree;
+        Summary = summary;
 
-        _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(NavigateToTreemapBreadcrumb);
+        _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
         _closeSettingsCommand = new RelayCommand(CloseSettings);
-        _resetTreemapRootCommand = new RelayCommand(ResetTreemapRoot, () => CanResetTreemapRoot);
+        _resetTreemapRootCommand = new RelayCommand(_workspacePresenter.ResetTreemapRoot, () => CanResetTreemapRoot);
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
 
-        Tree.SelectedNodeChanged += (_, node) => SelectedNode = node?.Node;
-        _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
-        _settingsCoordinator.State.PropertyChanged += SettingsStateOnPropertyChanged;
-        _treemapNavigationState.PropertyChanged += TreemapNavigationStateOnPropertyChanged;
-
-        _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
-        RefreshToolbarAvailability();
-
-        if (_analysisSessionController.CurrentSnapshot is { } snapshot)
-        {
-            ApplySnapshot(snapshot);
-        }
-
-        Summary.SetState(_analysisSessionController.State);
-        if (_analysisSessionController.CurrentProgress is { } progress)
-        {
-            Summary.UpdateProgress(progress);
-        }
+        _workspacePresenter.PropertyChanged += WorkspacePresenterOnPropertyChanged;
     }
 
-    public string WindowTitle => BuildWindowTitle(_analysisSessionController.SelectedFolderPath);
+    public string WindowTitle => _workspacePresenter.WindowTitle;
 
-    public string ProjectTreeSelectedFolderText => _analysisSessionController.SelectedFolderPath?.Trim() ?? string.Empty;
+    public string ProjectTreeSelectedFolderText => _workspacePresenter.ProjectTreeSelectedFolderText;
 
     public ToolbarViewModel Toolbar { get; }
 
@@ -98,25 +65,25 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public string RevealMenuHeader => _pathShellService.RevealMenuHeader;
 
-    public ProjectNode? TreemapRootNode => _treemapNavigationState.TreemapRootNode;
+    public ProjectNode? TreemapRootNode => _workspacePresenter.TreemapRootNode;
 
-    public bool HasSnapshot => _analysisSessionController.HasSnapshot;
+    public bool HasSnapshot => _workspacePresenter.HasSnapshot;
 
     public ProjectNode? SelectedNode
     {
-        get => _treemapNavigationState.SelectedNode;
-        set => _treemapNavigationState.SelectNode(value);
+        get => _workspacePresenter.SelectedNode;
+        set => _workspacePresenter.SelectedNode = value;
     }
 
-    public AnalysisState AnalysisState => _analysisSessionController.State;
+    public AnalysisState AnalysisState => _workspacePresenter.AnalysisState;
 
-    public IReadOnlyList<TreemapBreadcrumbItem> TreemapBreadcrumbs => _treemapNavigationState.TreemapBreadcrumbs;
+    public IReadOnlyList<TreemapBreadcrumbItem> TreemapBreadcrumbs => _workspacePresenter.TreemapBreadcrumbs;
 
-    public bool CanResetTreemapRoot => _treemapNavigationState.CanResetTreemapRoot;
+    public bool CanResetTreemapRoot => _workspacePresenter.CanResetTreemapRoot;
 
-    public bool CanShowTreemapScope => _treemapNavigationState.CanShowTreemapScope;
+    public bool CanShowTreemapScope => _workspacePresenter.CanShowTreemapScope;
 
-    public string TreemapScopeDisplay => _treemapNavigationState.TreemapScopeDisplay;
+    public string TreemapScopeDisplay => _workspacePresenter.TreemapScopeDisplay;
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
@@ -136,20 +103,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public IRelayCommand<ProjectNode?> NavigateToTreemapBreadcrumbCommand => _navigateToTreemapBreadcrumbCommand;
 
-    private bool CanOpenFolder() => !_analysisSessionController.IsBusy;
-
-    private bool CanRescan() => !_analysisSessionController.IsBusy && _analysisSessionController.HasSelectedFolder;
-
-    private bool CanCancel() => _analysisSessionController.IsBusy;
-
     public void DrillIntoTreemap(ProjectNode? node)
     {
-        _treemapNavigationState.DrillInto(node);
+        _workspacePresenter.DrillIntoTreemap(node);
     }
 
-    public bool CanSetTreemapRoot(ProjectNode? node) => _treemapNavigationState.CanSetTreemapRoot(node);
+    public bool CanSetTreemapRoot(ProjectNode? node) => _workspacePresenter.CanSetTreemapRoot(node);
 
-    public void SetTreemapRoot(ProjectNode? node) => _treemapNavigationState.SetTreemapRoot(node);
+    public void SetTreemapRoot(ProjectNode? node) => _workspacePresenter.SetTreemapRoot(node);
 
     public Task OpenNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
     {
@@ -174,26 +135,6 @@ public partial class MainWindowViewModel : ViewModelBase
             cancellationToken);
     }
 
-    private async Task OpenFolderAsync()
-    {
-        await _analysisSessionController.OpenFolderAsync(Toolbar.BuildScanOptions());
-    }
-
-    private async Task RescanAsync()
-    {
-        await _analysisSessionController.RescanAsync(Toolbar.BuildScanOptions());
-    }
-
-    private void CancelAnalysis()
-    {
-        _analysisSessionController.Cancel();
-    }
-
-    private void ResetTreemapRoot()
-    {
-        _treemapNavigationState.ResetTreemapRoot();
-    }
-
     private void ToggleSettings()
     {
         IsSettingsOpen = !IsSettingsOpen;
@@ -204,124 +145,19 @@ public partial class MainWindowViewModel : ViewModelBase
         IsSettingsOpen = false;
     }
 
-    private void NavigateToTreemapBreadcrumb(ProjectNode? node)
-    {
-        _treemapNavigationState.NavigateToBreadcrumb(node);
-    }
-
     public bool CanExcludeNodeFromFolder(ProjectNode? node) => ExcludesEditor.CanExcludeNodeFromFolder(node);
 
-    private void AnalysisSessionControllerOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void WorkspacePresenterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        switch (e.PropertyName)
+        if (string.IsNullOrWhiteSpace(e.PropertyName))
         {
-            case nameof(IAnalysisSessionController.SelectedFolderPath):
-                _settingsCoordinator.SwitchActiveFolder(_analysisSessionController.SelectedFolderPath);
-                OnPropertyChanged(nameof(WindowTitle));
-                OnPropertyChanged(nameof(ProjectTreeSelectedFolderText));
-                RefreshToolbarAvailability();
-                break;
-            case nameof(IAnalysisSessionController.CurrentSnapshot):
-                OnPropertyChanged(nameof(WindowTitle));
-                OnPropertyChanged(nameof(HasSnapshot));
-                if (_analysisSessionController.CurrentSnapshot is { } snapshot)
-                {
-                    ApplySnapshot(snapshot);
-                }
-                else
-                {
-                    Tree.Clear();
-                    _treemapNavigationState.Clear();
-                }
-
-                RefreshToolbarAvailability();
-                break;
-            case nameof(IAnalysisSessionController.State):
-                OnPropertyChanged(nameof(AnalysisState));
-                Summary.SetState(_analysisSessionController.State);
-                if (_analysisSessionController.State == AnalysisState.Completed &&
-                    _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
-                {
-                    Summary.SetCompleted(completedSnapshot);
-                }
-
-                RefreshToolbarAvailability();
-                break;
-            case nameof(IAnalysisSessionController.StatusMessage):
-                Summary.SetState(_analysisSessionController.State);
-                break;
-            case nameof(IAnalysisSessionController.CurrentProgress):
-                if (_analysisSessionController.CurrentProgress is { } progress)
-                {
-                    Summary.UpdateProgress(progress);
-                }
-
-                break;
-        }
-    }
-
-    private void SettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(SettingsState.SelectedMetric))
-        {
-            Tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
-        }
-    }
-
-    private void TreemapNavigationStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        switch (e.PropertyName)
-        {
-            case nameof(TreemapNavigationState.SelectedNode):
-                OnPropertyChanged(nameof(SelectedNode));
-                Tree.SelectNodeById(_treemapNavigationState.SelectedNode?.Id);
-                break;
-            case nameof(TreemapNavigationState.TreemapRootNode):
-                OnPropertyChanged(nameof(TreemapRootNode));
-                OnPropertyChanged(nameof(CanResetTreemapRoot));
-                OnPropertyChanged(nameof(CanShowTreemapScope));
-                OnPropertyChanged(nameof(TreemapScopeDisplay));
-                _resetTreemapRootCommand.NotifyCanExecuteChanged();
-                break;
-            case nameof(TreemapNavigationState.TreemapBreadcrumbs):
-                OnPropertyChanged(nameof(TreemapBreadcrumbs));
-                break;
-        }
-    }
-
-    private void ApplySnapshot(ProjectSnapshot snapshot)
-    {
-        Tree.LoadRoot(snapshot.Root);
-        _treemapNavigationState.LoadSnapshot(snapshot);
-        Summary.SetCompleted(snapshot);
-    }
-
-    private void RefreshToolbarAvailability()
-    {
-        Toolbar.RefreshAvailability(
-            _analysisSessionController.IsBusy,
-            _analysisSessionController.HasSnapshot);
-    }
-
-    private static string BuildWindowTitle(string? folderPath)
-    {
-        var displayName = GetFolderDisplayName(folderPath);
-        return string.IsNullOrWhiteSpace(displayName)
-            ? "TokenMap"
-            : $"{displayName} - TokenMap";
-    }
-
-    private static string GetFolderDisplayName(string? folderPath)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            return string.Empty;
+            return;
         }
 
-        var trimmedPath = folderPath.Trim();
-        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return string.IsNullOrWhiteSpace(displayName)
-            ? trimmedPath
-            : displayName;
+        OnPropertyChanged(e.PropertyName);
+        if (e.PropertyName == nameof(MainWindowWorkspacePresenter.CanResetTreemapRoot))
+        {
+            _resetTreemapRootCommand.NotifyCanExecuteChanged();
+        }
     }
 }

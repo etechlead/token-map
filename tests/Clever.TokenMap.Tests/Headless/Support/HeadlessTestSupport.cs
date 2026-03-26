@@ -8,6 +8,7 @@ using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
 
@@ -160,16 +161,23 @@ internal static class HeadlessTestSupport
         IProjectAnalyzer projectAnalyzer,
         string? selectedFolderPath = "C:\\Demo",
         IEnumerable<string>? recentFolderPaths = null,
-        IPathShellService? pathShellService = null) =>
-        new(
-            new AnalysisSessionController(
-                projectAnalyzer,
-                new StubFolderPickerService(selectedFolderPath),
-                new StubFolderPathService()),
-            new TreemapNavigationState(),
-            new StubSettingsCoordinator(recentFolderPaths),
-            new StubFolderPathService(),
-            pathShellService ?? new StubPathShellService());
+        IPathShellService? pathShellService = null)
+    {
+        var analysisSessionController = new AnalysisSessionController(
+            projectAnalyzer,
+            new StubFolderPickerService(selectedFolderPath),
+            new StubFolderPathService());
+        var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths);
+        var folderPathService = new StubFolderPathService();
+
+        return MainWindowViewModelFactory.Create(
+                new MainWindowViewModelFactoryDependencies(
+                    analysisSessionController,
+                    settingsCoordinator,
+                    folderPathService,
+                    pathShellService ?? new StubPathShellService()))
+            .MainWindowViewModel;
+    }
 
     internal static T? FindNamedDescendant<T>(Window window, string name)
         where T : Control
@@ -195,9 +203,13 @@ internal static class HeadlessTestSupport
 
     private sealed class StubSettingsCoordinator(IEnumerable<string>? recentFolderPaths = null) : ISettingsCoordinator
     {
-        public SettingsState State { get; } = CreateState(recentFolderPaths);
+        private SettingsState MutableState { get; } = CreateState(recentFolderPaths);
 
-        public CurrentFolderSettingsState CurrentFolderState { get; } = new();
+        private CurrentFolderSettingsState MutableCurrentFolderState { get; } = new();
+
+        public IReadOnlySettingsState State => MutableState;
+
+        public IReadOnlyCurrentFolderSettingsState CurrentFolderState => MutableCurrentFolderState;
 
         public ScanOptions BuildCurrentScanOptions() =>
             new()
@@ -213,37 +225,37 @@ internal static class HeadlessTestSupport
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-        public void SetSelectedMetric(AnalysisMetric metric) => State.SelectedMetric = metric;
+        public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
 
-        public void SetRespectGitIgnore(bool value) => State.RespectGitIgnore = value;
+        public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 
-        public void SetUseGlobalExcludes(bool value) => State.UseGlobalExcludes = value;
+        public void SetUseGlobalExcludes(bool value) => MutableState.UseGlobalExcludes = value;
 
-        public void ReplaceGlobalExcludes(IEnumerable<string> entries) => State.ReplaceGlobalExcludes(entries);
+        public void ReplaceGlobalExcludes(IEnumerable<string> entries) => MutableState.ReplaceGlobalExcludes(entries);
 
-        public void SetThemePreference(ThemePreference preference) => State.SelectedThemePreference = preference;
+        public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
 
-        public void SetTreemapPalette(TreemapPalette palette) => State.SelectedTreemapPalette = palette;
+        public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
-        public void RecordRecentFolder(string folderPath) => State.RecordRecentFolder(folderPath);
+        public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
-        public void RemoveRecentFolder(string folderPath) => State.RemoveRecentFolder(folderPath);
+        public void RemoveRecentFolder(string folderPath) => MutableState.RemoveRecentFolder(folderPath);
 
-        public void ClearRecentFolders() => State.ClearRecentFolders();
+        public void ClearRecentFolders() => MutableState.ClearRecentFolders();
 
-        public void SetUseFolderExcludes(bool value) => CurrentFolderState.UseFolderExcludes = value;
+        public void SetUseFolderExcludes(bool value) => MutableCurrentFolderState.UseFolderExcludes = value;
 
-        public void ReplaceFolderExcludes(IEnumerable<string> entries) => CurrentFolderState.ReplaceFolderExcludes(entries);
+        public void ReplaceFolderExcludes(IEnumerable<string> entries) => MutableCurrentFolderState.ReplaceFolderExcludes(entries);
 
         public void SwitchActiveFolder(string? rootPath)
         {
             if (string.IsNullOrWhiteSpace(rootPath))
             {
-                CurrentFolderState.Reset();
+                MutableCurrentFolderState.Reset();
                 return;
             }
 
-            CurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
+            MutableCurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
         }
 
         private static SettingsState CreateState(IEnumerable<string>? recentFolderPaths)

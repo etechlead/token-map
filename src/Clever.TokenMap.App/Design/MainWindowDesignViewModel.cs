@@ -9,13 +9,15 @@ public sealed class MainWindowDesignViewModel : MainWindowViewModel
     {
     }
 
-    private MainWindowDesignViewModel(MainWindowViewModelDependencies dependencies)
+    private MainWindowDesignViewModel(MainWindowViewModelComposition composition)
         : base(
-            dependencies.AnalysisSessionController,
-            dependencies.TreemapNavigationState,
-            dependencies.SettingsCoordinator,
-            dependencies.FolderPathService,
-            dependencies.PathShellService)
+            composition.WorkspacePresenter,
+            composition.Toolbar,
+            composition.ExcludesEditor,
+            composition.RecentFolders,
+            composition.Tree,
+            composition.Summary,
+            composition.PathShellService)
     {
     }
 }

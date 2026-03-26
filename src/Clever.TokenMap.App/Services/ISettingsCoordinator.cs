@@ -9,9 +9,9 @@ namespace Clever.TokenMap.App.Services;
 
 public interface ISettingsCoordinator : IScanOptionsResolver
 {
-    SettingsState State { get; }
+    IReadOnlySettingsState State { get; }
 
-    CurrentFolderSettingsState CurrentFolderState { get; }
+    IReadOnlyCurrentFolderSettingsState CurrentFolderState { get; }
 
     ScanOptions BuildCurrentScanOptions();
 

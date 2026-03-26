@@ -10,7 +10,7 @@ using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.App.State;
 
-public sealed partial class SettingsState : ObservableObject
+public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsState
 {
     private const int MaxRecentFolderCount = 10;
     private static readonly StringComparer RecentFolderComparer = PathComparison.Comparer;

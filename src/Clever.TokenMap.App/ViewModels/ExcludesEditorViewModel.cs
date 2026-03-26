@@ -233,7 +233,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
 
     private void CurrentFolderStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(CurrentFolderSettingsState.ActiveRootPath))
+        if (e.PropertyName == nameof(IReadOnlyCurrentFolderSettingsState.ActiveRootPath))
         {
             _openFolderCommand.NotifyCanExecuteChanged();
             _excludeNodeFromFolderCommand.NotifyCanExecuteChanged();

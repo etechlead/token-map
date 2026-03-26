@@ -10,7 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.App.ViewModels;
 
-public partial class ProjectTreeViewModel : ViewModelBase
+public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspaceView
 {
     private readonly Dictionary<string, ProjectNode> _nodesById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string?> _parentNodeIdsById = new(StringComparer.Ordinal);
@@ -40,7 +40,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
     [ObservableProperty]
     private ProjectTreeNodeViewModel? selectedNode;
 
-    public event EventHandler<ProjectTreeNodeViewModel?>? SelectedNodeChanged;
+    public event EventHandler<ProjectNode?>? SelectedNodeChanged;
 
     public void LoadRoot(ProjectNode rootNode)
     {
@@ -99,7 +99,7 @@ public partial class ProjectTreeViewModel : ViewModelBase
     partial void OnSelectedNodeChanged(ProjectTreeNodeViewModel? value)
     {
         _selectedNodeId = value?.Node.Id;
-        SelectedNodeChanged?.Invoke(this, value);
+        SelectedNodeChanged?.Invoke(this, value?.Node);
     }
 
     public void SortBy(ProjectTreeSortColumn column, ListSortDirection direction)

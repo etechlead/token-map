@@ -8,14 +8,14 @@ using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.App.ViewModels;
 
-public partial class ToolbarViewModel : ViewModelBase
+public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 {
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
     private readonly ISettingsCoordinator _settingsCoordinator;
-    private readonly CurrentFolderSettingsState _currentFolderSettingsState;
-    private readonly SettingsState _settingsState;
+    private readonly IReadOnlyCurrentFolderSettingsState _currentFolderSettingsState;
+    private readonly IReadOnlySettingsState _settingsState;
 
     public ToolbarViewModel(
         ISettingsCoordinator settingsCoordinator,
@@ -199,25 +199,25 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         switch (e.PropertyName)
         {
-            case nameof(SettingsState.SelectedMetric):
+            case nameof(IReadOnlySettingsState.SelectedMetric):
                 OnPropertyChanged(nameof(SelectedMetric));
                 OnPropertyChanged(nameof(IsTokensMetricSelected));
                 OnPropertyChanged(nameof(IsLinesMetricSelected));
                 OnPropertyChanged(nameof(IsSizeMetricSelected));
                 break;
-            case nameof(SettingsState.RespectGitIgnore):
+            case nameof(IReadOnlySettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
                 break;
-            case nameof(SettingsState.UseGlobalExcludes):
+            case nameof(IReadOnlySettingsState.UseGlobalExcludes):
                 OnPropertyChanged(nameof(UseGlobalExcludes));
                 break;
-            case nameof(SettingsState.SelectedThemePreference):
+            case nameof(IReadOnlySettingsState.SelectedThemePreference):
                 OnPropertyChanged(nameof(SelectedThemePreference));
                 OnPropertyChanged(nameof(IsSystemThemeSelected));
                 OnPropertyChanged(nameof(IsLightThemeSelected));
                 OnPropertyChanged(nameof(IsDarkThemeSelected));
                 break;
-            case nameof(SettingsState.SelectedTreemapPalette):
+            case nameof(IReadOnlySettingsState.SelectedTreemapPalette):
                 OnPropertyChanged(nameof(SelectedTreemapPalette));
                 OnPropertyChanged(nameof(IsPlainTreemapPaletteSelected));
                 OnPropertyChanged(nameof(IsWeightedTreemapPaletteSelected));
@@ -230,12 +230,12 @@ public partial class ToolbarViewModel : ViewModelBase
     {
         switch (e.PropertyName)
         {
-            case nameof(CurrentFolderSettingsState.ActiveRootPath):
+            case nameof(IReadOnlyCurrentFolderSettingsState.ActiveRootPath):
                 OnPropertyChanged(nameof(HasCurrentFolderSettings));
                 OnPropertyChanged(nameof(CanConfigureFolderExcludes));
                 OnPropertyChanged(nameof(CurrentFolderSettingsTitle));
                 break;
-            case nameof(CurrentFolderSettingsState.UseFolderExcludes):
+            case nameof(IReadOnlyCurrentFolderSettingsState.UseFolderExcludes):
                 OnPropertyChanged(nameof(UseFolderExcludes));
                 break;
         }

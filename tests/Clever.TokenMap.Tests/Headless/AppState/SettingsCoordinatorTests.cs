@@ -63,9 +63,9 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
-        coordinator.State.SelectedTreemapPalette = TreemapPalette.Weighted;
-        coordinator.State.ReplaceGlobalExcludes(["bin/", "obj/"]);
+        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+        coordinator.SetTreemapPalette(TreemapPalette.Weighted);
+        coordinator.ReplaceGlobalExcludes(["bin/", "obj/"]);
 
         await Task.Delay(120);
 
@@ -91,7 +91,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromMilliseconds(25));
 
-            coordinator.State.SelectedMetric = AnalysisMetric.Lines;
+            coordinator.SetSelectedMetric(AnalysisMetric.Lines);
 
             await store.WaitForSaveAsync();
 
@@ -106,9 +106,9 @@ public sealed class SettingsCoordinatorTests
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.State.RecordRecentFolder("C:\\RepoA");
-        coordinator.State.RecordRecentFolder("C:\\RepoB");
-        coordinator.State.RecordRecentFolder("C:\\RepoA");
+        coordinator.RecordRecentFolder("C:\\RepoA");
+        coordinator.RecordRecentFolder("C:\\RepoB");
+        coordinator.RecordRecentFolder("C:\\RepoA");
 
         await Task.Delay(120);
 
@@ -133,7 +133,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromSeconds(5));
 
-            coordinator.State.SelectedMetric = AnalysisMetric.Lines;
+            coordinator.SetSelectedMetric(AnalysisMetric.Lines);
 
             await coordinator.FlushAsync();
 
@@ -154,10 +154,10 @@ public sealed class SettingsCoordinatorTests
             new RecordingThemeService(),
             debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
+        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
         await store.WaitForSaveStartedAsync(1);
 
-        coordinator.State.SelectedThemePreference = ThemePreference.Dark;
+        coordinator.SetThemePreference(ThemePreference.Dark);
 
         await store.WaitForSaveCountAsync(2);
 
@@ -177,10 +177,10 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.State.SelectedMetric = AnalysisMetric.Lines;
-        coordinator.State.SelectedThemePreference = ThemePreference.Dark;
-        coordinator.State.SelectedTreemapPalette = TreemapPalette.Studio;
-        coordinator.State.ReplaceGlobalExcludes(["vendor/"]);
+        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+        coordinator.SetThemePreference(ThemePreference.Dark);
+        coordinator.SetTreemapPalette(TreemapPalette.Studio);
+        coordinator.ReplaceGlobalExcludes(["vendor/"]);
 
         Assert.Equal(0, store.SaveCallCount);
 
@@ -220,8 +220,8 @@ public sealed class SettingsCoordinatorTests
             debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.SwitchActiveFolder(@"C:\RepoA");
-        coordinator.CurrentFolderState.UseFolderExcludes = true;
-        coordinator.CurrentFolderState.ReplaceFolderExcludes(["/dist/"]);
+        coordinator.SetUseFolderExcludes(true);
+        coordinator.ReplaceFolderExcludes(["/dist/"]);
 
         coordinator.SwitchActiveFolder(@"C:\RepoB");
 
@@ -251,8 +251,8 @@ public sealed class SettingsCoordinatorTests
             debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.SwitchActiveFolder(@"C:\RepoA");
-        coordinator.CurrentFolderState.UseFolderExcludes = true;
-        coordinator.CurrentFolderState.ReplaceFolderExcludes(["/dist/"]);
+        coordinator.SetUseFolderExcludes(true);
+        coordinator.ReplaceFolderExcludes(["/dist/"]);
 
         var switchTask = Task.Run(() => coordinator.SwitchActiveFolder(@"C:\RepoB"));
 

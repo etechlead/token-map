@@ -4,6 +4,8 @@ using ArchUnitNET.Fluent;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
+using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Analysis;
@@ -74,6 +76,54 @@ public sealed class ArchitectureRulesTests
         Types().That().ResideInNamespace("Clever.TokenMap.App.Views")
             .Or().ResideInNamespace("Clever.TokenMap.App.Views.Sections")
             .As("app views");
+
+    private static readonly IObjectProvider<IType> MainWindowShellViewModel =
+        Types().That().Are(typeof(MainWindowViewModel))
+            .As("main window shell viewmodel");
+
+    private static readonly IObjectProvider<IType> MainWindowWorkspacePresenterType =
+        Types().That().Are(typeof(MainWindowWorkspacePresenter))
+            .As("main window workspace presenter");
+
+    private static readonly IObjectProvider<IType> MainWindowShellCompositionHelpers =
+        Types().That().Are(typeof(MainWindowViewModelFactory), typeof(MainWindowViewModelComposition), typeof(MainWindowViewModelFactoryDependencies))
+            .As("main window shell composition helpers");
+
+    private static readonly IObjectProvider<IType> MutableSettingsStateTypes =
+        Types().That().Are(typeof(SettingsState), typeof(CurrentFolderSettingsState))
+            .As("mutable settings state types");
+
+    private static readonly IObjectProvider<IType> ConcreteMainWindowProjectionViewModels =
+        Types().That().Are(typeof(ToolbarViewModel), typeof(ProjectTreeViewModel), typeof(SummaryViewModel))
+            .As("concrete main window projection viewmodels");
+
+    private static readonly IObjectProvider<IType> ConcreteAppServiceImplementations =
+        Types().That().Are(
+                typeof(AnalysisSessionController),
+                typeof(SettingsCoordinator),
+                typeof(ApplicationThemeService),
+                typeof(WindowFolderPickerService),
+                typeof(PathShellService))
+            .Or().HaveFullName("Clever.TokenMap.App.Services.AppSettingsSession")
+            .Or().HaveFullName("Clever.TokenMap.App.Services.FolderSettingsSession")
+            .Or().HaveFullName("Clever.TokenMap.App.Services.SettingsPersistenceQueue")
+            .As("concrete app service implementations");
+
+    private static readonly IObjectProvider<IType> NonShellAppViewModels =
+        Types().That().Are(AppViewModels)
+            .And().AreNot(typeof(MainWindowViewModel))
+            .And().AreNot(typeof(MainWindowWorkspacePresenter))
+            .And().AreNot(MainWindowShellCompositionHelpers)
+            .As("non-shell app viewmodels");
+
+    private static readonly IObjectProvider<IType> MainWindowOrchestrationInternals =
+        Types().That().Are(
+                typeof(IAnalysisSessionController),
+                typeof(ISettingsCoordinator),
+                typeof(TreemapNavigationState),
+                typeof(SettingsState),
+                typeof(CurrentFolderSettingsState))
+            .As("main window orchestration internals");
 
     private static readonly IObjectProvider<IType> InfrastructureSettingsNamespace =
         Types().That().ResideInNamespace("Clever.TokenMap.Infrastructure.Settings")
@@ -192,10 +242,66 @@ public sealed class ArchitectureRulesTests
             .Check(Architecture);
 
     [Fact]
+    public void MainWindow_Shell_ViewModel_Should_Not_Depend_On_Orchestration_Internals() =>
+        Types().That().Are(MainWindowShellViewModel).Should()
+            .NotDependOnAny(MainWindowOrchestrationInternals)
+            .Because("the shell viewmodel should delegate cross-section synchronization to MainWindowWorkspacePresenter")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void NonShell_App_ViewModels_Should_Not_Depend_On_MainWindow_WorkspacePresenter() =>
+        Types().That().Are(NonShellAppViewModels).Should()
+            .NotDependOnAny(MainWindowWorkspacePresenterType)
+            .Because("the workspace presenter should remain a private shell composition detail")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void App_ViewModels_Should_Not_Depend_On_Mutable_Settings_State_Types() =>
+        Types().That().Are(AppViewModels).Should()
+            .NotDependOnAny(MutableSettingsStateTypes)
+            .Because("viewmodels should observe read-only settings state interfaces instead of mutable settings state implementations")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void MainWindow_WorkspacePresenter_Should_Not_Depend_On_Concrete_MainWindow_Projection_ViewModels() =>
+        Types().That().Are(MainWindowWorkspacePresenterType).Should()
+            .NotDependOnAny(ConcreteMainWindowProjectionViewModels)
+            .Because("the workspace presenter should coordinate narrow projection contracts rather than concrete child viewmodel implementations")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void App_ViewModels_Should_Not_Depend_On_Concrete_App_Service_Implementations() =>
+        Types().That().Are(AppViewModels).Should()
+            .NotDependOnAny(ConcreteAppServiceImplementations)
+            .Because("viewmodels should depend on app-service interfaces instead of concrete service implementations")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void MainWindow_WorkspacePresenter_Should_Not_Depend_On_Shell_Composition_Helpers() =>
+        Types().That().Are(MainWindowWorkspacePresenterType).Should()
+            .NotDependOnAny(MainWindowShellCompositionHelpers)
+            .Because("the workspace presenter should stay unaware of factory-level shell composition details")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
     public void App_ViewModels_Should_Not_Depend_On_Settings_Stores() =>
         Types().That().Are(AppViewModels).Should()
             .NotDependOnAny(SettingsStoreTypes)
             .Because("viewmodels should work through the settings coordinator instead of settings stores")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void App_Services_Should_Not_Depend_On_ViewModels() =>
+        Types().That().Are(AppServices).Should()
+            .NotDependOnAny(AppViewModels)
+            .Because("app services should stay below presentation-model orchestration")
             .WithoutRequiringPositiveResults()
             .Check(Architecture);
 

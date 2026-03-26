@@ -8,16 +8,18 @@
 - `Clever.TokenMap.Treemap` holds the treemap control and its rendering/layout logic.
 - `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer coordinators, and binding to analysis/settings services.
 - `Clever.TokenMap.App.AppComposition` is the runtime composition root only. It builds the desktop service provider and wires concrete infrastructure implementations; `Clever.TokenMap.App.App` boots Avalonia, resolves the root window from that provider, and owns application-lifetime hooks only. Test and harness composition stays outside the app assembly.
+- `MainWindowViewModelFactory` is the shared shell-graph builder used by runtime, design-time, headless tests, and harness code so the window-level composition stays consistent across execution modes.
 - `tests/Clever.TokenMap.Tests` holds the xUnit suite; `Clever.TokenMap.Tests.Architecture` enforces the statically checkable subset of these boundaries with ArchUnitNET in Debug test runs.
 
 ## App-Layer State
 
-- `MainWindowViewModel` is the shell coordinator for the desktop window.
+- `MainWindowViewModel` is the shell facade for the desktop window.
+- `MainWindowWorkspacePresenter` owns cross-section projection sync between analysis/session state, the project tree projection, summary projection, and treemap navigation.
 - `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay UI-neutral and depend on app/core state rather than infrastructure details; view-specific layout objects are composed in XAML/views rather than viewmodels.
 - `AnalysisSessionController` owns the committed selected-folder state, the current snapshot, analysis state, progress, and open/rescan/cancel flow. A newly picked folder is only committed when its analysis succeeds; failed or cancelled opens keep the previous committed folder/snapshot pair intact.
 - `SettingsState` is the app-layer source of truth for persisted app-wide analysis and appearance preferences.
 - `CurrentFolderSettingsState` is the app-layer source of truth for the committed root folder's folder-specific scan preferences.
-- `SettingsCoordinator` is the app-layer facade for settings workflows; it composes separate app-settings and current-folder settings sessions, exposes the shared app-layer state objects, resolves scan options for a target root path, and coordinates flush-on-shutdown behavior.
+- `SettingsCoordinator` is the app-layer facade for settings workflows; it composes separate app-settings and current-folder settings sessions, exposes read-only settings state views to consumers, resolves scan options for a target root path, and coordinates flush-on-shutdown behavior.
 - `Clever.TokenMap.App.Services` stay UI-agnostic except for the small platform-adapter services that wrap Avalonia folder picking and theme APIs.
 - `RecentFoldersViewModel` owns recent-folder projection, the start-surface empty-state workflow, and recent-folder open/remove/clear commands.
 - `ProjectTreeViewModel` owns tree sort mode, expansion state, selection, and the visible-row projection built from the scanned `ProjectNode` tree.

@@ -1,6 +1,5 @@
 using System;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Interfaces;
@@ -89,7 +88,6 @@ public static class AppComposition
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<SettingsCoordinator>(),
                 pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
-        services.AddSingleton<TreemapNavigationState>();
         services.AddSingleton<IAnalysisSessionController>(sp =>
             new AnalysisSessionController(
                 sp.GetRequiredService<IProjectAnalyzer>(),
@@ -98,12 +96,13 @@ public static class AppComposition
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<AnalysisSessionController>(),
                 sp.GetRequiredService<ISettingsCoordinator>()));
         services.AddSingleton(sp =>
-            new MainWindowViewModel(
-                sp.GetRequiredService<IAnalysisSessionController>(),
-                sp.GetRequiredService<TreemapNavigationState>(),
-                sp.GetRequiredService<ISettingsCoordinator>(),
-                sp.GetRequiredService<IFolderPathService>(),
-                sp.GetRequiredService<IPathShellService>()));
+            MainWindowViewModelFactory.Create(
+                new MainWindowViewModelFactoryDependencies(
+                    sp.GetRequiredService<IAnalysisSessionController>(),
+                    sp.GetRequiredService<ISettingsCoordinator>(),
+                    sp.GetRequiredService<IFolderPathService>(),
+                    sp.GetRequiredService<IPathShellService>()))
+                .MainWindowViewModel);
         services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainWindowViewModel>()));
     }
 }
