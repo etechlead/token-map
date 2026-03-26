@@ -66,7 +66,6 @@ public sealed class FileSystemProjectScannerTests : IDisposable
 
     private sealed class TestPathFilter(Func<string, bool> predicate) : IPathFilter
     {
-        public bool IsIncluded(string fullPath, string normalizedRelativePath, bool isDirectory) =>
-            predicate(normalizedRelativePath);
+        public bool IsIncluded(string normalizedRelativePath) => predicate(normalizedRelativePath);
     }
 }

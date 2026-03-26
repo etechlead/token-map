@@ -1,9 +1,8 @@
 using Clever.TokenMap.Core.Enums;
-using Clever.TokenMap.Core.Interfaces;
 
 namespace Clever.TokenMap.Core.Paths;
 
-public sealed class PathNormalizer : IPathNormalizer
+public sealed class PathNormalizer
 {
     public StringComparer PathComparer { get; } = PathComparison.Comparer;
 

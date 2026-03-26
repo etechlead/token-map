@@ -148,7 +148,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool CanSetTreemapRoot(ProjectNode? node) => _treemapNavigationState.CanSetTreemapRoot(node);
 
-    public bool SetTreemapRoot(ProjectNode? node) => _treemapNavigationState.SetTreemapRoot(node);
+    public void SetTreemapRoot(ProjectNode? node) => _treemapNavigationState.SetTreemapRoot(node);
 
     public Task OpenNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
     {

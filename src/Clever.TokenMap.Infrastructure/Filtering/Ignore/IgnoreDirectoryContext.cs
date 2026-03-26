@@ -27,9 +27,4 @@ internal sealed class IgnoreDirectoryContext
         return new IgnoreDirectoryContext(combinedRules, FinalOverrideRules);
     }
 
-    public IgnoreDirectoryContext AppendFinalOverrides(IEnumerable<IgnoreRule> rules)
-    {
-        var combinedRules = FinalOverrideRules.Concat(rules).ToArray();
-        return new IgnoreDirectoryContext(PrefixRules, combinedRules);
-    }
 }

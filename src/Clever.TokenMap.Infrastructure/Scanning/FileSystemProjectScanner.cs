@@ -131,7 +131,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 continue;
             }
 
-            if (!_pathFilter.IsIncluded(entry.FullName, entryRelativePath, isDirectory))
+            if (!_pathFilter.IsIncluded(entryRelativePath))
             {
                 continue;
             }

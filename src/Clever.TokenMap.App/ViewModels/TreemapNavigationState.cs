@@ -66,21 +66,26 @@ public sealed partial class TreemapNavigationState : ObservableObject
         return !string.Equals(TreemapRootNode?.Id, node.Id, StringComparison.Ordinal);
     }
 
-    public bool SetTreemapRoot(ProjectNode? node)
+    public void SetTreemapRoot(ProjectNode? node)
+    {
+        if (!CanSetTreemapRoot(node))
+        {
+            return;
+        }
+
+        TreemapRootNode = node;
+        SelectedNode = node;
+    }
+
+    public bool DrillInto(ProjectNode? node)
     {
         if (!CanSetTreemapRoot(node))
         {
             return false;
         }
 
-        TreemapRootNode = node;
-        SelectedNode = node;
+        SetTreemapRoot(node);
         return true;
-    }
-
-    public bool DrillInto(ProjectNode? node)
-    {
-        return SetTreemapRoot(node);
     }
 
     public void ResetTreemapRoot()

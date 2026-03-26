@@ -44,7 +44,7 @@ public static class AppComposition
         services.AddSingleton<ApplicationThemeService>(_ => new ApplicationThemeService(application));
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
         services.AddSingleton<IFolderPathService, FileSystemFolderPathService>();
-        services.AddSingleton<IPathNormalizer, PathNormalizer>();
+        services.AddSingleton<PathNormalizer>();
         services.AddSingleton<IPathShellService, PathShellService>();
         services.AddSingleton<IAppLoggerFactory>(sp =>
             new AppLoggerFactory(sp.GetRequiredService<AppSettings>().Logging));
@@ -64,7 +64,7 @@ public static class AppComposition
                 sp.GetRequiredService<IThemeService>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<SettingsCoordinator>(),
-                pathNormalizer: sp.GetRequiredService<IPathNormalizer>()));
+                pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
         services.AddSingleton<TreemapNavigationState>();
         services.AddSingleton<IAnalysisSessionController>(sp =>
             new AnalysisSessionController(

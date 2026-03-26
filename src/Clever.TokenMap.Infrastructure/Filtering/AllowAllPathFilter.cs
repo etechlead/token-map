@@ -4,5 +4,5 @@ namespace Clever.TokenMap.Infrastructure.Filtering;
 
 public sealed class AllowAllPathFilter : IPathFilter
 {
-    public bool IsIncluded(string fullPath, string normalizedRelativePath, bool isDirectory) => true;
+    public bool IsIncluded(string normalizedRelativePath) => true;
 }

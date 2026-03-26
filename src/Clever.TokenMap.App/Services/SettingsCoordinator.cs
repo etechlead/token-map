@@ -2,7 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
@@ -24,7 +23,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         AppSettings? initialSettings = null,
         IAppLogger? logger = null,
         TimeSpan? debounceDelay = null,
-        IPathNormalizer? pathNormalizer = null)
+        PathNormalizer? pathNormalizer = null)
     {
         var effectiveLogger = logger ?? NullAppLogger.Instance;
         var effectiveDebounceDelay = debounceDelay ?? DefaultDebounceDelay;

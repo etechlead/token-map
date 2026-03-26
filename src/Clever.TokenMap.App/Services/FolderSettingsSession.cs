@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
@@ -16,7 +15,7 @@ internal sealed class FolderSettingsSession
     private readonly IFolderSettingsStore _folderSettingsStore;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _debounceDelay;
-    private readonly IPathNormalizer _pathNormalizer;
+    private readonly PathNormalizer _pathNormalizer;
     private readonly Lock _syncLock = new();
 
     private FolderSettings _currentFolderSettings = FolderSettings.CreateDefault();
@@ -29,7 +28,7 @@ internal sealed class FolderSettingsSession
 
     public FolderSettingsSession(
         IFolderSettingsStore folderSettingsStore,
-        IPathNormalizer pathNormalizer,
+        PathNormalizer pathNormalizer,
         IAppLogger logger,
         TimeSpan debounceDelay)
     {

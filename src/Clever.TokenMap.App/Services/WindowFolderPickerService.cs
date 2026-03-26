@@ -10,11 +10,6 @@ public sealed class WindowFolderPickerService : IFolderPickerService
 {
     private readonly Func<Window?> _windowAccessor;
 
-    public WindowFolderPickerService(Window window)
-        : this(() => window)
-    {
-    }
-
     public WindowFolderPickerService(Func<Window?> windowAccessor)
     {
         ArgumentNullException.ThrowIfNull(windowAccessor);
