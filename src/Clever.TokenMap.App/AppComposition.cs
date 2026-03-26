@@ -41,12 +41,19 @@ public static class AppComposition
         services.AddSingleton<PathNormalizer>();
         services.AddSingleton<IAppStoragePaths>(sp =>
             new TokenMapAppDataPaths(pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
+        services.AddSingleton(sp =>
+            new AppLoggerFactory(
+                AppSettings.CreateDefault().Logging,
+                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
         services.AddSingleton<IAppSettingsStore>(sp =>
-            new JsonAppSettingsStore(appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
+            new JsonAppSettingsStore(
+                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>(),
+                logger: sp.GetRequiredService<AppLoggerFactory>().CreateLogger<JsonAppSettingsStore>()));
         services.AddSingleton<IFolderSettingsStore>(sp =>
             new JsonFolderSettingsStore(
                 pathNormalizer: sp.GetRequiredService<PathNormalizer>(),
-                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
+                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>(),
+                logger: sp.GetRequiredService<AppLoggerFactory>().CreateLogger<JsonFolderSettingsStore>()));
         services.AddSingleton(sp => sp.GetRequiredService<IAppSettingsStore>().Load());
         services.AddSingleton<ApplicationThemeService>(_ => new ApplicationThemeService(application));
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
@@ -56,12 +63,20 @@ public static class AppComposition
             new AppLoggerFactory(
                 sp.GetRequiredService<AppSettings>().Logging,
                 appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
+        services.AddSingleton<IProjectScanner>(sp =>
+            new FileSystemProjectScanner(
+                pathNormalizer: sp.GetRequiredService<PathNormalizer>(),
+                logger: sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<FileSystemProjectScanner>()));
+        services.AddSingleton<ITextFileDetector, HeuristicTextFileDetector>();
+        services.AddSingleton<ITokenCounter, MicrosoftMlTokenCounter>();
+        services.AddSingleton<ICacheStore>(sp =>
+            new InMemoryCacheStore(sp.GetRequiredService<PathNormalizer>()));
         services.AddSingleton<IProjectAnalyzer>(sp =>
             new ProjectAnalyzer(
-                new FileSystemProjectScanner(logger: sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<FileSystemProjectScanner>()),
-                new HeuristicTextFileDetector(),
-                new MicrosoftMlTokenCounter(),
-                new InMemoryCacheStore(),
+                sp.GetRequiredService<IProjectScanner>(),
+                sp.GetRequiredService<ITextFileDetector>(),
+                sp.GetRequiredService<ITokenCounter>(),
+                sp.GetRequiredService<ICacheStore>(),
                 loggerFactory: sp.GetRequiredService<IAppLoggerFactory>()));
         services.AddSingleton<IFolderPickerService>(sp =>
             new WindowFolderPickerService(() => sp.GetRequiredService<MainWindow>()));

@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
@@ -15,13 +16,18 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
 
     private readonly string _settingsFilePath;
+    private readonly IAppLogger? _logger;
 
-    public JsonAppSettingsStore(string? settingsFilePath = null, IAppStoragePaths? appStoragePaths = null)
+    public JsonAppSettingsStore(
+        string? settingsFilePath = null,
+        IAppStoragePaths? appStoragePaths = null,
+        IAppLogger? logger = null)
     {
         var storagePaths = appStoragePaths ?? new TokenMapAppDataPaths();
         _settingsFilePath = string.IsNullOrWhiteSpace(settingsFilePath)
             ? storagePaths.GetSettingsFilePath()
             : settingsFilePath;
+        _logger = logger;
     }
 
     public AppSettings Load()
@@ -30,7 +36,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         var persistedSettings = JsonSettingsFileHelper.TryLoad<PersistedAppSettings>(
             _settingsFilePath,
             SerializerOptions,
-            "app settings");
+            "app settings",
+            _logger);
         ApplySettings(settings, persistedSettings);
 
         return settings;
@@ -49,7 +56,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             _settingsFilePath,
             normalizedSettings,
             SerializerOptions,
-            "app settings");
+            "app settings",
+            _logger);
     }
 
     private static JsonSerializerOptions CreateSerializerOptions()
@@ -76,10 +84,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             if (analysis.UseGlobalExcludes is { } useGlobalExcludes)
             {
                 settings.Analysis.UseGlobalExcludes = useGlobalExcludes;
-            }
-            else if (analysis.UseDefaultExcludes is { } useDefaultExcludes)
-            {
-                settings.Analysis.UseGlobalExcludes = useDefaultExcludes;
             }
 
             if (analysis.GlobalExcludes is { } globalExcludes)
@@ -174,9 +178,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? UseGlobalExcludes { get; set; }
-
-        [JsonConverter(typeof(NullableBooleanConverter))]
-        public bool? UseDefaultExcludes { get; set; }
 
         public List<string>? GlobalExcludes { get; set; }
     }

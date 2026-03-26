@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
@@ -70,9 +71,41 @@ internal static class MainWindowViewModelDefaults
 
         public CurrentFolderSettingsState CurrentFolderState { get; } = new();
 
+        public ScanOptions BuildCurrentScanOptions() =>
+            new()
+            {
+                RespectGitIgnore = State.RespectGitIgnore,
+                UseGlobalExcludes = State.UseGlobalExcludes,
+                GlobalExcludes = [.. State.GlobalExcludes],
+                UseFolderExcludes = CurrentFolderState.UseFolderExcludes,
+                FolderExcludes = [.. CurrentFolderState.FolderExcludes],
+            };
+
         public Task FlushAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
+
+        public void SetSelectedMetric(Core.Enums.AnalysisMetric metric) => State.SelectedMetric = metric;
+
+        public void SetRespectGitIgnore(bool value) => State.RespectGitIgnore = value;
+
+        public void SetUseGlobalExcludes(bool value) => State.UseGlobalExcludes = value;
+
+        public void ReplaceGlobalExcludes(IEnumerable<string> entries) => State.ReplaceGlobalExcludes(entries);
+
+        public void SetThemePreference(Core.Enums.ThemePreference preference) => State.SelectedThemePreference = preference;
+
+        public void SetTreemapPalette(Core.Enums.TreemapPalette palette) => State.SelectedTreemapPalette = palette;
+
+        public void RecordRecentFolder(string folderPath) => State.RecordRecentFolder(folderPath);
+
+        public void RemoveRecentFolder(string folderPath) => State.RemoveRecentFolder(folderPath);
+
+        public void ClearRecentFolders() => State.ClearRecentFolders();
+
+        public void SetUseFolderExcludes(bool value) => CurrentFolderState.UseFolderExcludes = value;
+
+        public void ReplaceFolderExcludes(IEnumerable<string> entries) => CurrentFolderState.ReplaceFolderExcludes(entries);
 
         public void SwitchActiveFolder(string? rootPath)
         {

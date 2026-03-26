@@ -40,8 +40,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _pathShellService = pathShellService;
 
         Toolbar = new ToolbarViewModel(
-            _settingsCoordinator.State,
-            _settingsCoordinator.CurrentFolderState,
+            _settingsCoordinator,
             new AsyncRelayCommand(OpenFolderAsync, CanOpenFolder),
             new AsyncRelayCommand(RescanAsync, CanRescan),
             new RelayCommand(CancelAnalysis, CanCancel));

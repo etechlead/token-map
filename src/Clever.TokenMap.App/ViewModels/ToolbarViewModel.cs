@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -12,18 +13,19 @@ public partial class ToolbarViewModel : ViewModelBase
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
+    private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly CurrentFolderSettingsState _currentFolderSettingsState;
     private readonly SettingsState _settingsState;
 
     public ToolbarViewModel(
-        SettingsState settingsState,
-        CurrentFolderSettingsState currentFolderSettingsState,
+        ISettingsCoordinator settingsCoordinator,
         IAsyncRelayCommand openFolderCommand,
         IAsyncRelayCommand rescanCommand,
         IRelayCommand cancelCommand)
     {
-        _settingsState = settingsState;
-        _currentFolderSettingsState = currentFolderSettingsState;
+        _settingsCoordinator = settingsCoordinator;
+        _settingsState = settingsCoordinator.State;
+        _currentFolderSettingsState = settingsCoordinator.CurrentFolderState;
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
@@ -94,25 +96,25 @@ public partial class ToolbarViewModel : ViewModelBase
     public AnalysisMetric SelectedMetric
     {
         get => _settingsState.SelectedMetric;
-        set => _settingsState.SelectedMetric = value;
+        set => _settingsCoordinator.SetSelectedMetric(value);
     }
 
     public bool RespectGitIgnore
     {
         get => _settingsState.RespectGitIgnore;
-        set => _settingsState.RespectGitIgnore = value;
+        set => _settingsCoordinator.SetRespectGitIgnore(value);
     }
 
     public bool UseGlobalExcludes
     {
         get => _settingsState.UseGlobalExcludes;
-        set => _settingsState.UseGlobalExcludes = value;
+        set => _settingsCoordinator.SetUseGlobalExcludes(value);
     }
 
     public bool UseFolderExcludes
     {
         get => _currentFolderSettingsState.UseFolderExcludes;
-        set => _currentFolderSettingsState.UseFolderExcludes = value;
+        set => _settingsCoordinator.SetUseFolderExcludes(value);
     }
 
     public bool HasCurrentFolderSettings => _currentFolderSettingsState.HasActiveFolder;
@@ -126,13 +128,13 @@ public partial class ToolbarViewModel : ViewModelBase
     public ThemePreference SelectedThemePreference
     {
         get => _settingsState.SelectedThemePreference;
-        set => _settingsState.SelectedThemePreference = value;
+        set => _settingsCoordinator.SetThemePreference(value);
     }
 
     public TreemapPalette SelectedTreemapPalette
     {
         get => _settingsState.SelectedTreemapPalette;
-        set => _settingsState.SelectedTreemapPalette = value;
+        set => _settingsCoordinator.SetTreemapPalette(value);
     }
 
     public bool IsSystemThemeSelected => SelectedThemePreference == ThemePreference.System;
@@ -240,14 +242,7 @@ public partial class ToolbarViewModel : ViewModelBase
     }
 
     public ScanOptions BuildScanOptions() =>
-        new()
-        {
-            RespectGitIgnore = RespectGitIgnore,
-            UseGlobalExcludes = UseGlobalExcludes,
-            GlobalExcludes = [.. _settingsState.GlobalExcludes],
-            UseFolderExcludes = UseFolderExcludes,
-            FolderExcludes = [.. _currentFolderSettingsState.FolderExcludes],
-        };
+        _settingsCoordinator.BuildCurrentScanOptions();
 
     private static string GetFolderDisplayName(string? folderPath)
     {

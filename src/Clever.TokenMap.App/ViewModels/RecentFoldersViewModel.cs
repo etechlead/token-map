@@ -86,12 +86,12 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
             return;
         }
 
-        _settingsCoordinator.State.RemoveRecentFolder(folder.FullPath);
+        _settingsCoordinator.RemoveRecentFolder(folder.FullPath);
     }
 
     private void ClearRecentFolders()
     {
-        _settingsCoordinator.State.ClearRecentFolders();
+        _settingsCoordinator.ClearRecentFolders();
     }
 
     private void SettingsStateOnRecentFolderPathsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -113,7 +113,7 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
                 if (_analysisSessionController.State == AnalysisState.Completed &&
                     _analysisSessionController.CurrentSnapshot is { } completedSnapshot)
                 {
-                    _settingsCoordinator.State.RecordRecentFolder(completedSnapshot.RootPath);
+                    _settingsCoordinator.RecordRecentFolder(completedSnapshot.RootPath);
                 }
 
                 break;

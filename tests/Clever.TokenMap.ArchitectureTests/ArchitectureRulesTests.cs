@@ -5,7 +5,9 @@ using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Analysis;
+using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Treemap;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using static ArchUnitNET.Fluent.Slices.SliceRuleDefinition;
@@ -73,9 +75,21 @@ public sealed class ArchitectureRulesTests
             .Or().ResideInNamespace("Clever.TokenMap.App.Views.Sections")
             .As("app views");
 
+    private static readonly IObjectProvider<IType> InfrastructureSettingsNamespace =
+        Types().That().ResideInNamespace("Clever.TokenMap.Infrastructure.Settings")
+            .As("infrastructure settings namespace");
+
     private static readonly IObjectProvider<IType> InfrastructureTypes =
         Types().That().ResideInAssembly(InfrastructureAssemblyName)
             .As("infrastructure types");
+
+    private static readonly IObjectProvider<IType> SettingsStoreTypes =
+        Types().That().Are(
+                typeof(IAppSettingsStore),
+                typeof(IFolderSettingsStore),
+                typeof(JsonAppSettingsStore),
+                typeof(JsonFolderSettingsStore))
+            .As("settings store types");
 
     private static readonly IObjectProvider<IType> DirectFileSystemTypes =
         Types().That().HaveFullName(typeof(File).FullName!)
@@ -83,6 +97,10 @@ public sealed class ArchitectureRulesTests
             .Or().HaveFullName(typeof(FileInfo).FullName!)
             .Or().HaveFullName(typeof(DirectoryInfo).FullName!)
             .As("direct file system types");
+
+    private static readonly IObjectProvider<IType> TraceTypes =
+        Types().That().HaveFullName(typeof(System.Diagnostics.Trace).FullName!)
+            .As("System.Diagnostics.Trace");
 
     private static readonly IObjectProvider<IType> AvaloniaTypes =
         Types().That().HaveFullNameContaining("Avalonia.")
@@ -174,6 +192,14 @@ public sealed class ArchitectureRulesTests
             .Check(Architecture);
 
     [Fact]
+    public void App_ViewModels_Should_Not_Depend_On_Settings_Stores() =>
+        Types().That().Are(AppViewModels).Should()
+            .NotDependOnAny(SettingsStoreTypes)
+            .Because("viewmodels should work through the settings coordinator instead of settings stores")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
     public void App_Services_Should_Not_Depend_On_Infrastructure_Types() =>
         Types().That().Are(AppServices).Should()
             .NotDependOnAny(InfrastructureTypes)
@@ -210,6 +236,14 @@ public sealed class ArchitectureRulesTests
         Types().That().Are(AppLayer).Should()
             .NotDependOnAny(AppViews)
             .Because("the app layer should stay decoupled from XAML view composition")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void Infrastructure_Settings_Should_Not_Depend_On_Trace() =>
+        Types().That().Are(InfrastructureSettingsNamespace).Should()
+            .NotDependOnAny(TraceTypes)
+            .Because("settings persistence should emit warnings through the app logging abstraction")
             .WithoutRequiringPositiveResults()
             .Check(Architecture);
 

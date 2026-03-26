@@ -50,6 +50,31 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void Load_IgnoresInvalidPersistedRootPath()
+    {
+        var store = CreateStore();
+        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(@"C:\Repo");
+        Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
+        File.WriteAllText(
+            settingsFilePath,
+            """
+            {
+              "rootPath": "C:\\Repo\u0000Broken",
+              "scan": {
+                "useFolderExcludes": true,
+                "folderExcludes": ["/dist/"]
+              }
+            }
+            """);
+
+        var settings = store.Load(@"C:\Repo");
+
+        Assert.Equal(@"C:\Repo", settings.RootPath);
+        Assert.False(settings.Scan.UseFolderExcludes);
+        Assert.Empty(settings.Scan.FolderExcludes);
+    }
+
+    [Fact]
     public void Save_WritesJsonThatCanBeLoadedAgain()
     {
         var store = CreateStore();

@@ -1,5 +1,6 @@
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Settings;
 
@@ -133,7 +134,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     }
 
     [Fact]
-    public void Load_ReadsLegacyUseDefaultExcludes_WhenNewFlagIsAbsent()
+    public void Load_IgnoresLegacyUseDefaultExcludes_WhenCanonicalFlagIsAbsent()
     {
         Directory.CreateDirectory(_testRootPath);
         File.WriteAllText(
@@ -150,7 +151,24 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.False(settings.Analysis.UseGlobalExcludes);
+        Assert.True(settings.Analysis.UseGlobalExcludes);
+    }
+
+    [Fact]
+    public void Load_LogsWarning_WhenSettingsJsonIsMalformed()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(GetSettingsFilePath(), "{ invalid json");
+        var logger = new RecordingLogger();
+        var store = CreateStore(logger);
+
+        var settings = store.Load();
+
+        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Contains(
+            logger.Entries,
+            entry => entry.Level == AppLogLevel.Warning &&
+                     entry.Message.Contains("Unable to load app settings", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -251,7 +269,17 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         }
     }
 
-    private JsonAppSettingsStore CreateStore() => new(GetSettingsFilePath());
+    private JsonAppSettingsStore CreateStore(IAppLogger? logger = null) => new(GetSettingsFilePath(), logger: logger);
 
     private string GetSettingsFilePath() => Path.Combine(_testRootPath, "settings.json");
+
+    private sealed class RecordingLogger : IAppLogger
+    {
+        public List<(AppLogLevel Level, string Message, Exception? Exception)> Entries { get; } = [];
+
+        public void Log(AppLogLevel level, string message, Exception? exception = null)
+        {
+            Entries.Add((level, message, exception));
+        }
+    }
 }

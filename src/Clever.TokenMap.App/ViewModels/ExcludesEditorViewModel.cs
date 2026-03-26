@@ -176,7 +176,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
     private bool SaveGlobal(IReadOnlyList<string> updatedEntries)
     {
         var changed = !_settingsCoordinator.State.GlobalExcludes.SequenceEqual(updatedEntries, StringComparer.Ordinal);
-        _settingsCoordinator.State.ReplaceGlobalExcludes(updatedEntries);
+        _settingsCoordinator.ReplaceGlobalExcludes(updatedEntries);
         return changed;
     }
 
@@ -190,11 +190,11 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
         var changed = !_settingsCoordinator.CurrentFolderState.FolderExcludes.SequenceEqual(updatedEntries, StringComparer.Ordinal);
         if (!_settingsCoordinator.CurrentFolderState.UseFolderExcludes)
         {
-            _settingsCoordinator.CurrentFolderState.UseFolderExcludes = true;
+            _settingsCoordinator.SetUseFolderExcludes(true);
             changed = true;
         }
 
-        _settingsCoordinator.CurrentFolderState.ReplaceFolderExcludes(updatedEntries);
+        _settingsCoordinator.ReplaceFolderExcludes(updatedEntries);
         return changed;
     }
 

@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Logging;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
@@ -23,7 +24,8 @@ internal static class JsonSettingsFileHelper
     public static TPersisted? TryLoad<TPersisted>(
         string settingsFilePath,
         JsonSerializerOptions serializerOptions,
-        string settingsLabel)
+        string settingsLabel,
+        IAppLogger? logger = null)
     {
         if (!File.Exists(settingsFilePath))
         {
@@ -37,7 +39,7 @@ internal static class JsonSettingsFileHelper
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
-            Trace.TraceWarning($"Unable to load {settingsLabel} from '{settingsFilePath}': {exception.Message}");
+            LogWarning(logger, exception, $"Unable to load {settingsLabel} from '{settingsFilePath}': {exception.Message}");
             return default;
         }
     }
@@ -46,7 +48,8 @@ internal static class JsonSettingsFileHelper
         string settingsFilePath,
         TPersisted persistedSettings,
         JsonSerializerOptions serializerOptions,
-        string settingsLabel)
+        string settingsLabel,
+        IAppLogger? logger = null)
     {
         var tempFilePath = $"{settingsFilePath}.tmp";
 
@@ -64,7 +67,7 @@ internal static class JsonSettingsFileHelper
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            Trace.TraceWarning($"Unable to save {settingsLabel} to '{settingsFilePath}': {exception.Message}");
+            LogWarning(logger, exception, $"Unable to save {settingsLabel} to '{settingsFilePath}': {exception.Message}");
         }
         finally
         {
@@ -76,9 +79,14 @@ internal static class JsonSettingsFileHelper
                 }
                 catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
                 {
-                    Trace.TraceWarning($"Unable to clean up temporary {settingsLabel} file '{tempFilePath}': {exception.Message}");
+                    LogWarning(logger, exception, $"Unable to clean up temporary {settingsLabel} file '{tempFilePath}': {exception.Message}");
                 }
             }
         }
+    }
+
+    internal static void LogWarning(IAppLogger? logger, Exception exception, string message)
+    {
+        logger?.Log(AppLogLevel.Warning, message, exception);
     }
 }

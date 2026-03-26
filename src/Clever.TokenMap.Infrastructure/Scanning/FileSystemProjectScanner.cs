@@ -15,7 +15,6 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private readonly IAppLogger _logger;
     private readonly IPathFilter _pathFilter;
     private readonly PathNormalizer _pathNormalizer;
-    private int _processedNodeCount;
 
     public FileSystemProjectScanner(
         IPathFilter? pathFilter = null,
@@ -45,7 +44,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             throw new DirectoryNotFoundException($"Project root was not found: {normalizedRootPath}");
         }
 
-        _processedNodeCount = 0;
+        var processedNodeCount = 0;
         var warnings = new List<string>();
         var rootNode = ScanDirectory(
             directoryInfo,
@@ -54,6 +53,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             isRoot: true,
             options,
             warnings,
+            ref processedNodeCount,
             progress,
             cancellationToken);
 
@@ -76,6 +76,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         bool isRoot,
         ScanOptions options,
         List<string> warnings,
+        ref int processedNodeCount,
         IProgress<AnalysisProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -89,7 +90,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             isRoot,
             skippedReason: null);
 
-        ReportProgress(progress, normalizedRelativePath);
+        ReportProgress(progress, normalizedRelativePath, ref processedNodeCount);
         var ignoreContext = LoadIgnoreContext(
             directoryInfo,
             normalizedRootPath,
@@ -144,7 +145,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                     isDirectory,
                     isRoot: false,
                     skippedReason: SkippedReason.ReparsePoint));
-                ReportProgress(progress, entryRelativePath);
+                ReportProgress(progress, entryRelativePath, ref processedNodeCount);
                 continue;
             }
 
@@ -159,6 +160,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         isRoot: false,
                         options,
                         warnings,
+                        ref processedNodeCount,
                         progress,
                         cancellationToken));
                 }
@@ -172,7 +174,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         isDirectory: true,
                         isRoot: false,
                         skippedReason: SkippedReason.Inaccessible));
-                    ReportProgress(progress, entryRelativePath);
+                    ReportProgress(progress, entryRelativePath, ref processedNodeCount);
                 }
 
                 continue;
@@ -184,7 +186,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 isDirectory: false,
                 isRoot: false,
                 skippedReason: null));
-            ReportProgress(progress, entryRelativePath);
+            ReportProgress(progress, entryRelativePath, ref processedNodeCount);
         }
 
         return node;
@@ -214,12 +216,15 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         };
     }
 
-    private void ReportProgress(IProgress<AnalysisProgress>? progress, string normalizedRelativePath)
+    private static void ReportProgress(
+        IProgress<AnalysisProgress>? progress,
+        string normalizedRelativePath,
+        ref int processedNodeCount)
     {
-        _processedNodeCount++;
+        processedNodeCount++;
         progress?.Report(new AnalysisProgress(
             Phase: "ScanningTree",
-            ProcessedNodeCount: _processedNodeCount,
+            ProcessedNodeCount: processedNodeCount,
             TotalNodeCount: null,
             CurrentPath: normalizedRelativePath));
     }
