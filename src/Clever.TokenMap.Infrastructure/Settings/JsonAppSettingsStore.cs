@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
@@ -15,10 +16,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
     private readonly string _settingsFilePath;
 
-    public JsonAppSettingsStore(string? settingsFilePath = null)
+    public JsonAppSettingsStore(string? settingsFilePath = null, IAppStoragePaths? appStoragePaths = null)
     {
+        var storagePaths = appStoragePaths ?? new TokenMapAppDataPaths();
         _settingsFilePath = string.IsNullOrWhiteSpace(settingsFilePath)
-            ? GetDefaultSettingsFilePath()
+            ? storagePaths.GetSettingsFilePath()
             : settingsFilePath;
     }
 
@@ -106,10 +108,6 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.RecentFolderPaths = NormalizeRecentFolderPaths(recentFolderPaths);
         }
     }
-
-    private static string GetDefaultSettingsFilePath()
-        => TokenMapAppDataPaths.GetSettingsFilePath();
-
     private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
         selectedMetric switch
         {

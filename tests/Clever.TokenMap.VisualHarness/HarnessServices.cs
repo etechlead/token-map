@@ -69,6 +69,8 @@ internal sealed class ExistingFolderPathService : IFolderPathService
 
 internal sealed class NoOpPathShellService : IPathShellService
 {
+    public string RevealMenuHeader => "Reveal";
+
     public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
         Task.FromResult(true);
 

@@ -32,7 +32,7 @@ The current technical boundaries are documented in [docs/architecture.md](docs/a
 Current limitations:
 
 - Windows is the primary MVP target. macOS targets Apple Silicon only. Local validation can use a bundle published on Windows, and GitHub Actions can produce an unsigned Apple Silicon DMG for Releases. Linux polish is intentionally deferred.
-- The repository ships source, CI, and an unsigned Apple Silicon DMG release path, but not signing, notarization, installers, or broader multi-platform release automation.
+- The repository ships source, CI, an unsigned Apple Silicon DMG release path, and an unsigned per-user Windows installer path. Signing, notarization, and broader multi-platform release automation are still out of scope.
 - Settings currently persist lightweight analysis and appearance preferences, not recent projects or saved scan presets.
 
 ## Getting Started
@@ -70,6 +70,14 @@ bash ./scripts/package-macos-dmg.sh
 The script writes `artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The release workflow in [release-macos.yml](.github/workflows/release-macos.yml) runs on `macos-latest`, uploads that DMG as a workflow artifact, and attaches it to published GitHub Releases.
 
 The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
+
+Build a per-user Windows installer:
+
+```powershell
+.\scripts\publish-windows-installer.ps1
+```
+
+The script writes `artifacts\windows-installer\installer\TokenMap-Setup-win-x64.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
 
 ## Repository Quality
 

@@ -6,14 +6,14 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.App.State;
 
 public sealed partial class SettingsState : ObservableObject
 {
     private const int MaxRecentFolderCount = 10;
-    private static readonly StringComparer RecentFolderComparer =
-        OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+    private static readonly StringComparer RecentFolderComparer = PathComparison.Comparer;
 
     private readonly ObservableCollection<string> _recentFolderPaths = [];
     private List<string> _globalExcludes = [.. GlobalExcludeDefaults.DefaultEntries];

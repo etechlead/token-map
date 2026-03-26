@@ -38,16 +38,24 @@ public static class AppComposition
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(application);
 
-        services.AddSingleton<IAppSettingsStore, JsonAppSettingsStore>();
-        services.AddSingleton<IFolderSettingsStore, JsonFolderSettingsStore>();
+        services.AddSingleton<PathNormalizer>();
+        services.AddSingleton<IAppStoragePaths>(sp =>
+            new TokenMapAppDataPaths(pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
+        services.AddSingleton<IAppSettingsStore>(sp =>
+            new JsonAppSettingsStore(appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
+        services.AddSingleton<IFolderSettingsStore>(sp =>
+            new JsonFolderSettingsStore(
+                pathNormalizer: sp.GetRequiredService<PathNormalizer>(),
+                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
         services.AddSingleton(sp => sp.GetRequiredService<IAppSettingsStore>().Load());
         services.AddSingleton<ApplicationThemeService>(_ => new ApplicationThemeService(application));
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
         services.AddSingleton<IFolderPathService, FileSystemFolderPathService>();
-        services.AddSingleton<PathNormalizer>();
-        services.AddSingleton<IPathShellService, PathShellService>();
+        services.AddSingleton<IPathShellService>(_ => PathShellService.CreateForCurrentPlatform());
         services.AddSingleton<IAppLoggerFactory>(sp =>
-            new AppLoggerFactory(sp.GetRequiredService<AppSettings>().Logging));
+            new AppLoggerFactory(
+                sp.GetRequiredService<AppSettings>().Logging,
+                appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
         services.AddSingleton<IProjectAnalyzer>(sp =>
             new ProjectAnalyzer(
                 new FileSystemProjectScanner(logger: sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<FileSystemProjectScanner>()),

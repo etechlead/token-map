@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
@@ -12,11 +13,15 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
     private readonly PathNormalizer _pathNormalizer;
     private readonly string _folderSettingsRootPath;
 
-    public JsonFolderSettingsStore(string? folderSettingsRootPath = null, PathNormalizer? pathNormalizer = null)
+    public JsonFolderSettingsStore(
+        string? folderSettingsRootPath = null,
+        PathNormalizer? pathNormalizer = null,
+        IAppStoragePaths? appStoragePaths = null)
     {
         _pathNormalizer = pathNormalizer ?? new PathNormalizer();
+        var storagePaths = appStoragePaths ?? new TokenMapAppDataPaths(pathNormalizer: _pathNormalizer);
         _folderSettingsRootPath = string.IsNullOrWhiteSpace(folderSettingsRootPath)
-            ? TokenMapAppDataPaths.GetFolderSettingsRootPath()
+            ? storagePaths.GetFolderSettingsRootPath()
             : folderSettingsRootPath;
     }
 
@@ -82,11 +87,11 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
         }
     }
 
-    private string GetSettingsFilePath(string normalizedRootPath) =>
-        TokenMapAppDataPaths.GetFolderSettingsFilePath(
-            normalizedRootPath,
-            _folderSettingsRootPath,
-            _pathNormalizer);
+    private string GetSettingsFilePath(string normalizedRootPath)
+    {
+        var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath, _pathNormalizer);
+        return Path.Combine(_folderSettingsRootPath, directoryName, "settings.json");
+    }
 
     private sealed class PersistedFolderSettings
     {

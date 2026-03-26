@@ -40,6 +40,8 @@ public sealed class MainWindowNodeActionsTests
 
     private sealed class RecordingPathShellService : IPathShellService
     {
+        public string RevealMenuHeader => "Reveal";
+
         public string? OpenedPath { get; private set; }
 
         public string? RevealedPath { get; private set; }

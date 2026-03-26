@@ -81,6 +81,8 @@ internal static class MainWindowViewModelDefaults
 
     private sealed class NullPathShellService : IPathShellService
     {
+        public string RevealMenuHeader => "Reveal";
+
         public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
 

@@ -233,6 +233,8 @@ internal static class HeadlessTestSupport
 
     private sealed class StubPathShellService : IPathShellService
     {
+        public string RevealMenuHeader => "Reveal";
+
         public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
 

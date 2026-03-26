@@ -36,7 +36,7 @@ public static class FolderSettingsStorageKey
     }
 
     internal static string GetCanonicalIdentity(string normalizedRootPath) =>
-        OperatingSystem.IsWindows()
+        PathComparison.UsesCaseInsensitivePaths
             ? normalizedRootPath.ToUpperInvariant()
             : normalizedRootPath;
 

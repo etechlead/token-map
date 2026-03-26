@@ -97,6 +97,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public SummaryViewModel Summary { get; }
 
+    public string RevealMenuHeader => _pathShellService.RevealMenuHeader;
+
     public ProjectNode? TreemapRootNode => _treemapNavigationState.TreemapRootNode;
 
     public bool HasSnapshot => _analysisSessionController.HasSnapshot;

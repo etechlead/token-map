@@ -17,6 +17,7 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
     private MenuItem? _excludeItem;
+    private MenuItem? _revealItem;
     private MenuItem? _setAsTreemapRootItem;
     private ProjectNode? _currentNode;
 
@@ -57,7 +58,8 @@ internal sealed class ProjectNodeContextMenuController
             Placement = PlacementMode.Pointer,
         };
         menu.Items.Add(CreateMenuItem("Open", FluentIconGeometry.FolderOpen16Regular, OpenItem_OnClick));
-        menu.Items.Add(CreateMenuItem(GetRevealMenuHeader(), FluentIconGeometry.DesktopMac16Regular, RevealItem_OnClick));
+        _revealItem = CreateMenuItem(string.Empty, FluentIconGeometry.DesktopMac16Regular, RevealItem_OnClick);
+        menu.Items.Add(_revealItem);
         _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", FluentIconGeometry.TargetArrow16Regular, SetAsTreemapRootItem_OnClick);
         menu.Items.Add(_setAsTreemapRootItem);
         _excludeItem = CreateMenuItem("Exclude from Scan", FluentIconGeometry.SubtractCircle16Regular, ExcludeItem_OnClick);
@@ -93,6 +95,10 @@ internal sealed class ProjectNodeContextMenuController
         var viewModel = _viewModelAccessor();
         var canSetTreemapRoot = viewModel?.CanSetTreemapRoot(_currentNode) == true;
         var canExclude = viewModel?.CanExcludeNodeFromFolder(_currentNode) == true;
+        if (_revealItem is not null)
+        {
+            _revealItem.Header = viewModel?.RevealMenuHeader ?? "Reveal";
+        }
 
         if (_setAsTreemapRootItem is null || _excludeItem is null)
         {
@@ -165,11 +171,4 @@ internal sealed class ProjectNodeContextMenuController
 
         await clipboard.SetTextAsync(text);
     }
-
-    private static string GetRevealMenuHeader() =>
-        OperatingSystem.IsWindows()
-            ? "Reveal in Explorer"
-            : OperatingSystem.IsMacOS()
-                ? "Reveal in Finder"
-                : "Reveal in File Manager";
 }

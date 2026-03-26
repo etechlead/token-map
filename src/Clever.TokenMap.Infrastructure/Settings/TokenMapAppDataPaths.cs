@@ -1,11 +1,26 @@
+using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
 
-public static class TokenMapAppDataPaths
+public sealed class TokenMapAppDataPaths : IAppStoragePaths
 {
-    public static string GetAppDataRootPath()
+    private readonly string? _appDataRootPath;
+    private readonly PathNormalizer _pathNormalizer;
+
+    public TokenMapAppDataPaths(string? appDataRootPath = null, PathNormalizer? pathNormalizer = null)
     {
+        _appDataRootPath = appDataRootPath;
+        _pathNormalizer = pathNormalizer ?? new PathNormalizer();
+    }
+
+    public string GetAppDataRootPath()
+    {
+        if (!string.IsNullOrWhiteSpace(_appDataRootPath))
+        {
+            return _appDataRootPath;
+        }
+
         var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         if (string.IsNullOrWhiteSpace(localApplicationData))
         {
@@ -15,27 +30,20 @@ public static class TokenMapAppDataPaths
         return Path.Combine(localApplicationData, "Clever", "TokenMap");
     }
 
-    public static string GetSettingsFilePath() =>
+    public string GetSettingsFilePath() =>
         Path.Combine(GetAppDataRootPath(), "settings.json");
 
-    public static string GetFolderSettingsRootPath() =>
+    public string GetFolderSettingsRootPath() =>
         Path.Combine(GetAppDataRootPath(), "folders");
 
-    public static string GetFolderSettingsFilePath(
-        string rootPath,
-        string? folderSettingsRootPath = null,
-        PathNormalizer? pathNormalizer = null)
+    public string GetFolderSettingsFilePath(string rootPath)
     {
-        var normalizer = pathNormalizer ?? new PathNormalizer();
-        var normalizedRootPath = normalizer.NormalizeRootPath(rootPath);
-        var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath, normalizer);
-        var folderRoot = string.IsNullOrWhiteSpace(folderSettingsRootPath)
-            ? GetFolderSettingsRootPath()
-            : folderSettingsRootPath;
+        var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
+        var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath, _pathNormalizer);
 
-        return Path.Combine(folderRoot, directoryName, "settings.json");
+        return Path.Combine(GetFolderSettingsRootPath(), directoryName, "settings.json");
     }
 
-    public static string GetLogsDirectoryPath() =>
+    public string GetLogsDirectoryPath() =>
         Path.Combine(GetAppDataRootPath(), "logs");
 }

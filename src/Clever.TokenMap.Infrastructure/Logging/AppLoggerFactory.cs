@@ -1,5 +1,6 @@
 using System.Globalization;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Settings;
@@ -22,12 +23,14 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
     public AppLoggerFactory(
         LoggingSettings settings,
         string? logsDirectoryPath = null,
+        IAppStoragePaths? appStoragePaths = null,
         long fileSizeLimitBytes = DefaultFileSizeLimitBytes,
         int retainedFileCountLimit = DefaultRetainedFileCountLimit,
         bool? enableConsoleSinkInDebugMode = null)
     {
+        var storagePaths = appStoragePaths ?? new TokenMapAppDataPaths();
         var logDirectoryPath = string.IsNullOrWhiteSpace(logsDirectoryPath)
-            ? TokenMapAppDataPaths.GetLogsDirectoryPath()
+            ? storagePaths.GetLogsDirectoryPath()
             : logsDirectoryPath;
 
         var configuration = new LoggerConfiguration()

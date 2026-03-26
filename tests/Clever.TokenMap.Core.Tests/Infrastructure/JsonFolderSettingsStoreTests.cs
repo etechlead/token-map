@@ -38,7 +38,7 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     public void Load_FallsBackToDefaults_WhenFileIsMalformed()
     {
         var store = CreateStore();
-        var settingsFilePath = TokenMapAppDataPaths.GetFolderSettingsFilePath(@"C:\Repo", _testRootPath);
+        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(@"C:\Repo");
         Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
         File.WriteAllText(settingsFilePath, "{ invalid json");
 
