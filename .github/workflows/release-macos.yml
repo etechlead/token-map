@@ -38,11 +38,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TokenMap-macos-arm64-dmg
-          path: artifacts/macos-arm64/TokenMap-macos-arm64.dmg
+          path: .artifacts/macos-arm64/TokenMap-macos-arm64.dmg
           if-no-files-found: error
 
       - name: Attach DMG to GitHub release
         if: github.event_name == 'release'
-        run: gh release upload "${{ github.event.release.tag_name }}" artifacts/macos-arm64/TokenMap-macos-arm64.dmg --clobber
+        run: gh release upload "${{ github.event.release.tag_name }}" .artifacts/macos-arm64/TokenMap-macos-arm64.dmg --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -99,7 +99,7 @@ internal static class CliParsing
     public static string GetDefaultArtifactDirectory(string folderName)
     {
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
-        return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), "artifacts", folderName, timestamp));
+        return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), ".artifacts", folderName, timestamp));
     }
 
     public static int GetOptionalIntValue(string[] args, string optionName, int fallback)

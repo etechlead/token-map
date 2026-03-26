@@ -15,8 +15,8 @@ powershell -File scripts/run-coverage.ps1
 ### Outputs
 
 - Stdout: one JSON object with test totals, coverage summary, per-assembly coverage, zero-coverage classes, top uncovered classes, and artifact paths.
-- Files: `artifacts/coverage-agent/coverage-summary.json`, `artifacts/coverage-agent/report/Summary.json`, `artifacts/coverage-agent/report/Summary.txt`, `artifacts/coverage-agent/report/summary.html`.
-- Logs: step logs under `artifacts/coverage-agent/logs/` for tool restore, restore, build, test, and report generation.
+- Files: `.artifacts/coverage-agent/coverage-summary.json`, `.artifacts/coverage-agent/report/Summary.json`, `.artifacts/coverage-agent/report/Summary.txt`, `.artifacts/coverage-agent/report/summary.html`.
+- Logs: step logs under `.artifacts/coverage-agent/logs/` for tool restore, restore, build, test, and report generation.
 
 ## Visual Harness
 
@@ -46,12 +46,12 @@ powershell -File scripts/run-coverage.ps1
 ```powershell
 dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- capture-palettes --source repo --project-root . --metric size
 dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- capture --source repo --surface settings --palette studio --metric size
-dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- compare --left artifacts\visual-harness\example-a.png --right artifacts\visual-harness\example-b.png
+dotnet run --project tools/Clever.TokenMap.VisualHarness -c Release -- compare --left .artifacts\visual-harness\example-a.png --right .artifacts\visual-harness\example-b.png
 ```
 
 ### Notes
 
-- Default outputs go to `artifacts/visual-harness/<timestamp>` or `artifacts/visual-compare/<timestamp>`.
+- Default outputs go to `.artifacts/visual-harness/<timestamp>` or `.artifacts/visual-compare/<timestamp>`.
 - `report.json` records generated image paths and diff statistics.
 - The harness auto-excludes its own artifact directories when it analyzes the current repo, so repeated runs do not contaminate the snapshot being rendered.
 - Window and treemap sizes can be overridden with `--window-width`, `--window-height`, `--treemap-width`, and `--treemap-height`.

@@ -3,7 +3,7 @@ param(
     [string]$Configuration = "Release",
     [string]$RuntimeIdentifier = "osx-arm64",
     [string]$BundleName = "TokenMap",
-    [string]$OutputRoot = "artifacts/macos-arm64"
+    [string]$OutputRoot = ".artifacts/macos-arm64"
 )
 
 $ErrorActionPreference = "Stop"

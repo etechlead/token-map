@@ -22,8 +22,8 @@
   #define MyAppExeName "Clever.TokenMap.App.exe"
 #endif
 
-#define MyPublishDir AddBackslash(SourcePath) + "..\..\artifacts\windows-installer\publish\win-x64"
-#define MyOutputDir AddBackslash(SourcePath) + "..\..\artifacts\windows-installer\installer"
+#define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"
+#define MyOutputDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\installer"
 
 [Setup]
 AppId={{D6B37D4A-B4C7-4B7A-B8C7-6C46AC220001}

@@ -1,7 +1,7 @@
 param(
     [string]$Solution = "Clever.TokenMap.sln",
     [string]$Configuration = "Debug",
-    [string]$OutputRoot = "artifacts/coverage-agent",
+    [string]$OutputRoot = ".artifacts/coverage-agent",
     [int]$TopClassCount = 10,
     [string[]]$GeneratedClassPrefixes = @("CompiledAvaloniaXaml."),
     [switch]$SkipRestore,

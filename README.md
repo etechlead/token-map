@@ -55,7 +55,7 @@ Build an Apple Silicon macOS bundle from Windows:
 .\scripts\publish-macos-arm64.ps1
 ```
 
-The script writes `artifacts\macos-arm64\TokenMap.app`. Copy that bundle to a Mac for manual validation. If the direct copy drops execute permissions, run:
+The script writes `.artifacts\macos-arm64\TokenMap.app`. Copy that bundle to a Mac for manual validation. If the direct copy drops execute permissions, run:
 
 ```bash
 chmod +x "TokenMap.app/Contents/MacOS/Clever.TokenMap.App"
@@ -67,7 +67,7 @@ Build an Apple Silicon macOS DMG on macOS or in GitHub Actions:
 bash ./scripts/package-macos-dmg.sh
 ```
 
-The script writes `artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The release workflow in [release-macos.yml](.github/workflows/release-macos.yml) runs on `macos-latest`, uploads that DMG as a workflow artifact, and attaches it to published GitHub Releases.
+The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The release workflow in [release-macos.yml](.github/workflows/release-macos.yml) runs on `macos-latest`, uploads that DMG as a workflow artifact, and attaches it to published GitHub Releases.
 
 The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
 
@@ -77,7 +77,7 @@ Build a per-user Windows installer:
 .\scripts\publish-windows-installer.ps1
 ```
 
-The script writes `artifacts\windows-installer\installer\TokenMap-Setup-win-x64.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
+The script writes `.artifacts\windows-installer\installer\TokenMap-Setup-win-x64.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
 
 Silent uninstall keeps user data by default. To remove `%LOCALAPPDATA%\Clever\TokenMap` during uninstall, pass `/PURGEUSERDATA` to the uninstaller in addition to the normal Inno silent switches.
 
@@ -92,4 +92,3 @@ Silent uninstall keeps user data by default. To remove `%LOCALAPPDATA%\Clever\To
 ## License
 
 TokenMap is available under the [MIT License](LICENSE).
-

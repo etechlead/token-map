@@ -142,8 +142,8 @@ internal static class VisualCaptureRunner
         var userExcludes = new List<string>
         {
             ".git",
-            "artifacts/visual-harness",
-            "artifacts/visual-compare",
+            ".artifacts/visual-harness",
+            ".artifacts/visual-compare",
         };
 
         if (TryGetRelativeOutputExclude(options.ProjectRoot, options.OutputDirectory) is { } outputExclude &&

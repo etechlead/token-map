@@ -5,7 +5,7 @@ param(
     [string]$AppName = "TokenMap",
     [string]$Publisher = "Clever.pro",
     [string]$Version = "0.1.0-local",
-    [string]$OutputRoot = "artifacts/windows-installer"
+    [string]$OutputRoot = ".artifacts/windows-installer"
 )
 
 $ErrorActionPreference = "Stop"

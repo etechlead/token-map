@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <DefaultItemExcludes>$(DefaultItemExcludes);**\artifacts\**;**/artifacts/**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**\.artifacts\**;**/.artifacts/**</DefaultItemExcludes>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
