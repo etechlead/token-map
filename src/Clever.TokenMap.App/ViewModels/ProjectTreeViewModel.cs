@@ -373,13 +373,7 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
             _ => node.Name,
         };
 
-    private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) =>
-        metric switch
-        {
-            AnalysisMetric.Lines => AnalysisMetric.Lines,
-            AnalysisMetric.Size => AnalysisMetric.Size,
-            _ => AnalysisMetric.Tokens,
-        };
+    private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) => metric.Normalize();
 }
 
 public enum ProjectTreeSortColumn

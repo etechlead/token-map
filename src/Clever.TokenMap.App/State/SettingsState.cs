@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
+using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.App.State;
 
@@ -113,7 +114,7 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         ArgumentNullException.ThrowIfNull(folderPaths);
 
         _recentFolderPaths.Clear();
-        foreach (var folderPath in NormalizeRecentFolderPaths(folderPaths))
+        foreach (var folderPath in AppSettingsCanonicalizer.NormalizeRecentFolderPaths(folderPaths))
         {
             _recentFolderPaths.Add(folderPath);
         }
@@ -124,34 +125,6 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         ArgumentNullException.ThrowIfNull(entries);
         _globalExcludes = GlobalExcludeList.Normalize(entries).ToList();
         OnPropertyChanged(nameof(GlobalExcludes));
-    }
-
-    private static List<string> NormalizeRecentFolderPaths(IEnumerable<string> folderPaths)
-    {
-        var uniquePaths = new HashSet<string>(RecentFolderComparer);
-        var normalizedPaths = new List<string>();
-
-        foreach (var folderPath in folderPaths)
-        {
-            if (NormalizeFolderPath(folderPath) is not { } normalizedFolderPath)
-            {
-                continue;
-            }
-
-            if (!uniquePaths.Add(normalizedFolderPath))
-            {
-                continue;
-            }
-
-            normalizedPaths.Add(normalizedFolderPath);
-
-            if (normalizedPaths.Count >= MaxRecentFolderCount)
-            {
-                break;
-            }
-        }
-
-        return normalizedPaths;
     }
 
     private int IndexOfRecentFolder(string folderPath)

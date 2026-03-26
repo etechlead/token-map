@@ -143,7 +143,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     internal static double? TryCalculateParentShareRatio(ProjectNode node, ProjectNode? parentNode, AnalysisMetric metric)
     {
-        var normalizedMetric = NormalizeMetric(metric);
+        var normalizedMetric = metric.Normalize();
 
         if (node.Kind == ProjectNodeKind.Root && parentNode is null)
         {
@@ -172,18 +172,13 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     internal static double? TryGetMetricValue(ProjectNode node, AnalysisMetric metric)
     {
-        var normalizedMetric = NormalizeMetric(metric);
+        var normalizedMetric = metric.Normalize();
         if (normalizedMetric != AnalysisMetric.Size && node.SkippedReason is not null)
         {
             return null;
         }
 
-        return normalizedMetric switch
-        {
-            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
-            AnalysisMetric.Size => node.Metrics.FileSizeBytes,
-            _ => node.Metrics.Tokens,
-        };
+        return normalizedMetric.GetValue(node.Metrics);
     }
 
     private static string FormatParentShare(double? ratio) =>
@@ -191,11 +186,4 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
             ? "n/a"
             : $"{(ratio.Value * 100d).ToString("N1", CultureInfo.CurrentCulture)}%";
 
-    private static AnalysisMetric NormalizeMetric(AnalysisMetric metric) =>
-        metric switch
-        {
-            AnalysisMetric.Lines => AnalysisMetric.Lines,
-            AnalysisMetric.Size => AnalysisMetric.Size,
-            _ => AnalysisMetric.Tokens,
-        };
 }

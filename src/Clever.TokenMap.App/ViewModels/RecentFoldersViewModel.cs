@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.IO;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
@@ -147,7 +146,7 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
     private RecentFolderItemViewModel CreateRecentFolderItem(string folderPath)
     {
         return new RecentFolderItemViewModel(
-            GetFolderDisplayName(folderPath),
+            FolderDisplayText.GetFolderDisplayName(folderPath),
             folderPath.Trim(),
             isMissing: !_folderPathService.Exists(folderPath.Trim()));
     }
@@ -162,17 +161,4 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
             showFolderIcon: false);
     }
 
-    private static string GetFolderDisplayName(string? folderPath)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            return string.Empty;
-        }
-
-        var trimmedPath = folderPath.Trim();
-        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return string.IsNullOrWhiteSpace(displayName)
-            ? trimmedPath
-            : displayName;
-    }
 }

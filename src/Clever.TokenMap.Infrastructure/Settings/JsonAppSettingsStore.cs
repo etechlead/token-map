@@ -6,7 +6,6 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
@@ -47,10 +46,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        var normalizedSettings = settings.Clone();
-        normalizedSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(normalizedSettings.Analysis.SelectedMetric);
-        normalizedSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(normalizedSettings.Appearance.TreemapPalette);
-        normalizedSettings.Analysis.GlobalExcludes = NormalizeGlobalExcludes(normalizedSettings.Analysis.GlobalExcludes);
+        var normalizedSettings = AppSettingsCanonicalizer.Normalize(settings.Clone());
 
         JsonSettingsFileHelper.TrySave(
             _settingsFilePath,
@@ -73,7 +69,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         {
             if (analysis.SelectedMetric is { } selectedMetric)
             {
-                settings.Analysis.SelectedMetric = NormalizeAnalysisMetric(selectedMetric);
+                settings.Analysis.SelectedMetric = selectedMetric;
             }
 
             if (analysis.RespectGitIgnore is { } respectGitIgnore)
@@ -99,7 +95,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
         if (persistedSettings?.Appearance?.TreemapPalette is { } treemapPalette)
         {
-            settings.Appearance.TreemapPalette = NormalizeTreemapPalette(treemapPalette);
+            settings.Appearance.TreemapPalette = treemapPalette;
         }
 
         if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
@@ -109,49 +105,10 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
         if (persistedSettings?.RecentFolderPaths is { } recentFolderPaths)
         {
-            settings.RecentFolderPaths = NormalizeRecentFolderPaths(recentFolderPaths);
-        }
-    }
-    private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
-        selectedMetric switch
-        {
-            AnalysisMetric.Lines => AnalysisMetric.Lines,
-            AnalysisMetric.Size => AnalysisMetric.Size,
-            _ => AnalysisMetric.Tokens,
-        };
-
-    private static TreemapPalette NormalizeTreemapPalette(TreemapPalette treemapPalette) =>
-        Enum.IsDefined(treemapPalette)
-            ? treemapPalette
-            : TreemapPalette.Weighted;
-
-    private static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> persistedPaths)
-    {
-        var uniquePaths = new HashSet<string>(PathComparison.Comparer);
-        var normalizedPaths = new List<string>();
-
-        foreach (var persistedPath in persistedPaths)
-        {
-            if (string.IsNullOrWhiteSpace(persistedPath))
-            {
-                continue;
-            }
-
-            var trimmedPath = persistedPath.Trim();
-            if (!uniquePaths.Add(trimmedPath))
-            {
-                continue;
-            }
-
-            normalizedPaths.Add(trimmedPath);
-
-            if (normalizedPaths.Count >= 10)
-            {
-                break;
-            }
+            settings.RecentFolderPaths = [.. recentFolderPaths];
         }
 
-        return normalizedPaths;
+        AppSettingsCanonicalizer.Normalize(settings);
     }
 
     private static List<string> NormalizeGlobalExcludes(IEnumerable<string?> persistedEntries) =>

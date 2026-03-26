@@ -87,12 +87,12 @@ internal sealed class AppSettingsSession
 
         lock (_syncLock)
         {
-            _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(State.SelectedMetric);
+            _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.UseGlobalExcludes = State.UseGlobalExcludes;
             _currentSettings.Analysis.GlobalExcludes = [.. State.GlobalExcludes];
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
-            _currentSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(State.SelectedTreemapPalette);
+            _currentSettings.Appearance.TreemapPalette = State.SelectedTreemapPalette;
             _settingsVersion++;
         }
 
@@ -178,9 +178,7 @@ internal sealed class AppSettingsSession
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        _currentSettings = settings.Clone();
-        _currentSettings.Analysis.SelectedMetric = NormalizeAnalysisMetric(_currentSettings.Analysis.SelectedMetric);
-        _currentSettings.Appearance.TreemapPalette = NormalizeTreemapPalette(_currentSettings.Appearance.TreemapPalette);
+        _currentSettings = AppSettingsCanonicalizer.Normalize(settings.Clone());
 
         _isApplyingSettings = true;
         try
@@ -208,16 +206,4 @@ internal sealed class AppSettingsSession
         nameof(SettingsState.SelectedThemePreference) or
         nameof(SettingsState.SelectedTreemapPalette);
 
-    private static AnalysisMetric NormalizeAnalysisMetric(AnalysisMetric selectedMetric) =>
-        selectedMetric switch
-        {
-            AnalysisMetric.Lines => AnalysisMetric.Lines,
-            AnalysisMetric.Size => AnalysisMetric.Size,
-            _ => AnalysisMetric.Tokens,
-        };
-
-    private static TreemapPalette NormalizeTreemapPalette(TreemapPalette selectedPalette) =>
-        Enum.IsDefined(selectedPalette)
-            ? selectedPalette
-            : TreemapPalette.Weighted;
 }

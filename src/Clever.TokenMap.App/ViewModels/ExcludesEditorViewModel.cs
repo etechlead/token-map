@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
@@ -118,7 +117,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
         }
 
         _activeScope = ExcludesEditorScope.Folder;
-        Title = $"Excludes for {GetFolderDisplayName(_settingsCoordinator.CurrentFolderState.ActiveRootPath)}";
+        Title = $"Excludes for {FolderDisplayText.GetFolderDisplayName(_settingsCoordinator.CurrentFolderState.ActiveRootPath)}";
         HelperText = FolderExcludesHelperText;
 
         var entries = _settingsCoordinator.CurrentFolderState.FolderExcludes.ToList();
@@ -283,20 +282,6 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
 
     private static IReadOnlyList<string> ParseText(string? text) =>
         GlobalExcludeList.Normalize((text ?? string.Empty).ReplaceLineEndings("\n").Split('\n'));
-
-    private static string GetFolderDisplayName(string? folderPath)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            return string.Empty;
-        }
-
-        var trimmedPath = folderPath.Trim();
-        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return string.IsNullOrWhiteSpace(displayName)
-            ? trimmedPath
-            : displayName;
-    }
 
     private static string BuildFolderExcludeEntry(ProjectNode node)
     {

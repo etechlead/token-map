@@ -767,13 +767,7 @@ public sealed class TreemapControl : Control
             ? LeafDarkLabelBrush
             : LeafLightLabelBrush;
 
-    private double GetMetricValue(ProjectNode node) =>
-        Metric switch
-        {
-            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
-            AnalysisMetric.Size => node.Metrics.FileSizeBytes,
-            _ => node.Metrics.Tokens,
-        };
+    private double GetMetricValue(ProjectNode node) => Metric.GetValue(node.Metrics);
 
     private static string FormatShare(double current, double total) =>
         total <= 0 || current <= 0 ? "n/a" : $"{current / total:P1}";

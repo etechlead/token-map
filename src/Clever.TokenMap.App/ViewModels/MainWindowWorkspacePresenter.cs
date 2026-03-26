@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Models;
@@ -195,23 +194,9 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
 
     private static string BuildWindowTitle(string? folderPath)
     {
-        var displayName = GetFolderDisplayName(folderPath);
+        var displayName = FolderDisplayText.GetFolderDisplayName(folderPath);
         return string.IsNullOrWhiteSpace(displayName)
             ? "TokenMap"
             : $"{displayName} - TokenMap";
-    }
-
-    private static string GetFolderDisplayName(string? folderPath)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            return string.Empty;
-        }
-
-        var trimmedPath = folderPath.Trim();
-        var displayName = Path.GetFileName(trimmedPath.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        return string.IsNullOrWhiteSpace(displayName)
-            ? trimmedPath
-            : displayName;
     }
 }

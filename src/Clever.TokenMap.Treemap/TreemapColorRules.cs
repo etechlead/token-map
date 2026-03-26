@@ -179,12 +179,7 @@ internal static class TreemapColorRules
     }
 
     private static long GetMetricValue(ProjectNode node, AnalysisMetric metric) =>
-        metric switch
-        {
-            AnalysisMetric.Lines => node.Metrics.NonEmptyLines,
-            AnalysisMetric.Size => node.Metrics.FileSizeBytes,
-            _ => node.Metrics.Tokens,
-        };
+        metric.GetValue(node.Metrics);
 
     private static int GetStableHash(string seed)
     {

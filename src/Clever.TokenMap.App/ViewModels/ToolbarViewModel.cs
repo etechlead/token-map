@@ -122,7 +122,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public bool CanConfigureFolderExcludes => CanConfigureScanOptions && HasCurrentFolderSettings;
 
     public string CurrentFolderSettingsTitle => HasCurrentFolderSettings
-        ? $"Current folder: {GetFolderDisplayName(_currentFolderSettingsState.ActiveRootPath)}"
+        ? $"Current folder: {FolderDisplayText.GetFolderDisplayName(_currentFolderSettingsState.ActiveRootPath)}"
         : "Current folder";
 
     public ThemePreference SelectedThemePreference
@@ -243,18 +243,4 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     public ScanOptions BuildScanOptions() =>
         _settingsCoordinator.BuildCurrentScanOptions();
-
-    private static string GetFolderDisplayName(string? folderPath)
-    {
-        if (string.IsNullOrWhiteSpace(folderPath))
-        {
-            return string.Empty;
-        }
-
-        var trimmedPath = folderPath.Trim();
-        var displayName = System.IO.Path.GetFileName(trimmedPath.TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar));
-        return string.IsNullOrWhiteSpace(displayName)
-            ? trimmedPath
-            : displayName;
-    }
 }
