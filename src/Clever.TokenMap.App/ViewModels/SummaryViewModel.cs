@@ -1,6 +1,6 @@
 using System;
 using System.Globalization;
-using Clever.TokenMap.App;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 

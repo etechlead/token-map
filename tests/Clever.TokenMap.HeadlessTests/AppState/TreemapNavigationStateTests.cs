@@ -1,4 +1,4 @@
-using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.State;
 using static Clever.TokenMap.HeadlessTests.HeadlessTestSupport;
 
 namespace Clever.TokenMap.HeadlessTests;

@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.App.ViewModels;
 
-namespace Clever.TokenMap.App.ViewModels;
+namespace Clever.TokenMap.App.Design;
 
 internal sealed record MainWindowViewModelDependencies(
     IAnalysisSessionController AnalysisSessionController,

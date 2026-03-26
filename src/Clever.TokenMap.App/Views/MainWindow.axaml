@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:designvm="using:Clever.TokenMap.App.Design"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
         xmlns:sections="using:Clever.TokenMap.App.Views.Sections"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -19,7 +20,7 @@
         Icon="/Assets/app-icon.ico"
         Title="{Binding WindowTitle}">
     <Design.DataContext>
-        <vm:MainWindowDesignViewModel />
+        <designvm:MainWindowDesignViewModel />
     </Design.DataContext>
 
     <Window.Styles>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace Clever.TokenMap.App.ViewModels;
+namespace Clever.TokenMap.App.State;
 
 public sealed partial class TreemapNavigationState : ObservableObject
 {
@@ -19,7 +19,7 @@ public sealed partial class TreemapNavigationState : ObservableObject
     private ProjectNode? selectedNode;
 
     [ObservableProperty]
-    private IReadOnlyList<TreemapBreadcrumbItemViewModel> treemapBreadcrumbs = [];
+    private IReadOnlyList<TreemapBreadcrumbItem> treemapBreadcrumbs = [];
 
     public bool CanResetTreemapRoot =>
         _currentSnapshot is not null &&
@@ -113,7 +113,7 @@ public sealed partial class TreemapNavigationState : ObservableObject
         TreemapBreadcrumbs = BuildTreemapBreadcrumbs(value);
     }
 
-    private List<TreemapBreadcrumbItemViewModel> BuildTreemapBreadcrumbs(ProjectNode? node)
+    private List<TreemapBreadcrumbItem> BuildTreemapBreadcrumbs(ProjectNode? node)
     {
         if (_currentSnapshot is null || node is null)
         {
@@ -126,14 +126,14 @@ public sealed partial class TreemapNavigationState : ObservableObject
             return [];
         }
 
-        var items = new List<TreemapBreadcrumbItemViewModel>(path.Count);
+        var items = new List<TreemapBreadcrumbItem>(path.Count);
         for (var index = 0; index < path.Count; index++)
         {
             var pathNode = path[index];
             var label = index == 0
                 ? pathNode.Name
                 : $"/ {pathNode.Name}";
-            items.Add(new TreemapBreadcrumbItemViewModel(
+            items.Add(new TreemapBreadcrumbItem(
                 label,
                 pathNode,
                 canNavigate: index < path.Count - 1));

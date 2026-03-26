@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using Clever.TokenMap.App;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;

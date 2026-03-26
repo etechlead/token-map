@@ -110,7 +110,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public AnalysisState AnalysisState => _analysisSessionController.State;
 
-    public IReadOnlyList<TreemapBreadcrumbItemViewModel> TreemapBreadcrumbs => _treemapNavigationState.TreemapBreadcrumbs;
+    public IReadOnlyList<TreemapBreadcrumbItem> TreemapBreadcrumbs => _treemapNavigationState.TreemapBreadcrumbs;
 
     public bool CanResetTreemapRoot => _treemapNavigationState.CanResetTreemapRoot;
 

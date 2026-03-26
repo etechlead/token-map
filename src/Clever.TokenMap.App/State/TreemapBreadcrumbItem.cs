@@ -1,10 +1,10 @@
 using Clever.TokenMap.Core.Models;
 
-namespace Clever.TokenMap.App.ViewModels;
+namespace Clever.TokenMap.App.State;
 
-public sealed class TreemapBreadcrumbItemViewModel
+public sealed class TreemapBreadcrumbItem
 {
-    public TreemapBreadcrumbItemViewModel(string label, ProjectNode node, bool canNavigate)
+    public TreemapBreadcrumbItem(string label, ProjectNode node, bool canNavigate)
     {
         Label = label;
         Node = node;

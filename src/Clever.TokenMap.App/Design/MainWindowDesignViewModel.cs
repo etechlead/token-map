@@ -1,4 +1,6 @@
-namespace Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.ViewModels;
+
+namespace Clever.TokenMap.App.Design;
 
 public sealed class MainWindowDesignViewModel : MainWindowViewModel
 {

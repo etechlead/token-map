@@ -6,7 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
-using Clever.TokenMap.App;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;

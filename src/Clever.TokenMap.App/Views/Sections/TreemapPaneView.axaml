@@ -1,7 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:controls="using:Clever.TokenMap.Treemap"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+              xmlns:controls="using:Clever.TokenMap.Treemap"
+             xmlns:state="using:Clever.TokenMap.App.State"
+              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.TreemapPaneView"
              x:Name="TreemapPaneRoot"
              x:DataType="vm:MainWindowViewModel">
@@ -56,7 +57,7 @@
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:TreemapBreadcrumbItemViewModel">
+                        <DataTemplate x:DataType="state:TreemapBreadcrumbItem">
                             <StackPanel Orientation="Horizontal"
                                         Spacing="0">
                                 <Button Classes="breadcrumb-link"
@@ -81,4 +82,3 @@
         </Grid>
     </Border>
 </UserControl>
-
