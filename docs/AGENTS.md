@@ -15,23 +15,14 @@
 - If a document becomes mostly obvious from the codebase or UI, shrink it or remove it.
 - Doc filenames in `docs/` use lowercase with dashes; `AGENTS.md` is the only intentional exception.
 
-## Read Order
+## Read Order And Router
 - Start with root `AGENTS.md`, then this file.
-- For most implementation tasks, read `architecture.md` and `workflow.md`.
-- Read `tools.md` when the request touches internal harnesses, screenshot capture, visual diffs, or repo tooling.
-- Read `ui-principles.md` only for UI-facing changes.
+- For most implementation tasks, read `architecture.md` for current technical boundaries and sources of truth, then `workflow.md` for the concise request-to-code flow.
+- Read `tools.md` for internal harnesses, screenshot capture, visual diffs, and repo tooling.
+- Read `ui-principles.md` only for UI-facing changes and interaction constraints.
 - Read `versioning.md` when the request touches application version display, release tags, GitHub Releases, or packaged artifact naming.
 - Read `commit-policy.md` only when the user asks for a commit or commit message.
-- Read `post-mvp.md` only when the request touches deferred scope or backlog questions.
-
-## Documentation Router
-- `architecture.md`: current technical boundaries and sources of truth.
-- `post-mvp.md`: inactive backlog candidates outside the current MVP scope.
-- `tools.md`: internal repo tools and harnesses that are useful for implementation and debugging work.
-- `ui-principles.md`: current UI constraints and interaction principles.
-- `versioning.md`: canonical versioning, tagging, release, and artifact-naming policy.
-- `workflow.md`: the concise workflow for turning a request into code and docs.
-- `commit-policy.md`: commit format, grouping, and git safety rules.
+- Read `post-mvp.md` only for deferred scope or backlog questions; it is the inactive backlog doc outside the current MVP scope.
 
 ## Update Rules
 - Rewrite current-state docs in place. Do not append progress journals, dated logs, handoff notes, or lists of completed stages.
