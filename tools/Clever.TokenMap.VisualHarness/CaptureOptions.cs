@@ -29,56 +29,38 @@ internal sealed record CaptureOptions(
     CaptureCanvasSize WindowSize,
     CaptureCanvasSize TreemapSize)
 {
-    public static CaptureOptions ParseCapture(string[] args)
-    {
-        return Parse(
-            args,
-            defaultPalettes: [TreemapPalette.Weighted],
-            defaultSurfaces: [CaptureSurface.Main],
-            generateComparisonsByDefault: false);
-    }
+    public static CaptureOptions ParseCapture(string[] args) => Parse(args, VisualHarnessCli.Capture);
 
-    public static CaptureOptions ParseCapturePalettes(string[] args)
-    {
-        return Parse(
-            args,
-            defaultPalettes: [TreemapPalette.Weighted, TreemapPalette.Studio, TreemapPalette.Plain],
-            defaultSurfaces: [CaptureSurface.Main, CaptureSurface.Treemap],
-            generateComparisonsByDefault: true);
-    }
+    public static CaptureOptions ParseCapturePalettes(string[] args) => Parse(args, VisualHarnessCli.CapturePalettes);
 
-    private static CaptureOptions Parse(
-        string[] args,
-        IReadOnlyList<TreemapPalette> defaultPalettes,
-        IReadOnlyList<CaptureSurface> defaultSurfaces,
-        bool generateComparisonsByDefault)
+    private static CaptureOptions Parse(string[] args, CaptureCommandDefinition definition)
     {
-        var source = CliParsing.ParseCaptureSource(CliParsing.GetOptionValue(args, "--source") ?? "repo");
-        var projectRoot = Path.GetFullPath(CliParsing.GetOptionValue(args, "--project-root") ?? Directory.GetCurrentDirectory());
-        var outputDirectory = Path.GetFullPath(
-            CliParsing.GetOptionValue(args, "--output-dir")
-            ?? CliParsing.GetDefaultArtifactDirectory("visual-harness"));
-        var theme = CliParsing.ParseThemePreference(CliParsing.GetOptionValue(args, "--theme") ?? "dark");
-        var metric = CliParsing.ParseMetric(CliParsing.GetOptionValue(args, "--metric") ?? "tokens");
-        var palettes = CliParsing.ParsePalettes(CliParsing.GetOptionValue(args, "--palette") ?? string.Join(",", defaultPalettes));
-        var surfaces = CliParsing.ParseCaptureSurfaces(CliParsing.GetOptionValue(args, "--surface") ?? string.Join(",", defaultSurfaces));
-        var generateComparisons = generateComparisonsByDefault && !CliParsing.HasFlag(args, "--skip-compare")
-            || CliParsing.HasFlag(args, "--compare");
+        var generateComparisons = definition.GenerateComparisonsByDefault;
+        if (definition.SkipCompareOption?.IsSet(args) == true)
+        {
+            generateComparisons = false;
+        }
+
+        if (definition.CompareOption?.IsSet(args) == true)
+        {
+            generateComparisons = true;
+        }
+
         var windowSize = new CaptureCanvasSize(
-            CliParsing.GetOptionalIntValue(args, "--window-width", 1600),
-            CliParsing.GetOptionalIntValue(args, "--window-height", 1000));
+            definition.WindowWidthOption.GetValue(args),
+            definition.WindowHeightOption.GetValue(args));
         var treemapSize = new CaptureCanvasSize(
-            CliParsing.GetOptionalIntValue(args, "--treemap-width", 1320),
-            CliParsing.GetOptionalIntValue(args, "--treemap-height", 820));
+            definition.TreemapWidthOption.GetValue(args),
+            definition.TreemapHeightOption.GetValue(args));
 
         return new CaptureOptions(
-            outputDirectory,
-            theme,
-            metric,
-            source,
-            projectRoot,
-            palettes,
-            surfaces,
+            definition.OutputDirectoryOption.GetValue(args),
+            definition.ThemeOption.GetValue(args),
+            definition.MetricOption.GetValue(args),
+            definition.SourceOption.GetValue(args),
+            definition.ProjectRootOption.GetValue(args),
+            definition.PaletteOption.GetValue(args),
+            definition.SurfaceOption.GetValue(args),
             generateComparisons,
             windowSize,
             treemapSize);
@@ -89,10 +71,9 @@ internal sealed record CompareOptions(string LeftPath, string RightPath, string 
 {
     public static CompareOptions Parse(string[] args)
     {
-        var leftPath = CliParsing.GetRequiredOptionValue(args, "--left");
-        var rightPath = CliParsing.GetRequiredOptionValue(args, "--right");
-        var outputDirectory = CliParsing.GetOptionValue(args, "--output-dir")
-            ?? CliParsing.GetDefaultArtifactDirectory("visual-compare");
-        return new CompareOptions(Path.GetFullPath(leftPath), Path.GetFullPath(rightPath), Path.GetFullPath(outputDirectory));
+        return new CompareOptions(
+            VisualHarnessCli.Compare.LeftOption.GetValue(args),
+            VisualHarnessCli.Compare.RightOption.GetValue(args),
+            VisualHarnessCli.Compare.OutputDirectoryOption.GetValue(args));
     }
 }

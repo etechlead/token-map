@@ -1,23 +1,23 @@
+using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Reflection;
 using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.VisualHarness;
 
 internal static class CliParsing
 {
-    private static readonly TreemapPalette[] OrderedPalettes =
-    [
-        TreemapPalette.Weighted,
-        TreemapPalette.Studio,
-        TreemapPalette.Plain,
-    ];
-
     public static string? GetOptionValue(string[] args, string optionName)
     {
-        for (var index = 0; index < args.Length - 1; index++)
+        for (var index = 0; index < args.Length; index++)
         {
             if (string.Equals(args[index], optionName, StringComparison.OrdinalIgnoreCase))
             {
+                if (index == args.Length - 1 || LooksLikeOptionName(args[index + 1]))
+                {
+                    throw new InvalidOperationException($"Missing value for option: {optionName}");
+                }
+
                 return args[index + 1];
             }
         }
@@ -28,36 +28,6 @@ internal static class CliParsing
     public static bool HasFlag(string[] args, string optionName) =>
         args.Any(argument => string.Equals(argument, optionName, StringComparison.OrdinalIgnoreCase));
 
-    public static string GetRequiredOptionValue(string[] args, string optionName) =>
-        GetOptionValue(args, optionName)
-        ?? throw new InvalidOperationException($"Missing required option: {optionName}");
-
-    public static ThemePreference ParseThemePreference(string value) =>
-        value.ToLowerInvariant() switch
-        {
-            "light" => ThemePreference.Light,
-            "dark" => ThemePreference.Dark,
-            "system" => ThemePreference.System,
-            _ => throw new InvalidOperationException($"Unsupported theme '{value}'. Expected light, dark, or system."),
-        };
-
-    public static AnalysisMetric ParseMetric(string value) =>
-        value.ToLowerInvariant() switch
-        {
-            "tokens" => AnalysisMetric.Tokens,
-            "lines" => AnalysisMetric.Lines,
-            "size" => AnalysisMetric.Size,
-            _ => throw new InvalidOperationException($"Unsupported metric '{value}'. Expected tokens, lines, or size."),
-        };
-
-    public static CaptureSource ParseCaptureSource(string value) =>
-        value.ToLowerInvariant() switch
-        {
-            "repo" => CaptureSource.Repo,
-            "demo" => CaptureSource.Demo,
-            _ => throw new InvalidOperationException($"Unsupported source '{value}'. Expected repo or demo."),
-        };
-
     public static IReadOnlyList<CaptureSurface> ParseCaptureSurfaces(string value)
     {
         if (string.Equals(value, "all", StringComparison.OrdinalIgnoreCase))
@@ -66,7 +36,7 @@ internal static class CliParsing
         }
 
         var surfaces = SplitList(value)
-            .Select(ParseCaptureSurface)
+            .Select(ParseEnumToken<CaptureSurface>)
             .Distinct()
             .ToArray();
         if (surfaces.Length == 0)
@@ -81,11 +51,11 @@ internal static class CliParsing
     {
         if (string.Equals(value, "all", StringComparison.OrdinalIgnoreCase))
         {
-            return OrderedPalettes;
+            return Enum.GetValues<TreemapPalette>();
         }
 
         var palettes = SplitList(value)
-            .Select(ParsePalette)
+            .Select(ParseEnumToken<TreemapPalette>)
             .Distinct()
             .ToArray();
         if (palettes.Length == 0)
@@ -102,32 +72,44 @@ internal static class CliParsing
         return Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), ".artifacts", folderName, timestamp));
     }
 
-    public static int GetOptionalIntValue(string[] args, string optionName, int fallback)
+    public static int ParseInt(string value) => int.Parse(value, CultureInfo.InvariantCulture);
+
+    public static IReadOnlyList<string> GetEnumTokens<TEnum>()
+        where TEnum : struct, Enum =>
+        Enum.GetValues<TEnum>()
+            .Select(GetEnumToken)
+            .ToArray();
+
+    public static IReadOnlyList<string> GetEnumTokens<TEnum>(IEnumerable<TEnum> values)
+        where TEnum : struct, Enum =>
+        values.Select(GetEnumToken).ToArray();
+
+    public static string GetEnumToken<TEnum>(TEnum value)
+        where TEnum : struct, Enum
     {
-        var rawValue = GetOptionValue(args, optionName);
-        return rawValue is null
-            ? fallback
-            : int.Parse(rawValue, CultureInfo.InvariantCulture);
+        var member = typeof(TEnum).GetMember(value.ToString(), BindingFlags.Public | BindingFlags.Static).Single();
+        return member.GetCustomAttribute<DisplayAttribute>()?.GetName()
+            ?? value.ToString().ToLowerInvariant();
+    }
+
+    public static TEnum ParseEnumToken<TEnum>(string value)
+        where TEnum : struct, Enum
+    {
+        foreach (var candidate in Enum.GetValues<TEnum>())
+        {
+            if (string.Equals(GetEnumToken(candidate), value, StringComparison.OrdinalIgnoreCase))
+            {
+                return candidate;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"Unsupported {typeof(TEnum).Name} '{value}'. Expected {string.Join(", ", GetEnumTokens<TEnum>())}.");
     }
 
     private static string[] SplitList(string value) =>
         value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-    private static CaptureSurface ParseCaptureSurface(string value) =>
-        value.ToLowerInvariant() switch
-        {
-            "main" => CaptureSurface.Main,
-            "settings" => CaptureSurface.Settings,
-            "treemap" => CaptureSurface.Treemap,
-            _ => throw new InvalidOperationException($"Unsupported surface '{value}'. Expected main, settings, treemap, or all."),
-        };
-
-    private static TreemapPalette ParsePalette(string value) =>
-        value.ToLowerInvariant() switch
-        {
-            "plain" => TreemapPalette.Plain,
-            "weighted" => TreemapPalette.Weighted,
-            "studio" => TreemapPalette.Studio,
-            _ => throw new InvalidOperationException($"Unsupported palette '{value}'. Expected plain, weighted, studio, or all."),
-        };
+    private static bool LooksLikeOptionName(string value) =>
+        value.StartsWith('-');
 }

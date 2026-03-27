@@ -14,25 +14,57 @@ internal static class VisualHarnessProgram
 
     public static async Task<int> RunAsync(string[] args)
     {
-        if (args.Length == 0 || string.Equals(args[0], "capture-palettes", StringComparison.OrdinalIgnoreCase))
+        if (args.Length > 0 && VisualHarnessCli.IsHelpToken(args[0]))
         {
+            if (args.Length > 1 && VisualHarnessCli.TryGetCommand(args[1]) is { } helpCommand)
+            {
+                Console.WriteLine(VisualHarnessCli.FormatCommandHelp(helpCommand));
+                return 0;
+            }
+
+            Console.WriteLine(VisualHarnessCli.FormatGeneralHelp());
+            return 0;
+        }
+
+        if (args.Length == 0 || string.Equals(args[0], VisualHarnessCli.CapturePalettes.Command.Name, StringComparison.OrdinalIgnoreCase))
+        {
+            if (VisualHarnessCli.ContainsHelpToken(args.Skip(1)))
+            {
+                Console.WriteLine(VisualHarnessCli.FormatCommandHelp(VisualHarnessCli.CapturePalettes.Command));
+                return 0;
+            }
+
             var options = CaptureOptions.ParseCapturePalettes(args);
             return await RunWithSessionAsync(() => VisualCaptureRunner.CaptureAsync(options, JsonOptions));
         }
 
-        if (string.Equals(args[0], "capture", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(args[0], VisualHarnessCli.Capture.Command.Name, StringComparison.OrdinalIgnoreCase))
         {
+            if (VisualHarnessCli.ContainsHelpToken(args.Skip(1)))
+            {
+                Console.WriteLine(VisualHarnessCli.FormatCommandHelp(VisualHarnessCli.Capture.Command));
+                return 0;
+            }
+
             var options = CaptureOptions.ParseCapture(args);
             return await RunWithSessionAsync(() => VisualCaptureRunner.CaptureAsync(options, JsonOptions));
         }
 
-        if (string.Equals(args[0], "compare", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(args[0], VisualHarnessCli.Compare.Command.Name, StringComparison.OrdinalIgnoreCase))
         {
+            if (VisualHarnessCli.ContainsHelpToken(args.Skip(1)))
+            {
+                Console.WriteLine(VisualHarnessCli.FormatCommandHelp(VisualHarnessCli.Compare.Command));
+                return 0;
+            }
+
             var options = CompareOptions.Parse(args);
             return await RunWithSessionAsync(() => VisualCaptureRunner.CompareAsync(options, JsonOptions));
         }
 
-        PrintUsage();
+        Console.Error.WriteLine($"Unknown command: {args[0]}");
+        Console.Error.WriteLine();
+        Console.Error.WriteLine(VisualHarnessCli.FormatGeneralHelp());
         return 1;
     }
 
@@ -40,13 +72,5 @@ internal static class VisualHarnessProgram
     {
         using var session = HeadlessUnitTestSession.StartNew(typeof(VisualHarnessAppBuilder));
         return await session.Dispatch(action, CancellationToken.None);
-    }
-
-    private static void PrintUsage()
-    {
-        Console.WriteLine("Usage:");
-        Console.WriteLine("  dotnet run --project tools/Clever.TokenMap.VisualHarness -- capture [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette plain|weighted|studio|all] [--compare] [--window-width N] [--window-height N] [--treemap-width N] [--treemap-height N]");
-        Console.WriteLine("  dotnet run --project tools/Clever.TokenMap.VisualHarness -- capture-palettes [--source repo|demo] [--project-root DIR] [--output-dir DIR] [--theme dark|light|system] [--metric tokens|lines|size] [--surface main|settings|treemap|all] [--palette plain|weighted|studio|all] [--skip-compare]");
-        Console.WriteLine("  dotnet run --project tools/Clever.TokenMap.VisualHarness -- compare --left FILE --right FILE [--output-dir DIR]");
     }
 }
