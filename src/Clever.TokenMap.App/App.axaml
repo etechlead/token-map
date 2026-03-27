@@ -52,6 +52,43 @@
                                      Color="#0A5FC2" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
                                      Color="#DCEBFF" />
+                    <LinearGradientBrush x:Key="TokenMapShareCardBackgroundBrush"
+                                         StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="#F7FAFD"
+                                      Offset="0" />
+                        <GradientStop Color="#E9EFF6"
+                                      Offset="1" />
+                    </LinearGradientBrush>
+                    <RadialGradientBrush x:Key="TokenMapShareCardGlowBrush"
+                                         Center="0.5,0.5"
+                                         RadiusX="0.5"
+                                         RadiusY="0.5">
+                        <GradientStop Color="#240F6CBD"
+                                      Offset="0" />
+                        <GradientStop Color="#000F6CBD"
+                                      Offset="1" />
+                    </RadialGradientBrush>
+                    <SolidColorBrush x:Key="TokenMapShareCardBorderBrush"
+                                     Color="#18233B53" />
+                    <SolidColorBrush x:Key="TokenMapShareCardPrimaryTextBrush"
+                                     Color="#18212B" />
+                    <SolidColorBrush x:Key="TokenMapShareCardValueTextBrush"
+                                     Color="#101828" />
+                    <SolidColorBrush x:Key="TokenMapShareCardAccentTextBrush"
+                                     Color="#0F6CBD" />
+                    <SolidColorBrush x:Key="TokenMapShareCardSecondaryTextBrush"
+                                     Color="#667085" />
+                    <SolidColorBrush x:Key="TokenMapShareCardDividerBrush"
+                                     Color="#223B5361" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterLeadBrush"
+                                     Color="#667085" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterIconBrush"
+                                     Color="#667085" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterLinkBrush"
+                                     Color="#344054" />
+                    <SolidColorBrush x:Key="TokenMapShareCardTreemapHostBrush"
+                                     Color="#FFFFFF" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="TokenMapAppBackgroundBrush"
@@ -96,6 +133,43 @@
                                      Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
                                      Color="#16314D" />
+                    <LinearGradientBrush x:Key="TokenMapShareCardBackgroundBrush"
+                                         StartPoint="0,0"
+                                         EndPoint="1,1">
+                        <GradientStop Color="#11161D"
+                                      Offset="0" />
+                        <GradientStop Color="#19222E"
+                                      Offset="1" />
+                    </LinearGradientBrush>
+                    <RadialGradientBrush x:Key="TokenMapShareCardGlowBrush"
+                                         Center="0.5,0.5"
+                                         RadiusX="0.5"
+                                         RadiusY="0.5">
+                        <GradientStop Color="#1E7DE028"
+                                      Offset="0" />
+                        <GradientStop Color="#001E7DE0"
+                                      Offset="1" />
+                    </RadialGradientBrush>
+                    <SolidColorBrush x:Key="TokenMapShareCardBorderBrush"
+                                     Color="#0FFFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapShareCardPrimaryTextBrush"
+                                     Color="#E6EBF2" />
+                    <SolidColorBrush x:Key="TokenMapShareCardValueTextBrush"
+                                     Color="#F5F7FA" />
+                    <SolidColorBrush x:Key="TokenMapShareCardAccentTextBrush"
+                                     Color="#9DD0FF" />
+                    <SolidColorBrush x:Key="TokenMapShareCardSecondaryTextBrush"
+                                     Color="#8D9AAF" />
+                    <SolidColorBrush x:Key="TokenMapShareCardDividerBrush"
+                                     Color="#14FFFFFF" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterLeadBrush"
+                                     Color="#6F8198" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterIconBrush"
+                                     Color="#A9BED7" />
+                    <SolidColorBrush x:Key="TokenMapShareCardFooterLinkBrush"
+                                     Color="#C5D7EA" />
+                    <SolidColorBrush x:Key="TokenMapShareCardTreemapHostBrush"
+                                     Color="#0D131A" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="TokenMapAccentBrush"

@@ -10,20 +10,11 @@
     <Border Name="ShareCardRoot"
             Width="600"
             Height="336"
-            Background="Transparent"
-            CornerRadius="24"
-            ClipToBounds="True">
+            Background="{DynamicResource TokenMapShareCardBackgroundBrush}">
+
         <Border Name="RoundedCardLayout"
-                CornerRadius="24">
-            <Border.Background>
-                <LinearGradientBrush StartPoint="0,0"
-                                     EndPoint="1,1">
-                    <GradientStop Color="#11161D"
-                                  Offset="0" />
-                    <GradientStop Color="#19222E"
-                                  Offset="1" />
-                </LinearGradientBrush>
-            </Border.Background>
+                CornerRadius="24"
+                ClipToBounds="True">
 
             <Grid>
                 <Ellipse Width="220"
@@ -31,36 +22,27 @@
                          HorizontalAlignment="Right"
                          VerticalAlignment="Top"
                          Margin="0,-36,-20,0"
-                         IsHitTestVisible="False">
-                    <Ellipse.Fill>
-                        <RadialGradientBrush Center="0.5,0.5"
-                                             RadiusX="0.5"
-                                             RadiusY="0.5">
-                            <GradientStop Color="#1E7DE028"
-                                          Offset="0" />
-                            <GradientStop Color="#001E7DE0"
-                                          Offset="1" />
-                        </RadialGradientBrush>
-                    </Ellipse.Fill>
-                </Ellipse>
+                         IsHitTestVisible="False"
+                         Fill="{DynamicResource TokenMapShareCardGlowBrush}" />
 
-                <Border Margin="18"
+                <Border Margin="12"
                         CornerRadius="18"
-                        BorderBrush="#0FFFFFFF"
+                        BorderBrush="{DynamicResource TokenMapShareCardBorderBrush}"
                         BorderThickness="1" />
 
-                <Grid Margin="34,24,34,24"
-                      ColumnDefinitions="272,18,*">
-                    <Grid RowDefinitions="Auto,*,Auto">
+                <Grid Margin="24,0,18,0"
+                      ColumnDefinitions="248,14,*">
+                    <Grid Margin="0,18,0,18"
+                          RowDefinitions="Auto,*,Auto">
                         <StackPanel Spacing="10">
                             <StackPanel Name="ShareTopSectionWithProjectName"
                                         Spacing="10"
                                         IsVisible="{Binding ShowProjectName}">
                                 <TextBlock Name="ShareProjectTitleText"
-                                           MaxWidth="272"
+                                           MaxWidth="248"
                                            FontSize="30"
                                            FontWeight="SemiBold"
-                                           Foreground="#E6EBF2"
+                                           Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                            Text="{Binding DisplayProjectName}"
                                            TextTrimming="CharacterEllipsis" />
 
@@ -72,14 +54,14 @@
                                                  HorizontalAlignment="Left">
                                             <TextBlock FontSize="68"
                                                        FontWeight="Bold"
-                                                       Foreground="#F5F7FA"
+                                                       Foreground="{DynamicResource TokenMapShareCardValueTextBrush}"
                                                        Text="{Binding TokenValue}" />
                                         </Viewbox>
                                     </Grid>
                                     <TextBlock Margin="2,0,0,0"
                                                FontSize="18"
                                                FontWeight="SemiBold"
-                                               Foreground="#9DD0FF"
+                                               Foreground="{DynamicResource TokenMapShareCardAccentTextBrush}"
                                                Text="tokens" />
                                 </StackPanel>
                             </StackPanel>
@@ -92,26 +74,26 @@
                                         IsHitTestVisible="False" />
                                 <Grid Width="236"
                                       HorizontalAlignment="Left">
-                                    <Viewbox Stretch="Uniform"
+                                        <Viewbox Stretch="Uniform"
                                              StretchDirection="DownOnly"
                                              HorizontalAlignment="Left">
                                         <TextBlock FontSize="68"
                                                    FontWeight="Bold"
-                                                   Foreground="#F5F7FA"
+                                                   Foreground="{DynamicResource TokenMapShareCardValueTextBrush}"
                                                    Text="{Binding TokenValue}" />
                                     </Viewbox>
                                 </Grid>
                                 <TextBlock Margin="2,0,0,0"
                                            FontSize="18"
                                            FontWeight="SemiBold"
-                                           Foreground="#9DD0FF"
+                                           Foreground="{DynamicResource TokenMapShareCardAccentTextBrush}"
                                            Text="tokens" />
                             </StackPanel>
 
                             <Border Width="232"
                                     Height="1"
                                     HorizontalAlignment="Left"
-                                    Background="#14FFFFFF" />
+                                    Background="{DynamicResource TokenMapShareCardDividerBrush}" />
 
                             <Grid ColumnDefinitions="102,28,102">
                                 <StackPanel Spacing="2">
@@ -122,13 +104,13 @@
                                                  HorizontalAlignment="Left">
                                             <TextBlock FontSize="28"
                                                        FontWeight="Bold"
-                                                       Foreground="#E6EBF2"
+                                                       Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                                        Text="{Binding LineValue}" />
                                         </Viewbox>
                                     </Grid>
                                     <TextBlock FontSize="13"
                                                FontWeight="SemiBold"
-                                               Foreground="#8D9AAF"
+                                               Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
                                                Text="lines" />
                                 </StackPanel>
 
@@ -137,7 +119,7 @@
                                         Height="42"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Background="#14FFFFFF" />
+                                        Background="{DynamicResource TokenMapShareCardDividerBrush}" />
 
                                 <StackPanel Grid.Column="2"
                                             Spacing="2">
@@ -148,13 +130,13 @@
                                                  HorizontalAlignment="Left">
                                             <TextBlock FontSize="28"
                                                        FontWeight="Bold"
-                                                       Foreground="#E6EBF2"
+                                                       Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                                        Text="{Binding FileValue}" />
                                         </Viewbox>
                                     </Grid>
                                     <TextBlock FontSize="13"
                                                FontWeight="SemiBold"
-                                               Foreground="#8D9AAF"
+                                               Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
                                                Text="files" />
                                 </StackPanel>
                             </Grid>
@@ -162,12 +144,13 @@
 
                         <StackPanel Grid.Row="2"
                                     Orientation="Horizontal"
+                                    Margin="0,0,0,2"
                                     VerticalAlignment="Bottom"
                                     Spacing="8">
                             <TextBlock Margin="0,1,0,0"
                                        FontSize="11"
                                        FontWeight="SemiBold"
-                                       Foreground="#6F8198"
+                                       Foreground="{DynamicResource TokenMapShareCardFooterLeadBrush}"
                                        Text="make your own:" />
                             <StackPanel Orientation="Horizontal"
                                         Spacing="4">
@@ -175,27 +158,28 @@
                                       Height="12"
                                       Margin="0,2,0,0"
                                       Stretch="Uniform"
-                                      Fill="#A9BED7"
+                                      Fill="{DynamicResource TokenMapShareCardFooterIconBrush}"
                                       Data="{StaticResource TokenMapGithub16Geometry}" />
                                 <TextBlock FontSize="12"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"
-                                           Foreground="#C5D7EA"
+                                           Foreground="{DynamicResource TokenMapShareCardFooterLinkBrush}"
                                            Text="etechlead/token-map" />
                             </StackPanel>
                         </StackPanel>
                     </Grid>
 
                     <Border Grid.Column="2"
-                            Height="264"
-                            VerticalAlignment="Center"
-                            Background="#0D131A"
+                            Margin="0,18,0,18"
+                            VerticalAlignment="Stretch"
+                            Background="Transparent"
                             CornerRadius="18"
                             ClipToBounds="True">
                         <controls:TreemapControl Name="RoundedShareTreemapControl"
                                                  Margin="0"
                                                  IsHitTestVisible="False"
                                                  Focusable="False"
+                                                 CanvasBackgroundBrush="Transparent"
                                                  CanvasInset="3"
                                                  RootNode="{Binding PreviewRootNode}"
                                                  Metric="{Binding TreemapMetric}"

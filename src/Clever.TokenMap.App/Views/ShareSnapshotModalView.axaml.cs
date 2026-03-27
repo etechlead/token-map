@@ -43,9 +43,9 @@ public partial class ShareSnapshotModalView : UserControl
             UpdateLayout();
             await Dispatcher.UIThread.InvokeAsync(static () => { }, DispatcherPriority.Render);
 
-            var pixelWidth = Math.Max(1, (int)Math.Ceiling(shareCardRoot.Bounds.Width));
-            var pixelHeight = Math.Max(1, (int)Math.Ceiling(shareCardRoot.Bounds.Height));
-            using var bitmap = new RenderTargetBitmap(new PixelSize(pixelWidth, pixelHeight));
+            var renderScaling = Math.Max(1d, TopLevel.GetTopLevel(this)?.RenderScaling ?? 1d);
+            var exportSettings = GetBitmapExportSettings(shareCardRoot.Bounds.Size, renderScaling);
+            using var bitmap = new RenderTargetBitmap(exportSettings.PixelSize, exportSettings.Dpi);
             bitmap.Render(shareCardRoot);
             await clipboard.SetBitmapAsync(bitmap);
             await clipboard.FlushAsync();
@@ -86,4 +86,15 @@ public partial class ShareSnapshotModalView : UserControl
             },
             DispatcherPriority.Background);
     }
+
+    internal static BitmapExportSettings GetBitmapExportSettings(Size logicalSize, double renderScaling)
+    {
+        var exportScale = Math.Max(2d, renderScaling);
+        var pixelWidth = Math.Max(1, (int)Math.Ceiling(logicalSize.Width * exportScale));
+        var pixelHeight = Math.Max(1, (int)Math.Ceiling(logicalSize.Height * exportScale));
+        var dpi = new Vector(96d * exportScale, 96d * exportScale);
+        return new BitmapExportSettings(new PixelSize(pixelWidth, pixelHeight), dpi);
+    }
+
+    internal readonly record struct BitmapExportSettings(PixelSize PixelSize, Vector Dpi);
 }
