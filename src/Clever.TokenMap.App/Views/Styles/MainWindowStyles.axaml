@@ -391,7 +391,19 @@
     </Style>
     <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected">
         <Setter Property="Background" Value="{DynamicResource TokenMapAccentSurfaceBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected TextBlock.tree-table-name">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected TextBlock.tree-table-number">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected TextBlock.tree-share-text">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="DataGrid#ProjectTreeTable DataGridRow:selected Path.tree-expander-icon">
+        <Setter Property="Fill" Value="White" />
     </Style>
     <Style Selector="Border.settings-drawer">
         <Setter Property="Width" Value="320" />
