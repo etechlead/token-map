@@ -1,0 +1,214 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:controls="using:Clever.TokenMap.Treemap"
+             xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.ShareCardPreviewView"
+             x:DataType="vm:ShareSnapshotViewModel"
+             Width="600"
+             Height="336">
+    <Border Name="ShareCardRoot"
+            Width="600"
+            Height="336"
+            Background="Transparent"
+            CornerRadius="24"
+            ClipToBounds="True">
+        <Border Name="RoundedCardLayout"
+                CornerRadius="24">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0"
+                                     EndPoint="1,1">
+                    <GradientStop Color="#11161D"
+                                  Offset="0" />
+                    <GradientStop Color="#19222E"
+                                  Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+
+            <Grid>
+                <Ellipse Width="220"
+                         Height="220"
+                         HorizontalAlignment="Right"
+                         VerticalAlignment="Top"
+                         Margin="0,-36,-20,0"
+                         IsHitTestVisible="False">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush Center="0.5,0.5"
+                                             RadiusX="0.5"
+                                             RadiusY="0.5">
+                            <GradientStop Color="#1E7DE028"
+                                          Offset="0" />
+                            <GradientStop Color="#001E7DE0"
+                                          Offset="1" />
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+
+                <Border Margin="18"
+                        CornerRadius="18"
+                        BorderBrush="#0FFFFFFF"
+                        BorderThickness="1" />
+
+                <Grid Margin="34,24,34,24"
+                      ColumnDefinitions="272,18,*">
+                    <Grid RowDefinitions="Auto,*,Auto">
+                        <StackPanel Spacing="10">
+                            <StackPanel Name="ShareTopSectionWithProjectName"
+                                        Spacing="10"
+                                        IsVisible="{Binding ShowProjectName}">
+                                <TextBlock Name="ShareProjectTitleText"
+                                           MaxWidth="272"
+                                           FontSize="30"
+                                           FontWeight="SemiBold"
+                                           Foreground="#E6EBF2"
+                                           Text="{Binding DisplayProjectName}"
+                                           TextTrimming="CharacterEllipsis" />
+
+                                <StackPanel Spacing="4">
+                                    <Grid Width="236"
+                                          HorizontalAlignment="Left">
+                                        <Viewbox Stretch="Uniform"
+                                                 StretchDirection="DownOnly"
+                                                 HorizontalAlignment="Left">
+                                            <TextBlock FontSize="68"
+                                                       FontWeight="Bold"
+                                                       Foreground="#F5F7FA"
+                                                       Text="{Binding TokenValue}" />
+                                        </Viewbox>
+                                    </Grid>
+                                    <TextBlock Margin="2,0,0,0"
+                                               FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Foreground="#9DD0FF"
+                                               Text="tokens" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Name="ShareTopSectionWithoutProjectName"
+                                        Spacing="4"
+                                        IsVisible="{Binding ShowProjectNamePlaceholder}">
+                                <Border Height="18"
+                                        Background="Transparent"
+                                        IsHitTestVisible="False" />
+                                <Grid Width="236"
+                                      HorizontalAlignment="Left">
+                                    <Viewbox Stretch="Uniform"
+                                             StretchDirection="DownOnly"
+                                             HorizontalAlignment="Left">
+                                        <TextBlock FontSize="68"
+                                                   FontWeight="Bold"
+                                                   Foreground="#F5F7FA"
+                                                   Text="{Binding TokenValue}" />
+                                    </Viewbox>
+                                </Grid>
+                                <TextBlock Margin="2,0,0,0"
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Foreground="#9DD0FF"
+                                           Text="tokens" />
+                            </StackPanel>
+
+                            <Border Width="232"
+                                    Height="1"
+                                    HorizontalAlignment="Left"
+                                    Background="#14FFFFFF" />
+
+                            <Grid ColumnDefinitions="102,28,102">
+                                <StackPanel Spacing="2">
+                                    <Grid Width="102"
+                                          HorizontalAlignment="Left">
+                                        <Viewbox Stretch="Uniform"
+                                                 StretchDirection="DownOnly"
+                                                 HorizontalAlignment="Left">
+                                            <TextBlock FontSize="28"
+                                                       FontWeight="Bold"
+                                                       Foreground="#E6EBF2"
+                                                       Text="{Binding LineValue}" />
+                                        </Viewbox>
+                                    </Grid>
+                                    <TextBlock FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="#8D9AAF"
+                                               Text="lines" />
+                                </StackPanel>
+
+                                <Border Grid.Column="1"
+                                        Width="1"
+                                        Height="42"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Background="#14FFFFFF" />
+
+                                <StackPanel Grid.Column="2"
+                                            Spacing="2">
+                                    <Grid Width="102"
+                                          HorizontalAlignment="Left">
+                                        <Viewbox Stretch="Uniform"
+                                                 StretchDirection="DownOnly"
+                                                 HorizontalAlignment="Left">
+                                            <TextBlock FontSize="28"
+                                                       FontWeight="Bold"
+                                                       Foreground="#E6EBF2"
+                                                       Text="{Binding FileValue}" />
+                                        </Viewbox>
+                                    </Grid>
+                                    <TextBlock FontSize="13"
+                                               FontWeight="SemiBold"
+                                               Foreground="#8D9AAF"
+                                               Text="files" />
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Bottom"
+                                    Spacing="8">
+                            <TextBlock Margin="0,1,0,0"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       Foreground="#6F8198"
+                                       Text="make your own:" />
+                            <StackPanel Orientation="Horizontal"
+                                        Spacing="4">
+                                <Path Width="12"
+                                      Height="12"
+                                      Margin="0,2,0,0"
+                                      Stretch="Uniform"
+                                      Fill="#A9BED7"
+                                      Data="{StaticResource TokenMapGithub16Geometry}" />
+                                <TextBlock FontSize="12"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"
+                                           Foreground="#C5D7EA"
+                                           Text="etechlead/token-map" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Column="2"
+                            Height="264"
+                            VerticalAlignment="Center"
+                            Background="#0D131A"
+                            CornerRadius="18"
+                            ClipToBounds="True">
+                        <controls:TreemapControl Name="RoundedShareTreemapControl"
+                                                 Margin="0"
+                                                 IsHitTestVisible="False"
+                                                 Focusable="False"
+                                                 CanvasInset="3"
+                                                 RootNode="{Binding PreviewRootNode}"
+                                                 Metric="{Binding TreemapMetric}"
+                                                 Palette="{Binding PreviewTreemapPalette}"
+                                                 ShowLabels="False"
+                                                 ShowDirectoryNodes="False"
+                                                 ShowLeafBorders="False"
+                                                 LeafCornerRadius="6"
+                                                 LeafGap="2"
+                                                 MinLeafAreaRatio="0.0018" />
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+    </Border>
+</UserControl>

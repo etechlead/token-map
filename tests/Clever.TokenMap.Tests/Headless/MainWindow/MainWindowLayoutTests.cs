@@ -63,6 +63,8 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<Control>(window, "TreemapPane"));
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
         Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
+        Assert.NotNull(FindNamedDescendant<StackPanel>(window, "ToolbarActionsGroup"));
+        Assert.NotNull(FindNamedDescendant<Button>(window, "ShareButton"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
         Assert.NotNull(FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton"));
     }

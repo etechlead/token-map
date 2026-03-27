@@ -1,0 +1,95 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             xmlns:views="using:Clever.TokenMap.App.Views"
+             x:Class="Clever.TokenMap.App.Views.ShareSnapshotModalView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Classes="panel global-excludes-modal"
+            Width="760"
+            MaxWidth="760"
+            MinHeight="0">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="14">
+            <Grid RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8"
+                  RowSpacing="4">
+                <TextBlock Classes="panel-title"
+                           VerticalAlignment="Center"
+                           Text="Share image" />
+                <Button Name="CloseShareSnapshotModalButton"
+                        Grid.Column="1"
+                        Classes="close-button"
+                        Command="{Binding CloseShareSnapshotCommand}"
+                        ToolTip.Tip="Close share image preview">
+                    <Path Classes="close-button-icon"
+                          Data="{StaticResource FluentDismiss20Geometry}" />
+                </Button>
+                <TextBlock Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Classes="panel-body"
+                           Text="Preview the card, optionally include a project name, then copy the image to the clipboard." />
+            </Grid>
+
+            <Border Grid.Row="1"
+                    Classes="toolbar-group"
+                    Padding="14">
+                <Viewbox Stretch="Uniform"
+                         StretchDirection="DownOnly">
+                    <views:ShareCardPreviewView Name="ShareCardPreviewControl"
+                                                DataContext="{Binding ShareSnapshot}" />
+                </Viewbox>
+            </Border>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16"
+                  VerticalAlignment="Top">
+                <StackPanel DataContext="{Binding ShareSnapshot}"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="12"
+                            x:DataType="vm:ShareSnapshotViewModel">
+                    <CheckBox Name="IncludeProjectNameCheckBox"
+                              VerticalAlignment="Center"
+                              Content="Include project name"
+                              IsChecked="{Binding IncludeProjectName}" />
+
+                    <TextBox Name="ProjectNameTextBox"
+                             Width="320"
+                             VerticalAlignment="Center"
+                             Watermark="Project name"
+                             IsVisible="{Binding IncludeProjectName}"
+                             Text="{Binding ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="CopyShareImageButton"
+                            Classes="action-button primary"
+                            Background="{Binding ShareSnapshot.CopyButtonBackground}"
+                            BorderBrush="{Binding ShareSnapshot.CopyButtonBorderBrush}"
+                            Foreground="{Binding ShareSnapshot.CopyButtonForeground}"
+                            Click="ShareSnapshotCopyButton_OnClick">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentDocumentCopy16RegularGeometry}"
+                                  IsVisible="{Binding ShareSnapshot.IsCopyFeedbackIdle}" />
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource TokenMapCheckmark16Geometry}"
+                                  IsVisible="{Binding ShareSnapshot.IsCopyFeedbackSuccess}" />
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentDismiss20Geometry}"
+                                  IsVisible="{Binding ShareSnapshot.IsCopyFeedbackError}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="{Binding ShareSnapshot.CopyButtonText}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

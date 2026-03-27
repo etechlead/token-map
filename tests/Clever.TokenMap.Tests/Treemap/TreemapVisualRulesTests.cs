@@ -87,6 +87,17 @@ public sealed class TreemapVisualRulesTests
     }
 
     [Fact]
+    public void GetContentBounds_WithoutDirectoryHeader_UsesFullDirectoryBounds()
+    {
+        var directory = CreateNode("src", ProjectNodeKind.Directory);
+        var bounds = new Rect(10, 20, 80, 30);
+
+        var contentBounds = TreemapVisualRules.GetContentBounds(directory, bounds, includeDirectoryHeader: false);
+
+        Assert.Equal(bounds, contentBounds);
+    }
+
+    [Fact]
     public void GetHeaderBounds_ReturnsDefault_ForNonDirectory()
     {
         var file = CreateNode("file.cs", ProjectNodeKind.File);
@@ -165,4 +176,3 @@ public sealed class TreemapVisualRulesTests
                 DescendantDirectoryCount: kind == ProjectNodeKind.Directory ? 1 : 0),
         };
 }
-

@@ -16,12 +16,18 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IPathShellService _pathShellService;
     private readonly MainWindowWorkspacePresenter _workspacePresenter;
     private readonly RelayCommand _closeSettingsCommand;
+    private readonly RelayCommand _closeShareSnapshotCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
+    private readonly RelayCommand _openShareSnapshotCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
 
     [ObservableProperty]
     private bool isSettingsOpen;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsShareSnapshotOpen))]
+    private ShareSnapshotViewModel? shareSnapshot;
 
     public MainWindowViewModel(
         MainWindowWorkspacePresenter workspacePresenter,
@@ -43,6 +49,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
         _closeSettingsCommand = new RelayCommand(CloseSettings);
+        _closeShareSnapshotCommand = new RelayCommand(CloseShareSnapshot);
+        _openShareSnapshotCommand = new RelayCommand(OpenShareSnapshot, () => HasSnapshot);
         _resetTreemapRootCommand = new RelayCommand(_workspacePresenter.ResetTreemapRoot, () => CanResetTreemapRoot);
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
 
@@ -81,13 +89,15 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool CanResetTreemapRoot => _workspacePresenter.CanResetTreemapRoot;
 
-    public bool CanShowTreemapScope => _workspacePresenter.CanShowTreemapScope;
-
-    public string TreemapScopeDisplay => _workspacePresenter.TreemapScopeDisplay;
+    public bool IsShareSnapshotOpen => ShareSnapshot is not null;
 
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
     public IRelayCommand CloseSettingsCommand => _closeSettingsCommand;
+
+    public IRelayCommand OpenShareSnapshotCommand => _openShareSnapshotCommand;
+
+    public IRelayCommand CloseShareSnapshotCommand => _closeShareSnapshotCommand;
 
     public IRelayCommand<ProjectNode?> ExcludeNodeFromFolderCommand => ExcludesEditor.ExcludeNodeFromFolderCommand;
 
@@ -102,6 +112,9 @@ public partial class MainWindowViewModel : ViewModelBase
     public IAsyncRelayCommand SaveAndRescanExcludesEditorCommand => ExcludesEditor.SaveAndRescanCommand;
 
     public IRelayCommand<ProjectNode?> NavigateToTreemapBreadcrumbCommand => _navigateToTreemapBreadcrumbCommand;
+
+    internal ShareSnapshotViewModel? CreateShareSnapshotViewModel() =>
+        _workspacePresenter.CreateShareSnapshotViewModel();
 
     public void DrillIntoTreemap(ProjectNode? node)
     {
@@ -145,6 +158,16 @@ public partial class MainWindowViewModel : ViewModelBase
         IsSettingsOpen = false;
     }
 
+    private void OpenShareSnapshot()
+    {
+        ShareSnapshot = CreateShareSnapshotFromCurrentState(ShareSnapshot);
+    }
+
+    private void CloseShareSnapshot()
+    {
+        ShareSnapshot = null;
+    }
+
     public bool CanExcludeNodeFromFolder(ProjectNode? node) => ExcludesEditor.CanExcludeNodeFromFolder(node);
 
     private void WorkspacePresenterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -159,5 +182,32 @@ public partial class MainWindowViewModel : ViewModelBase
         {
             _resetTreemapRootCommand.NotifyCanExecuteChanged();
         }
+
+        if (e.PropertyName == nameof(MainWindowWorkspacePresenter.HasSnapshot))
+        {
+            _openShareSnapshotCommand.NotifyCanExecuteChanged();
+            if (ShareSnapshot is not null)
+            {
+                ShareSnapshot = CreateShareSnapshotFromCurrentState(ShareSnapshot);
+            }
+        }
+    }
+
+    private ShareSnapshotViewModel? CreateShareSnapshotFromCurrentState(ShareSnapshotViewModel? previousState)
+    {
+        var currentState = CreateShareSnapshotViewModel();
+        if (currentState is null)
+        {
+            return null;
+        }
+
+        if (previousState is null)
+        {
+            return currentState;
+        }
+
+        currentState.IncludeProjectName = previousState.IncludeProjectName;
+        currentState.ProjectName = previousState.ProjectName;
+        return currentState;
     }
 }

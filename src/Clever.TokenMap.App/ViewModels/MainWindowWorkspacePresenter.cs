@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -73,10 +74,6 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
 
     public bool CanResetTreemapRoot => _treemapNavigationState.CanResetTreemapRoot;
 
-    public bool CanShowTreemapScope => _treemapNavigationState.CanShowTreemapScope;
-
-    public string TreemapScopeDisplay => _treemapNavigationState.TreemapScopeDisplay;
-
     public void DrillIntoTreemap(ProjectNode? node)
     {
         _treemapNavigationState.DrillInto(node);
@@ -94,6 +91,18 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
     public void NavigateToTreemapBreadcrumb(ProjectNode? node)
     {
         _treemapNavigationState.NavigateToBreadcrumb(node);
+    }
+
+    public ShareSnapshotViewModel? CreateShareSnapshotViewModel()
+    {
+        if (_analysisSessionController.CurrentSnapshot is not { } snapshot)
+        {
+            return null;
+        }
+
+        return new ShareSnapshotViewModel(
+            snapshot,
+            FolderDisplayText.GetFolderDisplayName(_analysisSessionController.SelectedFolderPath));
     }
 
     private void TreeOnSelectedNodeChanged(object? sender, ProjectNode? node)
@@ -169,8 +178,6 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
             case nameof(TreemapNavigationState.TreemapRootNode):
                 OnPropertyChanged(nameof(TreemapRootNode));
                 OnPropertyChanged(nameof(CanResetTreemapRoot));
-                OnPropertyChanged(nameof(CanShowTreemapScope));
-                OnPropertyChanged(nameof(TreemapScopeDisplay));
                 break;
             case nameof(TreemapNavigationState.TreemapBreadcrumbs):
                 OnPropertyChanged(nameof(TreemapBreadcrumbs));

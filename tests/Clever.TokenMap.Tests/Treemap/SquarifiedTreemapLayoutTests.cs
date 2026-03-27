@@ -191,6 +191,33 @@ public sealed class SquarifiedTreemapLayoutTests
     }
 
     [Fact]
+    public void Calculate_ExcludesLeavesBelowMinimumAreaRatioBeforeLayout()
+    {
+        var root = CreateNode(
+            string.Empty,
+            ProjectNodeKind.Root,
+            1_000,
+            100,
+            children:
+            [
+                CreateNode("keep.cs", ProjectNodeKind.File, 998, 100),
+                CreateNode("tiny-a.cs", ProjectNodeKind.File, 1, 1),
+                CreateNode("tiny-b.cs", ProjectNodeKind.File, 1, 1),
+            ]);
+        var layout = new SquarifiedTreemapLayout();
+
+        var visuals = layout.Calculate(
+            root,
+            new Rect(0, 0, 300, 180),
+            AnalysisMetric.Tokens,
+            minLeafAreaRatio: 0.01);
+
+        Assert.Contains(visuals, visual => visual.Node.RelativePath == "keep.cs");
+        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tiny-a.cs");
+        Assert.DoesNotContain(visuals, visual => visual.Node.RelativePath == "tiny-b.cs");
+    }
+
+    [Fact]
     public void Calculate_PortraitBounds_StartsWithRowInsteadOfVerticalStripe()
     {
         var root = CreateNode(

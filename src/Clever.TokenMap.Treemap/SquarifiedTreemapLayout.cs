@@ -6,7 +6,12 @@ namespace Clever.TokenMap.Treemap;
 
 public sealed class SquarifiedTreemapLayout
 {
-    public IReadOnlyList<TreemapNodeVisual> Calculate(ProjectNode rootNode, Rect bounds, AnalysisMetric metric)
+    public IReadOnlyList<TreemapNodeVisual> Calculate(
+        ProjectNode rootNode,
+        Rect bounds,
+        AnalysisMetric metric,
+        bool includeDirectoryHeaders = true,
+        double minLeafAreaRatio = 0)
     {
         ArgumentNullException.ThrowIfNull(rootNode);
 
@@ -15,8 +20,20 @@ public sealed class SquarifiedTreemapLayout
             return [];
         }
 
+        var minimumLeafWeight = Math.Max(0, minLeafAreaRatio) <= 0
+            ? 0
+            : GetWeight(rootNode, metric) * Math.Max(0, minLeafAreaRatio);
+        var effectiveWeightCache = new Dictionary<ProjectNode, double>();
         var visuals = new List<TreemapNodeVisual>();
-        LayoutNode(rootNode, bounds, metric, visuals, depth: 0);
+        LayoutNode(
+            rootNode,
+            bounds,
+            metric,
+            visuals,
+            depth: 0,
+            includeDirectoryHeaders,
+            minimumLeafWeight,
+            effectiveWeightCache);
         return visuals;
     }
 
@@ -25,10 +42,15 @@ public sealed class SquarifiedTreemapLayout
         Rect bounds,
         AnalysisMetric metric,
         List<TreemapNodeVisual> visuals,
-        int depth)
+        int depth,
+        bool includeDirectoryHeaders,
+        double minimumLeafWeight,
+        Dictionary<ProjectNode, double> effectiveWeightCache)
     {
         var items = node.Children
-            .Select(child => new WeightedNode(child, GetWeight(child, metric)))
+            .Select(child => new WeightedNode(
+                child,
+                GetEffectiveWeight(child, metric, minimumLeafWeight, effectiveWeightCache)))
             .Where(item => item.Weight > 0)
             .OrderByDescending(item => item.Weight)
             .ToList();
@@ -62,13 +84,29 @@ public sealed class SquarifiedTreemapLayout
                 continue;
             }
 
-            remainingBounds = LayoutRow(row, remainingBounds, visuals, metric, depth);
+            remainingBounds = LayoutRow(
+                row,
+                remainingBounds,
+                visuals,
+                metric,
+                depth,
+                includeDirectoryHeaders,
+                minimumLeafWeight,
+                effectiveWeightCache);
             row.Clear();
         }
 
         if (row.Count > 0)
         {
-            LayoutRow(row, remainingBounds, visuals, metric, depth);
+            LayoutRow(
+                row,
+                remainingBounds,
+                visuals,
+                metric,
+                depth,
+                includeDirectoryHeaders,
+                minimumLeafWeight,
+                effectiveWeightCache);
         }
     }
 
@@ -77,7 +115,10 @@ public sealed class SquarifiedTreemapLayout
         Rect bounds,
         List<TreemapNodeVisual> visuals,
         AnalysisMetric metric,
-        int depth)
+        int depth,
+        bool includeDirectoryHeaders,
+        double minimumLeafWeight,
+        Dictionary<ProjectNode, double> effectiveWeightCache)
     {
         var rowArea = row.Sum(item => item.Area);
         if (rowArea <= 0)
@@ -102,7 +143,15 @@ public sealed class SquarifiedTreemapLayout
 
                 if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
                 {
-                    LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
+                    LayoutNode(
+                        item.Node,
+                        TreemapVisualRules.GetContentBounds(item.Node, itemBounds, includeDirectoryHeaders),
+                        metric,
+                        visuals,
+                        depth + 1,
+                        includeDirectoryHeaders,
+                        minimumLeafWeight,
+                        effectiveWeightCache);
                 }
 
                 y += itemHeight;
@@ -124,7 +173,15 @@ public sealed class SquarifiedTreemapLayout
 
             if (item.Node.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
             {
-                LayoutNode(item.Node, TreemapVisualRules.GetContentBounds(item.Node, itemBounds), metric, visuals, depth + 1);
+                LayoutNode(
+                    item.Node,
+                    TreemapVisualRules.GetContentBounds(item.Node, itemBounds, includeDirectoryHeaders),
+                    metric,
+                    visuals,
+                    depth + 1,
+                    includeDirectoryHeaders,
+                    minimumLeafWeight,
+                    effectiveWeightCache);
             }
 
             x += itemWidth;
@@ -168,6 +225,38 @@ public sealed class SquarifiedTreemapLayout
         return Math.Max(
             sideSquared * max / sumSquared,
             sumSquared / (sideSquared * min));
+    }
+
+    private static double GetEffectiveWeight(
+        ProjectNode node,
+        AnalysisMetric metric,
+        double minimumLeafWeight,
+        Dictionary<ProjectNode, double> effectiveWeightCache)
+    {
+        if (effectiveWeightCache.TryGetValue(node, out var cachedWeight))
+        {
+            return cachedWeight;
+        }
+
+        double effectiveWeight;
+        if (node.Kind == ProjectNodeKind.File || node.Children.Count == 0)
+        {
+            var rawWeight = GetWeight(node, metric);
+            effectiveWeight = rawWeight >= minimumLeafWeight
+                ? rawWeight
+                : 0;
+        }
+        else
+        {
+            effectiveWeight = node.Children.Sum(child => GetEffectiveWeight(
+                child,
+                metric,
+                minimumLeafWeight,
+                effectiveWeightCache));
+        }
+
+        effectiveWeightCache[node] = effectiveWeight;
+        return effectiveWeight;
     }
 
     private static double GetWeight(ProjectNode node, AnalysisMetric metric) =>

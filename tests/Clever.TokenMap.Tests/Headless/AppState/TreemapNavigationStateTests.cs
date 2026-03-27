@@ -37,7 +37,7 @@ public sealed class TreemapNavigationStateTests
         Assert.Equal(directory, state.SelectedNode);
         Assert.Equal(2, state.TreemapBreadcrumbs.Count);
         Assert.True(state.CanResetTreemapRoot);
-        Assert.Equal("src", state.TreemapScopeDisplay);
+        Assert.Equal("/ src", state.TreemapBreadcrumbs[1].Label);
     }
 
     [Fact]

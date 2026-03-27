@@ -32,6 +32,27 @@ public sealed class TreemapControl : Control
     public static readonly StyledProperty<TreemapPalette> PaletteProperty =
         AvaloniaProperty.Register<TreemapControl, TreemapPalette>(nameof(Palette), TreemapPalette.Weighted);
 
+    public static readonly StyledProperty<bool> ShowLabelsProperty =
+        AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowLabels), true);
+
+    public static readonly StyledProperty<bool> ShowDirectoryNodesProperty =
+        AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowDirectoryNodes), true);
+
+    public static readonly StyledProperty<double> LeafCornerRadiusProperty =
+        AvaloniaProperty.Register<TreemapControl, double>(nameof(LeafCornerRadius));
+
+    public static readonly StyledProperty<double> LeafGapProperty =
+        AvaloniaProperty.Register<TreemapControl, double>(nameof(LeafGap));
+
+    public static readonly StyledProperty<double> MinLeafAreaRatioProperty =
+        AvaloniaProperty.Register<TreemapControl, double>(nameof(MinLeafAreaRatio));
+
+    public static readonly StyledProperty<bool> ShowLeafBordersProperty =
+        AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowLeafBorders), true);
+
+    public static readonly StyledProperty<double> CanvasInsetProperty =
+        AvaloniaProperty.Register<TreemapControl, double>(nameof(CanvasInset), 6);
+
     public static readonly StyledProperty<IBrush> CanvasBackgroundBrushProperty =
         AvaloniaProperty.Register<TreemapControl, IBrush>(nameof(CanvasBackgroundBrush), Brushes.Transparent);
 
@@ -78,7 +99,7 @@ public sealed class TreemapControl : Control
         AvaloniaProperty.Register<TreemapControl, IBrush>(nameof(HoverBorderBrush), Brushes.Transparent);
 
     private readonly SquarifiedTreemapLayout _layout = new();
-    private IReadOnlyList<TreemapNodeVisual> _nodeVisuals = [];
+    private List<TreemapNodeVisual> _nodeVisuals = [];
     private bool _isTooltipSuppressed;
     private Size _layoutSize;
     private MouseButton? _lastPressedMouseButton;
@@ -92,6 +113,13 @@ public sealed class TreemapControl : Control
             RootNodeProperty,
             SelectedNodeProperty,
             PaletteProperty,
+            ShowLabelsProperty,
+            ShowDirectoryNodesProperty,
+            LeafCornerRadiusProperty,
+            LeafGapProperty,
+            MinLeafAreaRatioProperty,
+            ShowLeafBordersProperty,
+            CanvasInsetProperty,
             BoundsProperty,
             CanvasBackgroundBrushProperty,
             DirectoryFillBrushProperty,
@@ -132,6 +160,48 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(PaletteProperty);
         set => SetValue(PaletteProperty, value);
+    }
+
+    public bool ShowLabels
+    {
+        get => GetValue(ShowLabelsProperty);
+        set => SetValue(ShowLabelsProperty, value);
+    }
+
+    public bool ShowDirectoryNodes
+    {
+        get => GetValue(ShowDirectoryNodesProperty);
+        set => SetValue(ShowDirectoryNodesProperty, value);
+    }
+
+    public double LeafCornerRadius
+    {
+        get => GetValue(LeafCornerRadiusProperty);
+        set => SetValue(LeafCornerRadiusProperty, value);
+    }
+
+    public double LeafGap
+    {
+        get => GetValue(LeafGapProperty);
+        set => SetValue(LeafGapProperty, value);
+    }
+
+    public double MinLeafAreaRatio
+    {
+        get => GetValue(MinLeafAreaRatioProperty);
+        set => SetValue(MinLeafAreaRatioProperty, value);
+    }
+
+    public bool ShowLeafBorders
+    {
+        get => GetValue(ShowLeafBordersProperty);
+        set => SetValue(ShowLeafBordersProperty, value);
+    }
+
+    public double CanvasInset
+    {
+        get => GetValue(CanvasInsetProperty);
+        set => SetValue(CanvasInsetProperty, value);
     }
 
     public IBrush CanvasBackgroundBrush
@@ -247,13 +317,22 @@ public sealed class TreemapControl : Control
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == MetricProperty || change.Property == RootNodeProperty)
+        if (change.Property == MetricProperty ||
+            change.Property == RootNodeProperty ||
+            change.Property == ShowDirectoryNodesProperty ||
+            change.Property == LeafGapProperty ||
+            change.Property == MinLeafAreaRatioProperty ||
+            change.Property == CanvasInsetProperty)
         {
             UpdateVisuals(Bounds.Size);
             InvalidateVisual();
         }
 
-        if (change.Property == SelectedNodeProperty || change.Property == PaletteProperty)
+        if (change.Property == SelectedNodeProperty ||
+            change.Property == PaletteProperty ||
+            change.Property == ShowLabelsProperty ||
+            change.Property == LeafCornerRadiusProperty ||
+            change.Property == ShowLeafBordersProperty)
         {
             InvalidateVisual();
         }
@@ -263,7 +342,7 @@ public sealed class TreemapControl : Control
     {
         base.Render(context);
 
-        var drawingBounds = new Rect(Bounds.Size).Deflate(6);
+        var drawingBounds = new Rect(Bounds.Size).Deflate(Math.Max(0, CanvasInset));
 
         context.FillRectangle(CanvasBackgroundBrush, new Rect(Bounds.Size));
 
@@ -296,25 +375,43 @@ public sealed class TreemapControl : Control
             var leafFillColor = isLeaf
                 ? TreemapColorRules.GetLeafColor(visual.Node, Palette, paletteContext)
                 : default;
+            var borderPen = CreateBorderPen(visual.Node);
             if (isLeaf)
             {
                 var fill = new SolidColorBrush(leafFillColor);
-                context.FillRectangle(fill, visual.Bounds);
+                if (TryCreateLeafRoundedRect(visual.Bounds) is { } roundedRect)
+                {
+                    context.DrawRectangle(fill, borderPen, roundedRect);
+                }
+                else
+                {
+                    context.FillRectangle(fill, visual.Bounds);
+                    if (borderPen is not null)
+                    {
+                        context.DrawRectangle(borderPen, visual.Bounds);
+                    }
+                }
             }
-            else if (visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
+            else if (ShowDirectoryNodes && visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
             {
                 context.FillRectangle(DirectoryFillBrush, visual.Bounds);
 
-                var headerBounds = TreemapVisualRules.GetHeaderBounds(visual.Node, visual.Bounds);
+                var headerBounds = TreemapVisualRules.GetHeaderBounds(
+                    visual.Node,
+                    visual.Bounds,
+                    includeDirectoryHeader: true);
                 if (headerBounds.Height > 0)
                 {
                     context.FillRectangle(DirectoryHeaderBrush, headerBounds);
                 }
+
+                if (borderPen is not null)
+                {
+                    context.DrawRectangle(borderPen, visual.Bounds);
+                }
             }
 
-            context.DrawRectangle(CreateBorderPen(visual.Node), visual.Bounds);
-
-            if (TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
+            if (ShowLabels && (isLeaf || ShowDirectoryNodes) && TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
             {
                 var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
                 IBrush labelBrush = isLeaf
@@ -332,7 +429,10 @@ public sealed class TreemapControl : Control
                 var clipBounds = labelBounds;
                 if (!isLeaf)
                 {
-                    var headerBounds = TreemapVisualRules.GetHeaderBounds(visual.Node, visual.Bounds);
+                    var headerBounds = TreemapVisualRules.GetHeaderBounds(
+                        visual.Node,
+                        visual.Bounds,
+                        includeDirectoryHeader: true);
                     clipBounds = new Rect(labelBounds.X, headerBounds.Y, labelBounds.Width, headerBounds.Height);
                     textOrigin = new Point(labelBounds.X, GetDirectoryLabelOriginY(headerBounds, formattedText));
                 }
@@ -392,14 +492,38 @@ public sealed class TreemapControl : Control
     {
         _layoutSize = availableSize;
 
-        var drawingBounds = new Rect(availableSize).Deflate(6);
+        var drawingBounds = new Rect(availableSize).Deflate(Math.Max(0, CanvasInset));
         if (RootNode is null || drawingBounds.Width <= 0 || drawingBounds.Height <= 0)
         {
             _nodeVisuals = [];
             return;
         }
 
-        _nodeVisuals = _layout.Calculate(RootNode, drawingBounds, Metric);
+        var visuals = _layout.Calculate(
+            RootNode,
+            drawingBounds,
+            Metric,
+            includeDirectoryHeaders: ShowDirectoryNodes,
+            minLeafAreaRatio: MinLeafAreaRatio);
+        var halfGap = Math.Max(0, LeafGap) / 2d;
+        var styledVisuals = new List<TreemapNodeVisual>(visuals.Count);
+
+        foreach (var visual in visuals)
+        {
+            var bounds = visual.Bounds;
+            if (IsLeafNode(visual.Node) && halfGap > 0)
+            {
+                bounds = TreemapVisualRules.Inset(bounds, halfGap);
+                if (bounds.Width <= 0 || bounds.Height <= 0)
+                {
+                    continue;
+                }
+            }
+
+            styledVisuals.Add(visual with { Bounds = bounds });
+        }
+
+        _nodeVisuals = styledVisuals;
     }
 
     public ProjectNode? HitTestNode(Point point)
@@ -490,11 +614,16 @@ public sealed class TreemapControl : Control
         return true;
     }
 
-    private Pen CreateBorderPen(ProjectNode node)
+    private Pen? CreateBorderPen(ProjectNode node)
     {
         var isSelected = SelectedNode?.Id == node.Id;
         var isHovered = HoveredNode?.Id == node.Id;
         var isLeaf = IsLeafNode(node);
+
+        if (!isLeaf && !ShowDirectoryNodes)
+        {
+            return null;
+        }
 
         if (isSelected)
         {
@@ -506,9 +635,30 @@ public sealed class TreemapControl : Control
             return new Pen(HoverBorderBrush, 1);
         }
 
+        if (isLeaf && !ShowLeafBorders)
+        {
+            return null;
+        }
+
         return isLeaf
             ? new Pen(LeafBorderBrush, 1)
             : new Pen(DirectoryBorderBrush, 1);
+    }
+
+    private RoundedRect? TryCreateLeafRoundedRect(Rect bounds)
+    {
+        if (LeafCornerRadius <= 0)
+        {
+            return null;
+        }
+
+        var radius = Math.Min(LeafCornerRadius, Math.Min(bounds.Width, bounds.Height) / 2d);
+        if (radius <= 0)
+        {
+            return null;
+        }
+
+        return new RoundedRect(bounds, new CornerRadius(radius));
     }
 
     private string BuildTooltip(ProjectNode node)

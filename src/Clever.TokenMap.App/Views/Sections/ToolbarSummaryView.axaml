@@ -148,19 +148,36 @@
                     </Border>
                 </Grid>
 
-                <Button Name="SettingsButton"
-                        Grid.Column="2"
-                        Classes="action-button"
-                        VerticalAlignment="Center"
-                        Command="{Binding ToggleSettingsCommand}"
-                        ToolTip.Tip="Open settings">
-                    <StackPanel Classes="action-button-content">
-                        <Path Classes="action-button-icon"
-                              Data="{StaticResource FluentAppsSettings20RegularGeometry}" />
-                        <TextBlock VerticalAlignment="Center"
-                                   Text="Settings" />
-                    </StackPanel>
-                </Button>
+                <StackPanel Name="ToolbarActionsGroup"
+                            Grid.Column="2"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="ShareButton"
+                            Classes="action-button"
+                            IsVisible="{Binding HasSnapshot}"
+                            Command="{Binding OpenShareSnapshotCommand}"
+                            ToolTip.Tip="Preview and copy a share image">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource TokenMapShareImage20Geometry}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Share" />
+                        </StackPanel>
+                    </Button>
+                    <Button Name="SettingsButton"
+                            Classes="action-button"
+                            VerticalAlignment="Center"
+                            Command="{Binding ToggleSettingsCommand}"
+                            ToolTip.Tip="Open settings">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentAppsSettings20RegularGeometry}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="Settings" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
             </Grid>
         </Grid>
     </Border>

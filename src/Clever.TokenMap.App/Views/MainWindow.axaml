@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:designvm="using:Clever.TokenMap.App.Design"
         xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+        xmlns:views="using:Clever.TokenMap.App.Views"
         xmlns:sections="using:Clever.TokenMap.App.Views.Sections"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -173,64 +174,25 @@
                 IsVisible="{Binding ExcludesEditor.IsOpen}"
                 ZIndex="3" />
 
-        <Border Name="ExcludesEditorModal"
+        <views:ExcludesEditorModalView Name="ExcludesEditorModal"
+                                       Grid.RowSpan="3"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding ExcludesEditor.IsOpen}"
+                                       ZIndex="4" />
+
+        <Border Name="ShareSnapshotBackdrop"
                 Grid.RowSpan="3"
-                Classes="panel global-excludes-modal"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                IsVisible="{Binding ExcludesEditor.IsOpen}"
-                ZIndex="4">
-            <Grid RowDefinitions="Auto,Auto,*,Auto"
-                  RowSpacing="12">
-                <Grid ColumnDefinitions="*,Auto"
-                      ColumnSpacing="8">
-                    <TextBlock Classes="panel-title"
-                               VerticalAlignment="Center"
-                               Text="{Binding ExcludesEditor.Title}" />
-                    <Button Grid.Column="1"
-                            Classes="close-button"
-                            Command="{Binding ExcludesEditor.CancelCommand}"
-                            ToolTip.Tip="Cancel editing excludes">
-                        <Path Classes="close-button-icon"
-                              Data="{StaticResource FluentDismiss20Geometry}" />
-                    </Button>
-                </Grid>
+                Background="#660B1016"
+                IsVisible="{Binding IsShareSnapshotOpen}"
+                ZIndex="5" />
 
-                <TextBlock Grid.Row="1"
-                           Classes="panel-body"
-                           Text="{Binding ExcludesEditor.HelperText}"
-                           TextWrapping="Wrap" />
-
-                <TextBox Name="ExcludesEditorTextBox"
-                         Grid.Row="2"
-                         Classes="global-excludes-editor"
-                         AcceptsReturn="True"
-                         HorizontalAlignment="Stretch"
-                         VerticalAlignment="Stretch"
-                         Text="{Binding ExcludesEditor.Text, Mode=TwoWay}"
-                         TextWrapping="NoWrap" />
-
-                <Grid Grid.Row="3"
-                      ColumnDefinitions="Auto,*,Auto,Auto"
-                      ColumnSpacing="8">
-                    <Button Name="CancelExcludesButton"
-                            Grid.Column="0"
-                            Classes="action-button"
-                            Command="{Binding ExcludesEditor.CancelCommand}"
-                            Content="Cancel" />
-                    <Button Name="SaveExcludesButton"
-                            Grid.Column="2"
-                            Classes="action-button"
-                            Command="{Binding ExcludesEditor.SaveCommand}"
-                            Content="Save" />
-                    <Button Name="SaveAndRescanExcludesButton"
-                            Grid.Column="3"
-                            Classes="action-button primary"
-                            Command="{Binding ExcludesEditor.SaveAndRescanCommand}"
-                            Content="Save and Rescan" />
-                </Grid>
-            </Grid>
-        </Border>
+        <views:ShareSnapshotModalView Name="ShareSnapshotModal"
+                                      Grid.RowSpan="3"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      IsVisible="{Binding IsShareSnapshotOpen}"
+                                      ZIndex="6" />
 
         <Border Name="StatusStrip"
                 Grid.Row="2"

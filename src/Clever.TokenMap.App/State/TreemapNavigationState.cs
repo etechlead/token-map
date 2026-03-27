@@ -11,8 +11,6 @@ public sealed partial class TreemapNavigationState : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanResetTreemapRoot))]
-    [NotifyPropertyChangedFor(nameof(CanShowTreemapScope))]
-    [NotifyPropertyChangedFor(nameof(TreemapScopeDisplay))]
     private ProjectNode? treemapRootNode;
 
     [ObservableProperty]
@@ -25,13 +23,6 @@ public sealed partial class TreemapNavigationState : ObservableObject
         _currentSnapshot is not null &&
         TreemapRootNode is not null &&
         !string.Equals(TreemapRootNode.Id, _currentSnapshot.Root.Id, StringComparison.Ordinal);
-
-    public bool CanShowTreemapScope => CanResetTreemapRoot;
-
-    public string TreemapScopeDisplay =>
-        _currentSnapshot is null || TreemapRootNode is null || !CanResetTreemapRoot
-            ? string.Empty
-            : TreemapRootNode.RelativePath;
 
     public void LoadSnapshot(ProjectSnapshot snapshot)
     {

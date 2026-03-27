@@ -1,0 +1,58 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.ExcludesEditorModalView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Classes="panel global-excludes-modal">
+        <Grid RowDefinitions="Auto,Auto,*,Auto"
+              RowSpacing="12">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8">
+                <TextBlock Classes="panel-title"
+                           VerticalAlignment="Center"
+                           Text="{Binding ExcludesEditor.Title}" />
+                <Button Grid.Column="1"
+                        Classes="close-button"
+                        Command="{Binding ExcludesEditor.CancelCommand}"
+                        ToolTip.Tip="Cancel editing excludes">
+                    <Path Classes="close-button-icon"
+                          Data="{StaticResource FluentDismiss20Geometry}" />
+                </Button>
+            </Grid>
+
+            <TextBlock Grid.Row="1"
+                       Classes="panel-body"
+                       Text="{Binding ExcludesEditor.HelperText}"
+                       TextWrapping="Wrap" />
+
+            <TextBox Name="ExcludesEditorTextBox"
+                     Grid.Row="2"
+                     Classes="global-excludes-editor"
+                     AcceptsReturn="True"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Stretch"
+                     Text="{Binding ExcludesEditor.Text, Mode=TwoWay}"
+                     TextWrapping="NoWrap" />
+
+            <Grid Grid.Row="3"
+                  ColumnDefinitions="Auto,*,Auto,Auto"
+                  ColumnSpacing="8">
+                <Button Name="CancelExcludesButton"
+                        Grid.Column="0"
+                        Classes="action-button"
+                        Command="{Binding ExcludesEditor.CancelCommand}"
+                        Content="Cancel" />
+                <Button Name="SaveExcludesButton"
+                        Grid.Column="2"
+                        Classes="action-button"
+                        Command="{Binding ExcludesEditor.SaveCommand}"
+                        Content="Save" />
+                <Button Name="SaveAndRescanExcludesButton"
+                        Grid.Column="3"
+                        Classes="action-button primary"
+                        Command="{Binding ExcludesEditor.SaveAndRescanCommand}"
+                        Content="Save and Rescan" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

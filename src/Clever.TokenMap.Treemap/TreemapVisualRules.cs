@@ -13,9 +13,9 @@ internal static class TreemapVisualRules
     private const double DirectoryLabelInsetX = 3;
     private const double DirectoryLabelInsetY = 0;
 
-    public static double GetDirectoryHeaderHeight(ProjectNode node, Rect bounds)
+    public static double GetDirectoryHeaderHeight(ProjectNode node, Rect bounds, bool includeHeader = true)
     {
-        if (node.Kind != ProjectNodeKind.Directory)
+        if (!includeHeader || node.Kind != ProjectNodeKind.Directory)
         {
             return 0;
         }
@@ -33,10 +33,15 @@ internal static class TreemapVisualRules
         return 0;
     }
 
-    public static Rect GetContentBounds(ProjectNode node, Rect bounds)
+    public static Rect GetContentBounds(ProjectNode node, Rect bounds, bool includeDirectoryHeader = true)
     {
+        if (!includeDirectoryHeader && node.Kind != ProjectNodeKind.File)
+        {
+            return bounds;
+        }
+
         var innerBounds = Inset(bounds, GetNodeInset(node));
-        var headerHeight = GetDirectoryHeaderHeight(node, bounds);
+        var headerHeight = GetDirectoryHeaderHeight(node, bounds, includeDirectoryHeader);
         if (headerHeight <= 0)
         {
             return innerBounds;
@@ -47,9 +52,9 @@ internal static class TreemapVisualRules
             : new Rect(innerBounds.X, innerBounds.Y + headerHeight, innerBounds.Width, innerBounds.Height - headerHeight);
     }
 
-    public static Rect GetHeaderBounds(ProjectNode node, Rect bounds)
+    public static Rect GetHeaderBounds(ProjectNode node, Rect bounds, bool includeDirectoryHeader = true)
     {
-        var headerHeight = GetDirectoryHeaderHeight(node, bounds);
+        var headerHeight = GetDirectoryHeaderHeight(node, bounds, includeDirectoryHeader);
         if (headerHeight <= 0)
         {
             return default;
