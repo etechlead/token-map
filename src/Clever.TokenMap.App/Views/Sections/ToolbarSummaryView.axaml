@@ -89,7 +89,7 @@
                         <Button Name="RescanButton"
                                 Classes="action-button"
                                 Command="{Binding Toolbar.RescanCommand}"
-                                IsVisible="{Binding HasSnapshot}"
+                                IsVisible="{Binding Toolbar.IsRescanVisible}"
                                 ToolTip.Tip="Run the scan again for the selected folder">
                             <StackPanel Classes="action-button-content">
                                 <Path Classes="action-button-icon"

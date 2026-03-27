@@ -10,6 +10,7 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;
 using PathShape = Avalonia.Controls.Shapes.Path;
@@ -498,5 +499,65 @@ public sealed class MainWindowLayoutTests
         Assert.False(statusStrip.IsVisible);
         Assert.False(progressPill.IsVisible);
         Assert.False(stopButton.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_RescanButton_HidesWhileRescanIsRunning()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(new RescanAwareProjectAnalyzer());
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
+        var stopButton = FindNamedDescendant<Button>(window, "StopButton");
+
+        Assert.NotNull(rescanButton);
+        Assert.NotNull(stopButton);
+        Assert.True(rescanButton.IsVisible);
+        Assert.False(stopButton.IsVisible);
+
+        var rescanTask = viewModel.Toolbar.RescanCommand.ExecuteAsync(null);
+        await Task.Delay(100);
+
+        Assert.False(rescanButton.IsVisible);
+        Assert.True(stopButton.IsVisible);
+
+        viewModel.Toolbar.CancelCommand.Execute(null);
+        await rescanTask;
+
+        Assert.Equal(AnalysisState.Cancelled, viewModel.AnalysisState);
+        Assert.True(rescanButton.IsVisible);
+        Assert.False(stopButton.IsVisible);
+    }
+
+    private sealed class RescanAwareProjectAnalyzer : IProjectAnalyzer
+    {
+        private int _callCount;
+
+        public async Task<ProjectSnapshot> AnalyzeAsync(
+            string rootPath,
+            ScanOptions options,
+            IProgress<AnalysisProgress>? progress,
+            CancellationToken cancellationToken)
+        {
+            var callCount = Interlocked.Increment(ref _callCount);
+            if (callCount == 1)
+            {
+                return CreateSnapshot();
+            }
+
+            progress?.Report(new AnalysisProgress(
+                "ScanningTree",
+                1,
+                null,
+                "Program.cs",
+                DiscoveredFileCount: 1));
+            await Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
+
+            throw new InvalidOperationException("This path should have been cancelled.");
+        }
     }
 }

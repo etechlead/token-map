@@ -57,6 +57,9 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     [ObservableProperty]
     private bool isStopVisible;
 
+    [ObservableProperty]
+    private bool isRescanVisible;
+
     public bool IsTokensMetricSelected
     {
         get => SelectedMetric == AnalysisMetric.Tokens;
@@ -190,6 +193,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         CanConfigureScanOptions = !isBusy;
         CanChangeMetric = hasSnapshot && !isBusy;
         IsStopVisible = isBusy;
+        IsRescanVisible = hasSnapshot && !isBusy;
         OnPropertyChanged(nameof(CanConfigureFolderExcludes));
         OpenFolderCommand.NotifyCanExecuteChanged();
         RescanCommand.NotifyCanExecuteChanged();
