@@ -47,7 +47,7 @@
                     Classes="panel"
                     Margin="0,10,0,8"
                     Padding="24"
-                    ZIndex="1"
+                    ZIndex="{x:Static views:MainWindowZLayers.StartSurface}"
                     IsVisible="{Binding RecentFolders.ShowStartSurface}">
                 <Grid RowDefinitions="Auto,*"
                       RowSpacing="18">
@@ -162,37 +162,51 @@
                 Background="Transparent"
                 IsVisible="{Binding IsSettingsOpen}"
                 PointerPressed="SettingsBackdrop_OnPointerPressed"
-                ZIndex="1" />
+                ZIndex="{x:Static views:MainWindowZLayers.SettingsBackdrop}" />
 
         <sections:SettingsDrawerView Name="SettingsDrawerHost"
                                      Grid.Row="1"
-                                     ZIndex="2" />
+                                     ZIndex="{x:Static views:MainWindowZLayers.SettingsDrawer}" />
+
+        <Border Name="ProgressStatusPill"
+                Grid.RowSpan="3"
+                Classes="progress-status-pill"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Margin="0,0,0,18"
+                IsHitTestVisible="False"
+                IsVisible="{Binding Summary.IsProgressPillVisible}"
+                ZIndex="{x:Static views:MainWindowZLayers.ProgressPill}">
+            <TextBlock Name="ProgressStatusPillText"
+                       Classes="progress-status-pill-text"
+                       Text="{Binding Summary.ProgressPillText}" />
+        </Border>
 
         <Border Name="ExcludesEditorBackdrop"
                 Grid.RowSpan="3"
                 Background="#660B1016"
                 IsVisible="{Binding ExcludesEditor.IsOpen}"
-                ZIndex="3" />
+                ZIndex="{x:Static views:MainWindowZLayers.ExcludesBackdrop}" />
 
         <views:ExcludesEditorModalView Name="ExcludesEditorModal"
                                        Grid.RowSpan="3"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        IsVisible="{Binding ExcludesEditor.IsOpen}"
-                                       ZIndex="4" />
+                                       ZIndex="{x:Static views:MainWindowZLayers.ExcludesModal}" />
 
         <Border Name="ShareSnapshotBackdrop"
                 Grid.RowSpan="3"
                 Background="#660B1016"
                 IsVisible="{Binding IsShareSnapshotOpen}"
-                ZIndex="5" />
+                ZIndex="{x:Static views:MainWindowZLayers.ShareBackdrop}" />
 
         <views:ShareSnapshotModalView Name="ShareSnapshotModal"
                                       Grid.RowSpan="3"
                                       HorizontalAlignment="Center"
                                       VerticalAlignment="Center"
                                       IsVisible="{Binding IsShareSnapshotOpen}"
-                                      ZIndex="6" />
+                                      ZIndex="{x:Static views:MainWindowZLayers.ShareModal}" />
 
         <Border Name="StatusStrip"
                 Grid.Row="2"

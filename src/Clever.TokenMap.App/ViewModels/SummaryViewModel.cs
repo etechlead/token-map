@@ -26,6 +26,12 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
     private bool isProgressVisible;
 
     [ObservableProperty]
+    private bool isProgressPillVisible;
+
+    [ObservableProperty]
+    private string progressPillText = string.Empty;
+
+    [ObservableProperty]
     private string tokenSummaryValue = "0";
 
     [ObservableProperty]
@@ -55,12 +61,16 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
                 ProgressValue = 0;
                 IsProgressIndeterminate = true;
                 IsProgressVisible = true;
+                IsProgressPillVisible = true;
+                ProgressPillText = "Scanning tree";
                 break;
             default:
                 _acceptProgressUpdates = false;
                 ProgressValue = 0;
                 IsProgressIndeterminate = false;
                 IsProgressVisible = false;
+                IsProgressPillVisible = false;
+                ProgressPillText = string.Empty;
                 break;
         }
     }
@@ -76,6 +86,8 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
+        IsProgressPillVisible = false;
+        ProgressPillText = string.Empty;
         TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
         LineSummaryValue = snapshot.Root.Metrics.NonEmptyLines.ToString("N0", CultureInfo.CurrentCulture);
         FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
@@ -90,6 +102,8 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
         }
 
         IsProgressVisible = true;
+        IsProgressPillVisible = true;
+        ProgressPillText = BuildProgressPillText(progress);
 
         if (progress.TotalNodeCount is > 0)
         {
@@ -101,5 +115,31 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
             ProgressValue = 0;
             IsProgressIndeterminate = true;
         }
+    }
+
+    private static string BuildProgressPillText(AnalysisProgress progress)
+    {
+        if (string.Equals(progress.Phase, "AnalyzingFiles", StringComparison.Ordinal) &&
+            progress.TotalNodeCount is > 0)
+        {
+            return string.Format(
+                CultureInfo.CurrentCulture,
+                "Analyzing files • {0:N0} / {1:N0}",
+                progress.ProcessedNodeCount,
+                progress.TotalNodeCount.Value);
+        }
+
+        if (string.Equals(progress.Phase, "ScanningTree", StringComparison.Ordinal) &&
+            progress.DiscoveredFileCount is > 0)
+        {
+            return string.Format(
+                CultureInfo.CurrentCulture,
+                "Scanning tree • {0:N0} files found",
+                progress.DiscoveredFileCount.Value);
+        }
+
+        return string.Equals(progress.Phase, "AnalyzingFiles", StringComparison.Ordinal)
+            ? "Analyzing files"
+            : "Scanning tree";
     }
 }

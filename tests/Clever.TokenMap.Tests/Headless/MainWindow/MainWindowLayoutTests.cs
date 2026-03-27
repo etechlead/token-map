@@ -63,6 +63,8 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<Control>(window, "TreemapPane"));
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
         Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
+        Assert.NotNull(FindNamedDescendant<Border>(window, "ProgressStatusPill"));
+        Assert.NotNull(FindNamedDescendant<TextBlock>(window, "ProgressStatusPillText"));
         Assert.NotNull(FindNamedDescendant<StackPanel>(window, "ToolbarActionsGroup"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "ShareButton"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
@@ -428,6 +430,7 @@ public sealed class MainWindowLayoutTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         var statusStrip = FindNamedDescendant<Control>(window, "StatusStrip");
+        var progressPill = FindNamedDescendant<Control>(window, "ProgressStatusPill");
         var tokenSummaryText = FindNamedDescendant<TextBlock>(window, "TokenSummaryValueText");
         var lineSummaryText = FindNamedDescendant<TextBlock>(window, "LineSummaryValueText");
         var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
@@ -438,6 +441,7 @@ public sealed class MainWindowLayoutTests
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
 
         Assert.NotNull(statusStrip);
+        Assert.NotNull(progressPill);
         Assert.NotNull(tokenSummaryText);
         Assert.NotNull(lineSummaryText);
         Assert.NotNull(fileSummaryText);
@@ -455,6 +459,7 @@ public sealed class MainWindowLayoutTests
         Assert.True(metricLinesButton.IsEnabled);
         Assert.True(metricSizeButton.IsEnabled);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(progressPill.IsVisible);
         Assert.False(startSurface.IsVisible);
         Assert.True(rescanButton.IsVisible);
     }
@@ -468,22 +473,30 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
         var statusStrip = FindNamedDescendant<Control>(window, "StatusStrip");
+        var progressPill = FindNamedDescendant<Control>(window, "ProgressStatusPill");
+        var progressPillText = FindNamedDescendant<TextBlock>(window, "ProgressStatusPillText");
         var stopButton = FindNamedDescendant<Button>(window, "StopButton");
 
         Assert.NotNull(statusStrip);
+        Assert.NotNull(progressPill);
+        Assert.NotNull(progressPillText);
         Assert.NotNull(stopButton);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(progressPill.IsVisible);
         Assert.False(stopButton.IsVisible);
 
         var openTask = viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
         await Task.Delay(100);
         Assert.True(statusStrip.IsVisible);
+        Assert.True(progressPill.IsVisible);
+        Assert.Equal("Scanning tree", progressPillText.Text);
         Assert.True(stopButton.IsVisible);
         viewModel.Toolbar.CancelCommand.Execute(null);
         await openTask;
 
         Assert.Equal(AnalysisState.Cancelled, viewModel.AnalysisState);
         Assert.False(statusStrip.IsVisible);
+        Assert.False(progressPill.IsVisible);
         Assert.False(stopButton.IsVisible);
     }
 }

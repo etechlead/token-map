@@ -45,6 +45,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         }
 
         var processedNodeCount = 0;
+        var discoveredFileCount = 0;
         var warnings = new List<string>();
         var rootNode = ScanDirectory(
             directoryInfo,
@@ -54,6 +55,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             options,
             warnings,
             ref processedNodeCount,
+            ref discoveredFileCount,
             progress,
             cancellationToken);
 
@@ -77,6 +79,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         ScanOptions options,
         List<string> warnings,
         ref int processedNodeCount,
+        ref int discoveredFileCount,
         IProgress<AnalysisProgress>? progress,
         CancellationToken cancellationToken)
     {
@@ -90,7 +93,12 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             isRoot,
             skippedReason: null);
 
-        ReportProgress(progress, normalizedRelativePath, ref processedNodeCount);
+        ReportProgress(
+            progress,
+            normalizedRelativePath,
+            isFile: false,
+            ref processedNodeCount,
+            ref discoveredFileCount);
         var ignoreContext = LoadIgnoreContext(
             directoryInfo,
             normalizedRootPath,
@@ -145,7 +153,12 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                     isDirectory,
                     isRoot: false,
                     skippedReason: SkippedReason.ReparsePoint));
-                ReportProgress(progress, entryRelativePath, ref processedNodeCount);
+                ReportProgress(
+                    progress,
+                    entryRelativePath,
+                    isFile: !isDirectory,
+                    ref processedNodeCount,
+                    ref discoveredFileCount);
                 continue;
             }
 
@@ -161,6 +174,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         options,
                         warnings,
                         ref processedNodeCount,
+                        ref discoveredFileCount,
                         progress,
                         cancellationToken));
                 }
@@ -174,7 +188,12 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         isDirectory: true,
                         isRoot: false,
                         skippedReason: SkippedReason.Inaccessible));
-                    ReportProgress(progress, entryRelativePath, ref processedNodeCount);
+                    ReportProgress(
+                        progress,
+                        entryRelativePath,
+                        isFile: false,
+                        ref processedNodeCount,
+                        ref discoveredFileCount);
                 }
 
                 continue;
@@ -186,7 +205,12 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 isDirectory: false,
                 isRoot: false,
                 skippedReason: null));
-            ReportProgress(progress, entryRelativePath, ref processedNodeCount);
+            ReportProgress(
+                progress,
+                entryRelativePath,
+                isFile: true,
+                ref processedNodeCount,
+                ref discoveredFileCount);
         }
 
         return node;
@@ -219,14 +243,22 @@ public sealed class FileSystemProjectScanner : IProjectScanner
     private static void ReportProgress(
         IProgress<AnalysisProgress>? progress,
         string normalizedRelativePath,
-        ref int processedNodeCount)
+        bool isFile,
+        ref int processedNodeCount,
+        ref int discoveredFileCount)
     {
         processedNodeCount++;
+        if (isFile)
+        {
+            discoveredFileCount++;
+        }
+
         progress?.Report(new AnalysisProgress(
             Phase: "ScanningTree",
             ProcessedNodeCount: processedNodeCount,
             TotalNodeCount: null,
-            CurrentPath: normalizedRelativePath));
+            CurrentPath: normalizedRelativePath,
+            DiscoveredFileCount: discoveredFileCount));
     }
 
     private static string GetRootNodeName(string normalizedRootPath)

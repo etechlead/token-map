@@ -36,24 +36,28 @@ public sealed class FileSystemProjectScannerHotspotTests : IDisposable
                 Assert.Equal("ScanningTree", value.Phase);
                 Assert.Equal(1, value.ProcessedNodeCount);
                 Assert.Equal(string.Empty, value.CurrentPath);
+                Assert.Equal(0, value.DiscoveredFileCount);
             },
             value =>
             {
                 Assert.Equal("ScanningTree", value.Phase);
                 Assert.Equal(2, value.ProcessedNodeCount);
                 Assert.Equal("src", value.CurrentPath);
+                Assert.Equal(0, value.DiscoveredFileCount);
             },
             value =>
             {
                 Assert.Equal("ScanningTree", value.Phase);
                 Assert.Equal(3, value.ProcessedNodeCount);
                 Assert.Equal("src/nested.txt", value.CurrentPath);
+                Assert.Equal(1, value.DiscoveredFileCount);
             },
             value =>
             {
                 Assert.Equal("ScanningTree", value.Phase);
                 Assert.Equal(4, value.ProcessedNodeCount);
                 Assert.Equal("root.txt", value.CurrentPath);
+                Assert.Equal(2, value.DiscoveredFileCount);
             });
     }
 
