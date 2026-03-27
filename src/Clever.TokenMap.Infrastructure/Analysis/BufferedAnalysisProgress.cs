@@ -5,6 +5,7 @@ namespace Clever.TokenMap.Infrastructure.Analysis;
 internal sealed class BufferedAnalysisProgress : IProgress<AnalysisProgress>
 {
     private readonly int _batchSize;
+    private readonly object _gate = new();
     private readonly IProgress<AnalysisProgress>? _innerProgress;
     private AnalysisProgress? _pendingProgress;
     private int _pendingCount;
@@ -24,19 +25,28 @@ internal sealed class BufferedAnalysisProgress : IProgress<AnalysisProgress>
             return;
         }
 
-        if (_pendingProgress is not null &&
-            !string.Equals(_pendingProgress.Phase, value.Phase, StringComparison.Ordinal))
+        AnalysisProgress? progressToReport = null;
+        lock (_gate)
         {
-            Flush();
+            if (_pendingProgress is not null &&
+                !string.Equals(_pendingProgress.Phase, value.Phase, StringComparison.Ordinal))
+            {
+                progressToReport = TakePendingProgress();
+            }
+
+            _pendingProgress = value;
+            _pendingCount++;
+
+            var isTerminal = value.TotalNodeCount.HasValue && value.ProcessedNodeCount >= value.TotalNodeCount.Value;
+            if (_pendingCount >= _batchSize || isTerminal)
+            {
+                progressToReport = TakePendingProgress();
+            }
         }
 
-        _pendingProgress = value;
-        _pendingCount++;
-
-        var isTerminal = value.TotalNodeCount.HasValue && value.ProcessedNodeCount >= value.TotalNodeCount.Value;
-        if (_pendingCount >= _batchSize || isTerminal)
+        if (progressToReport is not null)
         {
-            Flush();
+            _innerProgress.Report(progressToReport);
         }
     }
 
@@ -47,8 +57,23 @@ internal sealed class BufferedAnalysisProgress : IProgress<AnalysisProgress>
             return;
         }
 
-        _innerProgress.Report(_pendingProgress);
+        AnalysisProgress? progressToReport;
+        lock (_gate)
+        {
+            progressToReport = TakePendingProgress();
+        }
+
+        if (progressToReport is not null)
+        {
+            _innerProgress.Report(progressToReport);
+        }
+    }
+
+    private AnalysisProgress? TakePendingProgress()
+    {
+        var progressToReport = _pendingProgress;
         _pendingProgress = null;
         _pendingCount = 0;
+        return progressToReport;
     }
 }

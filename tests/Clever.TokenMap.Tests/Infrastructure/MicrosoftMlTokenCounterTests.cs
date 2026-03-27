@@ -2,7 +2,7 @@ using Clever.TokenMap.Infrastructure.Tokenization;
 
 namespace Clever.TokenMap.Tests.Infrastructure;
 
-public sealed class MicrosoftMlTokenCounterTests
+public sealed class MicrosoftMlTokenCounterTests : IDisposable
 {
     private readonly MicrosoftMlTokenCounter _counter = new();
 
@@ -16,5 +16,24 @@ public sealed class MicrosoftMlTokenCounterTests
 
         Assert.True(first > 0);
         Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public async Task CountTokensAsync_SupportsConcurrentCalls()
+    {
+        const string content = "const message = 'parallel token counting';\n";
+
+        var tasks = Enumerable.Range(0, 8)
+            .Select(_ => _counter.CountTokensAsync(content, CancellationToken.None).AsTask())
+            .ToArray();
+
+        var counts = await Task.WhenAll(tasks);
+
+        Assert.All(counts, count => Assert.Equal(counts[0], count));
+    }
+
+    public void Dispose()
+    {
+        _counter.Dispose();
     }
 }

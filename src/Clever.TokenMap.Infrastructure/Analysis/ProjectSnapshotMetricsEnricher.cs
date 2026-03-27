@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
@@ -15,6 +16,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private readonly int _largeFileChunkSizeChars;
     private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
+    private readonly int _maxDegreeOfParallelism;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
 
@@ -24,7 +26,8 @@ public sealed class ProjectSnapshotMetricsEnricher
         ICacheStore? cacheStore = null,
         IAppLogger? logger = null,
         long largeFileTokenizationThresholdBytes = LargeFileTokenizationThresholdBytes,
-        int largeFileChunkSizeChars = LargeFileChunkSizeChars)
+        int largeFileChunkSizeChars = LargeFileChunkSizeChars,
+        int? maxDegreeOfParallelism = null)
     {
         _cacheStore = cacheStore;
         _largeFileChunkSizeChars = largeFileChunkSizeChars > 0
@@ -34,6 +37,9 @@ public sealed class ProjectSnapshotMetricsEnricher
             ? largeFileTokenizationThresholdBytes
             : throw new ArgumentOutOfRangeException(nameof(largeFileTokenizationThresholdBytes));
         _logger = logger ?? NullAppLogger.Instance;
+        _maxDegreeOfParallelism = maxDegreeOfParallelism.HasValue
+            ? NormalizeMaxDegreeOfParallelism(maxDegreeOfParallelism.Value)
+            : GetDefaultMaxDegreeOfParallelism();
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
     }
@@ -48,16 +54,44 @@ public sealed class ProjectSnapshotMetricsEnricher
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        var warnings = new List<string>(snapshot.Warnings);
-        var totalFileCount = CountFileNodes(snapshot.Root);
-        var progressState = new ProgressState();
-        var enrichedRoot = await EnrichNodeAsync(
-            snapshot.RootPath,
+        var warnings = new ConcurrentQueue<string>(snapshot.Warnings);
+        var fileWorkItems = CollectFileWorkItems(snapshot.Root);
+        var enrichedFiles = new ProjectNode?[fileWorkItems.Count];
+        var totalFileCount = fileWorkItems.Count;
+        var processedFileCount = 0;
+
+        if (fileWorkItems.Count > 0)
+        {
+            await Parallel.ForEachAsync(
+                fileWorkItems,
+                new ParallelOptions
+                {
+                    CancellationToken = cancellationToken,
+                    MaxDegreeOfParallelism = _maxDegreeOfParallelism,
+                },
+                async (fileWorkItem, ct) =>
+                {
+                    var enrichedFile = await EnrichFileNodeAsync(
+                        snapshot.RootPath,
+                        fileWorkItem.Node,
+                        warnings,
+                        ct).ConfigureAwait(false);
+                    enrichedFiles[fileWorkItem.Index] = enrichedFile;
+
+                    var processed = Interlocked.Increment(ref processedFileCount);
+                    progress?.Report(new AnalysisProgress(
+                        Phase: "AnalyzingFiles",
+                        ProcessedNodeCount: processed,
+                        TotalNodeCount: totalFileCount,
+                        CurrentPath: enrichedFile.RelativePath));
+                }).ConfigureAwait(false);
+        }
+
+        var nextFileIndex = 0;
+        var enrichedRoot = RebuildEnrichedTree(
             snapshot.Root,
-            warnings,
-            progress,
-            totalFileCount,
-            progressState,
+            enrichedFiles,
+            ref nextFileIndex,
             cancellationToken);
 
         return new ProjectSnapshot
@@ -66,43 +100,61 @@ public sealed class ProjectSnapshotMetricsEnricher
             CapturedAtUtc = snapshot.CapturedAtUtc,
             Options = snapshot.Options,
             Root = enrichedRoot,
-            Warnings = warnings,
+            Warnings = [.. warnings],
         };
     }
 
-    private async Task<ProjectNode> EnrichNodeAsync(
-        string rootPath,
+    private static int GetDefaultMaxDegreeOfParallelism() =>
+        Math.Max(1, Environment.ProcessorCount / 2);
+
+    private static int NormalizeMaxDegreeOfParallelism(int maxDegreeOfParallelism) =>
+        maxDegreeOfParallelism > 0
+            ? maxDegreeOfParallelism
+            : throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
+
+    private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
+    {
+        var fileWorkItems = new List<FileWorkItem>();
+        CollectFileWorkItems(root, fileWorkItems);
+        return fileWorkItems;
+    }
+
+    private static void CollectFileWorkItems(ProjectNode node, List<FileWorkItem> fileWorkItems)
+    {
+        if (node.Kind == ProjectNodeKind.File)
+        {
+            fileWorkItems.Add(new FileWorkItem(fileWorkItems.Count, node));
+            return;
+        }
+
+        foreach (var child in node.Children)
+        {
+            CollectFileWorkItems(child, fileWorkItems);
+        }
+    }
+
+    private static ProjectNode RebuildEnrichedTree(
         ProjectNode node,
-        List<string> warnings,
-        IProgress<AnalysisProgress>? progress,
-        int totalFileCount,
-        ProgressState progressState,
+        IReadOnlyList<ProjectNode?> enrichedFiles,
+        ref int nextFileIndex,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         if (node.Kind == ProjectNodeKind.File)
         {
-            var enrichedFile = await EnrichFileNodeAsync(rootPath, node, warnings, cancellationToken);
-            progressState.ProcessedFileCount++;
-            progress?.Report(new AnalysisProgress(
-                Phase: "AnalyzingFiles",
-                ProcessedNodeCount: progressState.ProcessedFileCount,
-                TotalNodeCount: totalFileCount,
-                CurrentPath: enrichedFile.RelativePath));
-            return enrichedFile;
+            var enrichedFile = enrichedFiles[nextFileIndex++];
+            return enrichedFile ?? throw new InvalidOperationException(
+                $"Missing enriched file metrics for '{node.RelativePath}'.");
         }
 
         var enrichedChildren = new List<ProjectNode>(node.Children.Count);
         foreach (var child in node.Children)
         {
-            enrichedChildren.Add(await EnrichNodeAsync(
-                rootPath,
+            enrichedChildren.Add(RebuildEnrichedTree(
                 child,
-                warnings,
-                progress,
-                totalFileCount,
-                progressState,
+                enrichedFiles,
+                ref nextFileIndex,
                 cancellationToken));
         }
 
@@ -113,7 +165,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task<ProjectNode> EnrichFileNodeAsync(
         string rootPath,
         ProjectNode node,
-        List<string> warnings,
+        ConcurrentQueue<string> warnings,
         CancellationToken cancellationToken)
     {
         var fileState = TryGetFileState(node.FullPath);
@@ -166,7 +218,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
         {
-            warnings.Add($"Unable to decode '{node.FullPath}': {exception.Message}");
+            warnings.Enqueue($"Unable to decode '{node.FullPath}': {exception.Message}");
             _logger.LogWarning(exception, $"Unable to decode '{node.FullPath}'.");
             return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Unsupported);
         }
@@ -255,22 +307,6 @@ public sealed class ProjectSnapshotMetricsEnricher
         return clone;
     }
 
-    private static int CountFileNodes(ProjectNode node)
-    {
-        if (node.Kind == ProjectNodeKind.File)
-        {
-            return 1;
-        }
-
-        var count = 0;
-        foreach (var child in node.Children)
-        {
-            count += CountFileNodes(child);
-        }
-
-        return count;
-    }
-
     private static NodeMetrics CreateSkippedFileMetrics(long fileSizeBytes) =>
         new(
             Tokens: 0,
@@ -281,7 +317,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task<TextAnalysisResult> AnalyzeSmallTextFileAsync(
         string fullPath,
-        List<string> warnings,
+        ConcurrentQueue<string> warnings,
         CancellationToken cancellationToken)
     {
         var content = await File.ReadAllTextAsync(fullPath, cancellationToken).ConfigureAwait(false);
@@ -295,7 +331,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task<TextAnalysisResult> AnalyzeLargeTextFileAsync(
         string fullPath,
-        List<string> warnings,
+        ConcurrentQueue<string> warnings,
         CancellationToken cancellationToken)
     {
         await using var stream = new FileStream(
@@ -416,7 +452,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task<long?> CountTokensWithWarningAsync(
         string fullPath,
         string content,
-        List<string> warnings,
+        ConcurrentQueue<string> warnings,
         CancellationToken cancellationToken)
     {
         try
@@ -429,7 +465,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception)
         {
-            warnings.Add($"Unable to count tokens for '{fullPath}': {exception.Message}");
+            warnings.Enqueue($"Unable to count tokens for '{fullPath}': {exception.Message}");
             _logger.LogWarning(exception, $"Token counting failed for '{fullPath}'.");
             return null;
         }
@@ -459,7 +495,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private static ProjectNode ApplyRecoverableFileError(
         ProjectNode node,
         Exception exception,
-        List<string> warnings,
+        ConcurrentQueue<string> warnings,
         long fileSizeBytes,
         IAppLogger logger)
     {
@@ -469,7 +505,7 @@ public sealed class ProjectSnapshotMetricsEnricher
                 ? SkippedReason.Inaccessible
                 : SkippedReason.Error;
 
-        warnings.Add($"Unable to analyze '{node.FullPath}': {exception.Message}");
+        warnings.Enqueue($"Unable to analyze '{node.FullPath}': {exception.Message}");
         logger.LogWarning(exception, $"Unable to analyze '{node.FullPath}'.");
         return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), skippedReason);
     }
@@ -504,10 +540,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         long Tokens,
         int NonEmptyLineCount);
 
-    private sealed class ProgressState
-    {
-        public int ProcessedFileCount { get; set; }
-    }
+    private readonly record struct FileWorkItem(int Index, ProjectNode Node);
 
     private sealed class StreamingNonEmptyLineCounter
     {

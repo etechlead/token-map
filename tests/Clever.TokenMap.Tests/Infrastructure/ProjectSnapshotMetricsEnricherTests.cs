@@ -38,7 +38,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var notesNode = Assert.Single(enriched.Root.Children, node => node.Name == "notes.txt");
         var imageNode = Assert.Single(enriched.Root.Children, node => node.Name == "image.bin");
 
-        Assert.Equal(["one\n\n  \ntwo", "hello\nworld"], tokenCounter.SeenContents);
+        Assert.Equal(
+            ["hello\nworld", "one\n\n  \ntwo"],
+            tokenCounter.GetSeenContents().OrderBy(content => content, StringComparer.Ordinal).ToArray());
 
         Assert.Equal(11, programNode.Metrics.Tokens);
         Assert.Equal(2, programNode.Metrics.NonEmptyLines);
@@ -149,9 +151,10 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
         var sampleNode = Assert.Single(enriched.Root.Children);
 
-        Assert.True(tokenCounter.SeenContents.Count > 1);
-        Assert.All(tokenCounter.SeenContents, chunk => Assert.True(chunk.Length <= 3));
-        Assert.Equal("ab\ncd\nef", string.Concat(tokenCounter.SeenContents));
+        var seenContents = tokenCounter.GetSeenContents();
+        Assert.True(seenContents.Count > 1);
+        Assert.All(seenContents, chunk => Assert.True(chunk.Length <= 3));
+        Assert.Equal("ab\ncd\nef", string.Concat(seenContents));
         Assert.Equal(8, sampleNode.Metrics.Tokens);
         Assert.Equal(3, sampleNode.Metrics.NonEmptyLines);
     }
@@ -174,10 +177,33 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
         var sampleNode = Assert.Single(enriched.Root.Children);
 
-        Assert.True(tokenCounter.SeenContents.Count > 1);
-        Assert.Equal(content, string.Concat(tokenCounter.SeenContents));
+        var seenContents = tokenCounter.GetSeenContents();
+        Assert.True(seenContents.Count > 1);
+        Assert.Equal(content, string.Concat(seenContents));
         Assert.Equal(content.Length, sampleNode.Metrics.Tokens);
         Assert.Equal(1, sampleNode.Metrics.NonEmptyLines);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_ProcessesFilesInParallelUpToConfiguredLimit()
+    {
+        for (var index = 0; index < 4; index++)
+        {
+            await File.WriteAllTextAsync(Path.Combine(_rootPath, $"File{index}.txt"), $"content-{index}");
+        }
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var tokenCounter = new ConcurrentTrackingTokenCounter();
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            tokenCounter,
+            maxDegreeOfParallelism: 2);
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+
+        Assert.Equal(4, enriched.Root.Metrics.DescendantFileCount);
+        Assert.Equal(2, tokenCounter.MaxConcurrency);
     }
 
     public void Dispose()
@@ -190,12 +216,25 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
     private sealed class RecordingTokenCounter : ITokenCounter
     {
-        public List<string> SeenContents { get; } = [];
+        private readonly object _gate = new();
+        private readonly List<string> _seenContents = [];
 
         public ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
         {
-            SeenContents.Add(content);
+            lock (_gate)
+            {
+                _seenContents.Add(content);
+            }
+
             return ValueTask.FromResult(content.Length);
+        }
+
+        public IReadOnlyList<string> GetSeenContents()
+        {
+            lock (_gate)
+            {
+                return _seenContents.ToArray();
+            }
         }
     }
 
@@ -203,5 +242,46 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     {
         public ValueTask<bool> IsTextAsync(string fullPath, CancellationToken cancellationToken) =>
             ValueTask.FromResult(true);
+    }
+
+    private sealed class ConcurrentTrackingTokenCounter : ITokenCounter
+    {
+        private int _currentConcurrency;
+        private int _maxConcurrency;
+
+        public int MaxConcurrency => Volatile.Read(ref _maxConcurrency);
+
+        public async ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
+        {
+            var currentConcurrency = Interlocked.Increment(ref _currentConcurrency);
+            UpdateMaxConcurrency(currentConcurrency);
+
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken);
+                return content.Length;
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _currentConcurrency);
+            }
+        }
+
+        private void UpdateMaxConcurrency(int currentConcurrency)
+        {
+            while (true)
+            {
+                var snapshot = Volatile.Read(ref _maxConcurrency);
+                if (snapshot >= currentConcurrency)
+                {
+                    return;
+                }
+
+                if (Interlocked.CompareExchange(ref _maxConcurrency, currentConcurrency, snapshot) == snapshot)
+                {
+                    return;
+                }
+            }
+        }
     }
 }

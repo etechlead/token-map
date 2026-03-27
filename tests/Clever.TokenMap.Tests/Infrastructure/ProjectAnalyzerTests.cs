@@ -148,11 +148,13 @@ public sealed class ProjectAnalyzerTests : IDisposable
 
     private sealed class RecordingTokenCounter : ITokenCounter
     {
-        public int CallCount { get; private set; }
+        private int _callCount;
+
+        public int CallCount => Volatile.Read(ref _callCount);
 
         public ValueTask<int> CountTokensAsync(string content, CancellationToken cancellationToken)
         {
-            CallCount++;
+            Interlocked.Increment(ref _callCount);
             return ValueTask.FromResult(content.Length);
         }
     }
