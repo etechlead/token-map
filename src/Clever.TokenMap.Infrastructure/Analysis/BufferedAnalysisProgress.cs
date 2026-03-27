@@ -5,7 +5,7 @@ namespace Clever.TokenMap.Infrastructure.Analysis;
 internal sealed class BufferedAnalysisProgress : IProgress<AnalysisProgress>
 {
     private readonly int _batchSize;
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly IProgress<AnalysisProgress>? _innerProgress;
     private AnalysisProgress? _pendingProgress;
     private int _pendingCount;
