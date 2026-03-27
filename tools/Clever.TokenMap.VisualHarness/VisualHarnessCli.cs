@@ -150,7 +150,7 @@ internal static class VisualHarnessCli
             CliParsing.ParseEnumToken<CaptureSource>,
             defaultFactory: () => CaptureSource.Repo,
             defaultValueDescription: CliParsing.GetEnumToken(CaptureSource.Repo),
-            allowedValues: CliParsing.GetEnumTokens<CaptureSource>());
+            allowedValues: CliParsing.GetEnumTokens(Enum.GetValues<CaptureSource>()));
         var projectRoot = new CliValueOption<string>(
             "--project-root",
             "DIR",
@@ -172,7 +172,7 @@ internal static class VisualHarnessCli
             CliParsing.ParseEnumToken<ThemePreference>,
             defaultFactory: () => ThemePreference.Dark,
             defaultValueDescription: CliParsing.GetEnumToken(ThemePreference.Dark),
-            allowedValues: CliParsing.GetEnumTokens<ThemePreference>());
+            allowedValues: CliParsing.GetEnumTokens(Enum.GetValues<ThemePreference>()));
         var metric = new CliValueOption<AnalysisMetric>(
             "--metric",
             "METRIC",
@@ -180,7 +180,7 @@ internal static class VisualHarnessCli
             CliParsing.ParseEnumToken<AnalysisMetric>,
             defaultFactory: () => AnalysisMetric.Tokens,
             defaultValueDescription: CliParsing.GetEnumToken(AnalysisMetric.Tokens),
-            allowedValues: CliParsing.GetEnumTokens<AnalysisMetric>());
+            allowedValues: CliParsing.GetEnumTokens(Enum.GetValues<AnalysisMetric>()));
         var surfaces = new CliValueOption<IReadOnlyList<CaptureSurface>>(
             "--surface",
             "SURFACES",
@@ -188,7 +188,7 @@ internal static class VisualHarnessCli
             CliParsing.ParseCaptureSurfaces,
             defaultFactory: () => defaultSurfaces,
             defaultValueDescription: DescribeSequence(defaultSurfaces),
-            allowedValues: [.. CliParsing.GetEnumTokens<CaptureSurface>(), "all"]);
+            allowedValues: [.. CliParsing.GetEnumTokens(Enum.GetValues<CaptureSurface>()), "all"]);
         var palettes = new CliValueOption<IReadOnlyList<TreemapPalette>>(
             "--palette",
             "PALETTES",
@@ -196,7 +196,7 @@ internal static class VisualHarnessCli
             CliParsing.ParsePalettes,
             defaultFactory: () => defaultPalettes,
             defaultValueDescription: DescribeSequence(defaultPalettes),
-            allowedValues: [.. CliParsing.GetEnumTokens<TreemapPalette>(), "all"]);
+            allowedValues: [.. CliParsing.GetEnumTokens(Enum.GetValues<TreemapPalette>()), "all"]);
         var windowWidth = new CliValueOption<int>(
             "--window-width",
             "N",

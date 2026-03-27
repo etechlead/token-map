@@ -122,6 +122,7 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
 
     partial void OnHasSnapshotChanged(bool value)
     {
+        _ = value;
         OnPropertyChanged(nameof(ShowStartSurface));
     }
 

@@ -242,6 +242,8 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
 
     partial void OnTextChanged(string value)
     {
+        _ = value;
+
         if (!_isLoadingText)
         {
             DismissRescanNotice();

@@ -2,13 +2,6 @@ namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 
 internal sealed class IgnoreDirectoryContext
 {
-    public static IgnoreDirectoryContext Empty { get; } = new([]);
-
-    public IgnoreDirectoryContext(IReadOnlyList<IgnoreRule> rules)
-        : this(rules, [])
-    {
-    }
-
     public IgnoreDirectoryContext(IReadOnlyList<IgnoreRule> prefixRules, IReadOnlyList<IgnoreRule> finalOverrideRules)
     {
         PrefixRules = prefixRules;

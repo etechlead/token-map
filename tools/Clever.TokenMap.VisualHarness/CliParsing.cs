@@ -74,12 +74,6 @@ internal static class CliParsing
 
     public static int ParseInt(string value) => int.Parse(value, CultureInfo.InvariantCulture);
 
-    public static IReadOnlyList<string> GetEnumTokens<TEnum>()
-        where TEnum : struct, Enum =>
-        Enum.GetValues<TEnum>()
-            .Select(GetEnumToken)
-            .ToArray();
-
     public static IReadOnlyList<string> GetEnumTokens<TEnum>(IEnumerable<TEnum> values)
         where TEnum : struct, Enum =>
         values.Select(GetEnumToken).ToArray();
@@ -104,7 +98,7 @@ internal static class CliParsing
         }
 
         throw new InvalidOperationException(
-            $"Unsupported {typeof(TEnum).Name} '{value}'. Expected {string.Join(", ", GetEnumTokens<TEnum>())}.");
+            $"Unsupported {typeof(TEnum).Name} '{value}'. Expected {string.Join(", ", GetEnumTokens(Enum.GetValues<TEnum>()))}.");
     }
 
     private static string[] SplitList(string value) =>
