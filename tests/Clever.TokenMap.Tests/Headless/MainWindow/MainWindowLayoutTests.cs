@@ -83,13 +83,16 @@ public sealed class MainWindowLayoutTests
         var tokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
         var linesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
         var sizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
+        var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
 
         Assert.NotNull(tokensButton);
         Assert.NotNull(linesButton);
         Assert.NotNull(sizeButton);
+        Assert.NotNull(showValuesCheckBox);
         Assert.True(tokensButton.IsChecked);
         Assert.False(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
+        Assert.True(showValuesCheckBox.IsChecked);
 
         viewModel.Toolbar.IsSizeMetricSelected = true;
         window.UpdateLayout();
@@ -102,6 +105,10 @@ public sealed class MainWindowLayoutTests
         Assert.False(tokensButton.IsChecked);
         Assert.True(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
+
+        viewModel.Toolbar.ShowTreemapMetricValues = false;
+        window.UpdateLayout();
+        Assert.False(showValuesCheckBox.IsChecked);
     }
 
     [AvaloniaFact]
@@ -232,18 +239,22 @@ public sealed class MainWindowLayoutTests
         var metricTokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
         var metricLinesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
         var metricSizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
+        var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
 
         Assert.NotNull(metricTokensButton);
         Assert.NotNull(metricLinesButton);
         Assert.NotNull(metricSizeButton);
+        Assert.NotNull(showValuesCheckBox);
         Assert.NotNull(themeSystemButton);
         Assert.NotNull(rescanButton);
         Assert.False(metricTokensButton.IsEnabled);
         Assert.False(metricLinesButton.IsEnabled);
         Assert.False(metricSizeButton.IsEnabled);
+        Assert.False(showValuesCheckBox.IsEnabled);
         Assert.True(metricTokensButton.IsChecked);
+        Assert.True(showValuesCheckBox.IsChecked);
         Assert.True(themeSystemButton.IsEnabled);
         Assert.False(rescanButton.IsVisible);
     }

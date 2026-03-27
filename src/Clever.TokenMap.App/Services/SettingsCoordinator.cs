@@ -89,6 +89,9 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public void SetTreemapPalette(TreemapPalette palette) =>
         MutableState.SelectedTreemapPalette = palette;
 
+    public void SetShowTreemapMetricValues(bool value) =>
+        MutableState.ShowTreemapMetricValues = value;
+
     public void RecordRecentFolder(string folderPath) =>
         MutableState.RecordRecentFolder(folderPath);
 

@@ -40,6 +40,9 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     [ObservableProperty]
     private TreemapPalette selectedTreemapPalette = TreemapPalette.Weighted;
 
+    [ObservableProperty]
+    private bool showTreemapMetricValues = true;
+
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     public IReadOnlyList<string> GlobalExcludes => _globalExcludes;

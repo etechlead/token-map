@@ -98,6 +98,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.Appearance.TreemapPalette = treemapPalette;
         }
 
+        if (persistedSettings?.Appearance?.ShowTreemapMetricValues is { } showTreemapMetricValues)
+        {
+            settings.Appearance.ShowTreemapMetricValues = showTreemapMetricValues;
+        }
+
         if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
         {
             settings.Logging.MinLevel = minimumLevel;
@@ -146,6 +151,9 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
         [JsonConverter(typeof(NullableStringEnumConverter<TreemapPalette>))]
         public TreemapPalette? TreemapPalette { get; set; }
+
+        [JsonConverter(typeof(NullableBooleanConverter))]
+        public bool? ShowTreemapMetricValues { get; set; }
     }
 
     private sealed class PersistedLoggingSettings

@@ -135,6 +135,32 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.Equal(targetRelativePath, (row.DataContext as ProjectTreeNodeViewModel)?.Node.RelativePath);
     }
 
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapShowValuesToggle_UpdatesTreemapControlImmediately()
+    {
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshot());
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
+
+        Assert.NotNull(control);
+        Assert.NotNull(showValuesCheckBox);
+        Assert.True(control.ShowMetricValues);
+        Assert.True(showValuesCheckBox.IsChecked);
+
+        viewModel.Toolbar.ShowTreemapMetricValues = false;
+        window.UpdateLayout();
+
+        Assert.False(control.ShowMetricValues);
+        Assert.False(showValuesCheckBox.IsChecked);
+
+        viewModel.Toolbar.ShowTreemapMetricValues = true;
+        window.UpdateLayout();
+
+        Assert.True(control.ShowMetricValues);
+        Assert.True(showValuesCheckBox.IsChecked);
+    }
+
     private static async Task<(AppMainWindow Window, MainWindowViewModel ViewModel)> CreateOpenWindowAsync(ProjectSnapshot snapshot)
     {
         var window = new AppMainWindow();

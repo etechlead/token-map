@@ -12,6 +12,9 @@ internal static class TreemapVisualRules
     private const double FileLabelInsetY = 3;
     private const double DirectoryLabelInsetX = 3;
     private const double DirectoryLabelInsetY = 0;
+    private const double MetricLabelInset = 4;
+    private const double MetricLabelMinWidth = 52;
+    private const double MetricLabelMinHeight = 20;
 
     public static double GetDirectoryHeaderHeight(ProjectNode node, Rect bounds, bool includeHeader = true)
     {
@@ -101,10 +104,66 @@ internal static class TreemapVisualRules
     public static double GetLabelFontSize(ProjectNode node) =>
         node.Kind == ProjectNodeKind.Directory ? 10 : 12;
 
+    public static bool CanDrawMetricValueLabel(ProjectNode node, Rect bounds)
+    {
+        if (node.Kind != ProjectNodeKind.File)
+        {
+            return false;
+        }
+
+        var metricBounds = GetMetricValueBounds(node, bounds);
+        return metricBounds.Width >= MetricLabelMinWidth && metricBounds.Height >= MetricLabelMinHeight;
+    }
+
+    public static Rect GetMetricValueBounds(ProjectNode node, Rect bounds)
+    {
+        if (node.Kind != ProjectNodeKind.File)
+        {
+            return default;
+        }
+
+        return GetMetricValueBoundsForFile(bounds);
+    }
+
+    public static double GetMetricLabelMaxFontSize(Rect bounds)
+    {
+        var metricBounds = GetMetricValueBoundsForFile(bounds);
+        var area = metricBounds.Width * metricBounds.Height;
+        var sizeByArea = Math.Sqrt(Math.Max(0d, area)) * 0.24d;
+        var sizeByWidth = metricBounds.Width * 0.32d;
+        var sizeByHeight = metricBounds.Height * 0.72d;
+
+        return Math.Clamp(Math.Min(sizeByArea, Math.Min(sizeByWidth, sizeByHeight)), 9d, 34d);
+    }
+
+    public static double GetMetricLabelMinFontSize() => 8;
+
+    public static bool CanDrawNameAlongsideMetric(ProjectNode node, Rect bounds, Rect metricBounds)
+    {
+        if (node.Kind != ProjectNodeKind.File)
+        {
+            return true;
+        }
+
+        var nameBounds = GetLabelBounds(node, bounds);
+        if (nameBounds.Width <= 0 || nameBounds.Height <= 0)
+        {
+            return false;
+        }
+
+        return metricBounds.Y - nameBounds.Y >= 18;
+    }
+
     public static Rect Inset(Rect rect, double inset) =>
         rect.Width <= inset * 2 || rect.Height <= inset * 2
             ? rect
             : new Rect(rect.X + inset, rect.Y + inset, rect.Width - inset * 2, rect.Height - inset * 2);
+
+    private static Rect GetMetricValueBoundsForFile(Rect bounds)
+    {
+        var contentBounds = Inset(bounds, NodeInset);
+        return Inset(contentBounds, MetricLabelInset);
+    }
 
     private static double GetNodeInset(ProjectNode node) =>
         node.Kind == ProjectNodeKind.Directory

@@ -99,6 +99,8 @@ internal static class MainWindowViewModelDefaults
 
         public void SetTreemapPalette(Core.Enums.TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
+        public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
+
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
         public void RemoveRecentFolder(string folderPath) => MutableState.RemoveRecentFolder(folderPath);

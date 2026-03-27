@@ -18,6 +18,8 @@ public interface IReadOnlySettingsState : INotifyPropertyChanged
 
     TreemapPalette SelectedTreemapPalette { get; }
 
+    bool ShowTreemapMetricValues { get; }
+
     ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     IReadOnlyList<string> GlobalExcludes { get; }

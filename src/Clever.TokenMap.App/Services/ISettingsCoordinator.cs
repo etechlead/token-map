@@ -27,6 +27,8 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     void SetTreemapPalette(TreemapPalette palette);
 
+    void SetShowTreemapMetricValues(bool value);
+
     void RecordRecentFolder(string folderPath);
 
     void RemoveRecentFolder(string folderPath);

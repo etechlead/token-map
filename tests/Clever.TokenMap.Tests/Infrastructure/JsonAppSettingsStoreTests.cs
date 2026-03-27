@@ -26,6 +26,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, settings.Analysis.GlobalExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
+        Assert.True(settings.Appearance.ShowTreemapMetricValues);
         Assert.Empty(settings.RecentFolderPaths);
     }
 
@@ -51,7 +52,8 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
               },
               "appearance": {
                 "themePreference": "Dark",
-                "treemapPalette": "Studio"
+                "treemapPalette": "Studio",
+                "showTreemapMetricValues": false
               },
               "logging": {
                 "minLevel": "Error"
@@ -79,6 +81,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, settings.Appearance.TreemapPalette);
+        Assert.False(settings.Appearance.ShowTreemapMetricValues);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
         Assert.Collection(
             settings.RecentFolderPaths,
@@ -215,6 +218,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Analysis.GlobalExcludes = [" node_modules\\ ", "", "/src//generated/**", "!nested/scripts/"];
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
+        settings.Appearance.ShowTreemapMetricValues = false;
         settings.Logging.MinLevel = AppLogLevel.Warning;
         settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
 
@@ -227,6 +231,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Contains(@"""useGlobalExcludes"": false", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""globalExcludes"": [", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""treemapPalette"": ""Weighted""", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""showTreemapMetricValues"": false", persistedJson, StringComparison.Ordinal);
 
         var reloaded = store.Load();
 
@@ -240,6 +245,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Weighted, reloaded.Appearance.TreemapPalette);
+        Assert.False(reloaded.Appearance.ShowTreemapMetricValues);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);
         Assert.Collection(
             reloaded.RecentFolderPaths,

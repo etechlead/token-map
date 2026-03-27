@@ -286,6 +286,85 @@ public sealed class TreemapControlHeadlessTests
     }
 
     [AvaloniaFact]
+    public void TreemapControl_GetMetricValueLabel_ReturnsNull_WhenMetricValuesAreHidden()
+    {
+        var control = CreateControl(showMetricValues: false);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+
+        Assert.Null(control.GetMetricValueLabel(visual.Node, visual.Bounds));
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_GetMetricValueLabel_ReturnsCompactText_ForLargeLeafTile()
+    {
+        var control = CreateControl(showMetricValues: true);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+
+        Assert.Equal("42", control.GetMetricValueLabel(visual.Node, visual.Bounds));
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_GetMetricValueLabel_ReturnsNull_ForSmallLeafTile()
+    {
+        var control = CreateControl(showMetricValues: true);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+
+        Assert.Null(control.GetMetricValueLabel(visual.Node, new Rect(0, 0, 48, 18)));
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_GetMetricValueLabel_ReturnsNull_ForSkippedBinaryFileTokensAndLines()
+    {
+        var snapshot = CreateSnapshotWithSkippedBinaryFile();
+        var control = CreateControl(snapshot, AnalysisMetric.Tokens, showMetricValues: true);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var skippedFile = Assert.Single(snapshot.Root.Children);
+
+        Assert.Null(control.GetMetricValueLabel(skippedFile, new Rect(0, 0, 160, 80)));
+
+        control.Metric = AnalysisMetric.Lines;
+
+        Assert.Null(control.GetMetricValueLabel(skippedFile, new Rect(0, 0, 160, 80)));
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_GetMetricValueLabel_ChangesWithSelectedMetric()
+    {
+        var snapshot = CreateMetricSensitiveSnapshot();
+        var control = CreateControl(snapshot, AnalysisMetric.Tokens, showMetricValues: true);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "a.cs");
+
+        Assert.Equal("80", control.GetMetricValueLabel(visual.Node, visual.Bounds));
+
+        control.Metric = AnalysisMetric.Lines;
+
+        Assert.Equal("10", control.GetMetricValueLabel(visual.Node, visual.Bounds));
+
+        control.Metric = AnalysisMetric.Size;
+
+        Assert.Equal("50 B", control.GetMetricValueLabel(visual.Node, visual.Bounds));
+    }
+
+    [AvaloniaFact]
     public void TreemapControl_ChangingMetric_RecomputesVisuals()
     {
         var snapshot = CreateMetricSensitiveSnapshot();
@@ -336,13 +415,15 @@ public sealed class TreemapControlHeadlessTests
 
     private static TreemapControl CreateControl(
         Clever.TokenMap.Core.Models.ProjectSnapshot? snapshot = null,
-        AnalysisMetric metric = AnalysisMetric.Tokens) =>
+        AnalysisMetric metric = AnalysisMetric.Tokens,
+        bool showMetricValues = false) =>
         new()
         {
             Width = 320,
             Height = 180,
             RootNode = (snapshot ?? CreateSnapshot()).Root,
             Metric = metric,
+            ShowMetricValues = showMetricValues,
         };
 
     private static Window CreateHostWindow(TreemapControl control) =>

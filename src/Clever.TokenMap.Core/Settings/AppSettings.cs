@@ -52,11 +52,14 @@ public sealed class AppearanceSettings
 
     public TreemapPalette TreemapPalette { get; set; } = TreemapPalette.Weighted;
 
+    public bool ShowTreemapMetricValues { get; set; } = true;
+
     public AppearanceSettings Clone() =>
         new()
         {
             ThemePreference = ThemePreference,
             TreemapPalette = TreemapPalette,
+            ShowTreemapMetricValues = ShowTreemapMetricValues,
         };
 }
 

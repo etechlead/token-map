@@ -135,6 +135,22 @@ public sealed class TreemapVisualRulesTests
     }
 
     [Fact]
+    public void CanDrawMetricValueLabel_ReturnsFalse_ForSmallFileTile()
+    {
+        var file = CreateNode("file.cs", ProjectNodeKind.File);
+
+        Assert.False(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 48, 18)));
+    }
+
+    [Fact]
+    public void CanDrawMetricValueLabel_ReturnsTrue_ForRoomyFileTile()
+    {
+        var file = CreateNode("file.cs", ProjectNodeKind.File);
+
+        Assert.True(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 72, 32)));
+    }
+
+    [Fact]
     public void GetHeaderBounds_ForDirectory_UsesInsetAndVisibleHeight()
     {
         var directory = CreateNode("src", ProjectNodeKind.Directory);

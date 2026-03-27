@@ -99,6 +99,12 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         set => _settingsCoordinator.SetSelectedMetric(value);
     }
 
+    public bool ShowTreemapMetricValues
+    {
+        get => _settingsState.ShowTreemapMetricValues;
+        set => _settingsCoordinator.SetShowTreemapMetricValues(value);
+    }
+
     public bool RespectGitIgnore
     {
         get => _settingsState.RespectGitIgnore;
@@ -222,6 +228,9 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
                 OnPropertyChanged(nameof(IsPlainTreemapPaletteSelected));
                 OnPropertyChanged(nameof(IsWeightedTreemapPaletteSelected));
                 OnPropertyChanged(nameof(IsStudioTreemapPaletteSelected));
+                break;
+            case nameof(IReadOnlySettingsState.ShowTreemapMetricValues):
+                OnPropertyChanged(nameof(ShowTreemapMetricValues));
                 break;
         }
     }

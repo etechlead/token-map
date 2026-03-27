@@ -12,7 +12,7 @@
               RowSpacing="8">
             <Grid Name="TreemapHeader"
                   Margin="6,12,6,0"
-                  ColumnDefinitions="Auto,Auto,*"
+                  ColumnDefinitions="Auto,Auto,Auto,*"
                   ColumnSpacing="12">
                 <TextBlock Classes="panel-title"
                            Name="TreemapTitleText"
@@ -45,8 +45,14 @@
                                       Content="Size" />
                     </Grid>
                 </Border>
+                <CheckBox Grid.Column="2"
+                          Name="TreemapShowValuesCheckBox"
+                          VerticalAlignment="Center"
+                          IsChecked="{Binding Toolbar.ShowTreemapMetricValues, Mode=TwoWay}"
+                          IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                          Content="Show values" />
                 <ItemsControl Name="TreemapBreadcrumbsItemsControl"
-                              Grid.Column="2"
+                              Grid.Column="3"
                               HorizontalAlignment="Right"
                               VerticalAlignment="Center"
                               ItemsSource="{Binding TreemapBreadcrumbs}">
@@ -78,6 +84,7 @@
                                      RootNode="{Binding TreemapRootNode}"
                                      Metric="{Binding Toolbar.SelectedMetric}"
                                      Palette="{Binding Toolbar.SelectedTreemapPalette}"
+                                     ShowMetricValues="{Binding Toolbar.ShowTreemapMetricValues}"
                                      SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
         </Grid>
     </Border>

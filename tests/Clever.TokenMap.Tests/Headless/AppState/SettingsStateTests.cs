@@ -13,6 +13,7 @@ public sealed class SettingsStateTests
         var state = new SettingsState();
 
         Assert.Equal(Clever.TokenMap.Core.Enums.TreemapPalette.Weighted, state.SelectedTreemapPalette);
+        Assert.True(state.ShowTreemapMetricValues);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, state.GlobalExcludes);
     }
 

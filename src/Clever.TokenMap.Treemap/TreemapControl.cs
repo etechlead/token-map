@@ -35,6 +35,9 @@ public sealed class TreemapControl : Control
     public static readonly StyledProperty<bool> ShowLabelsProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowLabels), true);
 
+    public static readonly StyledProperty<bool> ShowMetricValuesProperty =
+        AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowMetricValues), false);
+
     public static readonly StyledProperty<bool> ShowDirectoryNodesProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowDirectoryNodes), true);
 
@@ -114,6 +117,7 @@ public sealed class TreemapControl : Control
             SelectedNodeProperty,
             PaletteProperty,
             ShowLabelsProperty,
+            ShowMetricValuesProperty,
             ShowDirectoryNodesProperty,
             LeafCornerRadiusProperty,
             LeafGapProperty,
@@ -166,6 +170,12 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(ShowLabelsProperty);
         set => SetValue(ShowLabelsProperty, value);
+    }
+
+    public bool ShowMetricValues
+    {
+        get => GetValue(ShowMetricValuesProperty);
+        set => SetValue(ShowMetricValuesProperty, value);
     }
 
     public bool ShowDirectoryNodes
@@ -331,6 +341,7 @@ public sealed class TreemapControl : Control
         if (change.Property == SelectedNodeProperty ||
             change.Property == PaletteProperty ||
             change.Property == ShowLabelsProperty ||
+            change.Property == ShowMetricValuesProperty ||
             change.Property == LeafCornerRadiusProperty ||
             change.Property == ShowLeafBordersProperty)
         {
@@ -411,34 +422,11 @@ public sealed class TreemapControl : Control
                 }
             }
 
-            if (ShowLabels && (isLeaf || ShowDirectoryNodes) && TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
+            if ((isLeaf || ShowDirectoryNodes) &&
+                ((ShowLabels && TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds)) ||
+                 (isLeaf && ShowMetricValues)))
             {
-                var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
-                IBrush labelBrush = isLeaf
-                    ? GetLeafLabelBrush(leafFillColor)
-                    : DirectoryLabelBrush;
-                var formattedText = new FormattedText(
-                    visual.Node.Name,
-                    culture: System.Globalization.CultureInfo.InvariantCulture,
-                    flowDirection: FlowDirection.LeftToRight,
-                    typeface: Typeface.Default,
-                    emSize: TreemapVisualRules.GetLabelFontSize(visual.Node),
-                    foreground: labelBrush);
-
-                var textOrigin = new Point(labelBounds.X, labelBounds.Y);
-                var clipBounds = labelBounds;
-                if (!isLeaf)
-                {
-                    var headerBounds = TreemapVisualRules.GetHeaderBounds(
-                        visual.Node,
-                        visual.Bounds,
-                        includeDirectoryHeader: true);
-                    clipBounds = new Rect(labelBounds.X, headerBounds.Y, labelBounds.Width, headerBounds.Height);
-                    textOrigin = new Point(labelBounds.X, GetDirectoryLabelOriginY(headerBounds, formattedText));
-                }
-
-                using var clip = context.PushClip(clipBounds);
-                context.DrawText(formattedText, textOrigin);
+                DrawNodeLabel(context, visual, isLeaf, leafFillColor);
             }
         }
 
@@ -486,6 +474,88 @@ public sealed class TreemapControl : Control
             Math.Max(12, (Bounds.Width - formattedText.Width) / 2),
             Math.Max(12, (Bounds.Height - formattedText.Height) / 2));
         context.DrawText(formattedText, point);
+    }
+
+    private void DrawNodeLabel(DrawingContext context, TreemapNodeVisual visual, bool isLeaf, Color leafFillColor)
+    {
+        IBrush labelBrush = isLeaf
+            ? GetLeafLabelBrush(leafFillColor)
+            : DirectoryLabelBrush;
+
+        if (!isLeaf)
+        {
+            DrawDirectoryLabel(context, visual, labelBrush);
+            return;
+        }
+
+        var metricLabel = ShowMetricValues
+            ? TryCreateMetricValueLabel(visual.Node, visual.Bounds, labelBrush)
+            : null;
+
+        if (ShowLabels && TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
+        {
+            DrawLeafNameLabel(context, visual, labelBrush, metricLabel);
+        }
+
+        if (metricLabel is not null)
+        {
+            DrawCenteredMetricLabel(context, visual, metricLabel);
+        }
+    }
+
+    private static void DrawDirectoryLabel(DrawingContext context, TreemapNodeVisual visual, IBrush labelBrush)
+    {
+        if (!TreemapVisualRules.CanDrawLabel(visual.Node, visual.Bounds))
+        {
+            return;
+        }
+
+        var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
+        var nameText = CreateNodeLabelText(
+            visual.Node.Name,
+            TreemapVisualRules.GetLabelFontSize(visual.Node),
+            labelBrush);
+        var headerBounds = TreemapVisualRules.GetHeaderBounds(
+            visual.Node,
+            visual.Bounds,
+            includeDirectoryHeader: true);
+        var clipBounds = new Rect(labelBounds.X, headerBounds.Y, labelBounds.Width, headerBounds.Height);
+        var textOrigin = new Point(labelBounds.X, GetDirectoryLabelOriginY(headerBounds, nameText));
+
+        using var clip = context.PushClip(clipBounds);
+        context.DrawText(nameText, textOrigin);
+    }
+
+    private static void DrawLeafNameLabel(
+        DrawingContext context,
+        TreemapNodeVisual visual,
+        IBrush labelBrush,
+        FormattedText? metricLabel)
+    {
+        var labelBounds = TreemapVisualRules.GetLabelBounds(visual.Node, visual.Bounds);
+        var nameText = CreateNodeLabelText(
+            visual.Node.Name,
+            TreemapVisualRules.GetLabelFontSize(visual.Node),
+            labelBrush);
+
+        if (metricLabel is not null)
+        {
+            var metricBounds = GetCenteredMetricBounds(visual.Node, visual.Bounds, metricLabel);
+            if (!TreemapVisualRules.CanDrawNameAlongsideMetric(visual.Node, visual.Bounds, metricBounds))
+            {
+                return;
+            }
+        }
+
+        using var clip = context.PushClip(labelBounds);
+        context.DrawText(nameText, new Point(labelBounds.X, labelBounds.Y));
+    }
+
+    private static void DrawCenteredMetricLabel(DrawingContext context, TreemapNodeVisual visual, FormattedText metricLabel)
+    {
+        var metricBounds = GetCenteredMetricBounds(visual.Node, visual.Bounds, metricLabel);
+        using var clip = context.PushClip(TreemapVisualRules.GetMetricValueBounds(visual.Node, visual.Bounds));
+        context.DrawText(metricLabel, new Point(metricBounds.X, metricBounds.Y));
     }
 
     private void UpdateVisuals(Size availableSize)
@@ -905,6 +975,17 @@ public sealed class TreemapControl : Control
             foreground: foreground);
     }
 
+    private static FormattedText CreateNodeLabelText(string text, double fontSize, IBrush foreground)
+    {
+        return new FormattedText(
+            text,
+            culture: CultureInfo.CurrentCulture,
+            flowDirection: FlowDirection.LeftToRight,
+            typeface: Typeface.Default,
+            emSize: fontSize,
+            foreground: foreground);
+    }
+
     private static double GetDirectoryLabelOriginY(Rect headerBounds, FormattedText formattedText)
     {
         var inkTopOffset = Math.Max(0, formattedText.Height + formattedText.OverhangAfter - formattedText.Extent);
@@ -916,6 +997,64 @@ public sealed class TreemapControl : Control
         TreemapColorRules.ShouldUseDarkLeafLabel(fillColor)
             ? LeafDarkLabelBrush
             : LeafLightLabelBrush;
+
+    internal string? GetMetricValueLabel(ProjectNode node, Rect bounds)
+    {
+        if (!ShowMetricValues ||
+            node.Kind != Core.Enums.ProjectNodeKind.File ||
+            !TreemapVisualRules.CanDrawLabel(node, bounds) ||
+            !TreemapVisualRules.CanDrawMetricValueLabel(node, bounds))
+        {
+            return null;
+        }
+
+        var metricValue = TryGetMetricValueLabelValue(node);
+        return metricValue is null
+            ? null
+            : MetricValueFormatter.FormatCompact(Metric, metricValue.Value, CultureInfo.CurrentCulture);
+    }
+
+    private FormattedText? TryCreateMetricValueLabel(ProjectNode node, Rect bounds, IBrush foreground)
+    {
+        var text = GetMetricValueLabel(node, bounds);
+        if (text is null)
+        {
+            return null;
+        }
+
+        var metricBounds = TreemapVisualRules.GetMetricValueBounds(node, bounds);
+
+        var minFontSize = TreemapVisualRules.GetMetricLabelMinFontSize();
+        for (var fontSize = TreemapVisualRules.GetMetricLabelMaxFontSize(bounds); fontSize >= minFontSize; fontSize -= 0.5d)
+        {
+            var metricText = CreateNodeLabelText(text, fontSize, foreground);
+            if (metricText.Width <= metricBounds.Width && metricText.Height <= metricBounds.Height)
+            {
+                return metricText;
+            }
+        }
+
+        return null;
+    }
+
+    private long? TryGetMetricValueLabelValue(ProjectNode node)
+    {
+        var normalizedMetric = Metric.Normalize();
+        if (normalizedMetric != AnalysisMetric.Size && node.SkippedReason is not null)
+        {
+            return null;
+        }
+
+        return normalizedMetric.GetValue(node.Metrics);
+    }
+
+    private static Rect GetCenteredMetricBounds(ProjectNode node, Rect bounds, FormattedText metricLabel)
+    {
+        var metricBounds = TreemapVisualRules.GetMetricValueBounds(node, bounds);
+        var x = metricBounds.X + Math.Max(0d, (metricBounds.Width - metricLabel.Width) / 2d);
+        var y = metricBounds.Y + Math.Max(0d, (metricBounds.Height - metricLabel.Height) / 2d);
+        return new Rect(x, y, metricLabel.Width, metricLabel.Height);
+    }
 
     private double GetMetricValue(ProjectNode node) => Metric.GetValue(node.Metrics);
 

@@ -21,6 +21,7 @@ public sealed class SettingsCoordinatorTests
         settings.Analysis.GlobalExcludes = ["bin/", "obj/"];
         settings.Appearance.ThemePreference = ThemePreference.Dark;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
+        settings.Appearance.ShowTreemapMetricValues = false;
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
@@ -35,6 +36,7 @@ public sealed class SettingsCoordinatorTests
             entry => Assert.Equal("obj/", entry));
         Assert.Equal(ThemePreference.Dark, coordinator.State.SelectedThemePreference);
         Assert.Equal(TreemapPalette.Weighted, coordinator.State.SelectedTreemapPalette);
+        Assert.False(coordinator.State.ShowTreemapMetricValues);
         Assert.Equal(ThemePreference.Dark, themeService.LastAppliedThemePreference);
         Assert.Empty(coordinator.State.RecentFolderPaths);
         Assert.Equal(0, store.SaveCallCount);
@@ -65,6 +67,7 @@ public sealed class SettingsCoordinatorTests
 
         coordinator.SetSelectedMetric(AnalysisMetric.Lines);
         coordinator.SetTreemapPalette(TreemapPalette.Weighted);
+        coordinator.SetShowTreemapMetricValues(false);
         coordinator.ReplaceGlobalExcludes(["bin/", "obj/"]);
 
         await Task.Delay(120);
@@ -72,6 +75,7 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(1, store.SaveCallCount);
         Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(TreemapPalette.Weighted, store.LastSavedSettings.Appearance.TreemapPalette);
+        Assert.False(store.LastSavedSettings.Appearance.ShowTreemapMetricValues);
         Assert.Collection(
             store.LastSavedSettings.Analysis.GlobalExcludes,
             entry => Assert.Equal("bin/", entry),
@@ -180,6 +184,7 @@ public sealed class SettingsCoordinatorTests
         coordinator.SetSelectedMetric(AnalysisMetric.Lines);
         coordinator.SetThemePreference(ThemePreference.Dark);
         coordinator.SetTreemapPalette(TreemapPalette.Studio);
+        coordinator.SetShowTreemapMetricValues(false);
         coordinator.ReplaceGlobalExcludes(["vendor/"]);
 
         Assert.Equal(0, store.SaveCallCount);
@@ -191,6 +196,7 @@ public sealed class SettingsCoordinatorTests
         Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, store.LastSavedSettings.Appearance.TreemapPalette);
+        Assert.False(store.LastSavedSettings.Appearance.ShowTreemapMetricValues);
         Assert.Collection(
             store.LastSavedSettings.Analysis.GlobalExcludes,
             entry => Assert.Equal("vendor/", entry));

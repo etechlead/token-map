@@ -22,6 +22,7 @@ public sealed class ToolbarViewModelTests
         Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
+        Assert.True(viewModel.ShowTreemapMetricValues);
     }
 
     [Fact]
@@ -94,6 +95,18 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
+    public void TogglingTreemapMetricValues_StoresSetting()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        viewModel.ShowTreemapMetricValues = false;
+
+        Assert.False(state.ShowTreemapMetricValues);
+        Assert.False(viewModel.ShowTreemapMetricValues);
+    }
+
+    [Fact]
     public void BuildScanOptions_UsesGlobalExcludeSettings()
     {
         var state = new SettingsState
@@ -158,6 +171,8 @@ public sealed class ToolbarViewModelTests
         public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
 
         public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
+
+        public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
