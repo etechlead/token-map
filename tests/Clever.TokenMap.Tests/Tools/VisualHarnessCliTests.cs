@@ -11,7 +11,7 @@ public sealed class VisualHarnessCliTests
         var help = VisualHarnessCli.FormatCommandHelp(VisualHarnessCli.Capture.Command);
 
         Assert.Contains("--surface SURFACES", help);
-        Assert.Contains("Allowed: main, settings, treemap, all", help);
+        Assert.Contains("Allowed: main, settings, share, treemap, all", help);
         Assert.Contains("Allowed: plain, weighted, studio, all", help);
         Assert.Contains("Default: main", help);
         Assert.DoesNotContain("--skip-compare", help);

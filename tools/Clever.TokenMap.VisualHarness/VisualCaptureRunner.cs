@@ -192,6 +192,7 @@ internal static class VisualCaptureRunner
         {
             CaptureSurface.Main => CaptureMainWindowAsync(snapshot, options, palette, settingsOpen: false),
             CaptureSurface.Settings => CaptureMainWindowAsync(snapshot, options, palette, settingsOpen: true),
+            CaptureSurface.Share => CaptureShareWindowAsync(snapshot, options, palette),
             CaptureSurface.Treemap => CaptureStandaloneTreemapAsync(snapshot, options, palette),
             _ => throw new InvalidOperationException($"Unsupported surface '{surface}'."),
         };
@@ -233,6 +234,43 @@ internal static class VisualCaptureRunner
         };
 
         return await CaptureWindowAsync(window, "MainWindow did not render a frame.");
+    }
+
+    private static async Task<WriteableBitmap> CaptureShareWindowAsync(
+        ProjectSnapshot snapshot,
+        CaptureOptions options,
+        TreemapPalette palette)
+    {
+        var settingsState = new SettingsState
+        {
+            SelectedMetric = options.Metric,
+            SelectedTreemapPalette = palette,
+        };
+        var settingsCoordinator = new InlineSettingsCoordinator(settingsState);
+        var folderPathService = new ExistingFolderPathService();
+
+        var analysisSessionController = HarnessComposition.CreateAnalysisSessionController(
+            new SnapshotProjectAnalyzer(snapshot),
+            new FixedFolderPickerService(snapshot.RootPath),
+            folderPathService,
+            settingsCoordinator);
+        await analysisSessionController.OpenFolderAsync(snapshot.RootPath, ScanOptions.Default);
+
+        var viewModel = HarnessComposition.CreateMainWindowViewModel(
+            analysisSessionController,
+            settingsCoordinator,
+            folderPathService,
+            new NoOpPathShellService());
+        viewModel.OpenShareSnapshotCommand.Execute(null);
+
+        var window = new MainWindow
+        {
+            DataContext = viewModel,
+            Width = options.WindowSize.Width,
+            Height = options.WindowSize.Height,
+        };
+
+        return await CaptureWindowAsync(window, "Share window did not render a frame.");
     }
 
     private static Task<WriteableBitmap> CaptureStandaloneTreemapAsync(

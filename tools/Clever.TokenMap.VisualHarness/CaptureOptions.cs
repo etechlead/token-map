@@ -12,6 +12,7 @@ internal enum CaptureSurface
 {
     Main,
     Settings,
+    Share,
     Treemap,
 }
 

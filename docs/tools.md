@@ -17,7 +17,7 @@ powershell -File scripts/run-coverage.ps1
 - Location: `tools/Clever.TokenMap.VisualHarness`
 - Purpose: internal headless Avalonia harness for rendering app surfaces to PNG, saving machine-readable reports, and diffing screenshots between palettes or revisions.
 - Use it when you need visual evidence without manually driving the app: tuning treemap colors, checking layout and styling changes, producing review screenshots, investigating visual regressions, or comparing the same UI state across palettes, branches, or data sources.
-- It can capture the main window, the settings-open state, and a standalone treemap; it can render from a real repo snapshot or from deterministic demo data; and it can diff two existing images.
+- It can capture the main window, the settings-open state, the share modal, and a standalone treemap; it can render from a real repo snapshot or from deterministic demo data; and it can diff two existing images.
 - Treat built-in `help` output as the canonical CLI contract and parameter reference.
 
 ```powershell
