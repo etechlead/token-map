@@ -109,6 +109,16 @@ EOF
     ln -s /Applications "${link_path}"
 }
 
+ad_hoc_sign_bundle() {
+    local bundle_path="$1"
+
+    if ! command -v codesign >/dev/null 2>&1; then
+        return 1
+    fi
+
+    codesign --force --deep -s - "${bundle_path}"
+}
+
 rm -rf "${output_root_full_path}"
 mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}"
 
@@ -168,6 +178,11 @@ ${icon_plist_entries}
 </dict>
 </plist>
 EOF
+
+if ! ad_hoc_sign_bundle "${bundle_directory_path}"; then
+    echo "Ad-hoc signing the macOS app bundle failed." >&2
+    exit 1
+fi
 
 cp -R "${bundle_directory_path}" "${staging_directory_path}/"
 create_applications_drop_link "${staging_directory_path}"
