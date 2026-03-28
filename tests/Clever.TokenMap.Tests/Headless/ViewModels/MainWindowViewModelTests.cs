@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.App.Services;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 using Clever.TokenMap.Tests.Headless.Support;
@@ -93,5 +94,32 @@ public sealed class MainWindowViewModelTests
         var alphaBySize = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
         Assert.Equal("33.3%", alphaBySize.ParentShareText);
         Assert.Equal(1, analyzer.CallCount);
+    }
+
+    [Fact]
+    public async Task About_OpenRepositoryCommand_UsesPathShellService()
+    {
+        var shellService = new TrackingPathShellService();
+        var viewModel = CreateMainWindowViewModel(pathShellService: shellService);
+
+        await viewModel.About.OpenRepositoryCommand.ExecuteAsync(null);
+
+        Assert.Equal("https://github.com/etechlead/token-map", shellService.LastOpenedPath);
+    }
+
+    private sealed class TrackingPathShellService : IPathShellService
+    {
+        public string RevealMenuHeader => "Reveal";
+
+        public string? LastOpenedPath { get; private set; }
+
+        public Task<bool> TryOpenAsync(string fullPath, CancellationToken cancellationToken = default)
+        {
+            LastOpenedPath = fullPath;
+            return Task.FromResult(true);
+        }
+
+        public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
+            Task.FromResult(true);
     }
 }

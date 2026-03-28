@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.SettingsDrawerView"
@@ -141,68 +142,128 @@
                     BorderBrush="Transparent"
                     BorderThickness="0"
                     Padding="0">
-                <Grid RowDefinitions="Auto,Auto"
-                      RowSpacing="8">
-                    <TextBlock Classes="toolbar-group-title"
-                               Text="Theme" />
-                    <Border Grid.Row="1"
-                            Grid.ColumnSpan="2"
-                            Classes="segmented-toggle-panel">
-                        <Grid ColumnDefinitions="*,Auto,*,Auto,*">
-                            <ToggleButton Name="ThemeLightButton"
-                                          Classes="theme-mode-button segmented-toggle-button start"
-                                          IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
-                                          Command="{Binding Toolbar.SelectLightThemePreferenceCommand}"
-                                          ToolTip.Tip="Use the light theme">
-                                <Viewbox Classes="theme-mode-icon-host">
-                                    <Grid Width="20"
-                                          Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentBrightnessHigh20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentBrightnessHigh20FilledGeometry}" />
-                                    </Grid>
-                                </Viewbox>
-                            </ToggleButton>
-                            <Border Grid.Column="1"
-                                    Classes="segmented-toggle-divider" />
-                            <ToggleButton Name="ThemeSystemButton"
-                                          Grid.Column="2"
-                                          Classes="theme-mode-button segmented-toggle-button middle"
-                                          IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
-                                          Command="{Binding Toolbar.SelectSystemThemePreferenceCommand}"
-                                          ToolTip.Tip="Follow the system theme">
-                                <Viewbox Classes="theme-mode-icon-host">
-                                    <Grid Width="20"
-                                          Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentDesktopMac20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentDesktopMac20FilledGeometry}" />
-                                    </Grid>
-                                </Viewbox>
-                            </ToggleButton>
-                            <Border Grid.Column="3"
-                                    Classes="segmented-toggle-divider" />
-                            <ToggleButton Name="ThemeDarkButton"
-                                          Grid.Column="4"
-                                          Classes="theme-mode-button segmented-toggle-button end"
-                                          IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
-                                          Command="{Binding Toolbar.SelectDarkThemePreferenceCommand}"
-                                          ToolTip.Tip="Use the dark theme">
-                                <Viewbox Classes="theme-mode-icon-host">
-                                    <Grid Width="20"
-                                          Height="20">
-                                        <Path Classes="theme-mode-icon theme-mode-icon-regular"
-                                              Data="{StaticResource FluentDarkTheme20RegularGeometry}" />
-                                        <Path Classes="theme-mode-icon theme-mode-icon-filled"
-                                              Data="{StaticResource FluentDarkTheme20FilledGeometry}" />
-                                    </Grid>
-                                </Viewbox>
-                            </ToggleButton>
+                <StackPanel Spacing="12">
+                    <Border Name="AboutCard"
+                            Classes="toolbar-group"
+                            Padding="12"
+                            Margin="0,0,0,32">
+                        <Grid RowDefinitions="Auto,Auto,Auto"
+                              RowSpacing="8">
+                            <Grid ColumnDefinitions="Auto,*,Auto"
+                                  ColumnSpacing="8">
+                                <svg:Svg Name="AboutAppIcon"
+                                         Width="18"
+                                         Height="18"
+                                         VerticalAlignment="Center"
+                                         Path="avares://Clever.TokenMap.App/Assets/app-icon.svg" />
+                                <TextBlock Name="AboutProductNameText"
+                                           Grid.Column="1"
+                                           Classes="about-product-text"
+                                           VerticalAlignment="Center"
+                                           Text="{Binding About.ProductName}" />
+                                <TextBlock Name="AboutVersionText"
+                                           Grid.Column="2"
+                                           Classes="toolbar-group-title"
+                                           VerticalAlignment="Center"
+                                           Text="{Binding About.VersionText}"
+                                           ToolTip.Tip="{Binding About.InformationalVersion}" />
+                            </Grid>
+
+                            <TextBlock Name="AboutDescriptionText"
+                                       Grid.Row="1"
+                                       Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                       FontSize="11"
+                                       Text="{Binding About.Description}" />
+
+                            <Grid Grid.Row="2"
+                                  ColumnDefinitions="Auto,*"
+                                  ColumnSpacing="12">
+                                <Button Name="AboutRepositoryButton"
+                                        Classes="about-link-button"
+                                        Command="{Binding About.OpenRepositoryCommand}"
+                                        ToolTip.Tip="{Binding About.RepositoryUrl}">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="6">
+                                        <Path Classes="about-link-icon"
+                                              Data="{StaticResource TokenMapGithub16Geometry}" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Text="{Binding About.RepositoryDisplayName}" />
+                                    </StackPanel>
+                                </Button>
+
+                                <TextBlock Name="AboutLicenseText"
+                                           Grid.Column="1"
+                                           Classes="about-license-text"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Text="{Binding About.LicenseName}" />
+                            </Grid>
                         </Grid>
                     </Border>
-                </Grid>
+
+                    <Grid RowDefinitions="Auto,Auto"
+                          RowSpacing="8">
+                        <TextBlock Classes="toolbar-group-title"
+                                   Text="Theme" />
+                        <Border Grid.Row="1"
+                                Grid.ColumnSpan="2"
+                                Classes="segmented-toggle-panel">
+                            <Grid ColumnDefinitions="*,Auto,*,Auto,*">
+                                <ToggleButton Name="ThemeLightButton"
+                                              Classes="theme-mode-button segmented-toggle-button start"
+                                              IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
+                                              Command="{Binding Toolbar.SelectLightThemePreferenceCommand}"
+                                              ToolTip.Tip="Use the light theme">
+                                    <Viewbox Classes="theme-mode-icon-host">
+                                        <Grid Width="20"
+                                              Height="20">
+                                            <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                  Data="{StaticResource FluentBrightnessHigh20RegularGeometry}" />
+                                            <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                  Data="{StaticResource FluentBrightnessHigh20FilledGeometry}" />
+                                        </Grid>
+                                    </Viewbox>
+                                </ToggleButton>
+                                <Border Grid.Column="1"
+                                        Classes="segmented-toggle-divider" />
+                                <ToggleButton Name="ThemeSystemButton"
+                                              Grid.Column="2"
+                                              Classes="theme-mode-button segmented-toggle-button middle"
+                                              IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
+                                              Command="{Binding Toolbar.SelectSystemThemePreferenceCommand}"
+                                              ToolTip.Tip="Follow the system theme">
+                                    <Viewbox Classes="theme-mode-icon-host">
+                                        <Grid Width="20"
+                                              Height="20">
+                                            <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                  Data="{StaticResource FluentDesktopMac20RegularGeometry}" />
+                                            <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                  Data="{StaticResource FluentDesktopMac20FilledGeometry}" />
+                                        </Grid>
+                                    </Viewbox>
+                                </ToggleButton>
+                                <Border Grid.Column="3"
+                                        Classes="segmented-toggle-divider" />
+                                <ToggleButton Name="ThemeDarkButton"
+                                              Grid.Column="4"
+                                              Classes="theme-mode-button segmented-toggle-button end"
+                                              IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
+                                              Command="{Binding Toolbar.SelectDarkThemePreferenceCommand}"
+                                              ToolTip.Tip="Use the dark theme">
+                                    <Viewbox Classes="theme-mode-icon-host">
+                                        <Grid Width="20"
+                                              Height="20">
+                                            <Path Classes="theme-mode-icon theme-mode-icon-regular"
+                                                  Data="{StaticResource FluentDarkTheme20RegularGeometry}" />
+                                            <Path Classes="theme-mode-icon theme-mode-icon-filled"
+                                                  Data="{StaticResource FluentDarkTheme20FilledGeometry}" />
+                                        </Grid>
+                                    </Viewbox>
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </StackPanel>
             </Border>
         </Grid>
     </Border>

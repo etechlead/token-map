@@ -12,6 +12,7 @@ public sealed class MainWindowDesignViewModel : MainWindowViewModel
     private MainWindowDesignViewModel(MainWindowViewModelComposition composition)
         : base(
             composition.WorkspacePresenter,
+            composition.About,
             composition.Toolbar,
             composition.ExcludesEditor,
             composition.RecentFolders,

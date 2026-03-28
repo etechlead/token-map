@@ -292,6 +292,40 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_SettingsDrawer_ShowsAboutCard()
+    {
+        var window = new AppMainWindow
+        {
+            DataContext = CreateMainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        viewModel.ToggleSettingsCommand.Execute(null);
+        window.UpdateLayout();
+
+        var aboutCard = FindNamedDescendant<Border>(window, "AboutCard");
+        var productName = FindNamedDescendant<TextBlock>(window, "AboutProductNameText");
+        var version = FindNamedDescendant<TextBlock>(window, "AboutVersionText");
+        var description = FindNamedDescendant<TextBlock>(window, "AboutDescriptionText");
+        var repositoryButton = FindNamedDescendant<Button>(window, "AboutRepositoryButton");
+        var license = FindNamedDescendant<TextBlock>(window, "AboutLicenseText");
+
+        Assert.NotNull(aboutCard);
+        Assert.NotNull(productName);
+        Assert.NotNull(version);
+        Assert.NotNull(description);
+        Assert.NotNull(repositoryButton);
+        Assert.NotNull(license);
+        Assert.True(aboutCard.IsVisible);
+        Assert.Equal("TokenMap", productName.Text);
+        Assert.Equal("v0.1.1-local", version.Text);
+        Assert.Equal("Local source-tree analysis", description.Text);
+        Assert.Equal("MIT license", license.Text);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_GlobalExcludesEditor_OpensAndCancelsWithoutSaving()
     {
         var window = new AppMainWindow

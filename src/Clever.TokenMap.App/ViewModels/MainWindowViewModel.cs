@@ -31,6 +31,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         MainWindowWorkspacePresenter workspacePresenter,
+        AboutViewModel about,
         ToolbarViewModel toolbar,
         ExcludesEditorViewModel excludesEditor,
         RecentFoldersViewModel recentFolders,
@@ -41,6 +42,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _workspacePresenter = workspacePresenter;
         _pathShellService = pathShellService;
 
+        About = about;
         Toolbar = toolbar;
         ExcludesEditor = excludesEditor;
         RecentFolders = recentFolders;
@@ -60,6 +62,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public string WindowTitle => _workspacePresenter.WindowTitle;
 
     public string ProjectTreeSelectedFolderText => _workspacePresenter.ProjectTreeSelectedFolderText;
+
+    public AboutViewModel About { get; }
 
     public ToolbarViewModel Toolbar { get; }
 

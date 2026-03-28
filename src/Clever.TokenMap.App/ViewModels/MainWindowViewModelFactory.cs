@@ -11,11 +11,13 @@ public sealed record MainWindowViewModelFactoryDependencies(
     ISettingsCoordinator SettingsCoordinator,
     IFolderPathService FolderPathService,
     IPathShellService PathShellService,
-    TreemapNavigationState? TreemapNavigationState = null);
+    TreemapNavigationState? TreemapNavigationState = null,
+    AppAboutInfo? AboutInfo = null);
 
 public sealed record MainWindowViewModelComposition(
     MainWindowViewModel MainWindowViewModel,
     MainWindowWorkspacePresenter WorkspacePresenter,
+    AboutViewModel About,
     ToolbarViewModel Toolbar,
     ExcludesEditorViewModel ExcludesEditor,
     RecentFoldersViewModel RecentFolders,
@@ -33,6 +35,9 @@ public static class MainWindowViewModelFactory
         var analysisSessionController = dependencies.AnalysisSessionController;
         var settingsCoordinator = dependencies.SettingsCoordinator;
         var treemapNavigationState = dependencies.TreemapNavigationState ?? new TreemapNavigationState();
+        var about = new AboutViewModel(
+            dependencies.AboutInfo ?? AppAboutInfo.CreateDefault(),
+            dependencies.PathShellService);
 
         var toolbar = new ToolbarViewModel(
             settingsCoordinator,
@@ -65,6 +70,7 @@ public static class MainWindowViewModelFactory
             summary);
         var mainWindowViewModel = new MainWindowViewModel(
             workspacePresenter,
+            about,
             toolbar,
             excludesEditor,
             recentFolders,
@@ -75,6 +81,7 @@ public static class MainWindowViewModelFactory
         return new MainWindowViewModelComposition(
             mainWindowViewModel,
             workspacePresenter,
+            about,
             toolbar,
             excludesEditor,
             recentFolders,
