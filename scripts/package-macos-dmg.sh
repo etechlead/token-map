@@ -15,6 +15,8 @@ bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
 bundle_version="${BUNDLE_VERSION:-}"
 icon_file_name="${ICON_FILE_NAME:-app-icon.icns}"
 icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/${icon_file_name}}"
+applications_link_name="${APPLICATIONS_LINK_NAME:-Applications}"
+applications_icon_source_full_path="${APPLICATIONS_ICON_SOURCE_PATH:-/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ApplicationsFolderIcon.icns}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -54,6 +56,58 @@ dmg_path="${output_root_full_path}/${artifact_name}.dmg"
 temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 
 published_executable_path="${publish_directory_path}/${assembly_name}"
+
+set_custom_file_icon() {
+    local icon_path="$1"
+    local target_path="$2"
+    local temp_icon_base=""
+    local temp_icon_path=""
+    local temp_resource_path=""
+
+    if ! command -v sips >/dev/null 2>&1 || ! command -v DeRez >/dev/null 2>&1 || ! command -v Rez >/dev/null 2>&1 || ! command -v SetFile >/dev/null 2>&1; then
+        return 1
+    fi
+
+    temp_icon_base="$(mktemp "${TMPDIR:-/tmp}/tokenmap-file-icon.XXXXXX")"
+    temp_icon_path="${temp_icon_base}.icns"
+    temp_resource_path="$(mktemp "${TMPDIR:-/tmp}/tokenmap-file-icon-rsrc.XXXXXX")"
+
+    mv "${temp_icon_base}" "${temp_icon_path}"
+    cp "${icon_path}" "${temp_icon_path}"
+    sips -i "${temp_icon_path}" >/dev/null
+    DeRez -only icns "${temp_icon_path}" > "${temp_resource_path}"
+    Rez -append "${temp_resource_path}" -o "${target_path}"
+    SetFile -a C "${target_path}"
+
+    rm -f "${temp_icon_path}" "${temp_resource_path}"
+}
+
+create_applications_drop_link() {
+    local target_directory_path="$1"
+    local link_path="${target_directory_path}/${applications_link_name}"
+
+    rm -f "${link_path}"
+
+    if command -v osascript >/dev/null 2>&1; then
+        if osascript <<EOF
+tell application "Finder"
+    make new alias file at POSIX file "${target_directory_path}" to POSIX file "/Applications"
+    set name of result to "${applications_link_name}"
+end tell
+EOF
+        then
+            if [[ -f "${applications_icon_source_full_path}" ]]; then
+                if ! set_custom_file_icon "${applications_icon_source_full_path}" "${link_path}"; then
+                    echo "Applying a custom icon to the Applications drop-link failed; keeping the default alias icon." >&2
+                fi
+            fi
+
+            return 0
+        fi
+    fi
+
+    ln -s /Applications "${link_path}"
+}
 
 rm -rf "${output_root_full_path}"
 mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}"
@@ -116,13 +170,14 @@ ${icon_plist_entries}
 EOF
 
 cp -R "${bundle_directory_path}" "${staging_directory_path}/"
-ln -s /Applications "${staging_directory_path}/Applications"
+create_applications_drop_link "${staging_directory_path}"
 
 hdiutil create \
     -volname "${bundle_name}" \
     -srcfolder "${staging_directory_path}" \
     -ov \
     -format UDRW \
+    -fs HFS+ \
     "${temporary_dmg_path}"
 
 attach_output="$(hdiutil attach \
@@ -131,7 +186,7 @@ attach_output="$(hdiutil attach \
     -noautoopen \
     "${temporary_dmg_path}")"
 
-mount_directory_path="$(printf '%s\n' "${attach_output}" | awk '/\/Volumes\// {print $NF}' | tail -n 1)"
+mount_directory_path="$(printf '%s\n' "${attach_output}" | awk -F '\t' '/\/Volumes\// {print $NF}' | tail -n 1)"
 mounted_volume_name="$(basename "${mount_directory_path}")"
 
 if [[ -z "${mount_directory_path}" || ! -d "${mount_directory_path}" ]]; then
@@ -170,6 +225,12 @@ EOF
     fi
 fi
 
+if [[ -f "${icon_source_full_path}" ]] && command -v SetFile >/dev/null 2>&1; then
+    cp "${icon_source_full_path}" "${mount_directory_path}/.VolumeIcon.icns"
+    SetFile -a C "${mount_directory_path}"
+    SetFile -a V "${mount_directory_path}/.VolumeIcon.icns"
+fi
+
 sync
 hdiutil detach "${mount_directory_path}" -quiet
 
@@ -182,6 +243,12 @@ hdiutil convert \
     >/dev/null
 
 rm -f "${temporary_dmg_path}"
+
+if [[ -f "${icon_source_full_path}" ]]; then
+    if ! set_custom_file_icon "${icon_source_full_path}" "${dmg_path}"; then
+        echo "Applying a custom icon to the DMG file failed; keeping the default file icon." >&2
+    fi
+fi
 
 echo "macOS bundle created at: ${bundle_directory_path}"
 echo "DMG created at: ${dmg_path}"
