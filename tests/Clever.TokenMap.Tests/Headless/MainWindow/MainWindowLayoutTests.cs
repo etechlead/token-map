@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
@@ -323,6 +324,60 @@ public sealed class MainWindowLayoutTests
         Assert.False(modal.IsVisible);
         Assert.False(backdrop.IsVisible);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, viewModel.Toolbar.BuildScanOptions().GlobalExcludes);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_Escape_ClosesExcludesEditorModal()
+    {
+        var window = new AppMainWindow
+        {
+            DataContext = CreateMainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        viewModel.OpenGlobalExcludesEditorCommand.Execute(null);
+        window.UpdateLayout();
+
+        var keyArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = window,
+            Key = Key.Escape,
+        };
+
+        window.RaiseEvent(keyArgs);
+        window.UpdateLayout();
+
+        Assert.True(keyArgs.Handled);
+        Assert.False(viewModel.ExcludesEditor.IsOpen);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_Escape_ClosesShareSnapshotModal()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: "C:\\Demo");
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        viewModel.OpenShareSnapshotCommand.Execute(null);
+        window.UpdateLayout();
+
+        var keyArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = window,
+            Key = Key.Escape,
+        };
+
+        window.RaiseEvent(keyArgs);
+        window.UpdateLayout();
+
+        Assert.True(keyArgs.Handled);
+        Assert.False(viewModel.IsShareSnapshotOpen);
     }
 
     [AvaloniaFact]
