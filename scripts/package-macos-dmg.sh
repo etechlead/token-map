@@ -10,9 +10,9 @@ configuration="${CONFIGURATION:-Release}"
 runtime_identifier="${RUNTIME_IDENTIFIER:-osx-arm64}"
 bundle_name="${BUNDLE_NAME:-TokenMap}"
 output_root="${OUTPUT_ROOT:-.artifacts/macos-arm64}"
-artifact_name="${ARTIFACT_NAME:-TokenMap-macos-arm64}"
+artifact_name="${ARTIFACT_NAME:-}"
 bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
-bundle_version="${BUNDLE_VERSION:-1.0.0}"
+bundle_version="${BUNDLE_VERSION:-}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -22,7 +22,6 @@ bundle_contents_path="${bundle_directory_path}/Contents"
 bundle_macos_path="${bundle_contents_path}/MacOS"
 bundle_resources_path="${bundle_contents_path}/Resources"
 staging_directory_path="${output_root_full_path}/dmg-stage"
-dmg_path="${output_root_full_path}/${artifact_name}.dmg"
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
 
@@ -34,10 +33,20 @@ if command -v xmllint >/dev/null 2>&1; then
         assembly_name="${assembly_name_value}"
     fi
 
-    if [[ -n "${version_value}" ]]; then
+    if [[ -z "${bundle_version}" && -n "${version_value}" ]]; then
         bundle_version="${version_value}"
     fi
 fi
+
+if [[ -z "${bundle_version}" ]]; then
+    bundle_version="1.0.0"
+fi
+
+if [[ -z "${artifact_name}" ]]; then
+    artifact_name="TokenMap-macos-arm64-${bundle_version}-unsigned"
+fi
+
+dmg_path="${output_root_full_path}/${artifact_name}.dmg"
 
 published_executable_path="${publish_directory_path}/${assembly_name}"
 
@@ -50,6 +59,7 @@ dotnet publish "${project_full_path}" \
     -r "${runtime_identifier}" \
     --self-contained true \
     -p:UseAppHost=true \
+    -p:Version="${bundle_version}" \
     -o "${publish_directory_path}"
 
 if [[ ! -f "${published_executable_path}" ]]; then
