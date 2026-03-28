@@ -24,7 +24,6 @@ bundle_contents_path="${bundle_directory_path}/Contents"
 bundle_macos_path="${bundle_contents_path}/MacOS"
 bundle_resources_path="${bundle_contents_path}/Resources"
 staging_directory_path="${output_root_full_path}/dmg-stage"
-mount_directory_path="${output_root_full_path}/dmg-mount"
 temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 icon_source_full_path="${repo_root}/${icon_source_path}"
 
@@ -57,7 +56,7 @@ temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 published_executable_path="${publish_directory_path}/${assembly_name}"
 
 rm -rf "${output_root_full_path}"
-mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}" "${mount_directory_path}"
+mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}"
 
 echo "Publishing ${project_full_path} for ${runtime_identifier}..."
 dotnet publish "${project_full_path}" \
@@ -126,20 +125,26 @@ hdiutil create \
     -format UDRW \
     "${temporary_dmg_path}"
 
-hdiutil attach \
-    -mountpoint "${mount_directory_path}" \
+attach_output="$(hdiutil attach \
     -readwrite \
     -noverify \
     -noautoopen \
-    "${temporary_dmg_path}" \
-    >/dev/null
+    "${temporary_dmg_path}")"
+
+mount_directory_path="$(printf '%s\n' "${attach_output}" | awk '/\/Volumes\// {print $NF}' | tail -n 1)"
+mounted_volume_name="$(basename "${mount_directory_path}")"
+
+if [[ -z "${mount_directory_path}" || ! -d "${mount_directory_path}" ]]; then
+    echo "Mounted DMG volume path could not be determined." >&2
+    exit 1
+fi
 
 if command -v osascript >/dev/null 2>&1; then
     rm -f "${mount_directory_path}/Applications"
 
     if ! osascript <<EOF
 tell application "Finder"
-    tell disk "${bundle_name}"
+    tell disk "${mounted_volume_name}"
         open
         set current view of container window to icon view
         set toolbar visible of container window to false
@@ -150,12 +155,12 @@ tell application "Finder"
         set icon size of theViewOptions to 128
         set text size of theViewOptions to 14
 
-        if not (exists alias file "Applications" of disk "${bundle_name}") then
-            make new alias file at disk "${bundle_name}" to POSIX file "/Applications"
+        if not (exists alias file "Applications" of disk "${mounted_volume_name}") then
+            make new alias file at disk "${mounted_volume_name}" to POSIX file "/Applications"
         end if
 
-        set position of item "${bundle_name}.app" of disk "${bundle_name}" to {160, 150}
-        set position of item "Applications" of disk "${bundle_name}" to {460, 150}
+        set position of item "${bundle_name}.app" of disk "${mounted_volume_name}" to {160, 150}
+        set position of item "Applications" of disk "${mounted_volume_name}" to {460, 150}
         update without registering applications
         delay 1
         close
@@ -180,7 +185,6 @@ hdiutil convert \
     >/dev/null
 
 rm -f "${temporary_dmg_path}"
-rm -rf "${mount_directory_path}"
 
 echo "macOS bundle created at: ${bundle_directory_path}"
 echo "DMG created at: ${dmg_path}"
