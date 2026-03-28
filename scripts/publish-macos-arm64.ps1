@@ -3,7 +3,9 @@ param(
     [string]$Configuration = "Release",
     [string]$RuntimeIdentifier = "osx-arm64",
     [string]$BundleName = "TokenMap",
-    [string]$OutputRoot = ".artifacts/macos-arm64"
+    [string]$OutputRoot = ".artifacts/macos-arm64",
+    [string]$IconFileName = "app-icon.icns",
+    [string]$IconSourcePath = "src/Clever.TokenMap.App/Assets/app-icon.icns"
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,6 +40,7 @@ function Get-ProjectMetadata {
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
+$iconSourceFullPath = Join-Path $repoRoot $IconSourcePath
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
 
 $outputRootFullPath = Join-Path $repoRoot $OutputRoot
@@ -69,6 +72,15 @@ if (-not (Test-Path $publishedExecutablePath -PathType Leaf)) {
 
 Copy-Item -Path (Join-Path $publishDirectoryPath "*") -Destination $bundleMacOsPath -Recurse -Force
 
+$iconPlist = ""
+if (Test-Path $iconSourceFullPath -PathType Leaf) {
+    Copy-Item -Path $iconSourceFullPath -Destination (Join-Path $bundleResourcesPath $IconFileName) -Force
+    $iconPlist = @"
+    <key>CFBundleIconFile</key>
+    <string>$IconFileName</string>
+"@
+}
+
 $infoPlistPath = Join-Path $bundleContentsPath "Info.plist"
 $infoPlist = @"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -89,6 +101,7 @@ $infoPlist = @"
     <string>$BundleName</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+$iconPlist
     <key>CFBundleShortVersionString</key>
     <string>$($metadata.Version)</string>
     <key>CFBundleVersion</key>

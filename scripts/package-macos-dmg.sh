@@ -13,6 +13,8 @@ output_root="${OUTPUT_ROOT:-.artifacts/macos-arm64}"
 artifact_name="${ARTIFACT_NAME:-}"
 bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
 bundle_version="${BUNDLE_VERSION:-}"
+icon_file_name="${ICON_FILE_NAME:-app-icon.icns}"
+icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/${icon_file_name}}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -22,6 +24,9 @@ bundle_contents_path="${bundle_directory_path}/Contents"
 bundle_macos_path="${bundle_contents_path}/MacOS"
 bundle_resources_path="${bundle_contents_path}/Resources"
 staging_directory_path="${output_root_full_path}/dmg-stage"
+mount_directory_path="${output_root_full_path}/dmg-mount"
+temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
+icon_source_full_path="${repo_root}/${icon_source_path}"
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
 
@@ -47,11 +52,12 @@ if [[ -z "${artifact_name}" ]]; then
 fi
 
 dmg_path="${output_root_full_path}/${artifact_name}.dmg"
+temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 
 published_executable_path="${publish_directory_path}/${assembly_name}"
 
 rm -rf "${output_root_full_path}"
-mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}"
+mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}" "${mount_directory_path}"
 
 echo "Publishing ${project_full_path} for ${runtime_identifier}..."
 dotnet publish "${project_full_path}" \
@@ -69,6 +75,16 @@ fi
 
 cp -R "${publish_directory_path}/." "${bundle_macos_path}/"
 chmod +x "${bundle_macos_path}/${assembly_name}"
+
+icon_plist_entries=""
+if [[ -f "${icon_source_full_path}" ]]; then
+    cp "${icon_source_full_path}" "${bundle_resources_path}/${icon_file_name}"
+    icon_plist_entries=$(cat <<EOF
+    <key>CFBundleIconFile</key>
+    <string>${icon_file_name}</string>
+EOF
+)
+fi
 
 cat > "${bundle_contents_path}/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -89,6 +105,7 @@ cat > "${bundle_contents_path}/Info.plist" <<EOF
     <string>${bundle_name}</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+${icon_plist_entries}
     <key>CFBundleShortVersionString</key>
     <string>${bundle_version}</string>
     <key>CFBundleVersion</key>
@@ -106,8 +123,64 @@ hdiutil create \
     -volname "${bundle_name}" \
     -srcfolder "${staging_directory_path}" \
     -ov \
+    -format UDRW \
+    "${temporary_dmg_path}"
+
+hdiutil attach \
+    -mountpoint "${mount_directory_path}" \
+    -readwrite \
+    -noverify \
+    -noautoopen \
+    "${temporary_dmg_path}" \
+    >/dev/null
+
+if command -v osascript >/dev/null 2>&1; then
+    rm -f "${mount_directory_path}/Applications"
+
+    if ! osascript <<EOF
+tell application "Finder"
+    tell disk "${bundle_name}"
+        open
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        set bounds of container window to {120, 120, 760, 420}
+        set theViewOptions to the icon view options of container window
+        set arrangement of theViewOptions to not arranged
+        set icon size of theViewOptions to 128
+        set text size of theViewOptions to 14
+
+        if not (exists alias file "Applications" of disk "${bundle_name}") then
+            make new alias file at disk "${bundle_name}" to POSIX file "/Applications"
+        end if
+
+        set position of item "${bundle_name}.app" of disk "${bundle_name}" to {160, 150}
+        set position of item "Applications" of disk "${bundle_name}" to {460, 150}
+        update without registering applications
+        delay 1
+        close
+    end tell
+end tell
+EOF
+    then
+        echo "Finder customization failed; restoring the fallback Applications link." >&2
+        ln -s /Applications "${mount_directory_path}/Applications"
+    fi
+fi
+
+sync
+hdiutil detach "${mount_directory_path}" -quiet
+
+hdiutil convert \
+    "${temporary_dmg_path}" \
+    -ov \
     -format UDZO \
-    "${dmg_path}"
+    -imagekey zlib-level=9 \
+    -o "${dmg_path}" \
+    >/dev/null
+
+rm -f "${temporary_dmg_path}"
+rm -rf "${mount_directory_path}"
 
 echo "macOS bundle created at: ${bundle_directory_path}"
 echo "DMG created at: ${dmg_path}"

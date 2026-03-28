@@ -70,6 +70,7 @@ bash ./scripts/package-macos-dmg.sh
 The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64-<version>-unsigned.dmg` by default. The workflow in [package-macos-unsigned.yml](.github/workflows/package-macos-unsigned.yml) is manual-only and can build from a selected branch or tag, optionally skip tests for older packaging-only tags, then attach the unsigned DMG to an existing GitHub Release.
 
 The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
+When the DMG opens, drag `TokenMap` into `Applications`, then launch it from `Applications`.
 
 Build a per-user Windows installer:
 
