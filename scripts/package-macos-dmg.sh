@@ -140,8 +140,6 @@ if [[ -z "${mount_directory_path}" || ! -d "${mount_directory_path}" ]]; then
 fi
 
 if command -v osascript >/dev/null 2>&1; then
-    rm -f "${mount_directory_path}/Applications"
-
     if ! osascript <<EOF
 tell application "Finder"
     tell disk "${mounted_volume_name}"
@@ -155,12 +153,12 @@ tell application "Finder"
         set icon size of theViewOptions to 128
         set text size of theViewOptions to 14
 
-        if not (exists alias file "Applications" of disk "${mounted_volume_name}") then
-            make new alias file at disk "${mounted_volume_name}" to POSIX file "/Applications"
+        if not (exists item "Applications") then
+            error "Applications link was not found."
         end if
 
-        set position of item "${bundle_name}.app" of disk "${mounted_volume_name}" to {160, 150}
-        set position of item "Applications" of disk "${mounted_volume_name}" to {460, 150}
+        set position of item "${bundle_name}.app" to {160, 150}
+        set position of item "Applications" to {460, 150}
         update without registering applications
         delay 1
         close
@@ -168,8 +166,7 @@ tell application "Finder"
 end tell
 EOF
     then
-        echo "Finder customization failed; restoring the fallback Applications link." >&2
-        ln -s /Applications "${mount_directory_path}/Applications"
+        echo "Finder customization failed; keeping the fallback DMG layout." >&2
     fi
 fi
 
