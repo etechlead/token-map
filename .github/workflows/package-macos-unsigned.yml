@@ -3,21 +3,16 @@ name: package-macos-unsigned
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: Git ref to build, for example `main` or `v0.1.0`
+      git_ref:
+        description: Git ref to build, such as main or v0.1.0
         required: true
         default: main
-        type: string
       version:
-        description: Optional version override to embed in the bundle and DMG name
+        description: Optional version override for the app bundle and DMG
         required: false
-        default: ""
-        type: string
       release_tag:
-        description: Optional existing GitHub Release tag to attach the DMG to, for example `v0.1.0`
+        description: Optional existing release tag to receive the DMG asset
         required: false
-        default: ""
-        type: string
 
 permissions:
   contents: write
@@ -30,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.git_ref }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -42,26 +37,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          ref_input='${{ inputs.ref }}'
+          git_ref='${{ inputs.git_ref }}'
           version_input='${{ inputs.version }}'
+          release_tag_input='${{ inputs.release_tag }}'
 
           if [[ -n "${version_input}" ]]; then
             resolved_version="${version_input}"
-          elif [[ "${ref_input}" == v* ]]; then
-            resolved_version="${ref_input#v}"
+          elif [[ "${git_ref}" == v* ]]; then
+            resolved_version="${git_ref#v}"
           else
-            resolved_version="$(python3 - <<'PY'
-import xml.etree.ElementTree as ET
-
-tree = ET.parse("src/Clever.TokenMap.App/Clever.TokenMap.App.csproj")
-root = tree.getroot()
-
-for element in root.iter():
-    if element.tag.endswith("Version") and element.text and element.text.strip():
-        print(element.text.strip())
-        break
-PY
-)"
+            resolved_version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Clever.TokenMap.App/Clever.TokenMap.App.csproj | head -n 1)"
           fi
 
           if [[ -z "${resolved_version}" ]]; then
@@ -74,7 +59,7 @@ PY
           {
             echo "TOKENMAP_MACOS_VERSION=${resolved_version}"
             echo "TOKENMAP_MACOS_ARTIFACT_NAME=${artifact_name}"
-            echo "TOKENMAP_MACOS_RELEASE_TAG=${{ inputs.release_tag }}"
+            echo "TOKENMAP_MACOS_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
       - name: Restore
@@ -93,7 +78,7 @@ PY
         run: bash ./scripts/package-macos-dmg.sh
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
           path: .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg

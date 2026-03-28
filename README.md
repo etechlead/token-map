@@ -67,7 +67,7 @@ Build an Apple Silicon macOS DMG on macOS:
 bash ./scripts/package-macos-dmg.sh
 ```
 
-The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64-<version>-unsigned.dmg` by default. The workflow in [release-macos.yml](.github/workflows/release-macos.yml) is manual-only and can build from a selected branch or tag, then optionally attach the unsigned DMG to an existing GitHub Release.
+The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64-<version>-unsigned.dmg` by default. The workflow in [package-macos-unsigned.yml](.github/workflows/package-macos-unsigned.yml) is manual-only and can build from a selected branch or tag, then optionally attach the unsigned DMG to an existing GitHub Release.
 
 The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
 
