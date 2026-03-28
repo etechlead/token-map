@@ -53,6 +53,7 @@ if [[ -z "${artifact_name}" ]]; then
 fi
 
 dmg_path="${output_root_full_path}/${artifact_name}.dmg"
+zip_path="${output_root_full_path}/${artifact_name}.zip"
 temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 
 published_executable_path="${publish_directory_path}/${assembly_name}"
@@ -184,6 +185,13 @@ if ! ad_hoc_sign_bundle "${bundle_directory_path}"; then
     exit 1
 fi
 
+if ! command -v ditto >/dev/null 2>&1; then
+    echo "The 'ditto' tool is required to package the macOS ZIP artifact." >&2
+    exit 1
+fi
+
+ditto -c -k --keepParent "${bundle_directory_path}" "${zip_path}"
+
 cp -R "${bundle_directory_path}" "${staging_directory_path}/"
 create_applications_drop_link "${staging_directory_path}"
 
@@ -266,4 +274,5 @@ if [[ -f "${icon_source_full_path}" ]]; then
 fi
 
 echo "macOS bundle created at: ${bundle_directory_path}"
+echo "ZIP created at: ${zip_path}"
 echo "DMG created at: ${dmg_path}"

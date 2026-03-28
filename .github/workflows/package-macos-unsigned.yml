@@ -76,7 +76,7 @@ jobs:
         if: inputs.run_tests != 'false'
         run: dotnet test Clever.TokenMap.sln --no-build
 
-      - name: Package macOS DMG
+      - name: Package macOS artifacts
         env:
           ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
           BUNDLE_VERSION: ${{ env.TOKENMAP_MACOS_VERSION }}
@@ -86,11 +86,17 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
-          path: .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg
+          path: |
+            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg
+            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.zip
           if-no-files-found: error
 
-      - name: Attach DMG to GitHub release
+      - name: Attach macOS artifacts to GitHub release
         if: env.TOKENMAP_MACOS_RELEASE_TAG != ''
-        run: gh release upload "${{ env.TOKENMAP_MACOS_RELEASE_TAG }}" ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg" --clobber
+        run: |
+          gh release upload "${{ env.TOKENMAP_MACOS_RELEASE_TAG }}" \
+            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg" \
+            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.zip" \
+            --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
