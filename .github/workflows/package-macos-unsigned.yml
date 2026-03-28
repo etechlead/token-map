@@ -83,7 +83,7 @@ jobs:
         run: bash ./scripts/package-macos-dmg.sh
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
           path: .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg

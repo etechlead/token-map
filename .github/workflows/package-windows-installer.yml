@@ -1,4 +1,4 @@
-name: release-windows
+name: package-windows-installer
 
 on:
   workflow_dispatch:
@@ -71,7 +71,7 @@ jobs:
           "TOKENMAP_INSTALLER_NAME=$($installer.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.TOKENMAP_INSTALLER_NAME }}
           path: ${{ env.TOKENMAP_INSTALLER_PATH }}
