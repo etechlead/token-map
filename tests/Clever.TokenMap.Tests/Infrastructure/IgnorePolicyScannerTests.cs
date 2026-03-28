@@ -14,9 +14,10 @@ public sealed class IgnorePolicyScannerTests
     [Fact]
     public async Task ScanAsync_RespectsGitIgnoreAndSourceControlDefaults()
     {
+        using var fixture = CreateIgnorePolicyFixtureProject();
         var scanner = new FileSystemProjectScanner();
 
-        var snapshot = await scanner.ScanAsync(_fixtureRoot, ScanOptions.Default, progress: null, CancellationToken.None);
+        var snapshot = await scanner.ScanAsync(fixture.RootPath, ScanOptions.Default, progress: null, CancellationToken.None);
         var relativePaths = GetRelativePaths(snapshot.Root);
 
         Assert.Contains("keep-root.txt", relativePaths);
@@ -34,6 +35,7 @@ public sealed class IgnorePolicyScannerTests
     [Fact]
     public async Task ScanAsync_GlobalExcludes_FollowGitIgnoreNameOnlyRules()
     {
+        using var fixture = CreateIgnorePolicyFixtureProject();
         var scanner = new FileSystemProjectScanner();
         var options = new ScanOptions
         {
@@ -42,7 +44,7 @@ public sealed class IgnorePolicyScannerTests
             GlobalExcludes = ["scripts", "keep-root.txt"],
         };
 
-        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var snapshot = await scanner.ScanAsync(fixture.RootPath, options, progress: null, CancellationToken.None);
         var relativePaths = GetRelativePaths(snapshot.Root);
 
         Assert.DoesNotContain("scripts", relativePaths);
@@ -54,6 +56,7 @@ public sealed class IgnorePolicyScannerTests
     [Fact]
     public async Task ScanAsync_TogglesIgnorePolicies()
     {
+        using var fixture = CreateIgnorePolicyFixtureProject();
         var scanner = new FileSystemProjectScanner();
         var options = new ScanOptions
         {
@@ -61,7 +64,7 @@ public sealed class IgnorePolicyScannerTests
             UseGlobalExcludes = false,
         };
 
-        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var snapshot = await scanner.ScanAsync(fixture.RootPath, options, progress: null, CancellationToken.None);
         var relativePaths = GetRelativePaths(snapshot.Root);
 
         Assert.Contains("root-hidden.txt", relativePaths);
@@ -75,6 +78,7 @@ public sealed class IgnorePolicyScannerTests
     [Fact]
     public async Task ScanAsync_GlobalExcludes_SupportRootRelativeRules()
     {
+        using var fixture = CreateIgnorePolicyFixtureProject();
         var scanner = new FileSystemProjectScanner();
         var options = new ScanOptions
         {
@@ -83,7 +87,7 @@ public sealed class IgnorePolicyScannerTests
             GlobalExcludes = ["/scripts/"],
         };
 
-        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var snapshot = await scanner.ScanAsync(fixture.RootPath, options, progress: null, CancellationToken.None);
         var relativePaths = GetRelativePaths(snapshot.Root);
 
         Assert.DoesNotContain("scripts", relativePaths);
@@ -94,6 +98,7 @@ public sealed class IgnorePolicyScannerTests
     [Fact]
     public async Task ScanAsync_GlobalExcludes_SupportNegationRules()
     {
+        using var fixture = CreateIgnorePolicyFixtureProject();
         var scanner = new FileSystemProjectScanner();
         var options = new ScanOptions
         {
@@ -106,7 +111,7 @@ public sealed class IgnorePolicyScannerTests
             ],
         };
 
-        var snapshot = await scanner.ScanAsync(_fixtureRoot, options, progress: null, CancellationToken.None);
+        var snapshot = await scanner.ScanAsync(fixture.RootPath, options, progress: null, CancellationToken.None);
         var relativePaths = GetRelativePaths(snapshot.Root);
 
         Assert.DoesNotContain("scripts", relativePaths);
@@ -232,6 +237,14 @@ public sealed class IgnorePolicyScannerTests
         Assert.Contains("dist/output.txt", relativePaths);
     }
 
+    private TemporaryProject CreateIgnorePolicyFixtureProject()
+    {
+        var fixture = TemporaryProject.Create();
+        fixture.CopyDirectoryContentsFrom(_fixtureRoot);
+        fixture.WriteFile(".git/config", "[core]\n");
+        return fixture;
+    }
+
     private static string FindRepositoryRoot()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -293,6 +306,40 @@ public sealed class IgnorePolicyScannerTests
             var fullPath = Path.Combine(RootPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
             File.WriteAllText(fullPath, contents);
+        }
+
+        public void CopyDirectoryContentsFrom(string sourceRootPath)
+        {
+            foreach (var directoryPath in Directory.GetDirectories(sourceRootPath, "*", SearchOption.AllDirectories))
+            {
+                var relativePath = Path.GetRelativePath(sourceRootPath, directoryPath);
+                if (IsFixtureGitPath(relativePath))
+                {
+                    continue;
+                }
+
+                Directory.CreateDirectory(Path.Combine(RootPath, relativePath));
+            }
+
+            foreach (var filePath in Directory.GetFiles(sourceRootPath, "*", SearchOption.AllDirectories))
+            {
+                var relativePath = Path.GetRelativePath(sourceRootPath, filePath);
+                if (IsFixtureGitPath(relativePath))
+                {
+                    continue;
+                }
+
+                var destinationPath = Path.Combine(RootPath, relativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
+                File.Copy(filePath, destinationPath, overwrite: true);
+            }
+        }
+
+        private static bool IsFixtureGitPath(string relativePath)
+        {
+            var normalizedRelativePath = relativePath.Replace(Path.DirectorySeparatorChar, '/');
+            return normalizedRelativePath.Equals(".git", StringComparison.Ordinal) ||
+                   normalizedRelativePath.StartsWith(".git/", StringComparison.Ordinal);
         }
 
         public void Dispose()
