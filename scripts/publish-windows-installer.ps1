@@ -53,7 +53,7 @@ function Get-ProjectMetadata {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
-$fallbackVersion = "0.1.0-local"
+$fallbackVersion = "0.1.1-local"
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
         $Version

@@ -7,7 +7,7 @@
 #define MyAppVersion GetEnv("TOKENMAP_APP_VERSION")
 #if MyAppVersion == ""
   #undef MyAppVersion
-  #define MyAppVersion "0.1.0-local"
+  #define MyAppVersion "0.1.1-local"
 #endif
 
 #define MyAppPublisher GetEnv("TOKENMAP_APP_PUBLISHER")
@@ -25,7 +25,7 @@
 #define MyArtifactBaseName GetEnv("TOKENMAP_ARTIFACT_BASENAME")
 #if MyArtifactBaseName == ""
   #undef MyArtifactBaseName
-  #define MyArtifactBaseName "TokenMap-win-x64-0.1.0-local"
+  #define MyArtifactBaseName "TokenMap-win-x64-0.1.1-local"
 #endif
 
 #define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"

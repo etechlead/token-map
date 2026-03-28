@@ -10,7 +10,7 @@
 - TokenMap uses Semantic Versioning in the form `MAJOR.MINOR.PATCH`.
 - Until `1.0.0`, `MINOR` may include user-visible behavior changes that would otherwise count as breaking changes; `PATCH` stays reserved for fixes and low-risk polish.
 - Official release tags use the same public version with a `v` prefix, for example `v0.1.0`.
-- Public prereleases use SemVer prerelease labels on the same tag model, for example `v0.2.0-beta.1` or `v0.2.0-rc.1`.
+- Public prereleases use SemVer prerelease labels on the same tag model, for example `v0.1.1-beta.1` or `v0.1.1-rc.1`.
 
 ## Branching Model
 
@@ -23,7 +23,7 @@
 
 - Every build should have a user-facing version string and a diagnostic build identity.
 - Official release builds use the release version directly, for example `0.1.0`.
-- Non-release builds may append a prerelease or local suffix such as `0.2.0-dev.15` or `0.2.0-local`.
+- Non-release builds may append a prerelease or local suffix such as `0.1.1-dev.15` or `0.1.1-local`.
 - Non-release builds may include commit metadata for diagnostics, for example a short SHA and a dirty-working-tree marker.
 - Local builds must keep working even when git metadata is unavailable; they must fall back to a safe local version instead of failing the build.
 
@@ -41,3 +41,4 @@
 - Create an official release by tagging the intended commit on `main` with the matching `vX.Y.Z` version.
 - Publish GitHub release assets from that tagged commit.
 - After an official release, bump the next planned version in build metadata rather than continuing to build new work as the old release number.
+- Default the next planned version to the next patch release, for example `0.1.0` -> `0.1.1-local`, unless there is an explicit decision to start the next minor or major line immediately.
