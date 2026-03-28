@@ -1,6 +1,6 @@
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
 
@@ -19,12 +19,14 @@ public sealed class RecentFoldersViewModelTests
     [Fact]
     public void RemoveRecentFolderCommand_RemovesOneEntry()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var viewModel = CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateSnapshot()),
             recentFolderPaths:
             [
-                "C:\\RepoA",
-                "C:\\RepoB",
+                repoAPath,
+                repoBPath,
             ]);
 
         var folderToRemove = Assert.Single(viewModel.RecentFolders.Items, folder => folder.DisplayName == "RepoB");
@@ -38,12 +40,14 @@ public sealed class RecentFoldersViewModelTests
     [Fact]
     public void ClearRecentFoldersCommand_ClearsListAndRestoresFlyoutPlaceholder()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var viewModel = CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateSnapshot()),
             recentFolderPaths:
             [
-                "C:\\RepoA",
-                "C:\\RepoB",
+                repoAPath,
+                repoBPath,
             ]);
 
         viewModel.RecentFolders.ClearRecentFoldersCommand.Execute(null);

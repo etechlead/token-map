@@ -13,10 +13,12 @@ namespace Clever.TokenMap.App.Views;
 public partial class ShareSnapshotModalView : UserControl
 {
     private int _copyFeedbackVersion;
+    private readonly RetainedClipboardResource<Bitmap> _retainedClipboardBitmap = new();
 
     public ShareSnapshotModalView()
     {
         InitializeComponent();
+        DetachedFromVisualTree += (_, _) => _retainedClipboardBitmap.Clear();
     }
 
     private async void ShareSnapshotCopyButton_OnClick(object? sender, RoutedEventArgs e)
@@ -45,11 +47,23 @@ public partial class ShareSnapshotModalView : UserControl
 
             var renderScaling = Math.Max(1d, TopLevel.GetTopLevel(this)?.RenderScaling ?? 1d);
             var exportSettings = GetBitmapExportSettings(shareCardRoot.Bounds.Size, renderScaling);
-            using var bitmap = new RenderTargetBitmap(exportSettings.PixelSize, exportSettings.Dpi);
+            var bitmap = new RenderTargetBitmap(exportSettings.PixelSize, exportSettings.Dpi);
             bitmap.Render(shareCardRoot);
-            await clipboard.SetBitmapAsync(bitmap);
-            await clipboard.FlushAsync();
-            SetCopyFeedbackState(ShareCopyFeedbackState.Success);
+            try
+            {
+                await clipboard.SetBitmapAsync(bitmap);
+                await clipboard.FlushAsync();
+
+                // Keep the rendered bitmap alive after the copy call because non-Windows
+                // clipboards may request the image lazily when the user pastes elsewhere.
+                _retainedClipboardBitmap.Replace(bitmap);
+                SetCopyFeedbackState(ShareCopyFeedbackState.Success);
+            }
+            catch
+            {
+                bitmap.Dispose();
+                throw;
+            }
         }
         catch
         {
@@ -97,4 +111,28 @@ public partial class ShareSnapshotModalView : UserControl
     }
 
     internal readonly record struct BitmapExportSettings(PixelSize PixelSize, Vector Dpi);
+}
+
+internal sealed class RetainedClipboardResource<T>
+    where T : class, IDisposable
+{
+    private T? _current;
+
+    internal T? Current => _current;
+
+    internal void Replace(T value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var previous = _current;
+        _current = value;
+        previous?.Dispose();
+    }
+
+    internal void Clear()
+    {
+        var current = _current;
+        _current = null;
+        current?.Dispose();
+    }
 }

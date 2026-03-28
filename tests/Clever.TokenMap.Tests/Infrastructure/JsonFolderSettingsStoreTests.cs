@@ -1,5 +1,6 @@
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Settings;
+using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Infrastructure;
 
@@ -26,10 +27,11 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     public void Load_ReturnsDefaults_WhenFileDoesNotExist()
     {
         var store = CreateStore();
+        var rootPath = TestPaths.Folder("Repo");
 
-        var settings = store.Load(@"C:\Repo");
+        var settings = store.Load(rootPath);
 
-        Assert.Equal(@"C:\Repo", settings.RootPath);
+        Assert.Equal(rootPath, settings.RootPath);
         Assert.False(settings.Scan.UseFolderExcludes);
         Assert.Empty(settings.Scan.FolderExcludes);
     }
@@ -38,13 +40,14 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     public void Load_FallsBackToDefaults_WhenFileIsMalformed()
     {
         var store = CreateStore();
-        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(@"C:\Repo");
+        var rootPath = TestPaths.Folder("Repo");
+        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(rootPath);
         Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
         File.WriteAllText(settingsFilePath, "{ invalid json");
 
-        var settings = store.Load(@"C:\Repo");
+        var settings = store.Load(rootPath);
 
-        Assert.Equal(@"C:\Repo", settings.RootPath);
+        Assert.Equal(rootPath, settings.RootPath);
         Assert.False(settings.Scan.UseFolderExcludes);
         Assert.Empty(settings.Scan.FolderExcludes);
     }
@@ -53,7 +56,8 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     public void Load_IgnoresInvalidPersistedRootPath()
     {
         var store = CreateStore();
-        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(@"C:\Repo");
+        var rootPath = TestPaths.Folder("Repo");
+        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(rootPath);
         Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
         File.WriteAllText(
             settingsFilePath,
@@ -67,9 +71,9 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
             }
             """);
 
-        var settings = store.Load(@"C:\Repo");
+        var settings = store.Load(rootPath);
 
-        Assert.Equal(@"C:\Repo", settings.RootPath);
+        Assert.Equal(rootPath, settings.RootPath);
         Assert.False(settings.Scan.UseFolderExcludes);
         Assert.Empty(settings.Scan.FolderExcludes);
     }
@@ -78,15 +82,16 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     public void Save_WritesJsonThatCanBeLoadedAgain()
     {
         var store = CreateStore();
-        var settings = FolderSettings.CreateDefault(@"C:\Repo");
+        var rootPath = TestPaths.Folder("Repo");
+        var settings = FolderSettings.CreateDefault(rootPath);
         settings.Scan.UseFolderExcludes = true;
         settings.Scan.FolderExcludes = [" /dist// ", "", "# generated", "!/dist/keep.txt"];
 
-        store.Save(@"C:\Repo", settings);
+        store.Save(rootPath, settings);
 
-        var reloaded = store.Load(@"C:\Repo");
+        var reloaded = store.Load(rootPath);
 
-        Assert.Equal(@"C:\Repo", reloaded.RootPath);
+        Assert.Equal(rootPath, reloaded.RootPath);
         Assert.True(reloaded.Scan.UseFolderExcludes);
         Assert.Collection(
             reloaded.Scan.FolderExcludes,

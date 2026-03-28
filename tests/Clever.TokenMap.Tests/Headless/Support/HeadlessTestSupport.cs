@@ -8,23 +8,26 @@ using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Support;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
 
 internal static class HeadlessTestSupport
 {
+    internal static string GetTestFolderPath(string folderName) => TestPaths.Folder(folderName);
+
     internal static ProjectSnapshot CreateSnapshot() =>
         new()
         {
-            RootPath = "C:\\Demo",
+            RootPath = TestPaths.Folder("Demo"),
             CapturedAtUtc = DateTimeOffset.UtcNow,
             Options = ScanOptions.Default,
             Root = new ProjectNode
             {
                 Id = "/",
                 Name = "Demo",
-                FullPath = "C:\\Demo",
+                FullPath = TestPaths.Folder("Demo"),
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
@@ -39,7 +42,7 @@ internal static class HeadlessTestSupport
                     {
                         Id = "Program.cs",
                         Name = "Program.cs",
-                        FullPath = "C:\\Demo\\Program.cs",
+                        FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "Program.cs"),
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
                         Metrics = new NodeMetrics(
@@ -56,14 +59,14 @@ internal static class HeadlessTestSupport
     internal static ProjectSnapshot CreateNestedSnapshot() =>
         new()
         {
-            RootPath = "C:\\Demo",
+            RootPath = TestPaths.Folder("Demo"),
             CapturedAtUtc = DateTimeOffset.UtcNow,
             Options = ScanOptions.Default,
             Root = new ProjectNode
             {
                 Id = "/",
                 Name = "Demo",
-                FullPath = "C:\\Demo",
+                FullPath = TestPaths.Folder("Demo"),
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
@@ -78,7 +81,7 @@ internal static class HeadlessTestSupport
                     {
                         Id = "src",
                         Name = "src",
-                        FullPath = "C:\\Demo\\src",
+                        FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "src"),
                         RelativePath = "src",
                         Kind = ProjectNodeKind.Directory,
                         Metrics = new NodeMetrics(
@@ -93,7 +96,7 @@ internal static class HeadlessTestSupport
                             {
                                 Id = "src/Program.cs",
                                 Name = "Program.cs",
-                                FullPath = "C:\\Demo\\src\\Program.cs",
+                                FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "src", "Program.cs"),
                                 RelativePath = "src/Program.cs",
                                 Kind = ProjectNodeKind.File,
                                 Metrics = new NodeMetrics(
@@ -111,11 +114,12 @@ internal static class HeadlessTestSupport
 
     internal static ProjectNode CreateRootWithChildren(params (string Name, long FileSizeBytes, int Tokens, int NonEmptyLines)[] children)
     {
+        var demoRootPath = TestPaths.Folder("Demo");
         var root = new ProjectNode
         {
             Id = "/",
             Name = "Demo",
-            FullPath = "C:\\Demo",
+            FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
@@ -132,7 +136,7 @@ internal static class HeadlessTestSupport
             {
                 Id = item.Name,
                 Name = item.Name,
-                FullPath = Path.Combine("C:\\Demo", item.Name),
+                FullPath = Path.Combine(demoRootPath, item.Name),
                 RelativePath = item.Name,
                 Kind = ProjectNodeKind.File,
                 Metrics = new NodeMetrics(
@@ -153,19 +157,19 @@ internal static class HeadlessTestSupport
         IPathShellService? pathShellService = null) =>
         CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateSnapshot()),
-            selectedFolderPath,
+            selectedFolderPath ?? TestPaths.Folder("Demo"),
             recentFolderPaths,
             pathShellService);
 
     internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
-        string? selectedFolderPath = "C:\\Demo",
+        string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,
         IPathShellService? pathShellService = null)
     {
         var analysisSessionController = new AnalysisSessionController(
             projectAnalyzer,
-            new StubFolderPickerService(selectedFolderPath),
+            new StubFolderPickerService(selectedFolderPath ?? TestPaths.Folder("Demo")),
             new StubFolderPathService());
         var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths);
         var folderPathService = new StubFolderPathService();

@@ -10,6 +10,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Treemap;
+using PathShape = Avalonia.Controls.Shapes.Path;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
@@ -19,8 +20,9 @@ public sealed class ShareSnapshotModalTests
     [AvaloniaFact]
     public async Task ShareSnapshotModal_ProjectNameControlsTrackCheckboxState()
     {
+        var demoRootPath = GetTestFolderPath("Demo");
         var window = new AppMainWindow();
-        var viewModel = CreateMainWindowViewModel(selectedFolderPath: "C:\\Demo");
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
         window.DataContext = viewModel;
 
         window.Show();
@@ -63,8 +65,9 @@ public sealed class ShareSnapshotModalTests
     [AvaloniaFact]
     public async Task ShareSnapshotModal_ProjectNamePreviewUpdatesWhenUserEditsTitle()
     {
+        var demoRootPath = GetTestFolderPath("Demo");
         var window = new AppMainWindow();
-        var viewModel = CreateMainWindowViewModel(selectedFolderPath: "C:\\Demo");
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
         window.DataContext = viewModel;
 
         window.Show();
@@ -84,8 +87,9 @@ public sealed class ShareSnapshotModalTests
     [AvaloniaFact]
     public async Task ShareSnapshotModal_UsesSingleRoundedLayoutWithoutPresetControls()
     {
+        var demoRootPath = GetTestFolderPath("Demo");
         var window = new AppMainWindow();
-        var viewModel = CreateMainWindowViewModel(selectedFolderPath: "C:\\Demo");
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
         window.DataContext = viewModel;
 
         window.Show();
@@ -116,7 +120,7 @@ public sealed class ShareSnapshotModalTests
         try
         {
             var window = new AppMainWindow();
-            var viewModel = CreateMainWindowViewModel(selectedFolderPath: "C:\\Demo");
+            var viewModel = CreateMainWindowViewModel(selectedFolderPath: GetTestFolderPath("Demo"));
             window.DataContext = viewModel;
 
             window.Show();
@@ -151,8 +155,87 @@ public sealed class ShareSnapshotModalTests
     }
 
     [AvaloniaFact]
+    public async Task ShareSnapshotModal_ProjectTitle_KeepsComfortableTopInset()
+    {
+        var demoRootPath = GetTestFolderPath("Demo");
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
+        window.DataContext = viewModel;
+
+        try
+        {
+            window.Show();
+            await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+            viewModel.OpenShareSnapshotCommand.Execute(null);
+            window.UpdateLayout();
+
+            var shareCardRoot = FindNamedDescendant<Border>(window, "ShareCardRoot");
+            var projectTitleText = FindNamedDescendant<TextBlock>(window, "ShareProjectTitleText");
+
+            Assert.NotNull(shareCardRoot);
+            Assert.NotNull(projectTitleText);
+
+            var transform = projectTitleText.TransformToVisual(shareCardRoot);
+            Assert.NotNull(transform);
+
+            var titleBounds = new Rect(projectTitleText.Bounds.Size).TransformToAABB(transform.Value);
+            Assert.True(
+                titleBounds.Y >= 22,
+                $"Expected share card title to keep at least 22px of top inset, got {titleBounds.Y:F2}px.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ShareSnapshotModal_GithubIcon_StaysVerticallyCenteredWithRepositoryText()
+    {
+        var demoRootPath = GetTestFolderPath("Demo");
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
+        window.DataContext = viewModel;
+
+        try
+        {
+            window.Show();
+            await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+            viewModel.OpenShareSnapshotCommand.Execute(null);
+            window.UpdateLayout();
+
+            var shareCardRoot = FindNamedDescendant<Border>(window, "ShareCardRoot");
+            var githubIcon = FindNamedDescendant<PathShape>(window, "ShareFooterGithubIcon");
+            var repositoryText = FindNamedDescendant<TextBlock>(window, "ShareFooterRepositoryText");
+
+            Assert.NotNull(shareCardRoot);
+            Assert.NotNull(githubIcon);
+            Assert.NotNull(repositoryText);
+
+            var iconTransform = githubIcon.TransformToVisual(shareCardRoot);
+            var textTransform = repositoryText.TransformToVisual(shareCardRoot);
+            Assert.NotNull(iconTransform);
+            Assert.NotNull(textTransform);
+
+            var iconBounds = new Rect(githubIcon.Bounds.Size).TransformToAABB(iconTransform.Value);
+            var textBounds = new Rect(repositoryText.Bounds.Size).TransformToAABB(textTransform.Value);
+            var iconCenterY = iconBounds.Center.Y;
+            var textCenterY = textBounds.Center.Y;
+
+            Assert.True(
+                Math.Abs(iconCenterY - textCenterY) <= 1.5,
+                $"Expected share footer GitHub icon to stay centered with repository text, got iconCenterY={iconCenterY:F2}, textCenterY={textCenterY:F2}.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task ShareSnapshotModal_MetricValues_StayWithinHosts_ForRepresentativeLengths()
     {
+        var stressRepoPath = GetTestFolderPath("StressRepo");
         var scenarios = new[]
         {
             new ShareMetricScenario("medium", 210_053, 19_953, 266),
@@ -165,7 +248,7 @@ public sealed class ShareSnapshotModalTests
             var window = new AppMainWindow();
             var viewModel = CreateMainWindowViewModel(
                 new StubProjectAnalyzer(CreateShareSnapshot(scenario)),
-                selectedFolderPath: "C:\\StressRepo");
+                selectedFolderPath: stressRepoPath);
             window.DataContext = viewModel;
 
             try
@@ -189,10 +272,11 @@ public sealed class ShareSnapshotModalTests
     [AvaloniaFact]
     public async Task ShareSnapshotModal_SecondaryMetricValues_UseMatchingRenderedHeight_WhenCompressed()
     {
+        var stressRepoPath = GetTestFolderPath("StressRepo");
         var window = new AppMainWindow();
         var viewModel = CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateShareSnapshot(new ShareMetricScenario("compressed", 2_500_000_000L, 25_000_000, 999_000))),
-            selectedFolderPath: "C:\\StressRepo");
+            selectedFolderPath: stressRepoPath);
         window.DataContext = viewModel;
 
         try
@@ -250,6 +334,7 @@ public sealed class ShareSnapshotModalTests
 
     private static ProjectSnapshot CreateShareSnapshot(ShareMetricScenario scenario)
     {
+        var stressRepoPath = GetTestFolderPath("StressRepo");
         var childTokens = Math.Max(1L, scenario.Tokens / 2);
         var remainingTokens = Math.Max(1L, scenario.Tokens - childTokens);
         var childLines = Math.Max(1, scenario.NonEmptyLines / 2);
@@ -258,14 +343,14 @@ public sealed class ShareSnapshotModalTests
 
         return new ProjectSnapshot
         {
-            RootPath = "C:\\StressRepo",
+            RootPath = stressRepoPath,
             CapturedAtUtc = DateTimeOffset.UtcNow,
             Options = ScanOptions.Default,
             Root = new ProjectNode
             {
                 Id = "/",
                 Name = "StressRepo",
-                FullPath = "C:\\StressRepo",
+                FullPath = stressRepoPath,
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Metrics = new NodeMetrics(
@@ -280,7 +365,7 @@ public sealed class ShareSnapshotModalTests
                     {
                         Id = "src",
                         Name = "src",
-                        FullPath = "C:\\StressRepo\\src",
+                        FullPath = Path.Combine(stressRepoPath, "src"),
                         RelativePath = "src",
                         Kind = ProjectNodeKind.File,
                         Metrics = new NodeMetrics(
@@ -294,7 +379,7 @@ public sealed class ShareSnapshotModalTests
                     {
                         Id = "tests",
                         Name = "tests",
-                        FullPath = "C:\\StressRepo\\tests",
+                        FullPath = Path.Combine(stressRepoPath, "tests"),
                         RelativePath = "tests",
                         Kind = ProjectNodeKind.File,
                         Metrics = new NodeMetrics(

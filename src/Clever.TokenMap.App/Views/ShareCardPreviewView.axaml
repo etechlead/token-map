@@ -32,7 +32,7 @@
 
                 <Grid Margin="24,0,18,0"
                       ColumnDefinitions="248,14,*">
-                    <Grid Margin="0,18,0,18"
+                    <Grid Margin="0,24,0,18"
                           RowDefinitions="Auto,*,Auto">
                         <StackPanel Spacing="10">
                             <StackPanel Name="ShareTopSectionWithProjectName"
@@ -154,31 +154,32 @@
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="2"
-                                    Orientation="Horizontal"
-                                    Margin="0,0,0,2"
-                                    VerticalAlignment="Bottom"
-                                    Spacing="8">
-                            <TextBlock Margin="0,1,0,0"
+                        <Grid Grid.Row="2"
+                              Margin="0,0,0,2"
+                              ColumnDefinitions="Auto,8,Auto,4,Auto"
+                              VerticalAlignment="Bottom">
+                            <TextBlock Grid.Column="0"
+                                       VerticalAlignment="Center"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TokenMapShareCardFooterLeadBrush}"
                                        Text="make your own:" />
-                            <StackPanel Orientation="Horizontal"
-                                        Spacing="4">
-                                <Path Width="12"
-                                      Height="12"
-                                      Margin="0,2,0,0"
-                                      Stretch="Uniform"
-                                      Fill="{DynamicResource TokenMapShareCardFooterIconBrush}"
-                                      Data="{StaticResource TokenMapGithub16Geometry}" />
-                                <TextBlock FontSize="12"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource TokenMapShareCardFooterLinkBrush}"
-                                           Text="etechlead/token-map" />
-                            </StackPanel>
-                        </StackPanel>
+                            <Path Name="ShareFooterGithubIcon"
+                                  Grid.Column="2"
+                                  Width="12"
+                                  Height="12"
+                                  Stretch="Uniform"
+                                  VerticalAlignment="Center"
+                                  Fill="{DynamicResource TokenMapShareCardFooterIconBrush}"
+                                  Data="{StaticResource TokenMapGithub16Geometry}" />
+                            <TextBlock Name="ShareFooterRepositoryText"
+                                       Grid.Column="4"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TokenMapShareCardFooterLinkBrush}"
+                                       Text="etechlead/token-map" />
+                        </Grid>
                     </Grid>
 
                     <Border Grid.Column="2"
