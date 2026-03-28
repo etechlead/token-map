@@ -7,6 +7,10 @@ on:
         description: Git ref to build, such as main or v0.1.0
         required: true
         default: main
+      run_tests:
+        description: Set to false to skip tests for older tags that are packaging-only
+        required: true
+        default: true
       version:
         description: Optional version override for the app bundle and DMG
         required: false
@@ -69,6 +73,7 @@ jobs:
         run: dotnet build Clever.TokenMap.sln --no-restore
 
       - name: Test
+        if: inputs.run_tests != 'false'
         run: dotnet test Clever.TokenMap.sln --no-build
 
       - name: Package macOS DMG
