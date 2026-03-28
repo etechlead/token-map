@@ -63,7 +63,7 @@
                                     <TextBlock Margin="2,0,0,0"
                                                FontSize="18"
                                                FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TokenMapShareCardAccentTextBrush}"
+                                               Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
                                                Text="tokens" />
                                 </StackPanel>
                             </StackPanel>
@@ -90,7 +90,7 @@
                                 <TextBlock Margin="2,0,0,0"
                                            FontSize="18"
                                            FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TokenMapShareCardAccentTextBrush}"
+                                           Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
                                            Text="tokens" />
                             </StackPanel>
 
