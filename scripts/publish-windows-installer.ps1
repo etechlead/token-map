@@ -4,7 +4,7 @@ param(
     [string]$RuntimeIdentifier = "win-x64",
     [string]$AppName = "TokenMap",
     [string]$Publisher = "Clever.pro",
-    [string]$Version = "0.1.0-local",
+    [string]$Version = "",
     [string]$OutputRoot = ".artifacts/windows-installer"
 )
 
@@ -53,13 +53,24 @@ function Get-ProjectMetadata {
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
-$resolvedVersion = if ([string]::IsNullOrWhiteSpace($metadata.Version)) { $Version } else { $metadata.Version }
+$fallbackVersion = "0.1.0-local"
+$resolvedVersion =
+    if (-not [string]::IsNullOrWhiteSpace($Version)) {
+        $Version
+    }
+    elseif (-not [string]::IsNullOrWhiteSpace($metadata.Version)) {
+        $metadata.Version
+    }
+    else {
+        $fallbackVersion
+    }
 
 $outputRootFullPath = Join-Path $repoRoot $OutputRoot
 $publishDirectoryPath = Join-Path $outputRootFullPath "publish\$RuntimeIdentifier"
 $installerOutputPath = Join-Path $outputRootFullPath "installer"
 $issPath = Join-Path $repoRoot "packaging\windows\TokenMap.iss"
 $compilerPath = Get-InnoCompilerPath
+$artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion"
 
 if (Test-Path $outputRootFullPath) {
     Remove-Item -Path $outputRootFullPath -Recurse -Force
@@ -75,6 +86,7 @@ dotnet publish $projectFullPath `
     --self-contained true `
     -p:PublishSingleFile=false `
     -p:UseAppHost=true `
+    -p:Version=$resolvedVersion `
     -o $publishDirectoryPath
 
 $mainExecutablePath = Join-Path $publishDirectoryPath "$($metadata.AssemblyName).exe"
@@ -86,8 +98,14 @@ $env:TOKENMAP_APP_NAME = $AppName
 $env:TOKENMAP_APP_PUBLISHER = $Publisher
 $env:TOKENMAP_APP_VERSION = $resolvedVersion
 $env:TOKENMAP_APP_EXE = "$($metadata.AssemblyName).exe"
+$env:TOKENMAP_ARTIFACT_BASENAME = $artifactBaseName
 
 Write-Host "Compiling Inno Setup installer with $compilerPath..."
 & $compilerPath $issPath
 
-Write-Host "Installer created in: $installerOutputPath"
+$installerArtifactPath = Join-Path $installerOutputPath "$artifactBaseName.exe"
+if (-not (Test-Path $installerArtifactPath -PathType Leaf)) {
+    throw "Expected installer was not found at '$installerArtifactPath'."
+}
+
+Write-Host "Installer created at: $installerArtifactPath"

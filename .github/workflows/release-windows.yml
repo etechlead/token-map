@@ -1,0 +1,84 @@
+name: release-windows
+
+on:
+  workflow_dispatch:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Resolve release version
+        if: github.event_name == 'release'
+        shell: pwsh
+        run: |
+          $version = '${{ github.event.release.tag_name }}'
+          if ([string]::IsNullOrWhiteSpace($version)) {
+              throw 'Release tag name was empty.'
+          }
+
+          if ($version.StartsWith('v')) {
+              $version = $version.Substring(1)
+          }
+
+          "TOKENMAP_RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Restore
+        run: dotnet restore Clever.TokenMap.sln
+
+      - name: Build
+        run: dotnet build Clever.TokenMap.sln --no-restore
+
+      - name: Test
+        run: dotnet test Clever.TokenMap.sln --no-build
+
+      - name: Package Windows installer
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_RELEASE_VERSION)) {
+              ./scripts/publish-windows-installer.ps1
+              exit 0
+          }
+
+          ./scripts/publish-windows-installer.ps1 -Version $env:TOKENMAP_RELEASE_VERSION
+
+      - name: Resolve installer path
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path '.artifacts/windows-installer/installer/*.exe' | Select-Object -First 1
+          if ($null -eq $installer) {
+              throw 'Windows installer artifact was not found.'
+          }
+
+          "TOKENMAP_INSTALLER_PATH=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_INSTALLER_NAME=$($installer.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.TOKENMAP_INSTALLER_NAME }}
+          path: ${{ env.TOKENMAP_INSTALLER_PATH }}
+          if-no-files-found: error
+
+      - name: Attach installer to GitHub release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" "${{ env.TOKENMAP_INSTALLER_PATH }}" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -22,6 +22,12 @@
   #define MyAppExeName "Clever.TokenMap.App.exe"
 #endif
 
+#define MyArtifactBaseName GetEnv("TOKENMAP_ARTIFACT_BASENAME")
+#if MyArtifactBaseName == ""
+  #undef MyArtifactBaseName
+  #define MyArtifactBaseName "TokenMap-win-x64-0.1.0-local"
+#endif
+
 #define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"
 #define MyOutputDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\installer"
 
@@ -41,7 +47,7 @@ ChangesEnvironment=no
 Compression=lzma2
 SolidCompression=yes
 OutputDir={#MyOutputDir}
-OutputBaseFilename=TokenMap-Setup-win-x64
+OutputBaseFilename={#MyArtifactBaseName}
 SetupIconFile=..\..\src\Clever.TokenMap.App\Assets\app-icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 WizardStyle=modern

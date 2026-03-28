@@ -31,8 +31,8 @@ The current technical boundaries are documented in [docs/architecture.md](docs/a
 
 Current limitations:
 
-- Windows is the primary MVP target. macOS targets Apple Silicon only. Local validation can use a bundle published on Windows, and GitHub Actions can produce an unsigned Apple Silicon DMG for Releases. Linux polish is intentionally deferred.
-- The repository ships source, CI, an unsigned Apple Silicon DMG release path, and an unsigned per-user Windows installer path. Signing, notarization, and broader multi-platform release automation are still out of scope.
+- Windows is the primary MVP target. macOS targets Apple Silicon only, and its packaging path is currently manual-only so it does not block Windows-first delivery. Linux polish is intentionally deferred.
+- The repository ships source, Windows CI, an unsigned per-user Windows installer release path, and a manual Apple Silicon macOS packaging path. Signing, notarization, and broader multi-platform release automation are still out of scope.
 - Settings currently persist lightweight analysis and appearance preferences, not recent projects or saved scan presets.
 
 ## Getting Started
@@ -61,13 +61,13 @@ The script writes `.artifacts\macos-arm64\TokenMap.app`. Copy that bundle to a M
 chmod +x "TokenMap.app/Contents/MacOS/Clever.TokenMap.App"
 ```
 
-Build an Apple Silicon macOS DMG on macOS or in GitHub Actions:
+Build an Apple Silicon macOS DMG on macOS:
 
 ```bash
 bash ./scripts/package-macos-dmg.sh
 ```
 
-The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The release workflow in [release-macos.yml](.github/workflows/release-macos.yml) runs on `macos-latest`, uploads that DMG as a workflow artifact, and attaches it to published GitHub Releases.
+The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64.dmg`. The workflow in [release-macos.yml](.github/workflows/release-macos.yml) is now manual-only and is kept outside the automatic release path so macOS packaging does not block Windows-first builds.
 
 The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
 
@@ -77,15 +77,16 @@ Build a per-user Windows installer:
 .\scripts\publish-windows-installer.ps1
 ```
 
-The script writes `.artifacts\windows-installer\installer\TokenMap-Setup-win-x64.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
+The script writes `.artifacts\windows-installer\installer\TokenMap-win-x64-<version>.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
 
 Silent uninstall keeps user data by default. To remove `%LOCALAPPDATA%\Clever\TokenMap` during uninstall, pass `/PURGEUSERDATA` to the uninstaller in addition to the normal Inno silent switches.
 
 ## Repository Quality
 
 - `README`, `LICENSE`, `.editorconfig`, analyzer policy, and GitHub Actions are part of the repo baseline.
-- Build and test CI runs on `windows-latest` and `macos-latest`.
-- A release workflow can package an unsigned Apple Silicon DMG on `macos-latest` and attach it to GitHub Releases.
+- Build and test CI runs on `windows-latest`.
+- A release workflow packages an unsigned per-user Windows installer on `windows-latest` and attaches it to GitHub Releases.
+- macOS packaging remains available only as a manual workflow/script path and is not part of the automatic release flow.
 - Headless UI tests cover the shell layout and tree/treemap synchronization.
 - Unit tests cover settings serialization, debounced settings persistence, analysis session flow, and treemap navigation state.
 

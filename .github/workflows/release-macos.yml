@@ -1,10 +1,7 @@
-name: release-macos
+name: package-macos-manual
 
 on:
   workflow_dispatch:
-  release:
-    types:
-      - published
 
 permissions:
   contents: write
@@ -40,9 +37,3 @@ jobs:
           name: TokenMap-macos-arm64-dmg
           path: .artifacts/macos-arm64/TokenMap-macos-arm64.dmg
           if-no-files-found: error
-
-      - name: Attach DMG to GitHub release
-        if: github.event_name == 'release'
-        run: gh release upload "${{ github.event.release.tag_name }}" .artifacts/macos-arm64/TokenMap-macos-arm64.dmg --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
