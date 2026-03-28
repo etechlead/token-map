@@ -1,8 +1,9 @@
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
+using System.Globalization;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
 
@@ -11,11 +12,13 @@ public sealed class ProjectTreeNodeViewModelTests
     [Fact]
     public void ShowsNaForSkippedAnalysisMetrics()
     {
+        var demoRootPath = TestPaths.Folder("Demo");
+        var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var parentNode = new ProjectNode
         {
             Id = "/",
             Name = "Demo",
-            FullPath = "C:\\Demo",
+            FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
@@ -29,7 +32,7 @@ public sealed class ProjectTreeNodeViewModelTests
         {
             Id = "image.ico",
             Name = "image.ico",
-            FullPath = "C:\\Demo\\image.ico",
+            FullPath = TestPaths.CombineUnder(demoRootPath, "image.ico"),
             RelativePath = "image.ico",
             Kind = ProjectNodeKind.File,
             SkippedReason = SkippedReason.Binary,
@@ -45,7 +48,7 @@ public sealed class ProjectTreeNodeViewModelTests
 
         Assert.Equal("n/a", skippedFileNode.TokensText);
         Assert.Equal("n/a", skippedFileNode.LinesText);
-        Assert.Equal("167.8 KB", skippedFileNode.SizeText);
+        Assert.Equal($"167{decimalSeparator}8 KB", skippedFileNode.SizeText);
         Assert.Equal("n/a", skippedFileNode.ParentShareText);
         Assert.Null(skippedFileNode.ParentShareRatio);
     }
@@ -53,11 +56,14 @@ public sealed class ProjectTreeNodeViewModelTests
     [Fact]
     public void ParentShare_UsesImmediateParentMetric()
     {
+        var demoRootPath = TestPaths.Folder("Demo");
+        var zeroRootPath = TestPaths.Folder("Zero");
+        var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var rootNode = new ProjectNode
         {
             Id = "/",
             Name = "Demo",
-            FullPath = "C:\\Demo",
+            FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
             Metrics = new NodeMetrics(
@@ -71,7 +77,7 @@ public sealed class ProjectTreeNodeViewModelTests
         {
             Id = "Alpha.cs",
             Name = "Alpha.cs",
-            FullPath = "C:\\Demo\\Alpha.cs",
+            FullPath = TestPaths.CombineUnder(demoRootPath, "Alpha.cs"),
             RelativePath = "Alpha.cs",
             Kind = ProjectNodeKind.File,
             Metrics = new NodeMetrics(
@@ -91,7 +97,7 @@ public sealed class ProjectTreeNodeViewModelTests
         {
             Id = "/zero",
             Name = "Zero",
-            FullPath = "C:\\Zero",
+            FullPath = zeroRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
             Metrics = NodeMetrics.Empty,
@@ -101,10 +107,10 @@ public sealed class ProjectTreeNodeViewModelTests
             parentNode: zeroMetricParent,
             parentShareMetric: AnalysisMetric.Tokens);
 
-        Assert.Equal("100.0%", rootViewModel.ParentShareText);
+        Assert.Equal($"100{decimalSeparator}0%", rootViewModel.ParentShareText);
         Assert.NotNull(childViewModel.ParentShareRatio);
         Assert.Equal(1d / 3d, childViewModel.ParentShareRatio.Value, 3);
-        Assert.Equal("33.3%", childViewModel.ParentShareText);
+        Assert.Equal($"33{decimalSeparator}3%", childViewModel.ParentShareText);
         Assert.Equal("n/a", childWithZeroParent.ParentShareText);
         Assert.Null(childWithZeroParent.ParentShareRatio);
     }

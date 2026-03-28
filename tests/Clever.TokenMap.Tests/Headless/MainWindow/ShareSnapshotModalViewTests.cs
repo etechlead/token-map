@@ -26,4 +26,38 @@ public sealed class ShareSnapshotModalViewTests
         Assert.Equal(new PixelSize(expectedPixelWidth, expectedPixelHeight), settings.PixelSize);
         Assert.Equal(new Vector(expectedDpiX, expectedDpiY), settings.Dpi);
     }
+
+    [Fact]
+    public void RetainedClipboardResource_ReplacesAndDisposesPreviousValue()
+    {
+        var retention = new RetainedClipboardResource<TestDisposable>();
+        var first = new TestDisposable();
+        var second = new TestDisposable();
+
+        retention.Replace(first);
+
+        Assert.Same(first, retention.Current);
+        Assert.False(first.IsDisposed);
+
+        retention.Replace(second);
+
+        Assert.True(first.IsDisposed);
+        Assert.Same(second, retention.Current);
+        Assert.False(second.IsDisposed);
+
+        retention.Clear();
+
+        Assert.True(second.IsDisposed);
+        Assert.Null(retention.Current);
+    }
+
+    private sealed class TestDisposable : IDisposable
+    {
+        public bool IsDisposed { get; private set; }
+
+        public void Dispose()
+        {
+            IsDisposed = true;
+        }
+    }
 }

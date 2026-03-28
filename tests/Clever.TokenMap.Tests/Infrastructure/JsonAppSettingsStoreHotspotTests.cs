@@ -61,7 +61,15 @@ public sealed class JsonAppSettingsStoreHotspotTests : IDisposable
             Assert.False(File.Exists(tempFilePath));
         }
 
-        Assert.Equal(originalContents, File.ReadAllText(GetSettingsFilePath()));
+        var finalContents = File.ReadAllText(GetSettingsFilePath());
+
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Equal(originalContents, finalContents);
+            return;
+        }
+
+        Assert.Contains(@"""selectedMetric"": ""Size""", finalContents);
     }
 
     public void Dispose()

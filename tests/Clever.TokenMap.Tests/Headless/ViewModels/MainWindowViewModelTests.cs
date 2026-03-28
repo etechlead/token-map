@@ -2,8 +2,9 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.App.Services;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
+using System.Globalization;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
 
@@ -71,9 +72,11 @@ public sealed class MainWindowViewModelTests
     [Fact]
     public async Task SelectedMetric_UpdatesParentShareWithoutReanalysis()
     {
+        var demoRootPath = TestPaths.Folder("Demo");
+        var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
         var snapshot = new ProjectSnapshot
         {
-            RootPath = "C:\\Demo",
+            RootPath = demoRootPath,
             CapturedAtUtc = DateTimeOffset.UtcNow,
             Options = ScanOptions.Default,
             Root = CreateRootWithChildren(
@@ -86,13 +89,13 @@ public sealed class MainWindowViewModelTests
         await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
 
         var alphaByTokens = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
-        Assert.Equal("66.7%", alphaByTokens.ParentShareText);
+        Assert.Equal($"66{decimalSeparator}7%", alphaByTokens.ParentShareText);
         Assert.Equal(1, analyzer.CallCount);
 
         viewModel.Toolbar.IsSizeMetricSelected = true;
 
         var alphaBySize = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
-        Assert.Equal("33.3%", alphaBySize.ParentShareText);
+        Assert.Equal($"33{decimalSeparator}3%", alphaBySize.ParentShareText);
         Assert.Equal(1, analyzer.CallCount);
     }
 

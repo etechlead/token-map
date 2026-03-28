@@ -7,8 +7,8 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Treemap;
 using Avalonia.Media;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using System.Globalization;
 
 namespace Clever.TokenMap.Tests.Headless.Treemap;
 
@@ -256,6 +256,7 @@ public sealed class TreemapControlHeadlessTests
     [AvaloniaFact]
     public void TreemapControl_HoverSkippedBinaryFile_ShowsNaForAnalysisMetrics()
     {
+        var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
         var control = CreateControl(CreateSnapshotWithSkippedBinaryFile(), AnalysisMetric.Size);
         var window = CreateHostWindow(control);
 
@@ -267,12 +268,13 @@ public sealed class TreemapControlHeadlessTests
         Assert.Contains("image.ico", control.TooltipText);
         Assert.Contains("Tokens: n/a", control.TooltipText);
         Assert.Contains("Non-empty lines: n/a", control.TooltipText);
-        Assert.Contains("Share: 100.0%", control.TooltipText);
+        Assert.Contains($"Share: {expectedShareText}", control.TooltipText);
     }
 
     [AvaloniaFact]
     public void TreemapControl_Hover_UsesSelectedMetricForShare()
     {
+        var expectedShareText = (0.1d).ToString("P1", CultureInfo.CurrentCulture);
         var snapshot = CreateMetricSensitiveSnapshot();
         var control = CreateControl(snapshot, AnalysisMetric.Lines);
         var window = CreateHostWindow(control);
@@ -282,7 +284,7 @@ public sealed class TreemapControlHeadlessTests
         var visual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "a.cs");
         control.UpdateHover(GetCenter(visual));
 
-        Assert.Contains("Share: 10.0%", control.TooltipText);
+        Assert.Contains($"Share: {expectedShareText}", control.TooltipText);
     }
 
     [AvaloniaFact]

@@ -4,8 +4,8 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Models;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.AppState;
 
@@ -45,16 +45,18 @@ public sealed class SettingsCoordinatorTests
     [Fact]
     public void Constructor_LoadsRecentFolderPathsIntoState()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var settings = AppSettings.CreateDefault();
-        settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
+        settings.RecentFolderPaths = [repoAPath, repoBPath];
 
         var store = new RecordingAppSettingsStore(settings);
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Collection(
             coordinator.State.RecentFolderPaths,
-            path => Assert.Equal("C:\\RepoA", path),
-            path => Assert.Equal("C:\\RepoB", path));
+            path => Assert.Equal(repoAPath, path),
+            path => Assert.Equal(repoBPath, path));
         Assert.Equal(0, store.SaveCallCount);
     }
 
@@ -107,12 +109,14 @@ public sealed class SettingsCoordinatorTests
     [Fact]
     public async Task RecentFolders_AreDebouncedIntoSingleSave()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.RecordRecentFolder("C:\\RepoA");
-        coordinator.RecordRecentFolder("C:\\RepoB");
-        coordinator.RecordRecentFolder("C:\\RepoA");
+        coordinator.RecordRecentFolder(repoAPath);
+        coordinator.RecordRecentFolder(repoBPath);
+        coordinator.RecordRecentFolder(repoAPath);
 
         await Task.Delay(120);
 
@@ -120,8 +124,8 @@ public sealed class SettingsCoordinatorTests
         Assert.NotNull(store.LastSavedSettings);
         Assert.Collection(
             store.LastSavedSettings!.RecentFolderPaths,
-            path => Assert.Equal("C:\\RepoA", path),
-            path => Assert.Equal("C:\\RepoB", path));
+            path => Assert.Equal(repoAPath, path),
+            path => Assert.Equal(repoBPath, path));
     }
 
     [Fact]
@@ -208,10 +212,12 @@ public sealed class SettingsCoordinatorTests
     [Fact]
     public async Task SwitchActiveFolder_FlushesPreviousFolderAndLoadsNextFolderState()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var folderStore = new RecordingFolderSettingsStore();
-        folderStore.Seed(@"C:\RepoB", new FolderSettings
+        folderStore.Seed(repoBPath, new FolderSettings
         {
-            RootPath = @"C:\RepoB",
+            RootPath = repoBPath,
             Scan = new FolderScanSettings
             {
                 UseFolderExcludes = true,
@@ -225,13 +231,13 @@ public sealed class SettingsCoordinatorTests
             new RecordingThemeService(),
             debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.SwitchActiveFolder(@"C:\RepoA");
+        coordinator.SwitchActiveFolder(repoAPath);
         coordinator.SetUseFolderExcludes(true);
         coordinator.ReplaceFolderExcludes(["/dist/"]);
 
-        coordinator.SwitchActiveFolder(@"C:\RepoB");
+        coordinator.SwitchActiveFolder(repoBPath);
 
-        Assert.Equal(@"C:\RepoB", coordinator.CurrentFolderState.ActiveRootPath);
+        Assert.Equal(repoBPath, coordinator.CurrentFolderState.ActiveRootPath);
         Assert.True(coordinator.CurrentFolderState.UseFolderExcludes);
         Assert.Collection(
             coordinator.CurrentFolderState.FolderExcludes,
@@ -240,7 +246,7 @@ public sealed class SettingsCoordinatorTests
         await coordinator.FlushAsync();
 
         Assert.Equal(1, folderStore.SaveCallCount);
-        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
+        Assert.Equal(repoAPath, folderStore.LastSavedSettings?.RootPath);
         Assert.Collection(
             folderStore.LastSavedSettings!.Scan.FolderExcludes,
             entry => Assert.Equal("/dist/", entry));
@@ -249,6 +255,8 @@ public sealed class SettingsCoordinatorTests
     [Fact]
     public async Task SwitchActiveFolder_DoesNotBlockOnQueuedFolderSave_AndFlushAwaitsIt()
     {
+        var repoAPath = TestPaths.Folder("RepoA");
+        var repoBPath = TestPaths.Folder("RepoB");
         var folderStore = new BlockingFolderSettingsStore();
         var coordinator = new SettingsCoordinator(
             new RecordingAppSettingsStore(AppSettings.CreateDefault()),
@@ -256,11 +264,11 @@ public sealed class SettingsCoordinatorTests
             new RecordingThemeService(),
             debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.SwitchActiveFolder(@"C:\RepoA");
+        coordinator.SwitchActiveFolder(repoAPath);
         coordinator.SetUseFolderExcludes(true);
         coordinator.ReplaceFolderExcludes(["/dist/"]);
 
-        var switchTask = Task.Run(() => coordinator.SwitchActiveFolder(@"C:\RepoB"));
+        var switchTask = Task.Run(() => coordinator.SwitchActiveFolder(repoBPath));
 
         await folderStore.WaitForSaveStartedAsync();
         await switchTask.WaitAsync(TimeSpan.FromSeconds(1));
@@ -269,22 +277,23 @@ public sealed class SettingsCoordinatorTests
         await Task.Delay(100);
 
         Assert.False(flushTask.IsCompleted);
-        Assert.Equal(@"C:\RepoB", coordinator.CurrentFolderState.ActiveRootPath);
+        Assert.Equal(repoBPath, coordinator.CurrentFolderState.ActiveRootPath);
 
         folderStore.ReleaseSave();
 
         await flushTask.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.Equal(1, folderStore.SaveCallCount);
-        Assert.Equal(@"C:\RepoA", folderStore.LastSavedSettings?.RootPath);
+        Assert.Equal(repoAPath, folderStore.LastSavedSettings?.RootPath);
     }
 
     [Fact]
     public void Resolve_UsesFolderSettingsForTargetRoot()
     {
+        var repoBPath = TestPaths.Folder("RepoB");
         var folderStore = new RecordingFolderSettingsStore();
-        folderStore.Seed(@"C:\RepoB", new FolderSettings
+        folderStore.Seed(repoBPath, new FolderSettings
         {
-            RootPath = @"C:\RepoB",
+            RootPath = repoBPath,
             Scan = new FolderScanSettings
             {
                 UseFolderExcludes = true,
@@ -304,7 +313,7 @@ public sealed class SettingsCoordinatorTests
             GlobalExcludes = [".git/"],
         };
 
-        var resolved = coordinator.Resolve(@"C:\RepoB", baseOptions);
+        var resolved = coordinator.Resolve(repoBPath, baseOptions);
 
         Assert.False(resolved.RespectGitIgnore);
         Assert.True(resolved.UseGlobalExcludes);
