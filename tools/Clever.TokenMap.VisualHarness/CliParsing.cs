@@ -74,6 +74,8 @@ internal static class CliParsing
 
     public static int ParseInt(string value) => int.Parse(value, CultureInfo.InvariantCulture);
 
+    public static long ParseLong(string value) => long.Parse(value, CultureInfo.InvariantCulture);
+
     public static IReadOnlyList<string> GetEnumTokens<TEnum>(IEnumerable<TEnum> values)
         where TEnum : struct, Enum =>
         values.Select(GetEnumToken).ToArray();

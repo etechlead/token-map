@@ -18,6 +18,11 @@ internal enum CaptureSurface
 
 internal sealed record CaptureCanvasSize(int Width, int Height);
 
+internal sealed record ShareMetricOverrides(
+    long? Tokens,
+    int? Lines,
+    int? Files);
+
 internal sealed record CaptureOptions(
     string OutputDirectory,
     ThemePreference ThemePreference,
@@ -28,7 +33,8 @@ internal sealed record CaptureOptions(
     IReadOnlyList<CaptureSurface> Surfaces,
     bool GenerateComparisons,
     CaptureCanvasSize WindowSize,
-    CaptureCanvasSize TreemapSize)
+    CaptureCanvasSize TreemapSize,
+    ShareMetricOverrides ShareMetrics)
 {
     public static CaptureOptions ParseCapture(string[] args) => Parse(args, VisualHarnessCli.Capture);
 
@@ -64,7 +70,11 @@ internal sealed record CaptureOptions(
             definition.SurfaceOption.GetValue(args),
             generateComparisons,
             windowSize,
-            treemapSize);
+            treemapSize,
+            new ShareMetricOverrides(
+                CliParsing.GetOptionValue(args, definition.ShareTokensOption.Name) is { } shareTokens ? CliParsing.ParseLong(shareTokens) : null,
+                CliParsing.GetOptionValue(args, definition.ShareLinesOption.Name) is { } shareLines ? CliParsing.ParseInt(shareLines) : null,
+                CliParsing.GetOptionValue(args, definition.ShareFilesOption.Name) is { } shareFiles ? CliParsing.ParseInt(shareFiles) : null));
     }
 }
 

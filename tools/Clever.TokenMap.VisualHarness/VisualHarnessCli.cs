@@ -19,6 +19,7 @@ internal static class VisualHarnessCli
         [
             $"dotnet run --project {ProjectPath} -- capture --source repo --project-root . --theme light --surface main",
             $"dotnet run --project {ProjectPath} -- capture --source demo --surface treemap --palette studio --metric size",
+            $"dotnet run --project {ProjectPath} -- capture --surface share --share-tokens 245000000 --share-lines 3200000 --share-files 280000",
             $"dotnet run --project {ProjectPath} -- capture --surface main,settings --palette weighted,studio --compare",
         ]);
 
@@ -225,6 +226,21 @@ internal static class VisualHarnessCli
             CliParsing.ParseInt,
             defaultFactory: () => 820,
             defaultValueDescription: "820");
+        var shareTokens = new CliValueOption<long>(
+            "--share-tokens",
+            "N",
+            "Override the token count shown on the share card without changing the analyzed snapshot.",
+            CliParsing.ParseLong);
+        var shareLines = new CliValueOption<int>(
+            "--share-lines",
+            "N",
+            "Override the line count shown on the share card without changing the analyzed snapshot.",
+            CliParsing.ParseInt);
+        var shareFiles = new CliValueOption<int>(
+            "--share-files",
+            "N",
+            "Override the file count shown on the share card without changing the analyzed snapshot.",
+            CliParsing.ParseInt);
 
         var options = new List<CliOption>
         {
@@ -259,6 +275,9 @@ internal static class VisualHarnessCli
         options.Add(windowHeight);
         options.Add(treemapWidth);
         options.Add(treemapHeight);
+        options.Add(shareTokens);
+        options.Add(shareLines);
+        options.Add(shareFiles);
 
         var command = new CliCommandSpec(name, summary, options, examples);
         return new CaptureCommandDefinition(
@@ -276,6 +295,9 @@ internal static class VisualHarnessCli
             windowHeight,
             treemapWidth,
             treemapHeight,
+            shareTokens,
+            shareLines,
+            shareFiles,
             generateComparisonsByDefault);
     }
 
@@ -445,6 +467,9 @@ internal sealed record CaptureCommandDefinition(
     CliValueOption<int> WindowHeightOption,
     CliValueOption<int> TreemapWidthOption,
     CliValueOption<int> TreemapHeightOption,
+    CliValueOption<long> ShareTokensOption,
+    CliValueOption<int> ShareLinesOption,
+    CliValueOption<int> ShareFilesOption,
     bool GenerateComparisonsByDefault);
 
 internal sealed record CompareCommandDefinition(

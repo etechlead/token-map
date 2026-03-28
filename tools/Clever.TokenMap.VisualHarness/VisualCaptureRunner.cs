@@ -241,6 +241,8 @@ internal static class VisualCaptureRunner
         CaptureOptions options,
         TreemapPalette palette)
     {
+        snapshot = ApplyShareMetricOverrides(snapshot, options.ShareMetrics);
+
         var settingsState = new SettingsState
         {
             SelectedMetric = options.Metric,
@@ -271,6 +273,43 @@ internal static class VisualCaptureRunner
         };
 
         return await CaptureWindowAsync(window, "Share window did not render a frame.");
+    }
+
+    private static ProjectSnapshot ApplyShareMetricOverrides(ProjectSnapshot snapshot, ShareMetricOverrides overrides)
+    {
+        if (overrides.Tokens is null && overrides.Lines is null && overrides.Files is null)
+        {
+            return snapshot;
+        }
+
+        var root = snapshot.Root;
+        var metrics = root.Metrics;
+        var updatedRoot = new ProjectNode
+        {
+            Id = root.Id,
+            Name = root.Name,
+            FullPath = root.FullPath,
+            RelativePath = root.RelativePath,
+            Kind = root.Kind,
+            Metrics = metrics with
+            {
+                Tokens = overrides.Tokens ?? metrics.Tokens,
+                NonEmptyLines = overrides.Lines ?? metrics.NonEmptyLines,
+                DescendantFileCount = overrides.Files ?? metrics.DescendantFileCount,
+            },
+            SkippedReason = root.SkippedReason,
+        };
+
+        updatedRoot.Children.AddRange(root.Children);
+
+        return new ProjectSnapshot
+        {
+            RootPath = snapshot.RootPath,
+            CapturedAtUtc = snapshot.CapturedAtUtc,
+            Options = snapshot.Options,
+            Root = updatedRoot,
+            Warnings = snapshot.Warnings,
+        };
     }
 
     private static Task<WriteableBitmap> CaptureStandaloneTreemapAsync(

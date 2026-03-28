@@ -3,9 +3,12 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using Clever.TokenMap.App.ViewModels;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Treemap;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
@@ -146,4 +149,165 @@ public sealed class ShareSnapshotModalTests
             application.RequestedThemeVariant = previousThemeVariant;
         }
     }
+
+    [AvaloniaFact]
+    public async Task ShareSnapshotModal_MetricValues_StayWithinHosts_ForRepresentativeLengths()
+    {
+        var scenarios = new[]
+        {
+            new ShareMetricScenario("medium", 210_053, 19_953, 266),
+            new ShareMetricScenario("large", 9_999_999, 999_999, 99_999),
+            new ShareMetricScenario("xlarge", 99_999_999, 9_999_999, 999_999),
+        };
+
+        foreach (var scenario in scenarios)
+        {
+            var window = new AppMainWindow();
+            var viewModel = CreateMainWindowViewModel(
+                new StubProjectAnalyzer(CreateShareSnapshot(scenario)),
+                selectedFolderPath: "C:\\StressRepo");
+            window.DataContext = viewModel;
+
+            try
+            {
+                window.Show();
+                await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+                viewModel.OpenShareSnapshotCommand.Execute(null);
+                window.UpdateLayout();
+
+                AssertTextFitsHost<TextBlock, Grid>(window, "ShareTokenValueText", "ShareTokenValueHost", minRenderedHeight: 28, scenario.Name);
+                AssertTextFitsHost<TextBlock, Grid>(window, "ShareLineValueText", "ShareLineValueHost", minRenderedHeight: 12, scenario.Name);
+                AssertTextFitsHost<TextBlock, Grid>(window, "ShareFileValueText", "ShareFileValueHost", minRenderedHeight: 12, scenario.Name);
+            }
+            finally
+            {
+                window.Close();
+            }
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ShareSnapshotModal_SecondaryMetricValues_UseMatchingRenderedHeight_WhenCompressed()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(CreateShareSnapshot(new ShareMetricScenario("compressed", 2_500_000_000L, 25_000_000, 999_000))),
+            selectedFolderPath: "C:\\StressRepo");
+        window.DataContext = viewModel;
+
+        try
+        {
+            window.Show();
+            await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+            viewModel.OpenShareSnapshotCommand.Execute(null);
+            window.UpdateLayout();
+
+            var lineBounds = GetRenderedBounds<TextBlock, Grid>(window, "ShareLineValueText", "ShareLineValueHost");
+            var fileBounds = GetRenderedBounds<TextBlock, Grid>(window, "ShareFileValueText", "ShareFileValueHost");
+
+            Assert.True(Math.Abs(lineBounds.Height - fileBounds.Height) <= 0.5,
+                $"Expected compressed secondary metrics to use matching rendered heights, got lines={lineBounds.Height:F2}, files={fileBounds.Height:F2}.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    private static void AssertTextFitsHost<TText, THost>(Window window, string textName, string hostName, double minRenderedHeight, string scenarioName)
+        where TText : Control
+        where THost : Control
+    {
+        var renderedBounds = GetRenderedBounds<TText, THost>(window, textName, hostName);
+        var host = FindNamedDescendant<THost>(window, hostName);
+
+        Assert.NotNull(host);
+        var hostBounds = new Rect(host.Bounds.Size);
+
+        Assert.True(renderedBounds.Width > 0, $"Expected {textName} to render with positive width for scenario '{scenarioName}', got {renderedBounds}.");
+        Assert.True(renderedBounds.Height >= minRenderedHeight, $"Expected {textName} to stay readable for scenario '{scenarioName}', got rendered bounds {renderedBounds}.");
+        Assert.True(renderedBounds.X >= -0.5, $"Expected {textName} to stay within {hostName} for scenario '{scenarioName}', got {renderedBounds} inside host {hostBounds}.");
+        Assert.True(renderedBounds.Y >= -0.5, $"Expected {textName} to stay within {hostName} for scenario '{scenarioName}', got {renderedBounds} inside host {hostBounds}.");
+        Assert.True(renderedBounds.Right <= hostBounds.Right + 0.5, $"Expected {textName} to stay within {hostName} for scenario '{scenarioName}', got {renderedBounds} inside host {hostBounds}.");
+        Assert.True(renderedBounds.Bottom <= hostBounds.Bottom + 0.5, $"Expected {textName} to stay within {hostName} for scenario '{scenarioName}', got {renderedBounds} inside host {hostBounds}.");
+    }
+
+    private static Rect GetRenderedBounds<TText, THost>(Window window, string textName, string hostName)
+        where TText : Control
+        where THost : Control
+    {
+        var text = FindNamedDescendant<TText>(window, textName);
+        var host = FindNamedDescendant<THost>(window, hostName);
+
+        Assert.NotNull(text);
+        Assert.NotNull(host);
+
+        var transform = text.TransformToVisual(host);
+        Assert.NotNull(transform);
+
+        return new Rect(text.Bounds.Size).TransformToAABB(transform.Value);
+    }
+
+    private static ProjectSnapshot CreateShareSnapshot(ShareMetricScenario scenario)
+    {
+        var childTokens = Math.Max(1L, scenario.Tokens / 2);
+        var remainingTokens = Math.Max(1L, scenario.Tokens - childTokens);
+        var childLines = Math.Max(1, scenario.NonEmptyLines / 2);
+        var remainingLines = Math.Max(1, scenario.NonEmptyLines - childLines);
+        var fileCount = Math.Max(1, scenario.DescendantFileCount);
+
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\StressRepo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
+            {
+                Id = "/",
+                Name = "StressRepo",
+                FullPath = "C:\\StressRepo",
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Metrics = new NodeMetrics(
+                    Tokens: scenario.Tokens,
+                    NonEmptyLines: scenario.NonEmptyLines,
+                    FileSizeBytes: scenario.Tokens * 8L,
+                    DescendantFileCount: fileCount,
+                    DescendantDirectoryCount: 0),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "src",
+                        Name = "src",
+                        FullPath = "C:\\StressRepo\\src",
+                        RelativePath = "src",
+                        Kind = ProjectNodeKind.File,
+                        Metrics = new NodeMetrics(
+                            Tokens: childTokens,
+                            NonEmptyLines: childLines,
+                            FileSizeBytes: childTokens * 8L,
+                            DescendantFileCount: Math.Max(1, fileCount / 2),
+                            DescendantDirectoryCount: 0),
+                    },
+                    new ProjectNode
+                    {
+                        Id = "tests",
+                        Name = "tests",
+                        FullPath = "C:\\StressRepo\\tests",
+                        RelativePath = "tests",
+                        Kind = ProjectNodeKind.File,
+                        Metrics = new NodeMetrics(
+                            Tokens: remainingTokens,
+                            NonEmptyLines: remainingLines,
+                            FileSizeBytes: remainingTokens * 8L,
+                            DescendantFileCount: Math.Max(1, fileCount - Math.Max(1, fileCount / 2)),
+                            DescendantDirectoryCount: 0),
+                    },
+                },
+            },
+        };
+    }
+
+    private sealed record ShareMetricScenario(string Name, long Tokens, int NonEmptyLines, int DescendantFileCount);
 }

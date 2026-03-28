@@ -47,12 +47,14 @@
                                            TextTrimming="CharacterEllipsis" />
 
                                 <StackPanel Spacing="4">
-                                    <Grid Width="236"
+                                    <Grid Name="ShareTokenValueHost"
+                                          Width="236"
                                           HorizontalAlignment="Left">
                                         <Viewbox Stretch="Uniform"
                                                  StretchDirection="DownOnly"
                                                  HorizontalAlignment="Left">
-                                            <TextBlock FontSize="68"
+                                            <TextBlock Name="ShareTokenValueText"
+                                                       FontSize="68"
                                                        FontWeight="Bold"
                                                        Foreground="{DynamicResource TokenMapShareCardValueTextBrush}"
                                                        Text="{Binding TokenValue}" />
@@ -72,12 +74,14 @@
                                 <Border Height="18"
                                         Background="Transparent"
                                         IsHitTestVisible="False" />
-                                <Grid Width="236"
+                                <Grid Name="ShareTokenValueHostWithoutProjectName"
+                                      Width="236"
                                       HorizontalAlignment="Left">
                                         <Viewbox Stretch="Uniform"
                                              StretchDirection="DownOnly"
                                              HorizontalAlignment="Left">
-                                        <TextBlock FontSize="68"
+                                        <TextBlock Name="ShareTokenValueTextWithoutProjectName"
+                                                   FontSize="68"
                                                    FontWeight="Bold"
                                                    Foreground="{DynamicResource TokenMapShareCardValueTextBrush}"
                                                    Text="{Binding TokenValue}" />
@@ -95,14 +99,21 @@
                                     HorizontalAlignment="Left"
                                     Background="{DynamicResource TokenMapShareCardDividerBrush}" />
 
-                            <Grid ColumnDefinitions="102,28,102">
+                            <Grid Name="ShareSecondaryMetricsGrid"
+                                  Width="232">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="102" />
+                                    <ColumnDefinition Width="28" />
+                                    <ColumnDefinition Width="102" />
+                                </Grid.ColumnDefinitions>
                                 <StackPanel Spacing="2">
-                                    <Grid Width="102"
-                                          HorizontalAlignment="Left">
+                                    <Grid Name="ShareLineValueHost"
+                                          HorizontalAlignment="Stretch">
                                         <Viewbox Stretch="Uniform"
                                                  StretchDirection="DownOnly"
                                                  HorizontalAlignment="Left">
-                                            <TextBlock FontSize="28"
+                                            <TextBlock Name="ShareLineValueText"
+                                                       FontSize="28"
                                                        FontWeight="Bold"
                                                        Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                                        Text="{Binding LineValue}" />
@@ -123,12 +134,13 @@
 
                                 <StackPanel Grid.Column="2"
                                             Spacing="2">
-                                    <Grid Width="102"
-                                          HorizontalAlignment="Left">
+                                    <Grid Name="ShareFileValueHost"
+                                          HorizontalAlignment="Stretch">
                                         <Viewbox Stretch="Uniform"
                                                  StretchDirection="DownOnly"
                                                  HorizontalAlignment="Left">
-                                            <TextBlock FontSize="28"
+                                            <TextBlock Name="ShareFileValueText"
+                                                       FontSize="28"
                                                        FontWeight="Bold"
                                                        Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                                        Text="{Binding FileValue}" />

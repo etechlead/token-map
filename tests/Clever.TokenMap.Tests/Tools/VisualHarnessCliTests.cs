@@ -14,6 +14,9 @@ public sealed class VisualHarnessCliTests
         Assert.Contains("Allowed: main, settings, share, treemap, all", help);
         Assert.Contains("Allowed: plain, weighted, studio, all", help);
         Assert.Contains("Default: main", help);
+        Assert.Contains("--share-tokens N", help);
+        Assert.Contains("--share-lines N", help);
+        Assert.Contains("--share-files N", help);
         Assert.DoesNotContain("--skip-compare", help);
     }
 
@@ -41,6 +44,9 @@ public sealed class VisualHarnessCliTests
         Assert.Equal(1000, options.WindowSize.Height);
         Assert.Equal(1320, options.TreemapSize.Width);
         Assert.Equal(820, options.TreemapSize.Height);
+        Assert.Null(options.ShareMetrics.Tokens);
+        Assert.Null(options.ShareMetrics.Lines);
+        Assert.Null(options.ShareMetrics.Files);
     }
 
     [Fact]
@@ -51,5 +57,22 @@ public sealed class VisualHarnessCliTests
         Assert.Equal([CaptureSurface.Main, CaptureSurface.Treemap], options.Surfaces);
         Assert.Equal([TreemapPalette.Weighted, TreemapPalette.Studio, TreemapPalette.Plain], options.Palettes);
         Assert.True(options.GenerateComparisons);
+    }
+
+    [Fact]
+    public void CaptureOptions_ParseCapture_ParsesShareMetricOverrides()
+    {
+        var options = CaptureOptions.ParseCapture(
+        [
+            "capture",
+            "--surface", "share",
+            "--share-tokens", "245000000",
+            "--share-lines", "3200000",
+            "--share-files", "280000",
+        ]);
+
+        Assert.Equal(245_000_000L, options.ShareMetrics.Tokens);
+        Assert.Equal(3_200_000, options.ShareMetrics.Lines);
+        Assert.Equal(280_000, options.ShareMetrics.Files);
     }
 }
