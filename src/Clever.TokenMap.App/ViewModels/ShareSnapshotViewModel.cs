@@ -11,14 +11,12 @@ public enum ShareCopyFeedbackState
 {
     Idle = 0,
     Success = 1,
-    Error = 2,
 }
 
 public partial class ShareSnapshotViewModel : ViewModelBase
 {
     private static readonly IBrush CopyButtonDefaultBrush = new SolidColorBrush(Color.Parse("#0F6CBD"));
     private static readonly IBrush CopyButtonSuccessBrush = new SolidColorBrush(Color.Parse("#2A8A57"));
-    private static readonly IBrush CopyButtonErrorBrush = new SolidColorBrush(Color.Parse("#B53D4A"));
     private static readonly IBrush CopyButtonForegroundBrush = Brushes.White;
 
     public ShareSnapshotViewModel(ProjectSnapshot snapshot, string? defaultProjectName)
@@ -58,7 +56,6 @@ public partial class ShareSnapshotViewModel : ViewModelBase
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsCopyFeedbackIdle))]
     [NotifyPropertyChangedFor(nameof(IsCopyFeedbackSuccess))]
-    [NotifyPropertyChangedFor(nameof(IsCopyFeedbackError))]
     [NotifyPropertyChangedFor(nameof(CopyButtonText))]
     [NotifyPropertyChangedFor(nameof(CopyButtonBackground))]
     [NotifyPropertyChangedFor(nameof(CopyButtonBorderBrush))]
@@ -75,13 +72,10 @@ public partial class ShareSnapshotViewModel : ViewModelBase
 
     public bool IsCopyFeedbackSuccess => CopyFeedbackState == ShareCopyFeedbackState.Success;
 
-    public bool IsCopyFeedbackError => CopyFeedbackState == ShareCopyFeedbackState.Error;
-
     public string CopyButtonText =>
         CopyFeedbackState switch
         {
             ShareCopyFeedbackState.Success => "Copied",
-            ShareCopyFeedbackState.Error => "Copy failed",
             _ => "Copy",
         };
 
@@ -89,7 +83,6 @@ public partial class ShareSnapshotViewModel : ViewModelBase
         CopyFeedbackState switch
         {
             ShareCopyFeedbackState.Success => CopyButtonSuccessBrush,
-            ShareCopyFeedbackState.Error => CopyButtonErrorBrush,
             _ => CopyButtonDefaultBrush,
         };
 

@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.Core.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.App.ViewModels;
@@ -54,12 +55,17 @@ public sealed class AboutViewModel : ViewModelBase
 {
     private readonly AppAboutInfo _aboutInfo;
     private readonly AsyncRelayCommand _openRepositoryCommand;
+    private readonly IAppIssueReporter _issueReporter;
     private readonly IPathShellService _pathShellService;
 
-    public AboutViewModel(AppAboutInfo aboutInfo, IPathShellService pathShellService)
+    public AboutViewModel(
+        AppAboutInfo aboutInfo,
+        IPathShellService pathShellService,
+        IAppIssueReporter issueReporter)
     {
         _aboutInfo = aboutInfo ?? throw new ArgumentNullException(nameof(aboutInfo));
         _pathShellService = pathShellService ?? throw new ArgumentNullException(nameof(pathShellService));
+        _issueReporter = issueReporter ?? throw new ArgumentNullException(nameof(issueReporter));
         _openRepositoryCommand = new AsyncRelayCommand(OpenRepositoryAsync);
     }
 
@@ -81,6 +87,20 @@ public sealed class AboutViewModel : ViewModelBase
 
     private async Task OpenRepositoryAsync()
     {
-        await _pathShellService.TryOpenAsync(_aboutInfo.RepositoryUrl).ConfigureAwait(false);
+        var opened = await _pathShellService.TryOpenAsync(_aboutInfo.RepositoryUrl).ConfigureAwait(false);
+        if (opened)
+        {
+            return;
+        }
+
+        _issueReporter.Report(new AppIssue
+        {
+            Code = "about.open_repository_failed",
+            UserMessage = "TokenMap could not open the project repository link.",
+            TechnicalMessage = "Opening the repository URL through the shell failed.",
+            Context = AppIssueContext.Create(
+                ("RepositoryDisplayName", _aboutInfo.RepositoryDisplayName),
+                ("RepositoryUrl", _aboutInfo.RepositoryUrl)),
+        });
     }
 }

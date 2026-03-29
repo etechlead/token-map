@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,6 +15,7 @@ namespace Clever.TokenMap.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IPathShellService _pathShellService;
+    private readonly IAppIssueReporter _issueReporter;
     private readonly MainWindowWorkspacePresenter _workspacePresenter;
     private readonly RelayCommand _closeSettingsCommand;
     private readonly RelayCommand _closeShareSnapshotCommand;
@@ -35,17 +37,21 @@ public partial class MainWindowViewModel : ViewModelBase
         ToolbarViewModel toolbar,
         ExcludesEditorViewModel excludesEditor,
         RecentFoldersViewModel recentFolders,
+        AppIssueViewModel issue,
         ProjectTreeViewModel tree,
         SummaryViewModel summary,
-        IPathShellService pathShellService)
+        IPathShellService pathShellService,
+        IAppIssueReporter issueReporter)
     {
         _workspacePresenter = workspacePresenter;
         _pathShellService = pathShellService;
+        _issueReporter = issueReporter;
 
         About = about;
         Toolbar = toolbar;
         ExcludesEditor = excludesEditor;
         RecentFolders = recentFolders;
+        Issue = issue;
         Tree = tree;
         Summary = summary;
 
@@ -70,6 +76,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public ExcludesEditorViewModel ExcludesEditor { get; }
 
     public RecentFoldersViewModel RecentFolders { get; }
+
+    public AppIssueViewModel Issue { get; }
 
     public ProjectTreeViewModel Tree { get; }
 
@@ -130,26 +138,55 @@ public partial class MainWindowViewModel : ViewModelBase
     public void SetTreemapRoot(ProjectNode? node) => _workspacePresenter.SetTreemapRoot(node);
 
     public Task OpenNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
-    {
-        if (node is null)
-        {
-            return Task.CompletedTask;
-        }
-
-        return _pathShellService.TryOpenAsync(node.FullPath, cancellationToken);
-    }
+        => OpenPathActionAsync(
+            node,
+            static (service, currentNode, token) => service.TryOpenAsync(currentNode.FullPath, token),
+            code: "shell.open_node_failed",
+            messageFactory: currentNode => $"TokenMap could not open '{currentNode.Name}'.",
+            technicalMessage: "Opening a path through the shell failed.",
+            cancellationToken: cancellationToken);
 
     public Task RevealNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default)
+        => OpenPathActionAsync(
+            node,
+            (service, currentNode, token) => service.TryRevealAsync(
+                currentNode.FullPath,
+                currentNode.Kind is not Core.Enums.ProjectNodeKind.File,
+                token),
+            code: "shell.reveal_node_failed",
+            messageFactory: currentNode => $"TokenMap could not reveal '{currentNode.Name}'.",
+            technicalMessage: "Revealing a path through the shell failed.",
+            cancellationToken: cancellationToken);
+
+    private async Task OpenPathActionAsync(
+        ProjectNode? node,
+        Func<IPathShellService, ProjectNode, CancellationToken, Task<bool>> action,
+        string code,
+        Func<ProjectNode, string> messageFactory,
+        string technicalMessage,
+        CancellationToken cancellationToken = default)
     {
         if (node is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
-        return _pathShellService.TryRevealAsync(
-            node.FullPath,
-            node.Kind is not Core.Enums.ProjectNodeKind.File,
-            cancellationToken);
+        var succeeded = await action(_pathShellService, node, cancellationToken).ConfigureAwait(false);
+        if (succeeded)
+        {
+            return;
+        }
+
+        _issueReporter.Report(new AppIssue
+        {
+            Code = code,
+            UserMessage = messageFactory(node),
+            TechnicalMessage = technicalMessage,
+            Context = AppIssueContext.Create(
+                ("NodeName", node.Name),
+                ("NodePath", node.FullPath),
+                ("NodeKind", node.Kind)),
+        });
     }
 
     private void ToggleSettings()
@@ -173,6 +210,12 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     public bool CanExcludeNodeFromFolder(ProjectNode? node) => ExcludesEditor.CanExcludeNodeFromFolder(node);
+
+    internal void ReportIssue(AppIssue issue)
+    {
+        ArgumentNullException.ThrowIfNull(issue);
+        _issueReporter.Report(issue);
+    }
 
     private void WorkspacePresenterOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

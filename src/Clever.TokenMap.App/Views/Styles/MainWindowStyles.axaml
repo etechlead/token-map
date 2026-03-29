@@ -65,6 +65,35 @@
         <Setter Property="TextAlignment" Value="Center" />
         <Setter Property="TextTrimming" Value="CharacterEllipsis" />
     </Style>
+    <Style Selector="Border.issue-banner">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="14" />
+        <Setter Property="Opacity" Value="0.99" />
+    </Style>
+    <Style Selector="Border.issue-modal">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="Padding" Value="18" />
+    </Style>
+    <Style Selector="TextBlock.issue-title">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBlock.issue-body">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="FontSize" Value="12" />
+    </Style>
+    <Style Selector="TextBlock.issue-meta">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+        <Setter Property="FontSize" Value="11" />
+    </Style>
     <Style Selector="Button.recent-folder-button">
         <Setter Property="Template">
             <ControlTemplate>

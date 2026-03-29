@@ -1,6 +1,7 @@
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
@@ -41,14 +42,22 @@ internal static class HarnessComposition
         IAnalysisSessionController analysisSessionController,
         ISettingsCoordinator settingsCoordinator,
         IFolderPathService folderPathService,
-        IPathShellService pathShellService) =>
-        MainWindowViewModelFactory.Create(
+        IPathShellService pathShellService)
+    {
+        var appIssueState = new AppIssueState();
+
+        return MainWindowViewModelFactory.Create(
                 new MainWindowViewModelFactoryDependencies(
                     analysisSessionController,
                     settingsCoordinator,
                     folderPathService,
-                    pathShellService))
+                    pathShellService,
+                    NullAppIssueReporter.Instance,
+                    appIssueState,
+                    new HarnessAppStoragePaths(),
+                    new HarnessApplicationControlService()))
             .MainWindowViewModel;
+    }
 }
 
 internal sealed class SnapshotProjectAnalyzer(ProjectSnapshot snapshot) : IProjectAnalyzer
@@ -141,4 +150,20 @@ internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettings
 
         MutableCurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
     }
+}
+
+internal sealed class HarnessApplicationControlService : IApplicationControlService
+{
+    public void RequestShutdown(int exitCode = 0)
+    {
+    }
+}
+
+internal sealed class HarnessAppStoragePaths : IAppStoragePaths
+{
+    public string GetSettingsFilePath() => Path.Combine(Path.GetTempPath(), "tokenmap.settings.json");
+
+    public string GetFolderSettingsRootPath() => Path.Combine(Path.GetTempPath(), "folder-settings");
+
+    public string GetLogsDirectoryPath() => Path.Combine(Path.GetTempPath(), "logs");
 }

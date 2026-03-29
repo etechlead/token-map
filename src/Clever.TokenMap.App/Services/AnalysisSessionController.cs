@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
@@ -15,6 +16,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     private readonly IFolderPickerService _folderPickerService;
     private readonly IFolderPathService _folderPathService;
     private readonly IScanOptionsResolver _scanOptionsResolver;
+    private readonly IAppIssueReporter _issueReporter;
     private readonly IAppLogger _logger;
 
     private CancellationTokenSource? _analysisCancellationTokenSource;
@@ -26,13 +28,15 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         IFolderPickerService folderPickerService,
         IFolderPathService folderPathService,
         IAppLogger? logger = null,
-        IScanOptionsResolver? scanOptionsResolver = null)
+        IScanOptionsResolver? scanOptionsResolver = null,
+        IAppIssueReporter? issueReporter = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
         _folderPathService = folderPathService;
         _scanOptionsResolver = scanOptionsResolver ?? new PassthroughScanOptionsResolver();
         _logger = logger ?? NullAppLogger.Instance;
+        _issueReporter = issueReporter ?? NullAppIssueReporter.Instance;
     }
 
     [ObservableProperty]
@@ -46,9 +50,6 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsBusy))]
     private AnalysisState state = AnalysisState.Idle;
-
-    [ObservableProperty]
-    private string? statusMessage;
 
     [ObservableProperty]
     private AnalysisProgress? currentProgress;
@@ -77,7 +78,10 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         ArgumentException.ThrowIfNullOrWhiteSpace(folderPath);
         ArgumentNullException.ThrowIfNull(options);
 
-        _logger.LogInformation($"Folder selected for analysis: '{folderPath}'.");
+        _logger.LogInformation(
+            "Folder selected for analysis.",
+            eventCode: "analysis.folder_selected",
+            context: AppIssueContext.Create(("FolderPath", folderPath)));
         return AnalyzeFolderAsync(folderPath, options, commitSelectedFolderOnSuccess: true);
     }
 
@@ -99,7 +103,10 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         }
 
         var activeFolderPath = _activeAnalysisFolderPath ?? SelectedFolderPath ?? "<unknown>";
-        _logger.LogInformation($"Cancellation requested for '{activeFolderPath}'.");
+        _logger.LogInformation(
+            "Cancellation requested for the active analysis.",
+            eventCode: "analysis.cancel_requested",
+            context: AppIssueContext.Create(("FolderPath", activeFolderPath)));
         _analysisCancellationTokenSource?.Cancel();
     }
 
@@ -123,12 +130,18 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
 
         if (!_folderPathService.Exists(folderPath))
         {
-            _logger.LogInformation($"Analysis skipped because project root was not found: '{folderPath}'.");
-            SetState(AnalysisState.Failed, $"Project root was not found: {folderPath}");
+            _issueReporter.Report(new AppIssue
+            {
+                Code = "analysis.root_missing",
+                UserMessage = $"TokenMap could not find '{folderPath}'.",
+                TechnicalMessage = "The selected project root does not exist.",
+                Context = AppIssueContext.Create(("FolderPath", folderPath)),
+            });
+            SetState(AnalysisState.Failed);
             return;
         }
 
-        SetState(AnalysisState.Scanning, $"Analyzing {folderPath}");
+        SetState(AnalysisState.Scanning);
 
         var progress = new Progress<AnalysisProgress>(value =>
         {
@@ -167,9 +180,12 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
                 return;
             }
 
-            _logger.LogInformation($"Analysis cancelled from UI for '{folderPath}'.");
+            _logger.LogInformation(
+                "Analysis cancelled from the UI flow.",
+                eventCode: "analysis.cancelled",
+                context: AppIssueContext.Create(("FolderPath", folderPath)));
             CurrentProgress = null;
-            SetState(AnalysisState.Cancelled, "Analysis cancelled.");
+            SetState(AnalysisState.Cancelled);
         }
         catch (Exception exception)
         {
@@ -178,9 +194,16 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
                 return;
             }
 
-            _logger.LogError(exception, $"Analysis failed in UI flow for '{folderPath}'.");
+            _issueReporter.Report(new AppIssue
+            {
+                Code = "analysis.run_failed",
+                UserMessage = $"TokenMap could not finish analyzing '{folderPath}'.",
+                TechnicalMessage = "The analysis flow failed before the workspace state could be updated.",
+                Exception = exception,
+                Context = AppIssueContext.Create(("FolderPath", folderPath)),
+            });
             CurrentProgress = null;
-            SetState(AnalysisState.Failed, exception.Message);
+            SetState(AnalysisState.Failed);
         }
         finally
         {
@@ -194,10 +217,9 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         }
     }
 
-    private void SetState(AnalysisState value, string? message = null)
+    private void SetState(AnalysisState value)
     {
         State = value;
-        StatusMessage = message;
     }
 
     private Task<ProjectSnapshot> RunProjectAnalysisAsync(

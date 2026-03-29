@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
@@ -173,13 +174,18 @@ internal static class HeadlessTestSupport
             new StubFolderPathService());
         var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths);
         var folderPathService = new StubFolderPathService();
+        var appIssueState = new AppIssueState();
 
         return MainWindowViewModelFactory.Create(
                 new MainWindowViewModelFactoryDependencies(
                     analysisSessionController,
                     settingsCoordinator,
                     folderPathService,
-                    pathShellService ?? new StubPathShellService()))
+                    pathShellService ?? new StubPathShellService(),
+                    new TestAppIssueReporter(appIssueState),
+                    appIssueState,
+                    new StubAppStoragePaths(),
+                    new StubApplicationControlService()))
             .MainWindowViewModel;
     }
 
@@ -290,6 +296,32 @@ internal static class HeadlessTestSupport
 
         public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+    }
+
+    private sealed class StubApplicationControlService : IApplicationControlService
+    {
+        public void RequestShutdown(int exitCode = 0)
+        {
+        }
+    }
+
+    private sealed class StubAppStoragePaths : IAppStoragePaths
+    {
+        public string GetSettingsFilePath() => Path.Combine(TestPaths.Folder("Demo"), "settings.json");
+
+        public string GetFolderSettingsRootPath() => Path.Combine(TestPaths.Folder("Demo"), "folders");
+
+        public string GetLogsDirectoryPath() => Path.Combine(TestPaths.Folder("Demo"), "logs");
+    }
+
+    private sealed class TestAppIssueReporter(AppIssueState state) : IAppIssueReporter
+    {
+        public void Report(AppIssue issue)
+        {
+            ArgumentNullException.ThrowIfNull(issue);
+
+            state.Show(new DisplayedAppIssue(issue, "TEST-ISSUE", DateTimeOffset.UtcNow));
+        }
     }
 }
 

@@ -1,3 +1,5 @@
+using Clever.TokenMap.Core.Diagnostics;
+
 namespace Clever.TokenMap.Core.Models;
 
 public sealed class ProjectSnapshot
@@ -10,5 +12,5 @@ public sealed class ProjectSnapshot
 
     public required ProjectNode Root { get; init; }
 
-    public IReadOnlyList<string> Warnings { get; init; } = [];
+    public IReadOnlyList<AnalysisIssue> Diagnostics { get; init; } = [];
 }

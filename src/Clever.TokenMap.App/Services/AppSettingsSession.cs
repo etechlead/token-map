@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Settings;
@@ -41,7 +42,13 @@ internal sealed class AppSettingsSession
         State = new SettingsState();
         State.PropertyChanged += StateOnPropertyChanged;
         State.RecentFolderPathsChanged += StateRecentFolderPathsOnCollectionChanged;
-        LoadSettings(initialSettings ?? _appSettingsStore.Load());
+        if (initialSettings is not null)
+        {
+            LoadSettings(initialSettings);
+            return;
+        }
+
+        LoadSettings(_appSettingsStore.Load());
     }
 
     public SettingsState State { get; }
@@ -167,7 +174,10 @@ internal sealed class AppSettingsSession
                 () =>
                 {
                     _appSettingsStore.Save(snapshot);
-                    _logger.LogDebug("Persisted updated app settings to settings.json.");
+                    _logger.LogDebug(
+                        "Persisted updated app settings.",
+                        eventCode: "settings.app.persisted",
+                        context: AppIssueContext.Create(("SettingsVersion", versionToSave)));
                 });
             _persistenceTask = queuedPersistenceTask;
         }

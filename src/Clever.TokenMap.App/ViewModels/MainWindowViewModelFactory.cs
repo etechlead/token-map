@@ -1,6 +1,7 @@
 using System;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using CommunityToolkit.Mvvm.Input;
 
@@ -11,6 +12,10 @@ public sealed record MainWindowViewModelFactoryDependencies(
     ISettingsCoordinator SettingsCoordinator,
     IFolderPathService FolderPathService,
     IPathShellService PathShellService,
+    IAppIssueReporter AppIssueReporter,
+    AppIssueState AppIssueState,
+    IAppStoragePaths AppStoragePaths,
+    IApplicationControlService ApplicationControlService,
     TreemapNavigationState? TreemapNavigationState = null,
     AppAboutInfo? AboutInfo = null);
 
@@ -21,6 +26,7 @@ public sealed record MainWindowViewModelComposition(
     ToolbarViewModel Toolbar,
     ExcludesEditorViewModel ExcludesEditor,
     RecentFoldersViewModel RecentFolders,
+    AppIssueViewModel Issue,
     ProjectTreeViewModel Tree,
     SummaryViewModel Summary,
     TreemapNavigationState TreemapNavigationState,
@@ -37,7 +43,8 @@ public static class MainWindowViewModelFactory
         var treemapNavigationState = dependencies.TreemapNavigationState ?? new TreemapNavigationState();
         var about = new AboutViewModel(
             dependencies.AboutInfo ?? AppAboutInfo.CreateDefault(),
-            dependencies.PathShellService);
+            dependencies.PathShellService,
+            dependencies.AppIssueReporter);
 
         var toolbar = new ToolbarViewModel(
             settingsCoordinator,
@@ -61,6 +68,12 @@ public static class MainWindowViewModelFactory
             settingsCoordinator,
             dependencies.FolderPathService,
             settingsCoordinator.BuildCurrentScanOptions);
+        var issue = new AppIssueViewModel(
+            dependencies.AppIssueState,
+            dependencies.PathShellService,
+            dependencies.AppStoragePaths,
+            dependencies.ApplicationControlService,
+            dependencies.AppIssueReporter);
         var workspacePresenter = new MainWindowWorkspacePresenter(
             analysisSessionController,
             treemapNavigationState,
@@ -74,9 +87,11 @@ public static class MainWindowViewModelFactory
             toolbar,
             excludesEditor,
             recentFolders,
+            issue,
             tree,
             summary,
-            dependencies.PathShellService);
+            dependencies.PathShellService,
+            dependencies.AppIssueReporter);
 
         return new MainWindowViewModelComposition(
             mainWindowViewModel,
@@ -85,6 +100,7 @@ public static class MainWindowViewModelFactory
             toolbar,
             excludesEditor,
             recentFolders,
+            issue,
             tree,
             summary,
             treemapNavigationState,

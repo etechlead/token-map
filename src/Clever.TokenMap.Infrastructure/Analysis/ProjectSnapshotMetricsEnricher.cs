@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
@@ -54,7 +55,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
-        var warnings = new ConcurrentQueue<string>(snapshot.Warnings);
+        var diagnostics = new ConcurrentQueue<AnalysisIssue>(snapshot.Diagnostics);
         var fileWorkItems = CollectFileWorkItems(snapshot.Root);
         var enrichedFiles = new ProjectNode?[fileWorkItems.Count];
         var totalFileCount = fileWorkItems.Count;
@@ -74,7 +75,7 @@ public sealed class ProjectSnapshotMetricsEnricher
                     var enrichedFile = await EnrichFileNodeAsync(
                         snapshot.RootPath,
                         fileWorkItem.Node,
-                        warnings,
+                        diagnostics,
                         ct).ConfigureAwait(false);
                     enrichedFiles[fileWorkItem.Index] = enrichedFile;
 
@@ -100,7 +101,7 @@ public sealed class ProjectSnapshotMetricsEnricher
             CapturedAtUtc = snapshot.CapturedAtUtc,
             Options = snapshot.Options,
             Root = enrichedRoot,
-            Warnings = [.. warnings],
+            Diagnostics = [.. diagnostics],
         };
     }
 
@@ -165,7 +166,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task<ProjectNode> EnrichFileNodeAsync(
         string rootPath,
         ProjectNode node,
-        ConcurrentQueue<string> warnings,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
         var fileState = TryGetFileState(node.FullPath);
@@ -185,7 +186,13 @@ public sealed class ProjectSnapshotMetricsEnricher
                 cancellationToken);
             if (cachedMetrics is not null)
             {
-                _logger.LogTrace($"Restored cached metrics for '{node.FullPath}'.");
+                _logger.LogTrace(
+                    "Restored cached metrics for the file.",
+                    eventCode: "analysis.cache_hit",
+                    context: AppIssueContext.Create(
+                        ("RootPath", rootPath),
+                        ("RelativePath", node.RelativePath),
+                        ("FullPath", node.FullPath)));
                 return CloneNode(node, cachedMetrics, node.SkippedReason);
             }
         }
@@ -197,7 +204,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            return ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
+            return ApplyRecoverableFileError(node, exception, diagnostics, fileSizeBytes, _logger);
         }
 
         if (!isText)
@@ -209,17 +216,23 @@ public sealed class ProjectSnapshotMetricsEnricher
         try
         {
             textAnalysis = fileState.FileSizeBytes > _largeFileTokenizationThresholdBytes
-                ? await AnalyzeLargeTextFileAsync(node.FullPath, warnings, cancellationToken).ConfigureAwait(false)
-                : await AnalyzeSmallTextFileAsync(node.FullPath, warnings, cancellationToken).ConfigureAwait(false);
+                ? await AnalyzeLargeTextFileAsync(node.FullPath, diagnostics, cancellationToken).ConfigureAwait(false)
+                : await AnalyzeSmallTextFileAsync(node.FullPath, diagnostics, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
-            return ApplyRecoverableFileError(node, exception, warnings, fileSizeBytes, _logger);
+            return ApplyRecoverableFileError(node, exception, diagnostics, fileSizeBytes, _logger);
         }
         catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
         {
-            warnings.Enqueue($"Unable to decode '{node.FullPath}': {exception.Message}");
-            _logger.LogWarning(exception, $"Unable to decode '{node.FullPath}'.");
+            diagnostics.Enqueue(CreateDiagnostic(
+                message: $"TokenMap could not decode '{node.FullPath}'.",
+                context: AppIssueContext.Create(("FullPath", node.FullPath))));
+            _logger.LogWarning(
+                exception,
+                "Decoding a text file failed during analysis.",
+                eventCode: "analysis.decode_failed",
+                context: AppIssueContext.Create(("FullPath", node.FullPath)));
             return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Unsupported);
         }
 
@@ -317,13 +330,13 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task<TextAnalysisResult> AnalyzeSmallTextFileAsync(
         string fullPath,
-        ConcurrentQueue<string> warnings,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
         var content = await File.ReadAllTextAsync(fullPath, cancellationToken).ConfigureAwait(false);
         var normalizedContent = NormalizeNewlines(content);
         var nonEmptyLineCount = CountNonEmptyLines(normalizedContent);
-        var tokens = await CountTokensWithWarningAsync(fullPath, normalizedContent, warnings, cancellationToken)
+        var tokens = await CountTokensWithWarningAsync(fullPath, normalizedContent, diagnostics, cancellationToken)
             .ConfigureAwait(false);
 
         return new TextAnalysisResult(tokens ?? 0, nonEmptyLineCount);
@@ -331,7 +344,7 @@ public sealed class ProjectSnapshotMetricsEnricher
 
     private async Task<TextAnalysisResult> AnalyzeLargeTextFileAsync(
         string fullPath,
-        ConcurrentQueue<string> warnings,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
         await using var stream = new FileStream(
@@ -370,7 +383,7 @@ public sealed class ProjectSnapshotMetricsEnricher
                 continue;
             }
 
-            var chunkTokens = await CountTokensWithWarningAsync(fullPath, normalizedChunk, warnings, cancellationToken)
+            var chunkTokens = await CountTokensWithWarningAsync(fullPath, normalizedChunk, diagnostics, cancellationToken)
                 .ConfigureAwait(false);
             if (chunkTokens is null)
             {
@@ -385,7 +398,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         var finalChunk = lineCounter.Complete();
         if (!tokenCountingFailed && finalChunk.Length > 0)
         {
-            var chunkTokens = await CountTokensWithWarningAsync(fullPath, finalChunk, warnings, cancellationToken)
+            var chunkTokens = await CountTokensWithWarningAsync(fullPath, finalChunk, diagnostics, cancellationToken)
                 .ConfigureAwait(false);
             if (chunkTokens is null)
             {
@@ -452,7 +465,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private async Task<long?> CountTokensWithWarningAsync(
         string fullPath,
         string content,
-        ConcurrentQueue<string> warnings,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
         try
@@ -465,8 +478,14 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
         catch (Exception exception)
         {
-            warnings.Enqueue($"Unable to count tokens for '{fullPath}': {exception.Message}");
-            _logger.LogWarning(exception, $"Token counting failed for '{fullPath}'.");
+            diagnostics.Enqueue(CreateDiagnostic(
+                message: $"TokenMap could not count tokens for '{fullPath}'.",
+                context: AppIssueContext.Create(("FullPath", fullPath))));
+            _logger.LogWarning(
+                exception,
+                "Counting tokens for a text file failed during analysis.",
+                eventCode: "analysis.token_count_failed",
+                context: AppIssueContext.Create(("FullPath", fullPath)));
             return null;
         }
     }
@@ -495,7 +514,7 @@ public sealed class ProjectSnapshotMetricsEnricher
     private static ProjectNode ApplyRecoverableFileError(
         ProjectNode node,
         Exception exception,
-        ConcurrentQueue<string> warnings,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         long fileSizeBytes,
         IAppLogger logger)
     {
@@ -505,10 +524,25 @@ public sealed class ProjectSnapshotMetricsEnricher
                 ? SkippedReason.Inaccessible
                 : SkippedReason.Error;
 
-        warnings.Enqueue($"Unable to analyze '{node.FullPath}': {exception.Message}");
-        logger.LogWarning(exception, $"Unable to analyze '{node.FullPath}'.");
+        diagnostics.Enqueue(CreateDiagnostic(
+            message: $"TokenMap could not analyze '{node.FullPath}'.",
+            context: AppIssueContext.Create(("FullPath", node.FullPath))));
+        logger.LogWarning(
+            exception,
+            "Analyzing a file during metrics enrichment failed.",
+            eventCode: "analysis.file_analyze_failed",
+            context: AppIssueContext.Create(("FullPath", node.FullPath)));
         return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), skippedReason);
     }
+
+    private static AnalysisIssue CreateDiagnostic(
+        string message,
+        IReadOnlyDictionary<string, string> context) =>
+        new()
+        {
+            Message = message,
+            Context = context,
+        };
 
     private static FileState TryGetFileState(string fullPath)
     {

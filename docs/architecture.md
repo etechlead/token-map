@@ -18,6 +18,9 @@
 - `SettingsState` is the source of truth for app-wide analysis and appearance preferences.
 - `CurrentFolderSettingsState` is the source of truth for the committed root folder's folder-specific scan preferences.
 - `SettingsCoordinator` is the app-layer facade for settings workflows. It exposes read-only settings state views to consumers and keeps writes behind explicit commands.
+- `AppIssueState` is the source of truth for the currently displayed user-facing runtime issue.
+- `IAppIssueReporter` is the single app-layer entry point for reporting runtime issues. It owns reference-id assignment, structured error logging, and projection of user-visible issues into `AppIssueState`.
+- Settings persistence stays infrastructure-owned and logs persistence problems locally; it does not project settings load/save failures into shell-level user-facing issues.
 - `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay independent from infrastructure implementations.
 - `Clever.TokenMap.App.Services` stay UI-agnostic except for small platform-adapter services that wrap desktop framework APIs.
 
@@ -28,5 +31,9 @@
 - Global excludes, `.gitignore`, and folder-specific excludes flow through one ignore-rule pipeline.
 - Token counting stays local behind `ITokenCounter`.
 - Line metrics stay local in the analysis pipeline for included text files.
+- `AnalysisIssue` is the canonical snapshot diagnostic model for scanner and metrics-enrichment problems that do not stop analysis.
+- `AppIssue` is the canonical runtime issue model for shell actions and global exception handling.
+- `AppLogEntry` is the canonical structured log payload; runtime error logging does not use separate ad hoc logger shapes.
+- User-facing runtime errors flow through `AppIssueState` and are rendered by the shell as either a non-fatal banner or a fatal modal instead of per-feature bespoke error widgets.
 - The treemap remains one custom-rendered control, not a control-per-rectangle surface.
 - `Clever.TokenMap.App` works through app-layer services and state; it does not read the file system or settings files directly.

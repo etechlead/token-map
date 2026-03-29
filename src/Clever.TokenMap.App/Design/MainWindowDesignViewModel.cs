@@ -1,3 +1,4 @@
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Design;
@@ -16,9 +17,11 @@ public sealed class MainWindowDesignViewModel : MainWindowViewModel
             composition.Toolbar,
             composition.ExcludesEditor,
             composition.RecentFolders,
+            composition.Issue,
             composition.Tree,
             composition.Summary,
-            composition.PathShellService)
+            composition.PathShellService,
+            NullAppIssueReporter.Instance)
     {
     }
 }

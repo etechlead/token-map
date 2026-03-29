@@ -1,3 +1,4 @@
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
@@ -41,7 +42,13 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
 
         var startedAt = DateTimeOffset.Now;
         _logger.LogInformation(
-            $"Analysis started for '{rootPath}' with respectGitIgnore={options.RespectGitIgnore}, useGlobalExcludes={options.UseGlobalExcludes}, globalExcludeCount={options.GlobalExcludes.Count}.");
+            "Analysis started.",
+            eventCode: "analysis.started",
+            context: AppIssueContext.Create(
+                ("RootPath", rootPath),
+                ("RespectGitIgnore", options.RespectGitIgnore),
+                ("UseGlobalExcludes", options.UseGlobalExcludes),
+                ("GlobalExcludeCount", options.GlobalExcludes.Count)));
 
         var bufferedProgress = new BufferedAnalysisProgress(progress, _progressBatchSize);
 
@@ -75,7 +82,15 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
 
             var duration = DateTimeOffset.Now - startedAt;
             _logger.LogInformation(
-                $"Analysis completed for '{rootPath}' in {duration.TotalSeconds:F2}s. Files={enrichedSnapshot.Root.Metrics.DescendantFileCount:N0}, tokens={enrichedSnapshot.Root.Metrics.Tokens:N0}, non-empty lines={enrichedSnapshot.Root.Metrics.NonEmptyLines:N0}, warnings={enrichedSnapshot.Warnings.Count:N0}.");
+                "Analysis completed.",
+                eventCode: "analysis.completed",
+                context: AppIssueContext.Create(
+                    ("RootPath", rootPath),
+                    ("DurationSeconds", duration.TotalSeconds),
+                    ("FileCount", enrichedSnapshot.Root.Metrics.DescendantFileCount),
+                    ("TokenCount", enrichedSnapshot.Root.Metrics.Tokens),
+                    ("NonEmptyLineCount", enrichedSnapshot.Root.Metrics.NonEmptyLines),
+                    ("DiagnosticCount", enrichedSnapshot.Diagnostics.Count)));
 
             return enrichedSnapshot;
         }
@@ -83,14 +98,25 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
         {
             bufferedProgress.Flush();
             var duration = DateTimeOffset.Now - startedAt;
-            _logger.LogInformation($"Analysis cancelled for '{rootPath}' after {duration.TotalSeconds:F2}s.");
+            _logger.LogInformation(
+                "Analysis cancelled.",
+                eventCode: "analysis.cancelled_core",
+                context: AppIssueContext.Create(
+                    ("RootPath", rootPath),
+                    ("DurationSeconds", duration.TotalSeconds)));
             throw;
         }
         catch (Exception exception)
         {
             bufferedProgress.Flush();
             var duration = DateTimeOffset.Now - startedAt;
-            _logger.LogError(exception, $"Analysis failed for '{rootPath}' after {duration.TotalSeconds:F2}s.");
+            _logger.LogError(
+                exception,
+                "Analysis failed.",
+                eventCode: "analysis.failed_core",
+                context: AppIssueContext.Create(
+                    ("RootPath", rootPath),
+                    ("DurationSeconds", duration.TotalSeconds)));
             throw;
         }
     }

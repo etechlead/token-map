@@ -81,7 +81,10 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var fileNode = Assert.Single(enriched.Root.Children);
 
         Assert.Equal(SkippedReason.MissingDuringScan, fileNode.SkippedReason);
-        Assert.Contains(enriched.Warnings, warning => warning.Contains("gone.txt", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(
+            enriched.Diagnostics,
+            issue => issue.Context.TryGetValue("FullPath", out var fullPath) &&
+                     fullPath.Contains("gone.txt", StringComparison.OrdinalIgnoreCase));
         Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
         Assert.Equal(0, enriched.Root.Metrics.Tokens);
         Assert.Equal(0, enriched.Root.Metrics.NonEmptyLines);

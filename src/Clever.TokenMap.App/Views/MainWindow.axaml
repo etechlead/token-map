@@ -28,8 +28,8 @@
         <StyleInclude Source="avares://Clever.TokenMap.App/Views/Styles/MainWindowStyles.axaml" />
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto"
-          Margin="10">
+        <Grid RowDefinitions="Auto,*,Auto"
+              Margin="10">
         <sections:ToolbarSummaryView Grid.Row="0" />
 
         <Grid Grid.Row="1">
@@ -180,6 +180,85 @@
             <TextBlock Name="ProgressStatusPillText"
                        Classes="progress-status-pill-text"
                        Text="{Binding Summary.ProgressPillText}" />
+        </Border>
+
+        <Border Name="AppIssueBanner"
+                Grid.RowSpan="3"
+                Classes="panel issue-banner"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Margin="0,18,0,0"
+                MaxWidth="720"
+                IsVisible="{Binding Issue.IsBannerVisible}"
+                ZIndex="{x:Static views:MainWindowZLayers.IssueBanner}">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16">
+                <StackPanel Spacing="4">
+                    <TextBlock Name="AppIssueBannerTitleText"
+                               Classes="issue-title"
+                               Text="{Binding Issue.Title}" />
+                    <TextBlock Name="AppIssueBannerMessageText"
+                               Classes="issue-body"
+                               Text="{Binding Issue.Message}" />
+                    <TextBlock Name="AppIssueBannerReferenceText"
+                               Classes="issue-meta"
+                               Text="{Binding Issue.ReferenceIdText}" />
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Top"
+                            Spacing="8">
+                    <Button Name="AppIssueBannerOpenLogsButton"
+                            Classes="action-button"
+                            Command="{Binding Issue.OpenLogsCommand}"
+                            Content="Open Logs" />
+                    <Button Name="AppIssueBannerDismissButton"
+                            Classes="action-button"
+                            Command="{Binding Issue.DismissCommand}"
+                            Content="Dismiss" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Name="AppIssueBackdrop"
+                Grid.RowSpan="3"
+                Background="#7A0B1016"
+                IsVisible="{Binding Issue.IsModalVisible}"
+                ZIndex="{x:Static views:MainWindowZLayers.IssueBackdrop}" />
+
+        <Border Name="AppIssueModal"
+                Grid.RowSpan="3"
+                Classes="panel issue-modal"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Width="520"
+                MaxWidth="520"
+                IsVisible="{Binding Issue.IsModalVisible}"
+                ZIndex="{x:Static views:MainWindowZLayers.IssueModal}">
+            <StackPanel Spacing="12">
+                <TextBlock Name="AppIssueModalTitleText"
+                           Classes="panel-title issue-title"
+                           Text="{Binding Issue.Title}" />
+                <TextBlock Name="AppIssueModalMessageText"
+                           Classes="issue-body"
+                           Text="{Binding Issue.Message}" />
+                <TextBlock Name="AppIssueModalReferenceText"
+                           Classes="issue-meta"
+                           Text="{Binding Issue.ReferenceIdText}" />
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Name="AppIssueModalOpenLogsButton"
+                            Classes="action-button"
+                            Command="{Binding Issue.OpenLogsCommand}"
+                            Content="Open Logs" />
+                    <Button Name="AppIssueModalCloseAppButton"
+                            Classes="action-button primary"
+                            Command="{Binding Issue.CloseAppCommand}"
+                            Content="Close App" />
+                </StackPanel>
+            </StackPanel>
         </Border>
 
         <Border Name="ExcludesEditorBackdrop"

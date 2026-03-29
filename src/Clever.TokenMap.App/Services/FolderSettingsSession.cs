@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
@@ -234,7 +235,12 @@ internal sealed class FolderSettingsSession
                 () =>
                 {
                     _folderSettingsStore.Save(rootPath, snapshot);
-                    _logger.LogDebug($"Persisted updated folder settings for '{rootPath}'.");
+                    _logger.LogDebug(
+                        "Persisted updated folder settings.",
+                        eventCode: "settings.folder.persisted",
+                        context: AppIssueContext.Create(
+                            ("RootPath", rootPath),
+                            ("SettingsVersion", versionToSave)));
                 });
             _persistenceTask = queuedPersistenceTask;
         }

@@ -81,9 +81,6 @@
                             <Path Classes="action-button-icon"
                                   Data="{StaticResource TokenMapCheckmark16Geometry}"
                                   IsVisible="{Binding ShareSnapshot.IsCopyFeedbackSuccess}" />
-                            <Path Classes="action-button-icon"
-                                  Data="{StaticResource FluentDismiss20Geometry}"
-                                  IsVisible="{Binding ShareSnapshot.IsCopyFeedbackError}" />
                             <TextBlock VerticalAlignment="Center"
                                        Text="{Binding ShareSnapshot.CopyButtonText}" />
                         </StackPanel>

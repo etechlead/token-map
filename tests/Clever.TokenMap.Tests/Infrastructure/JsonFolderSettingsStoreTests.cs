@@ -41,7 +41,7 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var rootPath = TestPaths.Folder("Repo");
-        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(rootPath);
+        var settingsFilePath = GetSettingsFilePath(rootPath);
         Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
         File.WriteAllText(settingsFilePath, "{ invalid json");
 
@@ -57,7 +57,7 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var rootPath = TestPaths.Folder("Repo");
-        var settingsFilePath = new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsFilePath(rootPath);
+        var settingsFilePath = GetSettingsFilePath(rootPath);
         Directory.CreateDirectory(Path.GetDirectoryName(settingsFilePath)!);
         File.WriteAllText(
             settingsFilePath,
@@ -108,5 +108,14 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
         }
     }
 
-    private JsonFolderSettingsStore CreateStore() => new(_testRootPath);
+    private JsonFolderSettingsStore CreateStore() => new(
+        new TokenMapAppDataPaths(_testRootPath).GetFolderSettingsRootPath());
+
+    private string GetSettingsFilePath(string rootPath)
+    {
+        var storagePaths = new TokenMapAppDataPaths(_testRootPath);
+        var normalizedRootPath = new Clever.TokenMap.Core.Paths.PathNormalizer().NormalizeRootPath(rootPath);
+        var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath);
+        return Path.Combine(storagePaths.GetFolderSettingsRootPath(), directoryName, "settings.json");
+    }
 }

@@ -7,6 +7,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Views;
@@ -28,7 +29,7 @@ public partial class ShareSnapshotModalView : UserControl
             preview.FindControl<Control>("ShareCardRoot") is not { } shareCardRoot ||
             sender is not Button copyButton)
         {
-            SetCopyFeedbackState(ShareCopyFeedbackState.Error);
+            ReportCopyFailure(exception: null);
             return;
         }
 
@@ -38,7 +39,7 @@ public partial class ShareSnapshotModalView : UserControl
         {
             if (TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
             {
-                SetCopyFeedbackState(ShareCopyFeedbackState.Error);
+                ReportCopyFailure(exception: null);
                 return;
             }
 
@@ -68,9 +69,9 @@ public partial class ShareSnapshotModalView : UserControl
                 throw;
             }
         }
-        catch
+        catch (Exception exception)
         {
-            SetCopyFeedbackState(ShareCopyFeedbackState.Error);
+            ReportCopyFailure(exception);
         }
         finally
         {
@@ -102,6 +103,22 @@ public partial class ShareSnapshotModalView : UserControl
                 }
             },
             DispatcherPriority.Background);
+    }
+
+    private void ReportCopyFailure(Exception? exception)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.ReportIssue(new AppIssue
+        {
+            Code = "share.copy_image_failed",
+            UserMessage = "TokenMap could not copy the share image to the clipboard.",
+            TechnicalMessage = "Copying the rendered share image to the clipboard failed.",
+            Exception = exception,
+        });
     }
 
     internal static BitmapExportSettings GetBitmapExportSettings(Size logicalSize, double renderScaling)

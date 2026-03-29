@@ -13,6 +13,7 @@ namespace Clever.TokenMap.Infrastructure.Settings;
 public sealed class JsonAppSettingsStore : IAppSettingsStore
 {
     private static readonly JsonSerializerOptions SerializerOptions = CreateSerializerOptions();
+    private const string IssueCodePrefix = "settings.app";
 
     private readonly string _settingsFilePath;
     private readonly IAppLogger? _logger;
@@ -36,6 +37,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             _settingsFilePath,
             SerializerOptions,
             "app settings",
+            IssueCodePrefix,
             _logger);
         ApplySettings(settings, persistedSettings);
 
@@ -53,6 +55,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             normalizedSettings,
             SerializerOptions,
             "app settings",
+            IssueCodePrefix,
             _logger);
     }
 

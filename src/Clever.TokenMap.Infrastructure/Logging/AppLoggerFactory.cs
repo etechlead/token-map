@@ -14,9 +14,9 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
     private const long DefaultFileSizeLimitBytes = 4 * 1024 * 1024;
     private const int DefaultRetainedFileCountLimit = 10;
     private const string FileOutputTemplate =
-        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+        "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}";
     private const string ConsoleOutputTemplate =
-        "{Timestamp:HH:mm:ss} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}";
+        "{Timestamp:HH:mm:ss} [{Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}";
 
     private readonly Serilog.ILogger _logger;
 
@@ -88,21 +88,34 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
             _logger = logger;
         }
 
-        public void Log(AppLogLevel level, string message, Exception? exception = null)
+        public void Log(AppLogEntry entry)
         {
-            var serilogLevel = ToSerilogLevel(level);
+            ArgumentNullException.ThrowIfNull(entry);
+
+            var serilogLevel = ToSerilogLevel(entry.Level);
             if (!_logger.IsEnabled(serilogLevel))
             {
                 return;
             }
 
-            if (exception is null)
+            var logger = _logger;
+            if (!string.IsNullOrWhiteSpace(entry.EventCode))
             {
-                _logger.Write(serilogLevel, "{Text:l}", message);
+                logger = logger.ForContext("EventCode", entry.EventCode);
+            }
+
+            foreach (var (key, value) in entry.Context)
+            {
+                logger = logger.ForContext(key, value);
+            }
+
+            if (entry.Exception is null)
+            {
+                logger.Write(serilogLevel, "{Text:l}", entry.Message);
                 return;
             }
 
-            _logger.Write(serilogLevel, exception, "{Text:l}", message);
+            logger.Write(serilogLevel, entry.Exception, "{Text:l}", entry.Message);
         }
     }
 }

@@ -13,8 +13,6 @@ public interface IAnalysisSessionController : INotifyPropertyChanged
 
     AnalysisState State { get; }
 
-    string? StatusMessage { get; }
-
     AnalysisProgress? CurrentProgress { get; }
 
     bool HasSelectedFolder { get; }

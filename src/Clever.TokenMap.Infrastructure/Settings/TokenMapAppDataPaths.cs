@@ -14,7 +14,7 @@ public sealed class TokenMapAppDataPaths : IAppStoragePaths
         _pathNormalizer = pathNormalizer ?? new PathNormalizer();
     }
 
-    public string GetAppDataRootPath()
+    private string GetAppDataRootPath()
     {
         if (!string.IsNullOrWhiteSpace(_appDataRootPath))
         {
@@ -35,14 +35,6 @@ public sealed class TokenMapAppDataPaths : IAppStoragePaths
 
     public string GetFolderSettingsRootPath() =>
         Path.Combine(GetAppDataRootPath(), "folders");
-
-    public string GetFolderSettingsFilePath(string rootPath)
-    {
-        var normalizedRootPath = _pathNormalizer.NormalizeRootPath(rootPath);
-        var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath, _pathNormalizer);
-
-        return Path.Combine(GetFolderSettingsRootPath(), directoryName, "settings.json");
-    }
 
     public string GetLogsDirectoryPath() =>
         Path.Combine(GetAppDataRootPath(), "logs");

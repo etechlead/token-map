@@ -146,9 +146,6 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
 
                 RefreshToolbarAvailability();
                 break;
-            case nameof(IAnalysisSessionController.StatusMessage):
-                _summary.SetState(_analysisSessionController.State);
-                break;
             case nameof(IAnalysisSessionController.CurrentProgress):
                 if (_analysisSessionController.CurrentProgress is { } progress)
                 {

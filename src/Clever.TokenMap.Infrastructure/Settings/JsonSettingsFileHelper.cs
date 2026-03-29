@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Logging;
 
@@ -25,6 +26,7 @@ internal static class JsonSettingsFileHelper
         string settingsFilePath,
         JsonSerializerOptions serializerOptions,
         string settingsLabel,
+        string issueCodePrefix,
         IAppLogger? logger = null)
     {
         if (!File.Exists(settingsFilePath))
@@ -39,7 +41,15 @@ internal static class JsonSettingsFileHelper
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
-            LogWarning(logger, exception, $"Unable to load {settingsLabel} from '{settingsFilePath}': {exception.Message}");
+            Log(
+                logger,
+                AppLogLevel.Warning,
+                exception,
+                $"Loading {settingsLabel} failed.",
+                eventCode: $"{issueCodePrefix}.load_failed",
+                context: AppIssueContext.Create(
+                    ("SettingsLabel", settingsLabel),
+                    ("SettingsFilePath", settingsFilePath)));
             return default;
         }
     }
@@ -49,6 +59,7 @@ internal static class JsonSettingsFileHelper
         TPersisted persistedSettings,
         JsonSerializerOptions serializerOptions,
         string settingsLabel,
+        string issueCodePrefix,
         IAppLogger? logger = null)
     {
         var tempFilePath = $"{settingsFilePath}.tmp";
@@ -67,7 +78,16 @@ internal static class JsonSettingsFileHelper
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            LogWarning(logger, exception, $"Unable to save {settingsLabel} to '{settingsFilePath}': {exception.Message}");
+            Log(
+                logger,
+                AppLogLevel.Error,
+                exception,
+                $"Saving {settingsLabel} failed.",
+                eventCode: $"{issueCodePrefix}.save_failed",
+                context: AppIssueContext.Create(
+                    ("SettingsLabel", settingsLabel),
+                    ("SettingsFilePath", settingsFilePath),
+                    ("TempFilePath", tempFilePath)));
         }
         finally
         {
@@ -79,14 +99,44 @@ internal static class JsonSettingsFileHelper
                 }
                 catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
                 {
-                    LogWarning(logger, exception, $"Unable to clean up temporary {settingsLabel} file '{tempFilePath}': {exception.Message}");
+                    LogWarning(
+                        logger,
+                        exception,
+                        $"Cleaning up the temporary {settingsLabel} file failed.",
+                        eventCode: $"{issueCodePrefix}.temp_cleanup_failed",
+                        context: AppIssueContext.Create(
+                            ("SettingsLabel", settingsLabel),
+                            ("SettingsFilePath", settingsFilePath),
+                            ("TempFilePath", tempFilePath)));
                 }
             }
         }
     }
 
-    internal static void LogWarning(IAppLogger? logger, Exception exception, string message)
+    internal static void LogWarning(
+        IAppLogger? logger,
+        Exception exception,
+        string message,
+        string? eventCode = null,
+        IReadOnlyDictionary<string, string>? context = null)
+        => Log(logger, AppLogLevel.Warning, exception, message, eventCode, context);
+
+    private static void Log(
+        IAppLogger? logger,
+        AppLogLevel level,
+        Exception exception,
+        string message,
+        string? eventCode = null,
+        IReadOnlyDictionary<string, string>? context = null)
     {
-        logger?.Log(AppLogLevel.Warning, message, exception);
+        logger?.Log(new AppLogEntry
+        {
+            Level = level,
+            Message = message,
+            EventCode = eventCode,
+            Exception = exception,
+            Context = context ?? AppIssueContext.Empty,
+        });
     }
+
 }

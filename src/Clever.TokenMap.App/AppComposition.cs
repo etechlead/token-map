@@ -1,7 +1,9 @@
 using System;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.Views;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Paths;
@@ -41,10 +43,18 @@ public static class AppComposition
         services.AddSingleton<PathNormalizer>();
         services.AddSingleton<IAppStoragePaths>(sp =>
             new TokenMapAppDataPaths(pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
+        services.AddSingleton<AppIssueState>();
+        services.AddSingleton<IApplicationControlService, DesktopApplicationControlService>();
+        services.AddSingleton<IUiDispatcher, AvaloniaUiDispatcher>();
         services.AddSingleton(sp =>
             new AppLoggerFactory(
                 AppSettings.CreateDefault().Logging,
                 appStoragePaths: sp.GetRequiredService<IAppStoragePaths>()));
+        services.AddSingleton<IAppIssueReporter>(sp =>
+            new AppIssueReporter(
+                sp.GetRequiredService<AppLoggerFactory>().CreateLogger<AppIssueReporter>(),
+                sp.GetRequiredService<AppIssueState>(),
+                sp.GetRequiredService<IUiDispatcher>()));
         services.AddSingleton<IAppSettingsStore>(sp =>
             new JsonAppSettingsStore(
                 appStoragePaths: sp.GetRequiredService<IAppStoragePaths>(),
@@ -94,14 +104,19 @@ public static class AppComposition
                 sp.GetRequiredService<IFolderPickerService>(),
                 sp.GetRequiredService<IFolderPathService>(),
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<AnalysisSessionController>(),
-                sp.GetRequiredService<ISettingsCoordinator>()));
+                sp.GetRequiredService<ISettingsCoordinator>(),
+                sp.GetRequiredService<IAppIssueReporter>()));
         services.AddSingleton(sp =>
             MainWindowViewModelFactory.Create(
                 new MainWindowViewModelFactoryDependencies(
                     sp.GetRequiredService<IAnalysisSessionController>(),
                     sp.GetRequiredService<ISettingsCoordinator>(),
                     sp.GetRequiredService<IFolderPathService>(),
-                    sp.GetRequiredService<IPathShellService>()))
+                    sp.GetRequiredService<IPathShellService>(),
+                    sp.GetRequiredService<IAppIssueReporter>(),
+                    sp.GetRequiredService<AppIssueState>(),
+                    sp.GetRequiredService<IAppStoragePaths>(),
+                    sp.GetRequiredService<IApplicationControlService>()))
                 .MainWindowViewModel);
         services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainWindowViewModel>()));
     }

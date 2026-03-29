@@ -50,7 +50,7 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
             AnalysisState.Idle => "Select a folder to build a project treemap and metrics snapshot.",
             AnalysisState.Scanning => "Analyzing project structure, token counts and non-empty line statistics.",
             AnalysisState.Cancelled => "Analysis was cancelled. Previous snapshot remains available.",
-            AnalysisState.Failed => "Analysis failed. Check the status message and diagnostics.",
+            AnalysisState.Failed => "Analysis failed. Review the diagnostics issue and log details.",
             _ => SummaryText,
         };
 
@@ -78,11 +78,11 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
     public void SetCompleted(ProjectSnapshot snapshot)
     {
         _acceptProgressUpdates = false;
-        SummaryText = snapshot.Warnings.Count == 0
+        SummaryText = snapshot.Diagnostics.Count == 0
             ? $"Analysis completed for {snapshot.Root.Name}."
-            : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Warnings.Count:N0} warnings.";
+            : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Diagnostics.Count:N0} diagnostics.";
         TotalsText =
-            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.NonEmptyLines:N0} non-empty lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Warnings.Count:N0} warnings";
+            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.NonEmptyLines:N0} non-empty lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Diagnostics.Count:N0} diagnostics";
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
@@ -91,7 +91,7 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
         TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
         LineSummaryValue = snapshot.Root.Metrics.NonEmptyLines.ToString("N0", CultureInfo.CurrentCulture);
         FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
-        WarningSummaryValue = snapshot.Warnings.Count.ToString("N0", CultureInfo.CurrentCulture);
+        WarningSummaryValue = snapshot.Diagnostics.Count.ToString("N0", CultureInfo.CurrentCulture);
     }
 
     public void UpdateProgress(AnalysisProgress progress)

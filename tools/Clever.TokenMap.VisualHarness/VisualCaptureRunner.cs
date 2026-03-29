@@ -308,7 +308,7 @@ internal static class VisualCaptureRunner
             CapturedAtUtc = snapshot.CapturedAtUtc,
             Options = snapshot.Options,
             Root = updatedRoot,
-            Warnings = snapshot.Warnings,
+            Diagnostics = snapshot.Diagnostics,
         };
     }
 

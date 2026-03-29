@@ -171,7 +171,10 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Contains(
             logger.Entries,
             entry => entry.Level == AppLogLevel.Warning &&
-                     entry.Message.Contains("Unable to load app settings", StringComparison.Ordinal));
+                     entry.EventCode == "settings.app.load_failed" &&
+                     entry.Message == "Loading app settings failed." &&
+                     entry.Context.TryGetValue("SettingsLabel", out var settingsLabel) &&
+                     settingsLabel == "app settings");
     }
 
     [Fact]
@@ -281,11 +284,11 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
     private sealed class RecordingLogger : IAppLogger
     {
-        public List<(AppLogLevel Level, string Message, Exception? Exception)> Entries { get; } = [];
+        public List<AppLogEntry> Entries { get; } = [];
 
-        public void Log(AppLogLevel level, string message, Exception? exception = null)
+        public void Log(AppLogEntry entry)
         {
-            Entries.Add((level, message, exception));
+            Entries.Add(entry);
         }
     }
 }

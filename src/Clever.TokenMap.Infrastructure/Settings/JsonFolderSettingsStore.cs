@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Settings;
@@ -10,6 +11,7 @@ namespace Clever.TokenMap.Infrastructure.Settings;
 public sealed class JsonFolderSettingsStore : IFolderSettingsStore
 {
     private static readonly JsonSerializerOptions SerializerOptions = JsonSettingsFileHelper.CreateSerializerOptions();
+    private const string IssueCodePrefix = "settings.folder";
 
     private readonly PathNormalizer _pathNormalizer;
     private readonly string _folderSettingsRootPath;
@@ -40,6 +42,7 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
             settingsFilePath,
             SerializerOptions,
             "folder settings",
+            IssueCodePrefix,
             _logger);
         ApplySettings(settings, normalizedRootPath, persistedSettings);
 
@@ -62,6 +65,7 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
             normalizedSettings,
             SerializerOptions,
             "folder settings",
+            IssueCodePrefix,
             _logger);
     }
 
@@ -84,7 +88,11 @@ public sealed class JsonFolderSettingsStore : IFolderSettingsStore
                 JsonSettingsFileHelper.LogWarning(
                     _logger,
                     exception,
-                    $"Ignoring invalid persisted folder settings root path '{persistedSettings.RootPath}'.");
+                    $"Ignoring the invalid persisted folder settings root path.",
+                    eventCode: $"{IssueCodePrefix}.invalid_root_path",
+                    context: AppIssueContext.Create(
+                        ("PersistedRootPath", persistedSettings.RootPath),
+                        ("ExpectedRootPath", normalizedRootPath)));
                 return;
             }
 

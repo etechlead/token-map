@@ -151,7 +151,6 @@ public sealed class AnalysisSessionControllerTests
 
         Assert.Equal(AnalysisState.Failed, controller.State);
         Assert.Equal("Initial", controller.CurrentSnapshot?.Root.Name);
-        Assert.Equal("boom", controller.StatusMessage);
     }
 
     [Fact]
@@ -171,7 +170,6 @@ public sealed class AnalysisSessionControllerTests
         Assert.Equal(AnalysisState.Failed, controller.State);
         Assert.Equal("C:\\RepoA", controller.SelectedFolderPath);
         Assert.Equal("Initial", controller.CurrentSnapshot?.Root.Name);
-        Assert.Equal("boom", controller.StatusMessage);
     }
 
     [Fact]
@@ -277,7 +275,6 @@ public sealed class AnalysisSessionControllerTests
         await controller.OpenFolderAsync("C:\\RepoB", ScanOptions.Default);
 
         Assert.Equal(AnalysisState.Failed, controller.State);
-        Assert.Equal("Project root was not found: C:\\RepoB", controller.StatusMessage);
         Assert.Equal("C:\\RepoA", controller.SelectedFolderPath);
         Assert.Equal("Initial", controller.CurrentSnapshot?.Root.Name);
     }

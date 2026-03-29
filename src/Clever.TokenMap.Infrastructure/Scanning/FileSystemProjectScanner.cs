@@ -1,3 +1,4 @@
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
@@ -46,14 +47,14 @@ public sealed class FileSystemProjectScanner : IProjectScanner
 
         var processedNodeCount = 0;
         var discoveredFileCount = 0;
-        var warnings = new List<string>();
+        var diagnostics = new List<AnalysisIssue>();
         var rootNode = ScanDirectory(
             directoryInfo,
             normalizedRootPath,
             CreateInitialIgnoreContext(options),
             isRoot: true,
             options,
-            warnings,
+            diagnostics,
             ref processedNodeCount,
             ref discoveredFileCount,
             progress,
@@ -65,7 +66,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             CapturedAtUtc = DateTimeOffset.UtcNow,
             Options = options,
             Root = rootNode,
-            Warnings = warnings,
+            Diagnostics = diagnostics,
         };
 
         return Task.FromResult(snapshot);
@@ -77,7 +78,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         IgnoreDirectoryContext parentIgnoreContext,
         bool isRoot,
         ScanOptions options,
-        List<string> warnings,
+        List<AnalysisIssue> diagnostics,
         ref int processedNodeCount,
         ref int discoveredFileCount,
         IProgress<AnalysisProgress>? progress,
@@ -104,7 +105,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             normalizedRootPath,
             parentIgnoreContext,
             options,
-            warnings);
+            diagnostics);
 
         FileSystemInfo[] entries;
         try
@@ -118,8 +119,14 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         }
         catch (Exception exception) when (IsRecoverableDirectoryException(exception))
         {
-            warnings.Add($"Unable to enumerate '{directoryInfo.FullName}': {exception.Message}");
-            _logger.LogWarning(exception, $"Unable to enumerate '{directoryInfo.FullName}'.");
+            diagnostics.Add(CreateDiagnostic(
+                message: $"TokenMap could not enumerate '{directoryInfo.FullName}'.",
+                context: AppIssueContext.Create(("DirectoryPath", directoryInfo.FullName))));
+            _logger.LogWarning(
+                exception,
+                "Enumerating the directory during scanning failed.",
+                eventCode: "scanner.enumerate_failed",
+                context: AppIssueContext.Create(("DirectoryPath", directoryInfo.FullName)));
             return CreateNode(
                 fullPath: directoryInfo.FullName,
                 normalizedRelativePath,
@@ -172,7 +179,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                         ignoreContext,
                         isRoot: false,
                         options,
-                        warnings,
+                        diagnostics,
                         ref processedNodeCount,
                         ref discoveredFileCount,
                         progress,
@@ -180,8 +187,14 @@ public sealed class FileSystemProjectScanner : IProjectScanner
                 }
                 catch (Exception exception) when (IsRecoverableDirectoryException(exception))
                 {
-                    warnings.Add($"Unable to scan '{entry.FullName}': {exception.Message}");
-                    _logger.LogWarning(exception, $"Unable to scan '{entry.FullName}'.");
+                    diagnostics.Add(CreateDiagnostic(
+                        message: $"TokenMap could not scan '{entry.FullName}'.",
+                        context: AppIssueContext.Create(("EntryPath", entry.FullName))));
+                    _logger.LogWarning(
+                        exception,
+                        "Scanning a directory entry failed.",
+                        eventCode: "scanner.scan_entry_failed",
+                        context: AppIssueContext.Create(("EntryPath", entry.FullName)));
                     node.Children.Add(CreateNode(
                         fullPath: entry.FullName,
                         normalizedRelativePath: entryRelativePath,
@@ -281,7 +294,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         string normalizedRootPath,
         IgnoreDirectoryContext parentContext,
         ScanOptions options,
-        List<string> warnings)
+        List<AnalysisIssue> diagnostics)
     {
         var additionalRules = new List<IgnoreRule>();
         var directoryRelativePath = _pathNormalizer.NormalizeRelativePath(normalizedRootPath, directoryInfo.FullName);
@@ -303,14 +316,29 @@ public sealed class FileSystemProjectScanner : IProjectScanner
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            warnings.Add($"Unable to read '{ignoreFilePath}': {exception.Message}");
-            _logger.LogWarning(exception, $"Unable to read ignore file '{ignoreFilePath}'.");
+            diagnostics.Add(CreateDiagnostic(
+                message: $"TokenMap could not read '{ignoreFilePath}'.",
+                context: AppIssueContext.Create(("IgnoreFilePath", ignoreFilePath))));
+            _logger.LogWarning(
+                exception,
+                "Reading an ignore file during scanning failed.",
+                eventCode: "scanner.ignore_file_read_failed",
+                context: AppIssueContext.Create(("IgnoreFilePath", ignoreFilePath)));
         }
 
         return additionalRules.Count == 0
             ? parentContext
             : parentContext.AppendBetween(additionalRules);
     }
+
+    private static AnalysisIssue CreateDiagnostic(
+        string message,
+        IReadOnlyDictionary<string, string> context) =>
+        new()
+        {
+            Message = message,
+            Context = context,
+        };
 
     private static IgnoreDirectoryContext CreateInitialIgnoreContext(ScanOptions options)
     {

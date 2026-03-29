@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.App.ViewModels;
@@ -21,13 +22,18 @@ internal static class MainWindowViewModelDefaults
             folderPathService);
         var settingsCoordinator = new NullSettingsCoordinator();
         var pathShellService = new NullPathShellService();
+        var appIssueState = new AppIssueState();
 
         return MainWindowViewModelFactory.Create(
             new MainWindowViewModelFactoryDependencies(
                 analysisSessionController,
                 settingsCoordinator,
                 folderPathService,
-                pathShellService));
+                pathShellService,
+                NullAppIssueReporter.Instance,
+                appIssueState,
+                new DesignAppStoragePaths(),
+                new NullApplicationControlService()));
     }
 
     private static AnalysisSessionController CreateAnalysisSessionController(
@@ -125,5 +131,21 @@ internal static class MainWindowViewModelDefaults
 
         public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+    }
+
+    private sealed class NullApplicationControlService : IApplicationControlService
+    {
+        public void RequestShutdown(int exitCode = 0)
+        {
+        }
+    }
+
+    private sealed class DesignAppStoragePaths : IAppStoragePaths
+    {
+        public string GetSettingsFilePath() => string.Empty;
+
+        public string GetFolderSettingsRootPath() => string.Empty;
+
+        public string GetLogsDirectoryPath() => string.Empty;
     }
 }

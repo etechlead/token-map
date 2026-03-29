@@ -10,7 +10,8 @@ public sealed class NullAppLogger : IAppLogger
     {
     }
 
-    public void Log(AppLogLevel level, string message, Exception? exception = null)
+    public void Log(AppLogEntry entry)
     {
+        ArgumentNullException.ThrowIfNull(entry);
     }
 }
