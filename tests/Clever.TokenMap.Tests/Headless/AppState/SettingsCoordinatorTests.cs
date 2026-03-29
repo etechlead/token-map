@@ -72,7 +72,7 @@ public sealed class SettingsCoordinatorTests
         coordinator.SetShowTreemapMetricValues(false);
         coordinator.ReplaceGlobalExcludes(["bin/", "obj/"]);
 
-        await Task.Delay(120);
+        await store.WaitForSaveAsync();
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
@@ -118,7 +118,7 @@ public sealed class SettingsCoordinatorTests
         coordinator.RecordRecentFolder(repoBPath);
         coordinator.RecordRecentFolder(repoAPath);
 
-        await Task.Delay(120);
+        await store.WaitForSaveAsync();
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
