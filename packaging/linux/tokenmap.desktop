@@ -3,6 +3,7 @@ Name=TokenMap
 Comment=Local source-tree analysis
 Exec=tokenmap
 Icon=tokenmap
+StartupWMClass=tokenmap
 Terminal=false
 Type=Application
 Categories=Development;

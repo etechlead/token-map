@@ -20,6 +20,10 @@ public static class Program
                     Win32CompositionMode.RedirectionSurface,
                 ],
             })
+            .With(new X11PlatformOptions
+            {
+                WmClass = "tokenmap",
+            })
             .UsePlatformDetect()
             .LogToTrace();
 }
