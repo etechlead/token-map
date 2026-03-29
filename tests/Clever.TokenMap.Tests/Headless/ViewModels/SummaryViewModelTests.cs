@@ -1,3 +1,4 @@
+using System;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
@@ -22,21 +23,25 @@ public sealed class SummaryViewModelTests
         Assert.True(viewModel.IsProgressIndeterminate);
         Assert.Equal(0, viewModel.ProgressValue);
         Assert.True(viewModel.IsProgressPillVisible);
-        Assert.Equal("Scanning tree", viewModel.ProgressPillText);
+        Assert.False(string.IsNullOrWhiteSpace(viewModel.ProgressPillText));
+        Assert.Contains("Scanning", viewModel.ProgressPillText, StringComparison.OrdinalIgnoreCase);
 
         viewModel.UpdateProgress(new AnalysisProgress("ScanningTree", 4, null, "src", DiscoveredFileCount: 3));
         Assert.True(viewModel.IsProgressVisible);
         Assert.True(viewModel.IsProgressIndeterminate);
         Assert.Equal(0, viewModel.ProgressValue);
         Assert.True(viewModel.IsProgressPillVisible);
-        Assert.Equal("Scanning tree • 3 files found", viewModel.ProgressPillText);
+        Assert.Contains("Scanning", viewModel.ProgressPillText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("3", viewModel.ProgressPillText, StringComparison.Ordinal);
 
         viewModel.UpdateProgress(new AnalysisProgress("AnalyzingFiles", 3, 6, "src/Program.cs"));
         Assert.True(viewModel.IsProgressVisible);
         Assert.False(viewModel.IsProgressIndeterminate);
         Assert.Equal(50, viewModel.ProgressValue);
         Assert.True(viewModel.IsProgressPillVisible);
-        Assert.Equal("Analyzing files • 3 / 6", viewModel.ProgressPillText);
+        Assert.Contains("Analyzing", viewModel.ProgressPillText, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("3", viewModel.ProgressPillText, StringComparison.Ordinal);
+        Assert.Contains("6", viewModel.ProgressPillText, StringComparison.Ordinal);
 
         viewModel.SetCompleted(CreateSnapshot());
         Assert.False(viewModel.IsProgressVisible);

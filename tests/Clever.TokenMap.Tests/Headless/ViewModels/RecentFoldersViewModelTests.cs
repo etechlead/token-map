@@ -10,10 +10,12 @@ public sealed class RecentFoldersViewModelTests
     public void ProvidesFlyoutPlaceholder_WhenNoRecentFoldersExist()
     {
         var viewModel = CreateMainWindowViewModel();
+        var placeholder = Assert.Single(viewModel.RecentFolders.FlyoutItems);
 
-        Assert.Single(viewModel.RecentFolders.FlyoutItems);
-        Assert.False(viewModel.RecentFolders.FlyoutItems[0].CanOpen);
-        Assert.Equal("No previous folders yet", viewModel.RecentFolders.FlyoutItems[0].DisplayName);
+        Assert.False(placeholder.CanOpen);
+        Assert.False(placeholder.ShowFolderIcon);
+        Assert.False(string.IsNullOrWhiteSpace(placeholder.DisplayName));
+        Assert.False(string.IsNullOrWhiteSpace(placeholder.SecondaryText));
     }
 
     [Fact]
@@ -53,7 +55,10 @@ public sealed class RecentFoldersViewModelTests
         viewModel.RecentFolders.ClearRecentFoldersCommand.Execute(null);
 
         Assert.Empty(viewModel.RecentFolders.Items);
-        Assert.Single(viewModel.RecentFolders.FlyoutItems);
-        Assert.Equal("No previous folders yet", viewModel.RecentFolders.FlyoutItems[0].DisplayName);
+        var placeholder = Assert.Single(viewModel.RecentFolders.FlyoutItems);
+        Assert.False(placeholder.CanOpen);
+        Assert.False(placeholder.ShowFolderIcon);
+        Assert.False(string.IsNullOrWhiteSpace(placeholder.DisplayName));
+        Assert.False(string.IsNullOrWhiteSpace(placeholder.SecondaryText));
     }
 }

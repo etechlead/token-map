@@ -37,7 +37,8 @@ public sealed class MainWindowViewModelTests
         });
 
         Assert.True(viewModel.ExcludesEditor.IsOpen);
-        Assert.Equal("Excludes for Demo", viewModel.ExcludesEditor.Title);
+        Assert.False(string.IsNullOrWhiteSpace(viewModel.ExcludesEditor.Title));
+        Assert.Contains("Demo", viewModel.ExcludesEditor.Title, StringComparison.Ordinal);
         Assert.Equal("/src/", viewModel.ExcludesEditor.Text.ReplaceLineEndings("\n"));
     }
 

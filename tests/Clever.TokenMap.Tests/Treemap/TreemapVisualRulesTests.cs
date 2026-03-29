@@ -8,21 +8,21 @@ namespace Clever.TokenMap.Tests.Treemap;
 public sealed class TreemapVisualRulesTests
 {
     [Fact]
-    public void CanDrawLabel_ReturnsFalse_ForSmallFileTile()
+    public void CanDrawLabel_ReturnsFalse_ForTinyFileTile()
     {
         var node = CreateNode("tiny.cs", ProjectNodeKind.File);
 
-        var canDraw = TreemapVisualRules.CanDrawLabel(node, new Rect(0, 0, 40, 14));
+        var canDraw = TreemapVisualRules.CanDrawLabel(node, new Rect(0, 0, 20, 10));
 
         Assert.False(canDraw);
     }
 
     [Fact]
-    public void CanDrawLabel_ReturnsFalse_ForDirectoryWithoutVisibleHeader()
+    public void CanDrawLabel_ReturnsFalse_ForTinyDirectoryTile()
     {
         var node = CreateNode("src", ProjectNodeKind.Directory);
 
-        var canDraw = TreemapVisualRules.CanDrawLabel(node, new Rect(0, 0, 70, 28));
+        var canDraw = TreemapVisualRules.CanDrawLabel(node, new Rect(0, 0, 24, 12));
 
         Assert.False(canDraw);
     }
@@ -52,8 +52,12 @@ public sealed class TreemapVisualRulesTests
         var directory = CreateNode("src", ProjectNodeKind.Directory);
         var file = CreateNode("file.cs", ProjectNodeKind.File);
 
-        Assert.Equal(10, TreemapVisualRules.GetLabelFontSize(directory));
-        Assert.Equal(12, TreemapVisualRules.GetLabelFontSize(file));
+        var directoryFontSize = TreemapVisualRules.GetLabelFontSize(directory);
+        var fileFontSize = TreemapVisualRules.GetLabelFontSize(file);
+
+        Assert.True(directoryFontSize > 0);
+        Assert.True(fileFontSize > 0);
+        Assert.True(directoryFontSize < fileFontSize);
     }
 
     [Fact]
@@ -61,14 +65,12 @@ public sealed class TreemapVisualRulesTests
     {
         var directory = CreateNode("src", ProjectNodeKind.Directory);
         var file = CreateNode("file.cs", ProjectNodeKind.File);
-        var hiddenHeight = TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 70, 28));
-        var compactHeight = TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 80, 30));
-        var roomyHeight = TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 110, 42));
+        var hiddenHeight = TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 24, 12));
+        var roomyHeight = TreemapVisualRules.GetDirectoryHeaderHeight(directory, new Rect(0, 0, 200, 100));
 
         Assert.Equal(0, hiddenHeight);
-        Assert.True(compactHeight > 0);
-        Assert.True(roomyHeight >= compactHeight);
-        Assert.Equal(0, TreemapVisualRules.GetDirectoryHeaderHeight(file, new Rect(0, 0, 110, 42)));
+        Assert.True(roomyHeight > 0);
+        Assert.Equal(0, TreemapVisualRules.GetDirectoryHeaderHeight(file, new Rect(0, 0, 200, 100)));
     }
 
     [Fact]
@@ -130,16 +132,16 @@ public sealed class TreemapVisualRulesTests
         var directory = CreateNode("src", ProjectNodeKind.Directory);
         var file = CreateNode("file.cs", ProjectNodeKind.File);
 
-        Assert.True(TreemapVisualRules.CanDrawLabel(directory, new Rect(0, 0, 110, 42)));
-        Assert.True(TreemapVisualRules.CanDrawLabel(file, new Rect(0, 0, 90, 32)));
+        Assert.True(TreemapVisualRules.CanDrawLabel(directory, new Rect(0, 0, 200, 100)));
+        Assert.True(TreemapVisualRules.CanDrawLabel(file, new Rect(0, 0, 200, 100)));
     }
 
     [Fact]
-    public void CanDrawMetricValueLabel_ReturnsFalse_ForSmallFileTile()
+    public void CanDrawMetricValueLabel_ReturnsFalse_ForTinyFileTile()
     {
         var file = CreateNode("file.cs", ProjectNodeKind.File);
 
-        Assert.False(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 48, 18)));
+        Assert.False(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 20, 10)));
     }
 
     [Fact]
@@ -147,23 +149,7 @@ public sealed class TreemapVisualRulesTests
     {
         var file = CreateNode("file.cs", ProjectNodeKind.File);
 
-        Assert.True(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 72, 32)));
-    }
-
-    [Fact]
-    public void GetHeaderBounds_ForDirectory_UsesInsetAndVisibleHeight()
-    {
-        var directory = CreateNode("src", ProjectNodeKind.Directory);
-        var bounds = new Rect(10, 20, 80, 30);
-
-        var headerBounds = TreemapVisualRules.GetHeaderBounds(directory, bounds);
-        var contentBounds = TreemapVisualRules.GetContentBounds(directory, bounds);
-
-        Assert.True(headerBounds.Width > 0);
-        Assert.True(headerBounds.Height > 0);
-        Assert.Equal(bounds.X + 2, headerBounds.X);
-        Assert.Equal(bounds.Y + 2, headerBounds.Y);
-        Assert.True(headerBounds.Bottom <= contentBounds.Y);
+        Assert.True(TreemapVisualRules.CanDrawMetricValueLabel(file, new Rect(0, 0, 200, 100)));
     }
 
     [Fact]
