@@ -22,7 +22,6 @@
 - Read `ui-principles.md` only for UI-facing changes and interaction constraints.
 - Read `versioning.md` when the request touches application version display, release tags, GitHub Releases, or packaged artifact naming.
 - Read `commit-policy.md` only when the user asks for a commit or commit message.
-- Read `post-mvp.md` only for deferred scope or backlog questions; it is the inactive backlog doc outside the current MVP scope.
 
 ## Update Rules
 - Rewrite current-state docs in place. Do not append progress journals, dated logs, handoff notes, or lists of completed stages.

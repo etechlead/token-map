@@ -1,95 +1,81 @@
 # TokenMap
 
-Desktop source-tree analysis for local repositories, with a synchronized project tree and treemap for inspecting token weight, line counts, and subtree hotspots.
+TokenMap is a desktop app for exploring where a codebase gets heavy.
+Open a local folder and inspect the same project as both a tree and a treemap, measured by tokens, non-empty lines, or file size.
 
-## Screenshot
+<img src="docs/readme/screenshot.png" alt="TokenMap main window" width="838">
 
-TBD: replace this section with a real application screenshot after the current UI pass is finalized.
+## Why TokenMap?
 
-## Highlights
+- See which folders and files actually dominate a repository instead of guessing from file count alone.
+- Compare token-heavy areas before feeding code to LLM workflows.
+- Spot hotspots before refactors, cleanup, or architecture discussions.
 
-- Local-only analysis: no cloud services, remote tokenizers, or browser-based rendering.
-- Synchronized inspection: selecting nodes in the tree updates the treemap, and treemap drill-down stays aligned with the tree.
-- Token-aware treemap: compare repository weight by tokens, lines, or size, where lines count only non-empty lines and size reflects file bytes.
-- Configurable scan behavior: adjust ignore handling without leaving the main window.
-- Lightweight desktop shell: Avalonia UI with one custom-rendered treemap control instead of a control-per-rectangle surface.
+## How It Works
 
-## Architecture
+- TokenMap scans a local folder into one snapshot.
+- `.gitignore`, global excludes, and folder excludes decide what gets in.
+- Only included files are measured and shown.
+- Text files get local token counts, non-empty line counts, and byte size.
+- Folder weight is aggregated from descendants.
 
-- `src/Clever.TokenMap.Core`: domain models, enums, contracts, scan options, and aggregation rules.
-- `src/Clever.TokenMap.Infrastructure`: scanner, ignore handling, local token counting, local non-empty line metrics, cache, settings storage, and logging.
-- `src/Clever.TokenMap.Treemap`: treemap control, layout, color rules, and hit testing.
-- `src/Clever.TokenMap.App`: desktop shell, section views, view models, analysis session coordination, treemap navigation state, and settings coordination.
+> [!NOTE]
+> Token counts are computed locally with the `o200k_base` tokenizer via `Microsoft.ML.Tokenizers`.
+> They are useful for comparing files and folders inside the same repository, but should not be treated as exact billing or context-window numbers for every model.
 
-The current technical boundaries are documented in [docs/architecture.md](docs/architecture.md).
+## Install
 
-## MVP Scope
+- Windows: download the latest `TokenMap-win-x64-<version>-installer.exe` from GitHub Releases, run it, and follow the installer steps. The installer is per-user and does not require administrator rights.
+- macOS: download the latest `TokenMap-macos-arm64-<version>.dmg` from GitHub Releases, open it, and drag `TokenMap.app` into `Applications`.
+- Linux: release packaging is planned but not available yet.
 
-- Open a local folder, scan it, and inspect the resulting tree/treemap snapshot.
-- Keep analysis, settings, and theme application local to the desktop app.
-- Preserve a maintainable app-layer split where long-lived state lives outside `MainWindowViewModel`.
+<details>
+<summary>macOS: first launch for the unsigned build</summary>
 
-Current limitations:
+TokenMap is currently distributed as an unsigned app, so macOS may block the first launch.
 
-- Windows is the primary MVP target. macOS targets Apple Silicon only, and its packaging path is currently manual-only so it does not block Windows-first delivery. Linux polish is intentionally deferred.
-- The repository ships source, Windows CI, an unsigned per-user Windows installer release path, and a manual Apple Silicon macOS packaging path. Signing, notarization, and broader multi-platform release automation are still out of scope.
-- Settings currently persist lightweight analysis and appearance preferences, not recent projects or saved scan presets.
+UI path:
 
-## Getting Started
+1. Move `TokenMap.app` to `Applications`.
+2. Try to open it once, then dismiss the warning.
+3. Open `System Settings > Privacy & Security`.
+4. Find the message about `TokenMap` being blocked and click `Open Anyway`.
+5. Confirm the follow-up prompt and launch the app again.
+
+Terminal alternative:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/TokenMap.app
+```
+
+Then launch `TokenMap.app` again.
+</details>
+
+## Build From Source
+
+Prerequisite: .NET SDK `10.0.201` or newer in the same feature band.
 
 ```powershell
 dotnet restore Clever.TokenMap.sln
 dotnet build Clever.TokenMap.sln
-dotnet test Clever.TokenMap.sln --no-build
-```
-
-Run the desktop app:
-
-```powershell
 dotnet run --project .\src\Clever.TokenMap.App\Clever.TokenMap.App.csproj
 ```
 
-Build an Apple Silicon macOS bundle from Windows:
+Run tests:
 
 ```powershell
-.\scripts\publish-macos-arm64.ps1
+dotnet test Clever.TokenMap.sln --no-build
 ```
 
-The script writes `.artifacts\macos-arm64\TokenMap.app`. Copy that bundle to a Mac for manual validation. If the direct copy drops execute permissions, run:
+For repo conventions and architecture details, see `docs/architecture.md` and `docs/workflow.md`.
 
-```bash
-chmod +x "TokenMap.app/Contents/MacOS/Clever.TokenMap.App"
-```
+## Tech Stack
 
-Build an Apple Silicon macOS DMG on macOS:
-
-```bash
-bash ./scripts/package-macos-dmg.sh
-```
-
-The script writes `.artifacts/macos-arm64/TokenMap-macos-arm64-<version>-unsigned.dmg` by default. The workflow in [package-macos-unsigned.yml](.github/workflows/package-macos-unsigned.yml) is manual-only and can build from a selected branch or tag, optionally skip tests for older packaging-only tags, then attach the unsigned DMG to an existing GitHub Release.
-
-The DMG and app remain unsigned. macOS users may need to approve the first launch in `System Settings > Privacy & Security`.
-When the DMG opens, drag `TokenMap` into `Applications`, then launch it from `Applications`.
-
-Build a per-user Windows installer:
-
-```powershell
-.\scripts\publish-windows-installer.ps1
-```
-
-The script writes `.artifacts\windows-installer\installer\TokenMap-win-x64-<version>.exe`. The installer is unsigned and defaults to `%LOCALAPPDATA%\Programs\TokenMap`, so it does not require administrator rights.
-
-Silent uninstall keeps user data by default. To remove `%LOCALAPPDATA%\Clever\TokenMap` during uninstall, pass `/PURGEUSERDATA` to the uninstaller in addition to the normal Inno silent switches.
-
-## Repository Quality
-
-- `README`, `LICENSE`, `.editorconfig`, analyzer policy, and GitHub Actions are part of the repo baseline.
-- Build and test CI runs on `windows-latest`.
-- A release workflow packages an unsigned per-user Windows installer on `windows-latest` and attaches it to GitHub Releases.
-- macOS packaging remains available only as a manual workflow/script path and is not part of the automatic release flow.
-- Headless UI tests cover the shell layout and tree/treemap synchronization.
-- Unit tests cover settings serialization, debounced settings persistence, analysis session flow, and treemap navigation state.
+- .NET 10
+- C#
+- Avalonia
+- CommunityToolkit.Mvvm
+- Microsoft.ML.Tokenizers
 
 ## License
 

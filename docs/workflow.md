@@ -4,12 +4,11 @@
 
 1. Read `AGENTS.md`, `docs/AGENTS.md`, and `docs/architecture.md`.
 2. Read the active plan file only when it exists.
-3. If there is no active plan file, work only on an explicit user request or on an item explicitly promoted from `docs/post-mvp.md`.
+3. If there is no active plan file, work only on an explicit user request.
 
 ## While Working
 
 - Keep scope tight to the current request.
-- Do not pull work from `docs/post-mvp.md` without an explicit request.
 
 ## After Changes
 
