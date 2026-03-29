@@ -1,5 +1,4 @@
 using System;
-using Clever.TokenMap.Core.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.State;

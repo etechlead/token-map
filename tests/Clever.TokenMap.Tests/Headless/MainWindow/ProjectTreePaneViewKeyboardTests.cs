@@ -2,11 +2,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views.Sections;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
-using Clever.TokenMap.Tests.Headless.Support;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
 

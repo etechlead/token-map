@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 

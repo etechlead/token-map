@@ -11,7 +11,6 @@ using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
 using Clever.TokenMap.Infrastructure.Tokenization;
-using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.VisualHarness;
 

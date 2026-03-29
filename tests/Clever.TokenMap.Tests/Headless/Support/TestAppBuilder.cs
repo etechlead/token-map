@@ -1,7 +1,5 @@
 using Avalonia;
 using Avalonia.Headless;
-using Avalonia.Headless.XUnit;
-using Avalonia.Skia;
 
 [assembly: AvaloniaTestApplication(typeof(Clever.TokenMap.Tests.Headless.Support.TestAppBuilder))]
 

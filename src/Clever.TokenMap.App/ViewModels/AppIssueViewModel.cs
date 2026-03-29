@@ -5,7 +5,6 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.App.ViewModels;

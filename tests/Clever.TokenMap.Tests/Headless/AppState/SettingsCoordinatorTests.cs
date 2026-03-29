@@ -1,11 +1,8 @@
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Settings;
-using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.AppState;

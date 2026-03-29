@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Settings;
 

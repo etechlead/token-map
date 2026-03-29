@@ -1,7 +1,5 @@
-using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -9,11 +7,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views.Sections;
-using Clever.TokenMap.Core.Enums;
-using Clever.TokenMap.Core.Models;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
-using Clever.TokenMap.Tests.Headless.Support;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
 

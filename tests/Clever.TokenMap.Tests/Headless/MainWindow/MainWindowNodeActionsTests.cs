@@ -1,6 +1,4 @@
-using System.Threading;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.Core.Models;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 using Clever.TokenMap.Tests.Headless.Support;

@@ -1,8 +1,6 @@
 using Clever.TokenMap.App.State;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
-using Clever.TokenMap.Tests.Headless.Support;
-
 namespace Clever.TokenMap.Tests.Headless.AppState;
 
 public sealed class TreemapNavigationStateTests

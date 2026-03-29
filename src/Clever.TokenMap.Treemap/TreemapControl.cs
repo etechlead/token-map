@@ -3,10 +3,8 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
-using Avalonia.Styling;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using System.IO;
 
 namespace Clever.TokenMap.Treemap;
 

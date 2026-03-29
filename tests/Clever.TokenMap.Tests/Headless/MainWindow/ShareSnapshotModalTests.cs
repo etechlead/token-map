@@ -3,8 +3,6 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
-using Avalonia.VisualTree;
-using Clever.TokenMap.App.ViewModels;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;

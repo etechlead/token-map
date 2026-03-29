@@ -1,4 +1,3 @@
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Analysis;

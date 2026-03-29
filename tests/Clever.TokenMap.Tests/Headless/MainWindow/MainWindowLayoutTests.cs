@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -10,7 +9,6 @@ using Avalonia.VisualTree;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;

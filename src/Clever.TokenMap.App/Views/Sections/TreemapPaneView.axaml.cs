@@ -1,6 +1,5 @@
 using Avalonia.Controls;
 using Clever.TokenMap.App.ViewModels;
-using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;
 

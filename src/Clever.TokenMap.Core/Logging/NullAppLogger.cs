@@ -1,5 +1,3 @@
-using Clever.TokenMap.Core.Enums;
-
 namespace Clever.TokenMap.Core.Logging;
 
 public sealed class NullAppLogger : IAppLogger

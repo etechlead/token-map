@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Headless.XUnit;
 using Microsoft.Extensions.DependencyInjection;

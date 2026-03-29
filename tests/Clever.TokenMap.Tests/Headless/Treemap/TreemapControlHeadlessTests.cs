@@ -7,7 +7,6 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Treemap;
 using Avalonia.Media;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-using Clever.TokenMap.Tests.Headless.Support;
 using System.Globalization;
 
 namespace Clever.TokenMap.Tests.Headless.Treemap;

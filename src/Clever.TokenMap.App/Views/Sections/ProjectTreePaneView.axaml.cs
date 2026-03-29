@@ -6,12 +6,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
-using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Views.Sections;

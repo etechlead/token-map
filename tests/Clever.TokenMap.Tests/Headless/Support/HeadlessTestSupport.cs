@@ -1,7 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
-using System.Collections.Generic;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
@@ -10,7 +9,6 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Tests.Support;
-using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
 

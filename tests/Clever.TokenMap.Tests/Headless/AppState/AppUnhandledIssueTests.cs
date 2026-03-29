@@ -1,5 +1,3 @@
-using Clever.TokenMap.Core.Diagnostics;
-
 namespace Clever.TokenMap.Tests.Headless.AppState;
 
 public sealed class AppUnhandledIssueTests

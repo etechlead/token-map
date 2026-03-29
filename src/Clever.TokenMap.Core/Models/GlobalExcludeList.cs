@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Clever.TokenMap.Core.Models;
 
 public static class GlobalExcludeList

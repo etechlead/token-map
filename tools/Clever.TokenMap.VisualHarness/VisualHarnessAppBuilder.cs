@@ -1,6 +1,5 @@
 using Avalonia;
 using Avalonia.Headless;
-using Avalonia.Skia;
 
 namespace Clever.TokenMap.VisualHarness;
 

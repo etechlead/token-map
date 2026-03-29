@@ -1,4 +1,3 @@
-using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Infrastructure.Scanning;

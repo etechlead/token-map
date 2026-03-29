@@ -1,7 +1,6 @@
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Tests.Support;
 using System.Globalization;
 
