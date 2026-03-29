@@ -1,4 +1,4 @@
-name: package-macos-unsigned
+name: package-macos
 
 on:
   workflow_dispatch:
@@ -85,7 +85,7 @@ jobs:
           BUNDLE_VERSION: ${{ env.TOKENMAP_MACOS_VERSION }}
           DMG_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_DMG_NAME }}
           ZIP_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}
-        run: bash ./scripts/package-macos-unsigned.sh
+        run: bash ./scripts/package-macos.sh
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v6
