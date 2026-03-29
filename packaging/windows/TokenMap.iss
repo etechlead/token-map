@@ -25,7 +25,7 @@
 #define MyArtifactBaseName GetEnv("TOKENMAP_ARTIFACT_BASENAME")
 #if MyArtifactBaseName == ""
   #undef MyArtifactBaseName
-  #define MyArtifactBaseName "TokenMap-win-x64-0.1.1-local-installer"
+  #define MyArtifactBaseName "TokenMap-windows-x64-0.1.1-local-setup"
 #endif
 
 #define MyPublishDir GetEnv("TOKENMAP_PUBLISH_DIR")

@@ -10,9 +10,10 @@ configuration="${CONFIGURATION:-Release}"
 runtime_identifier="${RUNTIME_IDENTIFIER:-osx-arm64}"
 bundle_name="${BUNDLE_NAME:-TokenMap}"
 output_root="${OUTPUT_ROOT:-.artifacts/macos-arm64}"
-artifact_name="${ARTIFACT_NAME:-}"
 bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
 bundle_version="${BUNDLE_VERSION:-}"
+dmg_artifact_name="${DMG_ARTIFACT_NAME:-}"
+zip_artifact_name="${ZIP_ARTIFACT_NAME:-}"
 icon_file_name="${ICON_FILE_NAME:-app-icon.icns}"
 icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/${icon_file_name}}"
 applications_link_name="${APPLICATIONS_LINK_NAME:-Applications}"
@@ -26,7 +27,6 @@ bundle_contents_path="${bundle_directory_path}/Contents"
 bundle_macos_path="${bundle_contents_path}/MacOS"
 bundle_resources_path="${bundle_contents_path}/Resources"
 staging_directory_path="${output_root_full_path}/dmg-stage"
-temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
 icon_source_full_path="${repo_root}/${icon_source_path}"
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
@@ -48,13 +48,17 @@ if [[ -z "${bundle_version}" ]]; then
     bundle_version="1.0.0"
 fi
 
-if [[ -z "${artifact_name}" ]]; then
-    artifact_name="TokenMap-macos-arm64-${bundle_version}-unsigned"
+if [[ -z "${dmg_artifact_name}" ]]; then
+    dmg_artifact_name="TokenMap-macos-arm64-${bundle_version}-unsigned"
 fi
 
-dmg_path="${output_root_full_path}/${artifact_name}.dmg"
-zip_path="${output_root_full_path}/${artifact_name}.zip"
-temporary_dmg_path="${output_root_full_path}/${artifact_name}-temp.dmg"
+if [[ -z "${zip_artifact_name}" ]]; then
+    zip_artifact_name="TokenMap-macos-arm64-${bundle_version}-portable-unsigned"
+fi
+
+dmg_path="${output_root_full_path}/${dmg_artifact_name}.dmg"
+zip_path="${output_root_full_path}/${zip_artifact_name}.zip"
+temporary_dmg_path="${output_root_full_path}/${dmg_artifact_name}-temp.dmg"
 
 published_executable_path="${publish_directory_path}/${assembly_name}"
 

@@ -66,8 +66,8 @@ jobs:
 
           if (-not [string]::IsNullOrWhiteSpace($version)) {
               "TOKENMAP_WINDOWS_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              "TOKENMAP_INSTALLER_NAME=TokenMap-win-x64-$version-installer.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              "TOKENMAP_STANDALONE_NAME=TokenMap-win-x64-$version-standalone.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              "TOKENMAP_SETUP_NAME=TokenMap-windows-x64-$version-setup.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              "TOKENMAP_PORTABLE_NAME=TokenMap-windows-x64-$version-portable.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           }
 
           "TOKENMAP_WINDOWS_RELEASE_TAG=$releaseTag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -106,10 +106,10 @@ jobs:
 
           & dotnet @arguments
 
-      - name: Publish standalone input
+      - name: Publish portable input
         shell: pwsh
         run: |
-          $publishDir = '.artifacts/windows-package-inputs/standalone/win-x64'
+          $publishDir = '.artifacts/windows-package-inputs/portable/win-x64'
           if (Test-Path $publishDir) {
               Remove-Item -Path $publishDir -Recurse -Force
           }
@@ -132,7 +132,7 @@ jobs:
 
           & dotnet @arguments
 
-      - name: Package Windows installer
+      - name: Package Windows setup
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
@@ -142,60 +142,60 @@ jobs:
 
           ./scripts/publish-windows-installer.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION -PublishDirectory '.artifacts/windows-package-inputs/installer/win-x64'
 
-      - name: Package Windows standalone archive
+      - name: Package Windows portable archive
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
-              ./scripts/publish-windows-standalone.ps1 -PublishDirectory '.artifacts/windows-package-inputs/standalone/win-x64'
+              ./scripts/publish-windows-portable.ps1 -PublishDirectory '.artifacts/windows-package-inputs/portable/win-x64'
               exit 0
           }
 
-          ./scripts/publish-windows-standalone.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION -PublishDirectory '.artifacts/windows-package-inputs/standalone/win-x64'
+          ./scripts/publish-windows-portable.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION -PublishDirectory '.artifacts/windows-package-inputs/portable/win-x64'
 
-      - name: Resolve installer path
+      - name: Resolve setup path
         shell: pwsh
         run: |
           $installer = Get-ChildItem -Path '.artifacts/windows-installer/installer/*.exe' | Select-Object -First 1
           if ($null -eq $installer) {
-              throw 'Windows installer artifact was not found.'
+              throw 'Windows setup artifact was not found.'
           }
 
-          "TOKENMAP_INSTALLER_PATH=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "TOKENMAP_INSTALLER_NAME=$($installer.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_SETUP_PATH=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_SETUP_NAME=$($installer.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Resolve standalone archive path
+      - name: Resolve portable archive path
         shell: pwsh
         run: |
-          $archive = Get-ChildItem -Path '.artifacts/windows-standalone/standalone/*.zip' | Select-Object -First 1
+          $archive = Get-ChildItem -Path '.artifacts/windows-portable/portable/*.zip' | Select-Object -First 1
           if ($null -eq $archive) {
-              throw 'Windows standalone archive was not found.'
+              throw 'Windows portable archive was not found.'
           }
 
-          "TOKENMAP_STANDALONE_PATH=$($archive.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "TOKENMAP_STANDALONE_NAME=$($archive.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_PORTABLE_PATH=$($archive.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_PORTABLE_NAME=$($archive.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
-      - name: Upload installer workflow artifact
+      - name: Upload setup workflow artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.TOKENMAP_INSTALLER_NAME }}
-          path: ${{ env.TOKENMAP_INSTALLER_PATH }}
+          name: ${{ env.TOKENMAP_SETUP_NAME }}
+          path: ${{ env.TOKENMAP_SETUP_PATH }}
           if-no-files-found: error
 
-      - name: Upload standalone workflow artifact
+      - name: Upload portable workflow artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.TOKENMAP_STANDALONE_NAME }}
-          path: ${{ env.TOKENMAP_STANDALONE_PATH }}
+          name: ${{ env.TOKENMAP_PORTABLE_NAME }}
+          path: ${{ env.TOKENMAP_PORTABLE_PATH }}
           if-no-files-found: error
 
-      - name: Attach installer to GitHub release
+      - name: Attach setup to GitHub release
         if: env.TOKENMAP_WINDOWS_RELEASE_TAG != ''
-        run: gh release upload "${{ env.TOKENMAP_WINDOWS_RELEASE_TAG }}" "${{ env.TOKENMAP_INSTALLER_PATH }}" --clobber
+        run: gh release upload "${{ env.TOKENMAP_WINDOWS_RELEASE_TAG }}" "${{ env.TOKENMAP_SETUP_PATH }}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attach standalone archive to GitHub release
+      - name: Attach portable archive to GitHub release
         if: env.TOKENMAP_WINDOWS_RELEASE_TAG != ''
-        run: gh release upload "${{ env.TOKENMAP_WINDOWS_RELEASE_TAG }}" "${{ env.TOKENMAP_STANDALONE_PATH }}" --clobber
+        run: gh release upload "${{ env.TOKENMAP_WINDOWS_RELEASE_TAG }}" "${{ env.TOKENMAP_PORTABLE_PATH }}" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

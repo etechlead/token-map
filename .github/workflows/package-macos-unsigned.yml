@@ -58,11 +58,15 @@ jobs:
             exit 1
           fi
 
-          artifact_name="TokenMap-macos-arm64-${resolved_version}-unsigned"
+          dmg_artifact_name="TokenMap-macos-arm64-${resolved_version}-unsigned"
+          zip_artifact_name="TokenMap-macos-arm64-${resolved_version}-portable-unsigned"
+          artifact_base_name="TokenMap-macos-arm64-${resolved_version}"
 
           {
             echo "TOKENMAP_MACOS_VERSION=${resolved_version}"
-            echo "TOKENMAP_MACOS_ARTIFACT_NAME=${artifact_name}"
+            echo "TOKENMAP_MACOS_ARTIFACT_BASE_NAME=${artifact_base_name}"
+            echo "TOKENMAP_MACOS_DMG_NAME=${dmg_artifact_name}"
+            echo "TOKENMAP_MACOS_PORTABLE_NAME=${zip_artifact_name}"
             echo "TOKENMAP_MACOS_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
@@ -78,25 +82,26 @@ jobs:
 
       - name: Package macOS artifacts
         env:
-          ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
           BUNDLE_VERSION: ${{ env.TOKENMAP_MACOS_VERSION }}
+          DMG_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_DMG_NAME }}
+          ZIP_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}
         run: bash ./scripts/package-macos-dmg.sh
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}
+          name: ${{ env.TOKENMAP_MACOS_ARTIFACT_BASE_NAME }}
           path: |
-            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg
-            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.zip
+            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_DMG_NAME }}.dmg
+            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}.zip
           if-no-files-found: error
 
       - name: Attach macOS artifacts to GitHub release
         if: env.TOKENMAP_MACOS_RELEASE_TAG != ''
         run: |
           gh release upload "${{ env.TOKENMAP_MACOS_RELEASE_TAG }}" \
-            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.dmg" \
-            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_ARTIFACT_NAME }}.zip" \
+            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_DMG_NAME }}.dmg" \
+            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}.zip" \
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

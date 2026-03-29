@@ -4,7 +4,7 @@ param(
     [string]$RuntimeIdentifier = "win-x64",
     [string]$AppName = "TokenMap",
     [string]$Version = "",
-    [string]$OutputRoot = ".artifacts/windows-standalone",
+    [string]$OutputRoot = ".artifacts/windows-portable",
     [string]$PublishDirectory = ""
 )
 
@@ -34,9 +34,23 @@ function Get-ProjectMetadata {
     }
 }
 
+function Get-ArtifactPlatformLabel {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RuntimeId
+    )
+
+    switch ($RuntimeId) {
+        "win-x64" { return "windows-x64" }
+        "win-arm64" { return "windows-arm64" }
+        default { return $RuntimeId }
+    }
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
+$artifactPlatformLabel = Get-ArtifactPlatformLabel -RuntimeId $RuntimeIdentifier
 $fallbackVersion = "0.1.1-local"
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
@@ -50,10 +64,10 @@ $resolvedVersion =
     }
 
 $outputRootFullPath = Join-Path $repoRoot $OutputRoot
-$artifactOutputPath = Join-Path $outputRootFullPath "standalone"
-$artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion-standalone"
-$standaloneArtifactPath = Join-Path $artifactOutputPath "$artifactBaseName.exe"
-$standaloneArchivePath = Join-Path $artifactOutputPath "$artifactBaseName.zip"
+$artifactOutputPath = Join-Path $outputRootFullPath "portable"
+$artifactBaseName = "$AppName-$artifactPlatformLabel-$resolvedVersion-portable"
+$portableExecutablePath = Join-Path $artifactOutputPath "$artifactBaseName.exe"
+$portableArchivePath = Join-Path $artifactOutputPath "$artifactBaseName.zip"
 $publishDirectoryPath =
     if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
         if ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
@@ -87,7 +101,7 @@ if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
     }
 }
 else {
-    Write-Host "Publishing $projectFullPath for $RuntimeIdentifier as a single-file standalone app..."
+    Write-Host "Publishing $projectFullPath for $RuntimeIdentifier as a single-file portable app..."
     dotnet publish $projectFullPath `
         -c $Configuration `
         -r $RuntimeIdentifier `
@@ -100,16 +114,16 @@ else {
 }
 
 if (-not (Test-Path $publishedExecutablePath -PathType Leaf)) {
-    throw "Published Windows standalone executable was not found at '$publishedExecutablePath'."
+    throw "Published Windows portable executable was not found at '$publishedExecutablePath'."
 }
 
-Copy-Item -Path $publishedExecutablePath -Destination $standaloneArtifactPath -Force
+Copy-Item -Path $publishedExecutablePath -Destination $portableExecutablePath -Force
 
-if (Test-Path $standaloneArchivePath -PathType Leaf) {
-    Remove-Item -Path $standaloneArchivePath -Force
+if (Test-Path $portableArchivePath -PathType Leaf) {
+    Remove-Item -Path $portableArchivePath -Force
 }
 
-Compress-Archive -Path $standaloneArtifactPath -DestinationPath $standaloneArchivePath -CompressionLevel Optimal
+Compress-Archive -Path $portableExecutablePath -DestinationPath $portableArchivePath -CompressionLevel Optimal
 
-Write-Host "Standalone executable created at: $standaloneArtifactPath"
-Write-Host "Standalone archive created at: $standaloneArchivePath"
+Write-Host "Portable executable created at: $portableExecutablePath"
+Write-Host "Portable archive created at: $portableArchivePath"

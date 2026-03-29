@@ -25,9 +25,9 @@ Open a local folder and inspect the same project as both a tree and a treemap, m
 
 ## Install
 
-- Windows: download the latest `TokenMap-win-x64-<version>-installer.exe` from GitHub Releases, run it, and follow the installer steps. The installer is per-user and does not require administrator rights.
-- macOS: download the latest `TokenMap-macos-arm64-<version>.dmg` from GitHub Releases, open it, and drag `TokenMap.app` into `Applications`.
-- Linux: release packaging is planned but not available yet.
+- Windows: download either `TokenMap-windows-x64-<version>-setup.exe` for the installer or `TokenMap-windows-x64-<version>-portable.zip` for the no-install portable build.
+- macOS: download either `TokenMap-macos-arm64-<version>-unsigned.dmg` or `TokenMap-macos-arm64-<version>-portable-unsigned.zip`, then move `TokenMap.app` into `Applications`.
+- Linux: download either `TokenMap-linux-x64-<version>.deb` for the installer package or `TokenMap-linux-x64-<version>-portable.tar.gz` for the no-install portable build.
 
 <details>
 <summary>macOS: first launch for the unsigned build</summary>

@@ -51,9 +51,23 @@ function Get-ProjectMetadata {
     }
 }
 
+function Get-ArtifactPlatformLabel {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RuntimeId
+    )
+
+    switch ($RuntimeId) {
+        "win-x64" { return "windows-x64" }
+        "win-arm64" { return "windows-arm64" }
+        default { return $RuntimeId }
+    }
+}
+
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
+$artifactPlatformLabel = Get-ArtifactPlatformLabel -RuntimeId $RuntimeIdentifier
 $fallbackVersion = "0.1.1-local"
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
@@ -70,7 +84,7 @@ $outputRootFullPath = Join-Path $repoRoot $OutputRoot
 $installerOutputPath = Join-Path $outputRootFullPath "installer"
 $issPath = Join-Path $repoRoot "packaging\windows\TokenMap.iss"
 $compilerPath = Get-InnoCompilerPath
-$artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion-installer"
+$artifactBaseName = "$AppName-$artifactPlatformLabel-$resolvedVersion-setup"
 $publishDirectoryPath =
     if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
         if ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
