@@ -22,7 +22,7 @@ permissions:
   contents: write
 
 jobs:
-  build-dmg:
+  package-macos:
     runs-on: macos-latest
 
     steps:
