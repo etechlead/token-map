@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackagingMetadata>
+  <ProjectPath>src/Clever.TokenMap.App/Clever.TokenMap.App.csproj</ProjectPath>
+  <AppName>TokenMap</AppName>
+  <Publisher>Clever.pro</Publisher>
+  <FallbackLocalVersion>0.1.1-local</FallbackLocalVersion>
+  <Windows>
+    <SetupIconPath>src/Clever.TokenMap.App/Assets/app-icon.ico</SetupIconPath>
+  </Windows>
+  <Linux>
+    <PackageName>tokenmap</PackageName>
+    <Maintainer>Clever.pro</Maintainer>
+    <SectionName>devel</SectionName>
+    <InstallRoot>/usr/lib/tokenmap</InstallRoot>
+    <DesktopEntryName>tokenmap.desktop</DesktopEntryName>
+    <LauncherSourcePath>packaging/linux/tokenmap</LauncherSourcePath>
+    <DesktopSourcePath>packaging/linux/tokenmap.desktop</DesktopSourcePath>
+    <IconSourcePath>src/Clever.TokenMap.App/Assets/app-icon.svg</IconSourcePath>
+    <DescriptionSummary>Local source-tree analysis</DescriptionSummary>
+    <DescriptionBody>TokenMap lets you inspect a codebase as both a tree and a treemap, measured by tokens, non-empty lines, or file size.</DescriptionBody>
+  </Linux>
+  <MacOS>
+    <BundleIdentifier>pro.clever.tokenmap</BundleIdentifier>
+    <IconFileName>app-icon.icns</IconFileName>
+    <IconSourcePath>src/Clever.TokenMap.App/Assets/app-icon.icns</IconSourcePath>
+    <ApplicationsLinkName>Applications</ApplicationsLinkName>
+    <ApplicationsIconSourcePath>/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ApplicationsFolderIcon.icns</ApplicationsIconSourcePath>
+  </MacOS>
+</PackagingMetadata>

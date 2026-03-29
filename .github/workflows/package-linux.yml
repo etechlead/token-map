@@ -43,6 +43,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          source ./scripts/packaging-metadata.sh
+          initialize_packaging_metadata "$PWD"
+
+          project_path="$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')"
+          fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
 
           if [[ '${{ github.event_name }}' == 'release' ]]; then
             git_ref='${{ github.event.release.tag_name }}'
@@ -59,7 +64,11 @@ jobs:
           elif [[ "${git_ref}" == v* ]]; then
             resolved_version="${git_ref#v}"
           else
-            resolved_version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Clever.TokenMap.App/Clever.TokenMap.App.csproj | head -n 1)"
+            resolved_version="$(get_xml_value "${project_path}" '//Version')"
+          fi
+
+          if [[ -z "${resolved_version}" ]]; then
+            resolved_version="${fallback_local_version}"
           fi
 
           if [[ -z "${resolved_version}" ]]; then
@@ -67,14 +76,8 @@ jobs:
             exit 1
           fi
 
-          artifact_base_name="TokenMap-linux-x64-${resolved_version}"
-          publish_directory=".artifacts/linux-package-inputs/publish/linux-x64"
-
           {
             echo "TOKENMAP_LINUX_VERSION=${resolved_version}"
-            echo "TOKENMAP_LINUX_ARTIFACT_BASE_NAME=${artifact_base_name}"
-            echo "TOKENMAP_LINUX_DEB_NAME=${artifact_base_name}"
-            echo "TOKENMAP_LINUX_PORTABLE_NAME=${artifact_base_name}-portable"
             echo "TOKENMAP_LINUX_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
@@ -91,27 +94,49 @@ jobs:
       - name: Package Linux artifacts
         env:
           PACKAGE_VERSION: ${{ env.TOKENMAP_LINUX_VERSION }}
-          ARTIFACT_BASE_NAME: ${{ env.TOKENMAP_LINUX_ARTIFACT_BASE_NAME }}
-          DEB_ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_DEB_NAME }}
-          PORTABLE_ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}
           PUBLISH_OUTPUT_ROOT: .artifacts/linux-package-inputs/publish
         run: bash ./scripts/package-linux.sh
+
+      - name: Resolve Linux artifact paths
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          deb_path="$(find .artifacts/linux-x64 -maxdepth 1 -type f -name '*.deb' | head -n 1)"
+          portable_path="$(find .artifacts/linux-x64 -maxdepth 1 -type f -name '*.tar.gz' | head -n 1)"
+
+          if [[ -z "${deb_path}" || -z "${portable_path}" ]]; then
+            echo "Expected Linux package artifacts were not found." >&2
+            exit 1
+          fi
+
+          deb_name="$(basename "${deb_path}")"
+          portable_name="$(basename "${portable_path}")"
+          artifact_upload_name="${deb_name%.deb}"
+
+          {
+            echo "TOKENMAP_LINUX_DEB_PATH=${deb_path}"
+            echo "TOKENMAP_LINUX_DEB_NAME=${deb_name}"
+            echo "TOKENMAP_LINUX_PORTABLE_PATH=${portable_path}"
+            echo "TOKENMAP_LINUX_PORTABLE_NAME=${portable_name}"
+            echo "TOKENMAP_LINUX_ARTIFACT_BASE_NAME=${artifact_upload_name}"
+          } >> "${GITHUB_ENV}"
 
       - name: Upload Linux workflow artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.TOKENMAP_LINUX_ARTIFACT_BASE_NAME }}
           path: |
-            .artifacts/linux-x64/${{ env.TOKENMAP_LINUX_DEB_NAME }}.deb
-            .artifacts/linux-x64/${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}.tar.gz
+            ${{ env.TOKENMAP_LINUX_DEB_PATH }}
+            ${{ env.TOKENMAP_LINUX_PORTABLE_PATH }}
           if-no-files-found: error
 
       - name: Attach Linux artifacts to GitHub release
         if: env.TOKENMAP_LINUX_RELEASE_TAG != ''
         run: |
           gh release upload "${{ env.TOKENMAP_LINUX_RELEASE_TAG }}" \
-            ".artifacts/linux-x64/${{ env.TOKENMAP_LINUX_DEB_NAME }}.deb" \
-            ".artifacts/linux-x64/${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}.tar.gz" \
+            "${{ env.TOKENMAP_LINUX_DEB_PATH }}" \
+            "${{ env.TOKENMAP_LINUX_PORTABLE_PATH }}" \
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

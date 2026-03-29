@@ -1,9 +1,9 @@
 param(
-    [string]$ProjectPath = "src/Clever.TokenMap.App/Clever.TokenMap.App.csproj",
+    [string]$ProjectPath = "",
     [string]$Configuration = "Release",
     [string]$RuntimeIdentifier = "win-x64",
-    [string]$AppName = "TokenMap",
-    [string]$Publisher = "Clever.pro",
+    [string]$AppName = "",
+    [string]$Publisher = "",
     [string]$Version = "",
     [string]$InstallerOutputRoot = ".artifacts/windows-installer",
     [string]$PortableOutputRoot = ".artifacts/windows-portable"
@@ -11,6 +11,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+
+. (Join-Path $PSScriptRoot "packaging-metadata.ps1")
 
 function Get-InnoCompilerPath {
     $candidatePaths = @(
@@ -139,6 +141,9 @@ function New-WindowsInstaller {
     $env:TOKENMAP_ARTIFACT_BASENAME = $artifactBaseName
     $env:TOKENMAP_PUBLISH_DIR = $PublishDirectory
     $env:TOKENMAP_OUTPUT_DIR = $installerOutputPath
+    if (-not [string]::IsNullOrWhiteSpace($windowsSetupIconPath)) {
+        $env:TOKENMAP_SETUP_ICON_FILE = (Join-Path $repoRoot $windowsSetupIconPath)
+    }
 
     Write-Host "Compiling Inno Setup installer with $compilerPath..."
     & $compilerPath $issPath
@@ -182,10 +187,25 @@ function New-WindowsPortableArchive {
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$fallbackVersionFromMetadata = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/FallbackLocalVersion"
+$windowsSetupIconPath = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/Windows/SetupIconPath"
+
+if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
+    $ProjectPath = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/ProjectPath"
+}
+
+if ([string]::IsNullOrWhiteSpace($AppName)) {
+    $AppName = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/AppName"
+}
+
+if ([string]::IsNullOrWhiteSpace($Publisher)) {
+    $Publisher = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/Publisher"
+}
+
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
 $artifactPlatformLabel = Get-ArtifactPlatformLabel -RuntimeId $RuntimeIdentifier
-$fallbackVersion = "0.1.1-local"
+$fallbackVersion = if (-not [string]::IsNullOrWhiteSpace($fallbackVersionFromMetadata)) { $fallbackVersionFromMetadata } else { "0.1.1-local" }
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
         $Version

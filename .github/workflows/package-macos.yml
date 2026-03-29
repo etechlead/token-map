@@ -40,6 +40,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          source ./scripts/packaging-metadata.sh
+          initialize_packaging_metadata "$PWD"
+
+          project_path="$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')"
+          fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
 
           git_ref='${{ inputs.git_ref }}'
           version_input='${{ inputs.version }}'
@@ -50,7 +55,11 @@ jobs:
           elif [[ "${git_ref}" == v* ]]; then
             resolved_version="${git_ref#v}"
           else
-            resolved_version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' src/Clever.TokenMap.App/Clever.TokenMap.App.csproj | head -n 1)"
+            resolved_version="$(get_xml_value "${project_path}" '//Version')"
+          fi
+
+          if [[ -z "${resolved_version}" ]]; then
+            resolved_version="${fallback_local_version}"
           fi
 
           if [[ -z "${resolved_version}" ]]; then
@@ -58,15 +67,8 @@ jobs:
             exit 1
           fi
 
-          dmg_artifact_name="TokenMap-macos-arm64-${resolved_version}-unsigned"
-          zip_artifact_name="TokenMap-macos-arm64-${resolved_version}-portable-unsigned"
-          artifact_base_name="TokenMap-macos-arm64-${resolved_version}"
-
           {
             echo "TOKENMAP_MACOS_VERSION=${resolved_version}"
-            echo "TOKENMAP_MACOS_ARTIFACT_BASE_NAME=${artifact_base_name}"
-            echo "TOKENMAP_MACOS_DMG_NAME=${dmg_artifact_name}"
-            echo "TOKENMAP_MACOS_PORTABLE_NAME=${zip_artifact_name}"
             echo "TOKENMAP_MACOS_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
@@ -83,25 +85,48 @@ jobs:
       - name: Package macOS artifacts
         env:
           BUNDLE_VERSION: ${{ env.TOKENMAP_MACOS_VERSION }}
-          DMG_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_DMG_NAME }}
-          ZIP_ARTIFACT_NAME: ${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}
         run: bash ./scripts/package-macos.sh
+
+      - name: Resolve macOS artifact paths
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          dmg_path="$(find .artifacts/macos-arm64 -maxdepth 1 -type f -name '*.dmg' | head -n 1)"
+          zip_path="$(find .artifacts/macos-arm64 -maxdepth 1 -type f -name '*.zip' | head -n 1)"
+
+          if [[ -z "${dmg_path}" || -z "${zip_path}" ]]; then
+            echo "Expected macOS package artifacts were not found." >&2
+            exit 1
+          fi
+
+          dmg_name="$(basename "${dmg_path}")"
+          zip_name="$(basename "${zip_path}")"
+          artifact_upload_name="${dmg_name%.dmg}"
+
+          {
+            echo "TOKENMAP_MACOS_DMG_PATH=${dmg_path}"
+            echo "TOKENMAP_MACOS_DMG_NAME=${dmg_name}"
+            echo "TOKENMAP_MACOS_PORTABLE_PATH=${zip_path}"
+            echo "TOKENMAP_MACOS_PORTABLE_NAME=${zip_name}"
+            echo "TOKENMAP_MACOS_ARTIFACT_BASE_NAME=${artifact_upload_name}"
+          } >> "${GITHUB_ENV}"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v6
         with:
           name: ${{ env.TOKENMAP_MACOS_ARTIFACT_BASE_NAME }}
           path: |
-            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_DMG_NAME }}.dmg
-            .artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}.zip
+            ${{ env.TOKENMAP_MACOS_DMG_PATH }}
+            ${{ env.TOKENMAP_MACOS_PORTABLE_PATH }}
           if-no-files-found: error
 
       - name: Attach macOS artifacts to GitHub release
         if: env.TOKENMAP_MACOS_RELEASE_TAG != ''
         run: |
           gh release upload "${{ env.TOKENMAP_MACOS_RELEASE_TAG }}" \
-            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_DMG_NAME }}.dmg" \
-            ".artifacts/macos-arm64/${{ env.TOKENMAP_MACOS_PORTABLE_NAME }}.zip" \
+            "${{ env.TOKENMAP_MACOS_DMG_PATH }}" \
+            "${{ env.TOKENMAP_MACOS_PORTABLE_PATH }}" \
             --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,19 +5,22 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
 
-project_path="${PROJECT_PATH:-src/Clever.TokenMap.App/Clever.TokenMap.App.csproj}"
+source "${script_dir}/packaging-metadata.sh"
+initialize_packaging_metadata "${repo_root}"
+
+project_path="${PROJECT_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')}"
 configuration="${CONFIGURATION:-Release}"
 runtime_identifier="${RUNTIME_IDENTIFIER:-osx-arm64}"
-bundle_name="${BUNDLE_NAME:-TokenMap}"
+bundle_name="${BUNDLE_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/AppName')}"
 output_root="${OUTPUT_ROOT:-.artifacts/macos-arm64}"
-bundle_identifier="${BUNDLE_IDENTIFIER:-pro.clever.tokenmap}"
+bundle_identifier="${BUNDLE_IDENTIFIER:-$(get_packaging_metadata_value '//PackagingMetadata/MacOS/BundleIdentifier')}"
 bundle_version="${BUNDLE_VERSION:-}"
 dmg_artifact_name="${DMG_ARTIFACT_NAME:-}"
 zip_artifact_name="${ZIP_ARTIFACT_NAME:-}"
-icon_file_name="${ICON_FILE_NAME:-app-icon.icns}"
-icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/${icon_file_name}}"
-applications_link_name="${APPLICATIONS_LINK_NAME:-Applications}"
-applications_icon_source_full_path="${APPLICATIONS_ICON_SOURCE_PATH:-/System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/ApplicationsFolderIcon.icns}"
+icon_file_name="${ICON_FILE_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/MacOS/IconFileName')}"
+icon_source_path="${ICON_SOURCE_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/MacOS/IconSourcePath')}"
+applications_link_name="${APPLICATIONS_LINK_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/MacOS/ApplicationsLinkName')}"
+applications_icon_source_full_path="${APPLICATIONS_ICON_SOURCE_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/MacOS/ApplicationsIconSourcePath')}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -30,22 +33,20 @@ staging_directory_path="${output_root_full_path}/dmg-stage"
 icon_source_full_path="${repo_root}/${icon_source_path}"
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
+assembly_name_value="$(get_xml_value "${project_full_path}" '//AssemblyName')"
+version_value="$(get_xml_value "${project_full_path}" '//Version')"
+fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
 
-if command -v xmllint >/dev/null 2>&1; then
-    assembly_name_value="$(xmllint --xpath 'string(//AssemblyName)' "${project_full_path}" 2>/dev/null || true)"
-    version_value="$(xmllint --xpath 'string(//Version)' "${project_full_path}" 2>/dev/null || true)"
+if [[ -n "${assembly_name_value}" ]]; then
+    assembly_name="${assembly_name_value}"
+fi
 
-    if [[ -n "${assembly_name_value}" ]]; then
-        assembly_name="${assembly_name_value}"
-    fi
-
-    if [[ -z "${bundle_version}" && -n "${version_value}" ]]; then
-        bundle_version="${version_value}"
-    fi
+if [[ -z "${bundle_version}" && -n "${version_value}" ]]; then
+    bundle_version="${version_value}"
 fi
 
 if [[ -z "${bundle_version}" ]]; then
-    bundle_version="1.0.0"
+    bundle_version="${fallback_local_version}"
 fi
 
 if [[ -z "${dmg_artifact_name}" ]]; then

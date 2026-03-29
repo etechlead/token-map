@@ -5,13 +5,16 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/.." && pwd)"
 
-project_path="${PROJECT_PATH:-src/Clever.TokenMap.App/Clever.TokenMap.App.csproj}"
+source "${script_dir}/packaging-metadata.sh"
+initialize_packaging_metadata "${repo_root}"
+
+project_path="${PROJECT_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')}"
 configuration="${CONFIGURATION:-Release}"
 runtime_identifier="${RUNTIME_IDENTIFIER:-linux-x64}"
-app_name="${APP_NAME:-TokenMap}"
-package_name="${PACKAGE_NAME:-tokenmap}"
-maintainer="${MAINTAINER:-Clever.pro}"
-section_name="${SECTION_NAME:-devel}"
+app_name="${APP_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/AppName')}"
+package_name="${PACKAGE_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/PackageName')}"
+maintainer="${MAINTAINER:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/Maintainer')}"
+section_name="${SECTION_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/SectionName')}"
 portable_suffix="${PORTABLE_SUFFIX:--portable}"
 output_root="${OUTPUT_ROOT:-.artifacts/linux-x64}"
 publish_output_root="${PUBLISH_OUTPUT_ROOT:-.artifacts/linux-package-inputs/publish}"
@@ -19,14 +22,14 @@ package_version="${PACKAGE_VERSION:-}"
 artifact_base_name="${ARTIFACT_BASE_NAME:-}"
 deb_artifact_name="${DEB_ARTIFACT_NAME:-}"
 portable_artifact_name="${PORTABLE_ARTIFACT_NAME:-}"
-install_root="${INSTALL_ROOT:-/usr/lib/tokenmap}"
-desktop_entry_name="${DESKTOP_ENTRY_NAME:-tokenmap.desktop}"
-icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/app-icon.svg}"
-launcher_source_path="${LAUNCHER_SOURCE_PATH:-packaging/linux/tokenmap}"
-desktop_source_path="${DESKTOP_SOURCE_PATH:-packaging/linux/tokenmap.desktop}"
+install_root="${INSTALL_ROOT:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/InstallRoot')}"
+desktop_entry_name="${DESKTOP_ENTRY_NAME:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/DesktopEntryName')}"
+icon_source_path="${ICON_SOURCE_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/IconSourcePath')}"
+launcher_source_path="${LAUNCHER_SOURCE_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/LauncherSourcePath')}"
+desktop_source_path="${DESKTOP_SOURCE_PATH:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/DesktopSourcePath')}"
 portable_app_directory_name="${PORTABLE_APP_DIRECTORY_NAME:-app}"
-description_summary="${DESCRIPTION_SUMMARY:-Local source-tree analysis}"
-description_body="${DESCRIPTION_BODY:-TokenMap lets you inspect a codebase as both a tree and a treemap, measured by tokens, non-empty lines, or file size.}"
+description_summary="${DESCRIPTION_SUMMARY:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/DescriptionSummary')}"
+description_body="${DESCRIPTION_BODY:-$(get_packaging_metadata_value '//PackagingMetadata/Linux/DescriptionBody')}"
 deb_depends="${DEB_DEPENDS:-libx11-6, libice6, libsm6, libfontconfig1, ca-certificates, tzdata, libc6, libgcc-s1 | libgcc1, libgssapi-krb5-2, libstdc++6, zlib1g, libssl3 | libssl1.1 | libssl1.0.2 | libssl1.0.0, libicu74 | libicu72 | libicu71 | libicu70 | libicu69 | libicu68 | libicu67 | libicu66 | libicu65 | libicu63 | libicu60 | libicu57 | libicu55 | libicu52}"
 
 project_full_path="${repo_root}/${project_path}"
@@ -65,18 +68,6 @@ assert_compatible_dotnet_sdk() {
     echo "Installed SDKs:" >&2
     dotnet --list-sdks >&2 || true
     exit 1
-}
-
-get_project_value() {
-    local xpath="$1"
-
-    if command -v xmllint >/dev/null 2>&1; then
-        xmllint --xpath "string(${xpath})" "${project_full_path}" 2>/dev/null || true
-        return
-    fi
-
-    local element_name="${xpath##//}"
-    sed -n "s:.*<${element_name}>\\(.*\\)</${element_name}>.*:\\1:p" "${project_full_path}" | head -n 1
 }
 
 map_runtime_identifier_to_architecture() {
@@ -190,8 +181,9 @@ require_command tar
 assert_compatible_dotnet_sdk
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
-assembly_name_value="$(get_project_value '//AssemblyName')"
-project_version="$(get_project_value '//Version')"
+assembly_name_value="$(get_xml_value "${project_full_path}" '//AssemblyName')"
+project_version="$(get_xml_value "${project_full_path}" '//Version')"
+fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
 
 if [[ -n "${assembly_name_value}" ]]; then
     assembly_name="${assembly_name_value}"
@@ -202,7 +194,7 @@ if [[ -z "${package_version}" ]]; then
 fi
 
 if [[ -z "${package_version}" ]]; then
-    package_version="0.1.1-local"
+    package_version="${fallback_local_version}"
 fi
 
 if [[ -z "${artifact_base_name}" ]]; then

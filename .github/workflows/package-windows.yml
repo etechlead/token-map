@@ -66,8 +66,6 @@ jobs:
 
           if (-not [string]::IsNullOrWhiteSpace($version)) {
               "TOKENMAP_WINDOWS_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              "TOKENMAP_SETUP_NAME=TokenMap-windows-x64-$version-setup.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-              "TOKENMAP_PORTABLE_NAME=TokenMap-windows-x64-$version-portable.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           }
 
           "TOKENMAP_WINDOWS_RELEASE_TAG=$releaseTag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
