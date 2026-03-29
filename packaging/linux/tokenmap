@@ -2,10 +2,26 @@
 
 set -euo pipefail
 
-install_root="${TOKENMAP_INSTALL_ROOT:-/usr/lib/tokenmap}"
+script_path="${BASH_SOURCE[0]}"
 
-if [[ -n "${APPDIR:-}" ]]; then
+if command -v readlink >/dev/null 2>&1; then
+    resolved_script_path="$(readlink -f "${script_path}" 2>/dev/null || true)"
+    if [[ -n "${resolved_script_path}" ]]; then
+        script_path="${resolved_script_path}"
+    fi
+fi
+
+script_dir="$(cd "$(dirname "${script_path}")" && pwd)"
+install_root="${TOKENMAP_INSTALL_ROOT:-}"
+
+if [[ -n "${install_root}" ]]; then
+    :
+elif [[ -n "${APPDIR:-}" ]]; then
     install_root="${APPDIR}/usr/lib/tokenmap"
+elif [[ -x "${script_dir}/app/Clever.TokenMap.App" ]]; then
+    install_root="${script_dir}/app"
+else
+    install_root="/usr/lib/tokenmap"
 fi
 
 exec "${install_root}/Clever.TokenMap.App" "$@"
