@@ -70,7 +70,7 @@ $publishDirectoryPath = Join-Path $outputRootFullPath "publish\$RuntimeIdentifie
 $installerOutputPath = Join-Path $outputRootFullPath "installer"
 $issPath = Join-Path $repoRoot "packaging\windows\TokenMap.iss"
 $compilerPath = Get-InnoCompilerPath
-$artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion"
+$artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion-installer"
 
 if (Test-Path $outputRootFullPath) {
     Remove-Item -Path $outputRootFullPath -Recurse -Force

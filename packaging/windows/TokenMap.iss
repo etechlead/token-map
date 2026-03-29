@@ -25,7 +25,7 @@
 #define MyArtifactBaseName GetEnv("TOKENMAP_ARTIFACT_BASENAME")
 #if MyArtifactBaseName == ""
   #undef MyArtifactBaseName
-  #define MyArtifactBaseName "TokenMap-win-x64-0.1.1-local"
+  #define MyArtifactBaseName "TokenMap-win-x64-0.1.1-local-installer"
 #endif
 
 #define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"
