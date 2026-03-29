@@ -1,0 +1,112 @@
+name: package-windows-standalone
+
+on:
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: Git ref to build, such as main or v0.1.0
+        required: true
+        default: main
+      version:
+        description: Optional version override for the standalone archive name
+        required: false
+      release_tag:
+        description: Optional existing release tag to receive the standalone archive
+        required: false
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write
+
+jobs:
+  build-standalone:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout requested ref
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.git_ref }}
+
+      - name: Checkout release tag
+        if: github.event_name == 'release'
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve packaging metadata
+        shell: pwsh
+        run: |
+          $version = ''
+          $releaseTag = ''
+
+          if ('${{ github.event_name }}' -eq 'release') {
+              $releaseTag = '${{ github.event.release.tag_name }}'
+              $version = $releaseTag
+          }
+          else {
+              $releaseTag = '${{ inputs.release_tag }}'
+              $version = '${{ inputs.version }}'
+          }
+
+          if (-not [string]::IsNullOrWhiteSpace($version) -and $version.StartsWith('v')) {
+              $version = $version.Substring(1)
+          }
+
+          if (-not [string]::IsNullOrWhiteSpace($version)) {
+              "TOKENMAP_STANDALONE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              "TOKENMAP_STANDALONE_NAME=TokenMap-win-x64-$version-standalone.zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }
+
+          "TOKENMAP_STANDALONE_RELEASE_TAG=$releaseTag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Restore
+        run: dotnet restore Clever.TokenMap.sln
+
+      - name: Build
+        run: dotnet build Clever.TokenMap.sln --no-restore
+
+      - name: Test
+        run: dotnet test Clever.TokenMap.sln --no-build
+
+      - name: Package Windows standalone archive
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_STANDALONE_VERSION)) {
+              ./scripts/publish-windows-standalone.ps1
+              exit 0
+          }
+
+          ./scripts/publish-windows-standalone.ps1 -Version $env:TOKENMAP_STANDALONE_VERSION
+
+      - name: Resolve standalone archive path
+        shell: pwsh
+        run: |
+          $archive = Get-ChildItem -Path '.artifacts/windows-standalone/standalone/*.zip' | Select-Object -First 1
+          if ($null -eq $archive) {
+              throw 'Windows standalone archive was not found.'
+          }
+
+          "TOKENMAP_STANDALONE_PATH=$($archive.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TOKENMAP_STANDALONE_NAME=$($archive.Name)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.TOKENMAP_STANDALONE_NAME }}
+          path: ${{ env.TOKENMAP_STANDALONE_PATH }}
+          if-no-files-found: error
+
+      - name: Attach standalone archive to GitHub release
+        if: env.TOKENMAP_STANDALONE_RELEASE_TAG != ''
+        run: gh release upload "${{ env.TOKENMAP_STANDALONE_RELEASE_TAG }}" "${{ env.TOKENMAP_STANDALONE_PATH }}" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

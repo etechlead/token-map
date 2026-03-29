@@ -32,6 +32,7 @@
 - The version shown in the application, the Git tag, the GitHub Release title, and packaged artifact names should all derive from the same public version.
 - GitHub Release titles should use the product name plus the public version, for example `TokenMap 0.1.0`.
 - Packaged artifact names should include runtime, version, and any qualifier needed to distinguish sibling deliverables, for example `TokenMap-win-x64-0.1.0-installer.exe`.
+- When the same platform ships multiple Windows deliverables, use explicit sibling qualifiers such as `-installer` and `-standalone`, for example `TokenMap-win-x64-0.1.0-standalone.zip`.
 - When the distribution status is material to the artifact, append a clear qualifier such as `-unsigned`, for example `TokenMap-macos-arm64-0.1.0-unsigned.dmg`.
 - The app UI should show a concise user-facing version and may expose the diagnostic build identity separately.
 
