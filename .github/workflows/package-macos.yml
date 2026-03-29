@@ -17,6 +17,9 @@ on:
       release_tag:
         description: Optional existing release tag to receive the DMG asset
         required: false
+  release:
+    types:
+      - published
 
 permissions:
   contents: write
@@ -29,7 +32,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.git_ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.git_ref || github.event.release.tag_name }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -46,9 +49,15 @@ jobs:
           project_path="$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')"
           fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
 
-          git_ref='${{ inputs.git_ref }}'
-          version_input='${{ inputs.version }}'
-          release_tag_input='${{ inputs.release_tag }}'
+          if [[ '${{ github.event_name }}' == 'release' ]]; then
+            git_ref='${{ github.event.release.tag_name }}'
+            version_input=''
+            release_tag_input='${{ github.event.release.tag_name }}'
+          else
+            git_ref='${{ inputs.git_ref }}'
+            version_input='${{ inputs.version }}'
+            release_tag_input='${{ inputs.release_tag }}'
+          fi
 
           if [[ -n "${version_input}" ]]; then
             resolved_version="${version_input}"
@@ -79,7 +88,7 @@ jobs:
         run: dotnet build Clever.TokenMap.sln --no-restore
 
       - name: Test
-        if: inputs.run_tests != 'false'
+        if: github.event_name != 'workflow_dispatch' || inputs.run_tests != 'false'
         run: dotnet test Clever.TokenMap.sln --no-build
 
       - name: Package macOS artifacts

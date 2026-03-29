@@ -205,7 +205,7 @@ if ([string]::IsNullOrWhiteSpace($Publisher)) {
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
 $artifactPlatformLabel = Get-ArtifactPlatformLabel -RuntimeId $RuntimeIdentifier
-$fallbackVersion = if (-not [string]::IsNullOrWhiteSpace($fallbackVersionFromMetadata)) { $fallbackVersionFromMetadata } else { "0.1.1-local" }
+$fallbackVersion = if (-not [string]::IsNullOrWhiteSpace($fallbackVersionFromMetadata)) { $fallbackVersionFromMetadata } else { "0.2.0" }
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
         $Version

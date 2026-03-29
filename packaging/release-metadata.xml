@@ -3,7 +3,7 @@
   <ProjectPath>src/Clever.TokenMap.App/Clever.TokenMap.App.csproj</ProjectPath>
   <AppName>TokenMap</AppName>
   <Publisher>Clever.pro</Publisher>
-  <FallbackLocalVersion>0.1.1-local</FallbackLocalVersion>
+  <FallbackLocalVersion>0.2.0</FallbackLocalVersion>
   <Windows>
     <SetupIconPath>src/Clever.TokenMap.App/Assets/app-icon.ico</SetupIconPath>
   </Windows>

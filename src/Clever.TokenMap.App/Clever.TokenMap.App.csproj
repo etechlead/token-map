@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <Product>TokenMap</Product>
     <Description>Local source-tree analysis</Description>
-    <Version>0.1.1-local</Version>
+    <Version>0.2.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
