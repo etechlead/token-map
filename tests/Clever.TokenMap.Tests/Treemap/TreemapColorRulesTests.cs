@@ -1,6 +1,7 @@
-using Clever.TokenMap.Treemap;
+using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.Tests.Treemap;
 
@@ -154,7 +155,7 @@ public sealed class TreemapColorRulesTests
         Assert.Equal(1_000, context.MaxLeafWeight);
     }
 
-    private static double GetBrightness(Avalonia.Media.Color color) =>
+    private static double GetBrightness(Color color) =>
         (color.R * 299d) + (color.G * 587d) + (color.B * 114d);
 
     private static ProjectNode CreateFile(

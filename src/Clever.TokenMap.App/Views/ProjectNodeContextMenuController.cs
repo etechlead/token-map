@@ -2,8 +2,8 @@ using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
-using Avalonia.Interactivity;
 using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
 

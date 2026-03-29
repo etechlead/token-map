@@ -3,14 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
-using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.Treemap;
-using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Treemap;
+using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
+using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
 

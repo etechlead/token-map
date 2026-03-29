@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.State;
 

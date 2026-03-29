@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using ArchUnitNET.Domain;
 using ArchUnitNET.Loader;
 using ArchUnitNET.xUnit;
+using Clever.TokenMap.App;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
@@ -18,13 +20,13 @@ public sealed class ArchitectureRulesTests
 {
     private static readonly ArchUnitNET.Domain.Architecture Architecture = new ArchLoader()
         .LoadAssemblies(
-            typeof(Clever.TokenMap.App.App).Assembly,
+            typeof(App.App).Assembly,
             typeof(ProjectNode).Assembly,
             typeof(ProjectAnalyzer).Assembly,
             typeof(TreemapControl).Assembly)
         .Build();
 
-    private static readonly string AppAssemblyName = typeof(Clever.TokenMap.App.App).Assembly.GetName().Name!;
+    private static readonly string AppAssemblyName = typeof(App.App).Assembly.GetName().Name!;
     private static readonly string CoreAssemblyName = typeof(ProjectNode).Assembly.GetName().Name!;
     private static readonly string InfrastructureAssemblyName = typeof(ProjectAnalyzer).Assembly.GetName().Name!;
     private static readonly string TreemapAssemblyName = typeof(TreemapControl).Assembly.GetName().Name!;
@@ -147,7 +149,7 @@ public sealed class ArchitectureRulesTests
             .As("direct file system types");
 
     private static readonly IObjectProvider<IType> TraceTypes =
-        Types().That().HaveFullName(typeof(System.Diagnostics.Trace).FullName!)
+        Types().That().HaveFullName(typeof(Trace).FullName!)
             .As("System.Diagnostics.Trace");
 
     private static readonly IObjectProvider<IType> AvaloniaTypes =
@@ -164,7 +166,7 @@ public sealed class ArchitectureRulesTests
             .As("non-UI app services");
 
     private static readonly IObjectProvider<IType> AppCompositionRoots =
-        Types().That().Are(typeof(Clever.TokenMap.App.App), typeof(App.AppComposition))
+        Types().That().Are(typeof(App.App), typeof(AppComposition))
             .As("app composition roots");
 
     private static readonly IObjectProvider<IType> NonCompositionRootAppTypes =

@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls.Shapes;
 using Avalonia.Layout;
 using Avalonia.Media;
+
 namespace Clever.TokenMap.App.Views;
 
 internal static class FluentIconGeometry

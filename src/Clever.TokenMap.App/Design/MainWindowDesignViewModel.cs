@@ -1,5 +1,5 @@
-using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Diagnostics;
 
 namespace Clever.TokenMap.App.Design;
 

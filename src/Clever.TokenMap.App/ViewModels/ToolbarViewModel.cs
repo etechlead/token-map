@@ -1,10 +1,10 @@
 using System.ComponentModel;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Clever.TokenMap.Core.Enums;
 
 namespace Clever.TokenMap.App.ViewModels;
 

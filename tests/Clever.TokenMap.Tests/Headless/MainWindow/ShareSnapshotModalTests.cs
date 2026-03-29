@@ -3,11 +3,11 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media;
 using Avalonia.Styling;
-using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Treemap;
+using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using PathShape = Avalonia.Controls.Shapes.Path;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 

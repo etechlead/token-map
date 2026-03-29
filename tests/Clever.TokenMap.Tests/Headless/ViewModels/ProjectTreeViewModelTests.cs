@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
@@ -18,7 +19,7 @@ public sealed class ProjectTreeViewModelTests
         viewModel.LoadRoot(root);
 
         Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        Assert.Equal(ListSortDirection.Descending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
             name => Assert.Equal("Demo", name),
@@ -34,13 +35,13 @@ public sealed class ProjectTreeViewModelTests
             ("Alpha.cs", 10, 10, 1),
             ("Beta.cs", 20, 20, 1)));
 
-        viewModel.SortBy(ProjectTreeSortColumn.Tokens, System.ComponentModel.ListSortDirection.Ascending);
+        viewModel.SortBy(ProjectTreeSortColumn.Tokens, ListSortDirection.Ascending);
         viewModel.LoadRoot(CreateRootWithChildren(
             ("Gamma.cs", 30, 30, 1),
             ("Delta.cs", 5, 5, 1)));
 
         Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.CurrentSortDirection);
+        Assert.Equal(ListSortDirection.Ascending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
             name => Assert.Equal("Demo", name),
@@ -99,7 +100,7 @@ public sealed class ProjectTreeViewModelTests
         };
 
         viewModel.LoadRoot(root);
-        viewModel.SortBy(ProjectTreeSortColumn.Tokens, System.ComponentModel.ListSortDirection.Descending);
+        viewModel.SortBy(ProjectTreeSortColumn.Tokens, ListSortDirection.Descending);
 
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
@@ -173,10 +174,10 @@ public sealed class ProjectTreeViewModelTests
             },
         });
 
-        viewModel.SortBy(ProjectTreeSortColumn.ParentShare, System.ComponentModel.ListSortDirection.Descending);
+        viewModel.SortBy(ProjectTreeSortColumn.ParentShare, ListSortDirection.Descending);
 
         Assert.Equal(ProjectTreeSortColumn.ParentShare, viewModel.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.CurrentSortDirection);
+        Assert.Equal(ListSortDirection.Descending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
             name => Assert.Equal("Demo", name),

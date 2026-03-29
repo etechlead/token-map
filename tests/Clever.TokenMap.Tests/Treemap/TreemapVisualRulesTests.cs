@@ -1,7 +1,7 @@
 using Avalonia;
-using Clever.TokenMap.Treemap;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.Tests.Treemap;
 

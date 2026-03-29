@@ -1,14 +1,15 @@
 using Avalonia;
 using Avalonia.Headless;
+using Clever.TokenMap.Tests.Headless.Support;
 
-[assembly: AvaloniaTestApplication(typeof(Clever.TokenMap.Tests.Headless.Support.TestAppBuilder))]
+[assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
 namespace Clever.TokenMap.Tests.Headless.Support;
 
 public static class TestAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<Clever.TokenMap.App.App>()
+        AppBuilder.Configure<App.App>()
             .UseSkia()
             .UseHeadless(new AvaloniaHeadlessPlatformOptions
             {

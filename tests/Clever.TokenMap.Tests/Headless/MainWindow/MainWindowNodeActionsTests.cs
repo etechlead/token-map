@@ -1,7 +1,6 @@
 using Clever.TokenMap.App.Services;
-using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
 using Clever.TokenMap.Tests.Headless.Support;
+using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
 

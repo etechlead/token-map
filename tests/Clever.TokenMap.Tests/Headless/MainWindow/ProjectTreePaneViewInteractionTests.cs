@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -37,7 +38,7 @@ public sealed class ProjectTreePaneViewInteractionTests
         await ClickAsync(window, nameHeader);
 
         Assert.Equal(ProjectTreeSortColumn.Name, viewModel.Tree.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Ascending, viewModel.Tree.CurrentSortDirection);
+        Assert.Equal(ListSortDirection.Ascending, viewModel.Tree.CurrentSortDirection);
         Assert.Equal(
             ["Alpha.cs", "Zulu.cs"],
             viewModel.Tree.VisibleNodes.Skip(1).Select(node => node.Name).ToArray());
@@ -49,7 +50,7 @@ public sealed class ProjectTreePaneViewInteractionTests
         await ClickAsync(window, nameHeader);
 
         Assert.Equal(ProjectTreeSortColumn.Name, viewModel.Tree.CurrentSortColumn);
-        Assert.Equal(System.ComponentModel.ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
+        Assert.Equal(ListSortDirection.Descending, viewModel.Tree.CurrentSortDirection);
         Assert.Equal(
             ["Zulu.cs", "Alpha.cs"],
             viewModel.Tree.VisibleNodes.Skip(1).Select(node => node.Name).ToArray());

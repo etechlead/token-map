@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
+using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Diagnostics;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.App.ViewModels;
 
 namespace Clever.TokenMap.App.Design;
 
@@ -93,7 +94,7 @@ internal static class MainWindowViewModelDefaults
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-        public void SetSelectedMetric(Core.Enums.AnalysisMetric metric) => MutableState.SelectedMetric = metric;
+        public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 
@@ -101,9 +102,9 @@ internal static class MainWindowViewModelDefaults
 
         public void ReplaceGlobalExcludes(IEnumerable<string> entries) => MutableState.ReplaceGlobalExcludes(entries);
 
-        public void SetThemePreference(Core.Enums.ThemePreference preference) => MutableState.SelectedThemePreference = preference;
+        public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
 
-        public void SetTreemapPalette(Core.Enums.TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
+        public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 

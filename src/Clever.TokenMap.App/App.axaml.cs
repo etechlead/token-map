@@ -6,10 +6,10 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
-using Clever.TokenMap.Core.Diagnostics;
-using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.Views;
+using Clever.TokenMap.Core.Diagnostics;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Settings;
 using Microsoft.Extensions.DependencyInjection;
 

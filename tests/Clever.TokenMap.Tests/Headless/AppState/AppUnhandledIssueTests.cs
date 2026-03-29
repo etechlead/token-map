@@ -1,3 +1,5 @@
+using Clever.TokenMap.App;
+
 namespace Clever.TokenMap.Tests.Headless.AppState;
 
 public sealed class AppUnhandledIssueTests
@@ -17,7 +19,7 @@ public sealed class AppUnhandledIssueTests
     {
         var logsDirectoryPath = "C:\\Logs\\TokenMap";
 
-        var message = App.Program.BuildStartupFailureMessage(logsDirectoryPath);
+        var message = Program.BuildStartupFailureMessage(logsDirectoryPath);
 
         Assert.Contains("TokenMap failed to start.", message, StringComparison.Ordinal);
         Assert.Contains(logsDirectoryPath, message, StringComparison.Ordinal);

@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.App.ViewModels;
 
@@ -151,7 +152,7 @@ public partial class MainWindowViewModel : ViewModelBase
             node,
             (service, currentNode, token) => service.TryRevealAsync(
                 currentNode.FullPath,
-                currentNode.Kind is not Core.Enums.ProjectNodeKind.File,
+                currentNode.Kind is not ProjectNodeKind.File,
                 token),
             code: "shell.reveal_node_failed",
             messageFactory: currentNode => $"TokenMap could not reveal '{currentNode.Name}'.",

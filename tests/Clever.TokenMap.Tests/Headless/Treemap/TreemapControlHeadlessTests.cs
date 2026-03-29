@@ -1,13 +1,15 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
-using Clever.TokenMap.Core.Enums;
-using Clever.TokenMap.Treemap;
 using Avalonia.Media;
+using Avalonia.Threading;
+using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Treemap;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-using System.Globalization;
 
 namespace Clever.TokenMap.Tests.Headless.Treemap;
 
@@ -415,7 +417,7 @@ public sealed class TreemapControlHeadlessTests
     }
 
     private static TreemapControl CreateControl(
-        Clever.TokenMap.Core.Models.ProjectSnapshot? snapshot = null,
+        ProjectSnapshot? snapshot = null,
         AnalysisMetric metric = AnalysisMetric.Tokens,
         bool showMetricValues = false) =>
         new()
@@ -453,22 +455,22 @@ public sealed class TreemapControlHeadlessTests
 
     private static async Task WaitForUiAsync(Window window)
     {
-        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => { }, Avalonia.Threading.DispatcherPriority.Loaded);
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Loaded);
         window.UpdateLayout();
     }
 
-    private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithEmptyDirectory()
+    private static ProjectSnapshot CreateSnapshotWithEmptyDirectory()
     {
         var snapshot = CreateSnapshot();
         snapshot.Root.Children.Clear();
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        snapshot.Root.Children.Add(new ProjectNode
         {
             Id = "src",
             Name = "src",
             FullPath = "C:\\Demo\\src",
             RelativePath = "src",
             Kind = ProjectNodeKind.Directory,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+            Metrics = new NodeMetrics(
                 Tokens: 42,
                 NonEmptyLines: 11,
                 FileSizeBytes: 128,
@@ -479,18 +481,18 @@ public sealed class TreemapControlHeadlessTests
         return snapshot;
     }
 
-    private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithFileWithoutExtension()
+    private static ProjectSnapshot CreateSnapshotWithFileWithoutExtension()
     {
         var snapshot = CreateSnapshot();
         snapshot.Root.Children.Clear();
-        snapshot.Root.Children.Add(new Clever.TokenMap.Core.Models.ProjectNode
+        snapshot.Root.Children.Add(new ProjectNode
         {
             Id = "LICENSE",
             Name = "LICENSE",
             FullPath = "C:\\Demo\\LICENSE",
             RelativePath = "LICENSE",
             Kind = ProjectNodeKind.File,
-            Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+            Metrics = new NodeMetrics(
                 Tokens: 42,
                 NonEmptyLines: 11,
                 FileSizeBytes: 128,
@@ -501,21 +503,21 @@ public sealed class TreemapControlHeadlessTests
         return snapshot;
     }
 
-    private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateSnapshotWithSkippedBinaryFile()
+    private static ProjectSnapshot CreateSnapshotWithSkippedBinaryFile()
     {
-        return new Clever.TokenMap.Core.Models.ProjectSnapshot
+        return new ProjectSnapshot
         {
             RootPath = "C:\\Demo",
             CapturedAtUtc = DateTimeOffset.UtcNow,
-            Options = Clever.TokenMap.Core.Models.ScanOptions.Default,
-            Root = new Clever.TokenMap.Core.Models.ProjectNode
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
             {
                 Id = "/",
                 Name = "Demo",
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                Metrics = new NodeMetrics(
                     Tokens: 0,
                     NonEmptyLines: 0,
                     FileSizeBytes: 171_801,
@@ -523,7 +525,7 @@ public sealed class TreemapControlHeadlessTests
                     DescendantDirectoryCount: 0),
                 Children =
                 {
-                    new Clever.TokenMap.Core.Models.ProjectNode
+                    new ProjectNode
                     {
                         Id = "image.ico",
                         Name = "image.ico",
@@ -531,7 +533,7 @@ public sealed class TreemapControlHeadlessTests
                         RelativePath = "image.ico",
                         Kind = ProjectNodeKind.File,
                         SkippedReason = SkippedReason.Binary,
-                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                        Metrics = new NodeMetrics(
                             Tokens: 0,
                             NonEmptyLines: 0,
                             FileSizeBytes: 171_801,
@@ -543,21 +545,21 @@ public sealed class TreemapControlHeadlessTests
         };
     }
 
-    private static Clever.TokenMap.Core.Models.ProjectSnapshot CreateMetricSensitiveSnapshot()
+    private static ProjectSnapshot CreateMetricSensitiveSnapshot()
     {
-        return new Clever.TokenMap.Core.Models.ProjectSnapshot
+        return new ProjectSnapshot
         {
             RootPath = "C:\\Demo",
             CapturedAtUtc = DateTimeOffset.UtcNow,
-            Options = Clever.TokenMap.Core.Models.ScanOptions.Default,
-            Root = new Clever.TokenMap.Core.Models.ProjectNode
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
             {
                 Id = "/",
                 Name = "Demo",
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                Metrics = new NodeMetrics(
                     Tokens: 105,
                     NonEmptyLines: 100,
                     FileSizeBytes: 350,
@@ -565,42 +567,42 @@ public sealed class TreemapControlHeadlessTests
                     DescendantDirectoryCount: 0),
                 Children =
                 {
-                    new Clever.TokenMap.Core.Models.ProjectNode
+                    new ProjectNode
                     {
                         Id = "a.cs",
                         Name = "a.cs",
                         FullPath = "C:\\Demo\\a.cs",
                         RelativePath = "a.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                        Metrics = new NodeMetrics(
                             Tokens: 80,
                             NonEmptyLines: 10,
                             FileSizeBytes: 50,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
                     },
-                    new Clever.TokenMap.Core.Models.ProjectNode
+                    new ProjectNode
                     {
                         Id = "b.cs",
                         Name = "b.cs",
                         FullPath = "C:\\Demo\\b.cs",
                         RelativePath = "b.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                        Metrics = new NodeMetrics(
                             Tokens: 20,
                             NonEmptyLines: 90,
                             FileSizeBytes: 75,
                             DescendantFileCount: 1,
                             DescendantDirectoryCount: 0),
                     },
-                    new Clever.TokenMap.Core.Models.ProjectNode
+                    new ProjectNode
                     {
                         Id = "c.cs",
                         Name = "c.cs",
                         FullPath = "C:\\Demo\\c.cs",
                         RelativePath = "c.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
+                        Metrics = new NodeMetrics(
                             Tokens: 5,
                             NonEmptyLines: 0,
                             FileSizeBytes: 225,

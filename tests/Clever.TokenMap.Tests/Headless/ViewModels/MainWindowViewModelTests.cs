@@ -1,10 +1,10 @@
+using System.Globalization;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
-using Clever.TokenMap.App.Services;
-using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Tests.Support;
-using System.Globalization;
+using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
 

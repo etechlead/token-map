@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Clever.TokenMap.Core.Models;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.State;
 

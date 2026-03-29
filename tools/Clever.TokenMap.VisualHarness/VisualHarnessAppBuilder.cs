@@ -6,7 +6,7 @@ namespace Clever.TokenMap.VisualHarness;
 internal static class VisualHarnessAppBuilder
 {
     public static AppBuilder BuildAvaloniaApp() =>
-        AppBuilder.Configure<Clever.TokenMap.App.App>()
+        AppBuilder.Configure<App.App>()
             .UseSkia()
             .UseHeadless(new AvaloniaHeadlessPlatformOptions
             {

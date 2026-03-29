@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -155,6 +156,6 @@ public sealed partial class TreemapNavigationState : ObservableObject
 
     private static bool CanDrillInto(ProjectNode? node) =>
         node is not null &&
-        node.Kind != Core.Enums.ProjectNodeKind.File &&
+        node.Kind != ProjectNodeKind.File &&
         node.Children.Count > 0;
 }

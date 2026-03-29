@@ -2,13 +2,13 @@ using System;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Input.Platform;
+using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Diagnostics;
 
 namespace Clever.TokenMap.App.Views;
 

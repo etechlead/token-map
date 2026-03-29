@@ -8,14 +8,13 @@ using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
-using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Treemap;
+using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using PathShape = Avalonia.Controls.Shapes.Path;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
-
-using Clever.TokenMap.Tests.Headless.Support;
 
 namespace Clever.TokenMap.Tests.Headless.MainWindow;
 

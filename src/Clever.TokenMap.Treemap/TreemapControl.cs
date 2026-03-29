@@ -1,6 +1,7 @@
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
@@ -25,7 +26,7 @@ public sealed class TreemapControl : Control
         AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(RootNode));
 
     public static readonly StyledProperty<ProjectNode?> SelectedNodeProperty =
-        AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(SelectedNode), defaultBindingMode: Avalonia.Data.BindingMode.TwoWay);
+        AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(SelectedNode), defaultBindingMode: BindingMode.TwoWay);
 
     public static readonly StyledProperty<TreemapPalette> PaletteProperty =
         AvaloniaProperty.Register<TreemapControl, TreemapPalette>(nameof(Palette), TreemapPalette.Weighted);

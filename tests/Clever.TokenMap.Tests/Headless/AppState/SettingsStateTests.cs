@@ -1,4 +1,5 @@
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.Tests.Headless.AppState;
@@ -10,7 +11,7 @@ public sealed class SettingsStateTests
     {
         var state = new SettingsState();
 
-        Assert.Equal(Clever.TokenMap.Core.Enums.TreemapPalette.Weighted, state.SelectedTreemapPalette);
+        Assert.Equal(TreemapPalette.Weighted, state.SelectedTreemapPalette);
         Assert.True(state.ShowTreemapMetricValues);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, state.GlobalExcludes);
     }

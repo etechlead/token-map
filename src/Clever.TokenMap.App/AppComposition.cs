@@ -1,8 +1,8 @@
 using System;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.App.Views;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;

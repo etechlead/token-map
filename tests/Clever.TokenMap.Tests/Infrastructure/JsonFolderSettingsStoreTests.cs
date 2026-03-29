@@ -1,5 +1,6 @@
-using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
+using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Infrastructure;
@@ -114,7 +115,7 @@ public sealed class JsonFolderSettingsStoreTests : IDisposable
     private string GetSettingsFilePath(string rootPath)
     {
         var storagePaths = new TokenMapAppDataPaths(_testRootPath);
-        var normalizedRootPath = new Clever.TokenMap.Core.Paths.PathNormalizer().NormalizeRootPath(rootPath);
+        var normalizedRootPath = new PathNormalizer().NormalizeRootPath(rootPath);
         var directoryName = FolderSettingsStorageKey.Build(normalizedRootPath);
         return Path.Combine(storagePaths.GetFolderSettingsRootPath(), directoryName, "settings.json");
     }
