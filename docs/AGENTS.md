@@ -22,7 +22,7 @@
 - Read `logging.md` when the request touches structured logging, startup failure handling, global exception capture, or the shell-level user-facing runtime issue flow.
 - Read `tools.md` for internal harnesses, screenshot capture, visual diffs, and repo tooling.
 - Read `ui-principles.md` only for UI-facing changes and interaction constraints.
-- Read `versioning.md` when the request touches application version display, release tags, GitHub Releases, or packaged artifact naming.
+- Read `release.md` when the request touches application version display, build identity, packaged artifact naming, release preparation, release tags, GitHub Releases, or release asset validation.
 - Read `commit-policy.md` only when the user asks for a commit or commit message.
 
 ## Update Rules
