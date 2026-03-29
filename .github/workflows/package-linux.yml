@@ -1,4 +1,4 @@
-name: package-linux-deb
+name: package-linux
 
 on:
   workflow_dispatch:
@@ -12,10 +12,10 @@ on:
         required: true
         default: true
       version:
-        description: Optional version override for the Debian package
+        description: Optional version override for Linux package names
         required: false
       release_tag:
-        description: Optional existing release tag to receive the .deb asset
+        description: Optional existing release tag to receive the Linux assets
         required: false
   release:
     types:
@@ -25,7 +25,7 @@ permissions:
   contents: write
 
 jobs:
-  build-deb:
+  package-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -67,11 +67,15 @@ jobs:
             exit 1
           fi
 
-          artifact_name="TokenMap-linux-x64-${resolved_version}"
+          artifact_base_name="TokenMap-linux-x64-${resolved_version}"
+          publish_directory=".artifacts/linux-package-inputs/publish/linux-x64"
 
           {
             echo "TOKENMAP_LINUX_VERSION=${resolved_version}"
-            echo "TOKENMAP_LINUX_ARTIFACT_NAME=${artifact_name}"
+            echo "TOKENMAP_LINUX_ARTIFACT_BASE_NAME=${artifact_base_name}"
+            echo "TOKENMAP_LINUX_DEB_NAME=${artifact_base_name}"
+            echo "TOKENMAP_LINUX_PORTABLE_NAME=${artifact_base_name}-portable"
+            echo "TOKENMAP_LINUX_PUBLISH_DIRECTORY=${publish_directory}"
             echo "TOKENMAP_LINUX_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
@@ -85,21 +89,52 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.run_tests != 'false'
         run: dotnet test Clever.TokenMap.sln --no-build
 
+      - name: Publish Linux packaging input
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          publish_directory='${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}'
+          rm -rf "${publish_directory}"
+          mkdir -p "${publish_directory}"
+
+          dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:UseAppHost=true \
+            -p:Version='${{ env.TOKENMAP_LINUX_VERSION }}' \
+            -o "${publish_directory}"
+
       - name: Package Debian artifact
         env:
-          ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_ARTIFACT_NAME }}
+          ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_DEB_NAME }}
           PACKAGE_VERSION: ${{ env.TOKENMAP_LINUX_VERSION }}
+          PUBLISH_DIRECTORY: ${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}
         run: bash ./scripts/package-linux-deb.sh
 
-      - name: Upload workflow artifact
+      - name: Package portable archive
+        env:
+          ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}
+          PACKAGE_VERSION: ${{ env.TOKENMAP_LINUX_VERSION }}
+          PUBLISH_DIRECTORY: ${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}
+        run: bash ./scripts/package-linux-portable.sh
+
+      - name: Upload Linux workflow artifact
         uses: actions/upload-artifact@v6
         with:
-          name: ${{ env.TOKENMAP_LINUX_ARTIFACT_NAME }}
-          path: .artifacts/linux-x64/${{ env.TOKENMAP_LINUX_ARTIFACT_NAME }}.deb
+          name: ${{ env.TOKENMAP_LINUX_ARTIFACT_BASE_NAME }}
+          path: |
+            .artifacts/linux-x64/${{ env.TOKENMAP_LINUX_DEB_NAME }}.deb
+            .artifacts/linux-x64/${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}.tar.gz
           if-no-files-found: error
 
-      - name: Attach Debian artifact to GitHub release
+      - name: Attach Linux artifacts to GitHub release
         if: env.TOKENMAP_LINUX_RELEASE_TAG != ''
-        run: gh release upload "${{ env.TOKENMAP_LINUX_RELEASE_TAG }}" ".artifacts/linux-x64/${{ env.TOKENMAP_LINUX_ARTIFACT_NAME }}.deb" --clobber
+        run: |
+          gh release upload "${{ env.TOKENMAP_LINUX_RELEASE_TAG }}" \
+            ".artifacts/linux-x64/${{ env.TOKENMAP_LINUX_DEB_NAME }}.deb" \
+            ".artifacts/linux-x64/${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}.tar.gz" \
+            --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

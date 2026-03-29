@@ -43,12 +43,26 @@ get_project_value() {
     sed -n "s:.*<${element_name}>\\(.*\\)</${element_name}>.*:\\1:p" "${project_full_path}" | head -n 1
 }
 
+resolve_path() {
+    local raw_path="$1"
+
+    case "${raw_path}" in
+        /*)
+            printf '%s\n' "${raw_path}"
+            ;;
+        *)
+            printf '%s\n' "${repo_root}/${raw_path}"
+            ;;
+    esac
+}
+
 require_command dotnet
 require_command tar
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
 assembly_name_value="$(get_project_value '//AssemblyName')"
 project_version="$(get_project_value '//Version')"
+provided_publish_directory="${PUBLISH_DIRECTORY:-}"
 
 if [[ -n "${assembly_name_value}" ]]; then
     assembly_name="${assembly_name_value}"
@@ -70,6 +84,9 @@ portable_root_path="${portable_output_root_path}/${artifact_name}"
 portable_app_directory_path="${portable_root_path}/${portable_app_directory_name}"
 portable_launcher_path="${portable_root_path}/tokenmap"
 portable_archive_path="${output_root_full_path}/${artifact_name}.tar.gz"
+if [[ -n "${provided_publish_directory}" ]]; then
+    publish_directory_path="$(resolve_path "${provided_publish_directory}")"
+fi
 published_executable_path="${publish_directory_path}/${assembly_name}"
 
 if [[ ! -f "${launcher_source_full_path}" ]]; then
@@ -78,17 +95,24 @@ if [[ ! -f "${launcher_source_full_path}" ]]; then
 fi
 
 rm -f "${portable_archive_path}"
-rm -rf "${publish_directory_path}" "${portable_root_path}"
+if [[ -z "${provided_publish_directory}" ]]; then
+    rm -rf "${publish_directory_path}"
+fi
+rm -rf "${portable_root_path}"
 mkdir -p "${portable_app_directory_path}"
 
-echo "Publishing ${project_full_path} for ${runtime_identifier}..."
-dotnet publish "${project_full_path}" \
-    -c "${configuration}" \
-    -r "${runtime_identifier}" \
-    --self-contained true \
-    -p:UseAppHost=true \
-    -p:Version="${package_version}" \
-    -o "${publish_directory_path}"
+if [[ -z "${provided_publish_directory}" ]]; then
+    echo "Publishing ${project_full_path} for ${runtime_identifier}..."
+    dotnet publish "${project_full_path}" \
+        -c "${configuration}" \
+        -r "${runtime_identifier}" \
+        --self-contained true \
+        -p:UseAppHost=true \
+        -p:Version="${package_version}" \
+        -o "${publish_directory_path}"
+else
+    echo "Using existing publish output at: ${publish_directory_path}"
+fi
 
 if [[ ! -f "${published_executable_path}" ]]; then
     echo "Published Linux executable was not found at '${published_executable_path}'." >&2
