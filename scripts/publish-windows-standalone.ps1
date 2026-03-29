@@ -4,7 +4,8 @@ param(
     [string]$RuntimeIdentifier = "win-x64",
     [string]$AppName = "TokenMap",
     [string]$Version = "",
-    [string]$OutputRoot = ".artifacts/windows-standalone"
+    [string]$OutputRoot = ".artifacts/windows-standalone",
+    [string]$PublishDirectory = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -49,30 +50,54 @@ $resolvedVersion =
     }
 
 $outputRootFullPath = Join-Path $repoRoot $OutputRoot
-$publishDirectoryPath = Join-Path $outputRootFullPath "publish\$RuntimeIdentifier"
 $artifactOutputPath = Join-Path $outputRootFullPath "standalone"
 $artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion-standalone"
-$publishedExecutablePath = Join-Path $publishDirectoryPath "$($metadata.AssemblyName).exe"
 $standaloneArtifactPath = Join-Path $artifactOutputPath "$artifactBaseName.exe"
 $standaloneArchivePath = Join-Path $artifactOutputPath "$artifactBaseName.zip"
+$publishDirectoryPath =
+    if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
+        if ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
+            $PublishDirectory
+        }
+        else {
+            Join-Path $repoRoot $PublishDirectory
+        }
+    }
+    else {
+        Join-Path $outputRootFullPath "publish\$RuntimeIdentifier"
+    }
+$publishedExecutablePath = Join-Path $publishDirectoryPath "$($metadata.AssemblyName).exe"
 
-if (Test-Path $outputRootFullPath) {
+if ([string]::IsNullOrWhiteSpace($PublishDirectory) -and (Test-Path $outputRootFullPath)) {
     Remove-Item -Path $outputRootFullPath -Recurse -Force
 }
 
-New-Item -Path $publishDirectoryPath -ItemType Directory -Force | Out-Null
+if (Test-Path $artifactOutputPath) {
+    Remove-Item -Path $artifactOutputPath -Recurse -Force
+}
+
+if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    New-Item -Path $publishDirectoryPath -ItemType Directory -Force | Out-Null
+}
 New-Item -Path $artifactOutputPath -ItemType Directory -Force | Out-Null
 
-Write-Host "Publishing $projectFullPath for $RuntimeIdentifier as a single-file standalone app..."
-dotnet publish $projectFullPath `
-    -c $Configuration `
-    -r $RuntimeIdentifier `
-    --self-contained true `
-    -p:PublishSingleFile=true `
-    -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:UseAppHost=true `
-    -p:Version=$resolvedVersion `
-    -o $publishDirectoryPath
+if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    if (-not (Test-Path $publishDirectoryPath -PathType Container)) {
+        throw "Publish directory was not found at '$publishDirectoryPath'."
+    }
+}
+else {
+    Write-Host "Publishing $projectFullPath for $RuntimeIdentifier as a single-file standalone app..."
+    dotnet publish $projectFullPath `
+        -c $Configuration `
+        -r $RuntimeIdentifier `
+        --self-contained true `
+        -p:PublishSingleFile=true `
+        -p:IncludeNativeLibrariesForSelfExtract=true `
+        -p:UseAppHost=true `
+        -p:Version=$resolvedVersion `
+        -o $publishDirectoryPath
+}
 
 if (-not (Test-Path $publishedExecutablePath -PathType Leaf)) {
     throw "Published Windows standalone executable was not found at '$publishedExecutablePath'."

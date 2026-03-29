@@ -28,8 +28,17 @@
   #define MyArtifactBaseName "TokenMap-win-x64-0.1.1-local-installer"
 #endif
 
-#define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"
-#define MyOutputDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\installer"
+#define MyPublishDir GetEnv("TOKENMAP_PUBLISH_DIR")
+#if MyPublishDir == ""
+  #undef MyPublishDir
+  #define MyPublishDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\publish\win-x64"
+#endif
+
+#define MyOutputDir GetEnv("TOKENMAP_OUTPUT_DIR")
+#if MyOutputDir == ""
+  #undef MyOutputDir
+  #define MyOutputDir AddBackslash(SourcePath) + "..\..\.artifacts\windows-installer\installer"
+#endif
 
 [Setup]
 AppId={{D6B37D4A-B4C7-4B7A-B8C7-6C46AC220001}

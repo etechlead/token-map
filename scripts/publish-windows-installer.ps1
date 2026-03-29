@@ -5,7 +5,8 @@ param(
     [string]$AppName = "TokenMap",
     [string]$Publisher = "Clever.pro",
     [string]$Version = "",
-    [string]$OutputRoot = ".artifacts/windows-installer"
+    [string]$OutputRoot = ".artifacts/windows-installer",
+    [string]$PublishDirectory = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,28 +67,52 @@ $resolvedVersion =
     }
 
 $outputRootFullPath = Join-Path $repoRoot $OutputRoot
-$publishDirectoryPath = Join-Path $outputRootFullPath "publish\$RuntimeIdentifier"
 $installerOutputPath = Join-Path $outputRootFullPath "installer"
 $issPath = Join-Path $repoRoot "packaging\windows\TokenMap.iss"
 $compilerPath = Get-InnoCompilerPath
 $artifactBaseName = "$AppName-$RuntimeIdentifier-$resolvedVersion-installer"
+$publishDirectoryPath =
+    if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
+        if ([System.IO.Path]::IsPathRooted($PublishDirectory)) {
+            $PublishDirectory
+        }
+        else {
+            Join-Path $repoRoot $PublishDirectory
+        }
+    }
+    else {
+        Join-Path $outputRootFullPath "publish\$RuntimeIdentifier"
+    }
 
-if (Test-Path $outputRootFullPath) {
+if ([string]::IsNullOrWhiteSpace($PublishDirectory) -and (Test-Path $outputRootFullPath)) {
     Remove-Item -Path $outputRootFullPath -Recurse -Force
 }
 
-New-Item -Path $publishDirectoryPath -ItemType Directory -Force | Out-Null
+if (Test-Path $installerOutputPath) {
+    Remove-Item -Path $installerOutputPath -Recurse -Force
+}
+
+if ([string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    New-Item -Path $publishDirectoryPath -ItemType Directory -Force | Out-Null
+}
 New-Item -Path $installerOutputPath -ItemType Directory -Force | Out-Null
 
-Write-Host "Publishing $projectFullPath for $RuntimeIdentifier..."
-dotnet publish $projectFullPath `
-    -c $Configuration `
-    -r $RuntimeIdentifier `
-    --self-contained true `
-    -p:PublishSingleFile=false `
-    -p:UseAppHost=true `
-    -p:Version=$resolvedVersion `
-    -o $publishDirectoryPath
+if (-not [string]::IsNullOrWhiteSpace($PublishDirectory)) {
+    if (-not (Test-Path $publishDirectoryPath -PathType Container)) {
+        throw "Publish directory was not found at '$publishDirectoryPath'."
+    }
+}
+else {
+    Write-Host "Publishing $projectFullPath for $RuntimeIdentifier..."
+    dotnet publish $projectFullPath `
+        -c $Configuration `
+        -r $RuntimeIdentifier `
+        --self-contained true `
+        -p:PublishSingleFile=false `
+        -p:UseAppHost=true `
+        -p:Version=$resolvedVersion `
+        -o $publishDirectoryPath
+}
 
 $mainExecutablePath = Join-Path $publishDirectoryPath "$($metadata.AssemblyName).exe"
 if (-not (Test-Path $mainExecutablePath -PathType Leaf)) {
@@ -99,6 +124,8 @@ $env:TOKENMAP_APP_PUBLISHER = $Publisher
 $env:TOKENMAP_APP_VERSION = $resolvedVersion
 $env:TOKENMAP_APP_EXE = "$($metadata.AssemblyName).exe"
 $env:TOKENMAP_ARTIFACT_BASENAME = $artifactBaseName
+$env:TOKENMAP_PUBLISH_DIR = $publishDirectoryPath
+$env:TOKENMAP_OUTPUT_DIR = $installerOutputPath
 
 Write-Host "Compiling Inno Setup installer with $compilerPath..."
 & $compilerPath $issPath
