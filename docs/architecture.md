@@ -1,35 +1,39 @@
-# TokenMap - Architecture (MVP)
+# TokenMap - Architecture
 
-## Responsibility Split
+Dependency boundaries are enforced in [ArchitectureRulesTests.cs](/Z:/Projects/My/tokenmap/src/tests/Clever.TokenMap.Tests/Architecture/ArchitectureRulesTests.cs).
+This document covers project purpose, canonical ownership, runtime flow, and non-obvious invariants.
 
-- `Clever.TokenMap.Core` holds domain models, shared contracts, settings DTOs, enums, scan options, aggregation rules, and path-normalization rules. It stays free of Avalonia and UI types.
-- `Clever.TokenMap.Infrastructure` holds scanning, ignore evaluation, local metrics/token analysis, caching, settings persistence, and concrete file-system/logging implementations. It stays independent from Avalonia and desktop UI framework types.
-- `Clever.TokenMap.Treemap` holds the treemap control and its layout/rendering logic.
-- `Clever.TokenMap.App` holds the desktop shell, section views, view models, app-layer state, and app-layer services that bind UI workflows to analysis and settings boundaries.
-- `Clever.TokenMap.App.AppComposition` is the runtime composition root only. Test, design-time, and harness composition stay outside the app assembly.
-- `MainWindowViewModelFactory` is the shared shell-graph builder used across runtime, design-time, headless tests, and harness code.
-- The statically enforceable subset of these boundaries lives in [ArchitectureRulesTests.cs](/Z:/Projects/My/tokenmap/src/tests/Clever.TokenMap.Tests/Architecture/ArchitectureRulesTests.cs).
+## Projects
 
-## App-Layer Ownership
+- `Clever.TokenMap.Core`: shared domain layer. Holds analysis models, contracts, enums, path rules, and settings DTOs used across the solution.
+- `Clever.TokenMap.Infrastructure`: local implementation layer. Holds filesystem scanning, ignore evaluation, metrics enrichment, token counting, caching, logging, and settings persistence.
+- `Clever.TokenMap.Treemap`: treemap UI primitive. Holds the custom-rendered treemap control plus layout and rendering rules.
+- `Clever.TokenMap.App`: desktop shell. Holds runtime composition, app state, app services, view models, and Avalonia views that project snapshots and settings into UI.
+- `Clever.TokenMap.VisualHarness`: repo tooling for visual capture and comparison of UI surfaces and treemap rendering.
+- `Clever.TokenMap.Tests`: verification layer. Holds architecture rules, unit tests, headless UI tests, and tool/harness coverage.
 
-- `MainWindowViewModel` stays a shell facade for the desktop window.
-- `MainWindowWorkspacePresenter` owns workspace-level projection sync between analysis/session state, tree projection, summary projection, and treemap navigation.
-- `AnalysisSessionController` owns committed folder selection, current snapshot, analysis state, progress, and open/rescan/cancel flow.
-- `SettingsState` is the source of truth for app-wide analysis and appearance preferences.
-- `CurrentFolderSettingsState` is the source of truth for the committed root folder's folder-specific scan preferences.
-- `SettingsCoordinator` is the app-layer facade for settings workflows. It exposes read-only settings state views to consumers and keeps writes behind explicit commands.
-- `AppIssueState` is the source of truth for the currently displayed user-facing runtime issue.
-- `IAppIssueReporter` is the single app-layer entry point for reporting runtime issues. It owns reference-id assignment, structured error logging, and projection of user-visible issues into `AppIssueState`.
-- `Clever.TokenMap.App.ViewModels` and `Clever.TokenMap.App.State` stay independent from infrastructure implementations.
-- `Clever.TokenMap.App.Services` stay UI-agnostic except for small platform-adapter services that wrap desktop framework APIs.
+## Canonical Owners
 
-## Sources Of Truth
+- Analysis session, current snapshot, progress, and open/rescan/cancel flow -> `AnalysisSessionController`
+- App-wide analysis and appearance preferences -> `SettingsState`
+- Folder-specific scan preferences for the active root -> `CurrentFolderSettingsState`
+- Treemap root, selection, and breadcrumbs -> `TreemapNavigationState`
+- User-visible runtime issue -> `AppIssueState`
+- Shell-level projection sync across analysis state, tree, summary, and treemap -> `MainWindowWorkspacePresenter`
 
-- The scanner defines the included tree structure and analyzed path set.
-- Enrichment produces a separate snapshot rather than mutating scanner output in place.
-- Global excludes, `.gitignore`, and folder-specific excludes flow through one ignore-rule pipeline.
-- Token counting stays local behind `ITokenCounter`.
-- Line metrics stay local in the analysis pipeline for included text files.
-- Logging and runtime issue policy lives in `logging.md`.
-- The treemap remains one custom-rendered control, not a control-per-rectangle surface.
-- `Clever.TokenMap.App` works through app-layer services and state; it does not read the file system or settings files directly.
+## Runtime Flow
+
+- `Program` and `App` bootstrap the desktop process and app lifetime.
+- `AppComposition` builds the runtime object graph.
+- `AnalysisSessionController` runs analysis and publishes snapshot, state, and progress.
+- `MainWindowWorkspacePresenter` projects analysis/session state into tree, summary, and treemap UI state.
+- Settings changes flow through `SettingsCoordinator`, then into app/folder settings sessions and persistence.
+
+## Non-Obvious Invariants
+
+- `MainWindowViewModel` is a shell facade, not a long-lived state owner.
+- `Clever.TokenMap.App` does not access the filesystem or settings files directly.
+- The scanner defines the included tree and analyzed node set.
+- Metrics enrichment returns a new snapshot; scanner output is not mutated in place.
+- Token counting stays behind `ITokenCounter`.
+- The treemap stays one custom-rendered control.
