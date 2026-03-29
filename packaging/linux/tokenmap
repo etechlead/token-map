@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 
-exec /usr/lib/tokenmap/Clever.TokenMap.App "$@"
+set -euo pipefail
+
+install_root="${TOKENMAP_INSTALL_ROOT:-/usr/lib/tokenmap}"
+
+if [[ -n "${APPDIR:-}" ]]; then
+    install_root="${APPDIR}/usr/lib/tokenmap"
+fi
+
+exec "${install_root}/Clever.TokenMap.App" "$@"
