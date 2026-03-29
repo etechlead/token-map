@@ -25,9 +25,17 @@ Open a local folder and inspect the same project as both a tree and a treemap, m
 
 ## Install
 
-- Windows: download either `TokenMap-windows-x64-<version>-setup.exe` for the installer or `TokenMap-windows-x64-<version>-portable.zip` for the no-install portable build.
-- macOS: download either `TokenMap-macos-arm64-<version>-unsigned.dmg` or `TokenMap-macos-arm64-<version>-portable-unsigned.zip`, then move `TokenMap.app` into `Applications`.
-- Linux: download either `TokenMap-linux-x64-<version>.deb` for the installer package or `TokenMap-linux-x64-<version>-portable.tar.gz` for the no-install portable build.
+The latest release is available in [GitHub Releases](https://github.com/etechlead/token-map/releases).
+
+### Windows
+
+- Installer: download the Windows setup from the latest release and run it. It installs per-user and does not require administrator rights.
+- Portable: download the Windows portable archive, extract it, and launch TokenMap from the extracted folder.
+
+### macOS
+
+- DMG: download the macOS disk image from the latest release, open it, and drag `TokenMap.app` into `Applications`.
+- Portable: download the macOS portable archive, extract it, and move `TokenMap.app` into `Applications`.
 
 <details>
 <summary>macOS: first launch for the unsigned build</summary>
@@ -50,6 +58,18 @@ xattr -dr com.apple.quarantine /Applications/TokenMap.app
 
 Then launch `TokenMap.app` again.
 </details>
+
+### Linux
+
+- Debian package:
+
+```bash
+cd ~/Downloads
+sudo apt install ./<downloaded-package>.deb
+tokenmap
+```
+
+- Portable: download the Linux portable archive, extract it, and run the included launcher from the extracted folder.
 
 ## Build From Source
 
