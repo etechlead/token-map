@@ -75,7 +75,6 @@ jobs:
             echo "TOKENMAP_LINUX_ARTIFACT_BASE_NAME=${artifact_base_name}"
             echo "TOKENMAP_LINUX_DEB_NAME=${artifact_base_name}"
             echo "TOKENMAP_LINUX_PORTABLE_NAME=${artifact_base_name}-portable"
-            echo "TOKENMAP_LINUX_PUBLISH_DIRECTORY=${publish_directory}"
             echo "TOKENMAP_LINUX_RELEASE_TAG=${release_tag_input}"
           } >> "${GITHUB_ENV}"
 
@@ -89,36 +88,14 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || inputs.run_tests != 'false'
         run: dotnet test Clever.TokenMap.sln --no-build
 
-      - name: Publish Linux packaging input
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          publish_directory='${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}'
-          rm -rf "${publish_directory}"
-          mkdir -p "${publish_directory}"
-
-          dotnet publish src/Clever.TokenMap.App/Clever.TokenMap.App.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained true \
-            -p:UseAppHost=true \
-            -p:Version='${{ env.TOKENMAP_LINUX_VERSION }}' \
-            -o "${publish_directory}"
-
-      - name: Package Debian artifact
+      - name: Package Linux artifacts
         env:
-          ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_DEB_NAME }}
           PACKAGE_VERSION: ${{ env.TOKENMAP_LINUX_VERSION }}
-          PUBLISH_DIRECTORY: ${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}
-        run: bash ./scripts/package-linux-deb.sh
-
-      - name: Package portable archive
-        env:
-          ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}
-          PACKAGE_VERSION: ${{ env.TOKENMAP_LINUX_VERSION }}
-          PUBLISH_DIRECTORY: ${{ env.TOKENMAP_LINUX_PUBLISH_DIRECTORY }}
-        run: bash ./scripts/package-linux-portable.sh
+          ARTIFACT_BASE_NAME: ${{ env.TOKENMAP_LINUX_ARTIFACT_BASE_NAME }}
+          DEB_ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_DEB_NAME }}
+          PORTABLE_ARTIFACT_NAME: ${{ env.TOKENMAP_LINUX_PORTABLE_NAME }}
+          PUBLISH_OUTPUT_ROOT: .artifacts/linux-package-inputs/publish
+        run: bash ./scripts/package-linux.sh
 
       - name: Upload Linux workflow artifact
         uses: actions/upload-artifact@v6

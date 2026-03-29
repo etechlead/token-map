@@ -81,76 +81,15 @@ jobs:
       - name: Test
         run: dotnet test Clever.TokenMap.sln --no-build
 
-      - name: Publish installer input
-        shell: pwsh
-        run: |
-          $publishDir = '.artifacts/windows-package-inputs/installer/win-x64'
-          if (Test-Path $publishDir) {
-              Remove-Item -Path $publishDir -Recurse -Force
-          }
-
-          $arguments = @(
-              'publish',
-              'src/Clever.TokenMap.App/Clever.TokenMap.App.csproj',
-              '-c', 'Release',
-              '-r', 'win-x64',
-              '--self-contained', 'true',
-              '-p:PublishSingleFile=false',
-              '-p:UseAppHost=true',
-              '-o', $publishDir
-          )
-
-          if (-not [string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
-              $arguments += "-p:Version=$($env:TOKENMAP_WINDOWS_VERSION)"
-          }
-
-          & dotnet @arguments
-
-      - name: Publish portable input
-        shell: pwsh
-        run: |
-          $publishDir = '.artifacts/windows-package-inputs/portable/win-x64'
-          if (Test-Path $publishDir) {
-              Remove-Item -Path $publishDir -Recurse -Force
-          }
-
-          $arguments = @(
-              'publish',
-              'src/Clever.TokenMap.App/Clever.TokenMap.App.csproj',
-              '-c', 'Release',
-              '-r', 'win-x64',
-              '--self-contained', 'true',
-              '-p:PublishSingleFile=true',
-              '-p:IncludeNativeLibrariesForSelfExtract=true',
-              '-p:UseAppHost=true',
-              '-o', $publishDir
-          )
-
-          if (-not [string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
-              $arguments += "-p:Version=$($env:TOKENMAP_WINDOWS_VERSION)"
-          }
-
-          & dotnet @arguments
-
-      - name: Package Windows setup
+      - name: Package Windows artifacts
         shell: pwsh
         run: |
           if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
-              ./scripts/publish-windows-installer.ps1 -PublishDirectory '.artifacts/windows-package-inputs/installer/win-x64'
+              ./scripts/package-windows.ps1
               exit 0
           }
 
-          ./scripts/publish-windows-installer.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION -PublishDirectory '.artifacts/windows-package-inputs/installer/win-x64'
-
-      - name: Package Windows portable archive
-        shell: pwsh
-        run: |
-          if ([string]::IsNullOrWhiteSpace($env:TOKENMAP_WINDOWS_VERSION)) {
-              ./scripts/publish-windows-portable.ps1 -PublishDirectory '.artifacts/windows-package-inputs/portable/win-x64'
-              exit 0
-          }
-
-          ./scripts/publish-windows-portable.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION -PublishDirectory '.artifacts/windows-package-inputs/portable/win-x64'
+          ./scripts/package-windows.ps1 -Version $env:TOKENMAP_WINDOWS_VERSION
 
       - name: Resolve setup path
         shell: pwsh
