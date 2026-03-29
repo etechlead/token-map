@@ -1,0 +1,4 @@
+interface:
+  display_name: "ReSharper Safe Cleanup"
+  short_description: "Run narrow cleanupcode profiles safely"
+  default_prompt: "Use $resharper-safe-cleanup to run the repository's safe ReSharper cleanup profile and summarize the files it changed."
