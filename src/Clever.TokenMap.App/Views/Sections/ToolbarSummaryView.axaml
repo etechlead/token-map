@@ -5,7 +5,8 @@
              x:DataType="vm:MainWindowViewModel">
     <Border Name="ToolbarHost"
             Classes="panel"
-            Padding="10">
+            Padding="10"
+            MinHeight="62">
         <Grid>
             <Grid ColumnDefinitions="Auto,*,Auto"
                   ColumnSpacing="16">
