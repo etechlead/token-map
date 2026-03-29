@@ -82,11 +82,11 @@
                     <SolidColorBrush x:Key="TokenMapShareCardDividerBrush"
                                      Color="#223B5361" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterLeadBrush"
-                                     Color="#667085" />
+                                     Color="#8A95A3" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterIconBrush"
                                      Color="#667085" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterLinkBrush"
-                                     Color="#344054" />
+                                     Color="#7A8494" />
                     <SolidColorBrush x:Key="TokenMapShareCardTreemapHostBrush"
                                      Color="#FFFFFF" />
                 </ResourceDictionary>
@@ -163,11 +163,11 @@
                     <SolidColorBrush x:Key="TokenMapShareCardDividerBrush"
                                      Color="#14FFFFFF" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterLeadBrush"
-                                     Color="#6F8198" />
+                                     Color="#526174" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterIconBrush"
                                      Color="#A9BED7" />
                     <SolidColorBrush x:Key="TokenMapShareCardFooterLinkBrush"
-                                     Color="#C5D7EA" />
+                                     Color="#75869A" />
                     <SolidColorBrush x:Key="TokenMapShareCardTreemapHostBrush"
                                      Color="#0D131A" />
                 </ResourceDictionary>

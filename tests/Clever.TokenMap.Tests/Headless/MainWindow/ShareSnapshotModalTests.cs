@@ -190,7 +190,7 @@ public sealed class ShareSnapshotModalTests
     }
 
     [AvaloniaFact]
-    public async Task ShareSnapshotModal_GithubIcon_StaysVerticallyCenteredWithRepositoryText()
+    public async Task ShareSnapshotModal_FooterElements_StayVerticallyBalanced()
     {
         var demoRootPath = GetTestFolderPath("Demo");
         var window = new AppMainWindow();
@@ -205,26 +205,43 @@ public sealed class ShareSnapshotModalTests
             window.UpdateLayout();
 
             var shareCardRoot = FindNamedDescendant<Border>(window, "ShareCardRoot");
+            var footerRow = FindNamedDescendant<Grid>(window, "ShareFooterRow");
+            var footerLeadText = FindNamedDescendant<TextBlock>(window, "ShareFooterLeadText");
             var githubIcon = FindNamedDescendant<PathShape>(window, "ShareFooterGithubIcon");
             var repositoryText = FindNamedDescendant<TextBlock>(window, "ShareFooterRepositoryText");
 
             Assert.NotNull(shareCardRoot);
+            Assert.NotNull(footerRow);
+            Assert.NotNull(footerLeadText);
             Assert.NotNull(githubIcon);
             Assert.NotNull(repositoryText);
 
+            var rowTransform = footerRow.TransformToVisual(shareCardRoot);
+            var leadTransform = footerLeadText.TransformToVisual(shareCardRoot);
             var iconTransform = githubIcon.TransformToVisual(shareCardRoot);
             var textTransform = repositoryText.TransformToVisual(shareCardRoot);
+            Assert.NotNull(rowTransform);
+            Assert.NotNull(leadTransform);
             Assert.NotNull(iconTransform);
             Assert.NotNull(textTransform);
 
+            var rowBounds = new Rect(footerRow.Bounds.Size).TransformToAABB(rowTransform.Value);
+            var leadBounds = new Rect(footerLeadText.Bounds.Size).TransformToAABB(leadTransform.Value);
             var iconBounds = new Rect(githubIcon.Bounds.Size).TransformToAABB(iconTransform.Value);
             var textBounds = new Rect(repositoryText.Bounds.Size).TransformToAABB(textTransform.Value);
+            var leadCenterY = leadBounds.Center.Y;
             var iconCenterY = iconBounds.Center.Y;
             var textCenterY = textBounds.Center.Y;
 
             Assert.True(
-                Math.Abs(iconCenterY - textCenterY) <= 1.5,
-                $"Expected share footer GitHub icon to stay centered with repository text, got iconCenterY={iconCenterY:F2}, textCenterY={textCenterY:F2}.");
+                Math.Abs(leadCenterY - textCenterY) <= 0.5,
+                $"Expected share footer texts to align on the same center, got leadCenterY={leadCenterY:F2}, textCenterY={textCenterY:F2}.");
+            Assert.True(
+                iconCenterY >= textCenterY - 0.5 && iconCenterY <= textCenterY + 3.0,
+                $"Expected share footer GitHub icon to sit on or slightly below the text optical center, got iconCenterY={iconCenterY:F2}, textCenterY={textCenterY:F2}.");
+            Assert.True(
+                iconBounds.Bottom <= rowBounds.Bottom + 0.5,
+                $"Expected share footer GitHub icon to remain within the footer row, got iconBottom={iconBounds.Bottom:F2}, rowBottom={rowBounds.Bottom:F2}.");
         }
         finally
         {
