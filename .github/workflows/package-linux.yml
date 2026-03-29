@@ -46,8 +46,7 @@ jobs:
           source ./scripts/packaging-metadata.sh
           initialize_packaging_metadata "$PWD"
 
-          project_path="$(get_packaging_metadata_value '//PackagingMetadata/ProjectPath')"
-          fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
+          repo_version="$(get_repo_version)"
 
           if [[ '${{ github.event_name }}' == 'release' ]]; then
             git_ref='${{ github.event.release.tag_name }}'
@@ -64,11 +63,7 @@ jobs:
           elif [[ "${git_ref}" == v* ]]; then
             resolved_version="${git_ref#v}"
           else
-            resolved_version="$(get_xml_value "${project_path}" '//Version')"
-          fi
-
-          if [[ -z "${resolved_version}" ]]; then
-            resolved_version="${fallback_local_version}"
+            resolved_version="${repo_version}"
           fi
 
           if [[ -z "${resolved_version}" ]]; then

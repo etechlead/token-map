@@ -34,19 +34,14 @@ icon_source_full_path="${repo_root}/${icon_source_path}"
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
 assembly_name_value="$(get_xml_value "${project_full_path}" '//AssemblyName')"
-version_value="$(get_xml_value "${project_full_path}" '//Version')"
-fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
+repo_version="$(get_repo_version)"
 
 if [[ -n "${assembly_name_value}" ]]; then
     assembly_name="${assembly_name_value}"
 fi
 
-if [[ -z "${bundle_version}" && -n "${version_value}" ]]; then
-    bundle_version="${version_value}"
-fi
-
 if [[ -z "${bundle_version}" ]]; then
-    bundle_version="${fallback_local_version}"
+    bundle_version="${repo_version}"
 fi
 
 if [[ -z "${dmg_artifact_name}" ]]; then

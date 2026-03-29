@@ -22,10 +22,11 @@
 ## Build Identity
 
 - Every build should have a user-facing version string and a diagnostic build identity.
+- The canonical repo version lives in `Version.props` as `TokenMapVersion`.
 - Official release builds use the release version directly, for example `0.1.0`.
 - Non-release builds may append a prerelease or local suffix such as `0.1.1-dev.15` or `0.1.1-local`.
 - Non-release builds may include commit metadata for diagnostics, for example a short SHA and a dirty-working-tree marker.
-- Local builds must keep working even when git metadata is unavailable; they must fall back to a safe local version instead of failing the build.
+- Local builds must keep working even when git metadata is unavailable; they should read the next planned version from `Version.props` instead of deriving it from git state.
 
 ## App And GitHub Alignment
 
@@ -39,9 +40,11 @@
 
 ## Operational Flow
 
-- Keep one next planned public version in build metadata for ongoing development.
+- Keep one next planned public version in `Version.props` for ongoing development.
 - Build and test `main` continuously with non-release version strings.
+- Use `scripts/set-version.ps1` to change the canonical repo version when preparing or advancing a release line.
+- Use `scripts/release.ps1` for the local release path: set the release version, run repo verification, create the release commit and tag, publish the GitHub Release with agent-supplied notes, then bump to the next `-local` version.
 - Create an official release by tagging the intended commit on `main` with the matching `vX.Y.Z` version.
 - Publish GitHub release assets from that tagged commit.
-- After an official release, bump the next planned version in build metadata rather than continuing to build new work as the old release number.
+- After an official release, bump the next planned version in `Version.props` rather than continuing to build new work as the old release number.
 - Default the next planned version to the next patch release, for example `0.1.0` -> `0.1.1-local`, unless there is an explicit decision to start the next minor or major line immediately.

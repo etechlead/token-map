@@ -7,7 +7,7 @@
 #define MyAppVersion GetEnv("TOKENMAP_APP_VERSION")
 #if MyAppVersion == ""
   #undef MyAppVersion
-  #define MyAppVersion "0.2.0"
+  #define MyAppVersion "0.0.0-local"
 #endif
 
 #define MyAppPublisher GetEnv("TOKENMAP_APP_PUBLISHER")
@@ -25,7 +25,7 @@
 #define MyArtifactBaseName GetEnv("TOKENMAP_ARTIFACT_BASENAME")
 #if MyArtifactBaseName == ""
   #undef MyArtifactBaseName
-  #define MyArtifactBaseName "TokenMap-windows-x64-0.2.0-setup"
+  #define MyArtifactBaseName "TokenMap-windows-x64-0.0.0-local-setup"
 #endif
 
 #define MySetupIconFile GetEnv("TOKENMAP_SETUP_ICON_FILE")

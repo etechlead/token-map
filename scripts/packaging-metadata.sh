@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 
 packaging_metadata_path=""
+version_metadata_path=""
 
 initialize_packaging_metadata() {
     local repo_root="$1"
     packaging_metadata_path="${repo_root}/packaging/release-metadata.xml"
+    version_metadata_path="${repo_root}/Version.props"
 
     if [[ ! -f "${packaging_metadata_path}" ]]; then
         echo "Packaging metadata was not found at '${packaging_metadata_path}'." >&2
+        exit 1
+    fi
+
+    if [[ ! -f "${version_metadata_path}" ]]; then
+        echo "Version metadata was not found at '${version_metadata_path}'." >&2
         exit 1
     fi
 }
@@ -34,4 +41,20 @@ get_packaging_metadata_value() {
     fi
 
     get_xml_value "${packaging_metadata_path}" "${xpath}"
+}
+
+get_repo_version() {
+    if [[ -z "${version_metadata_path}" ]]; then
+        echo "Version metadata was not initialized." >&2
+        exit 1
+    fi
+
+    local version_value
+    version_value="$(get_xml_value "${version_metadata_path}" '//TokenMapVersion')"
+    if [[ -z "${version_value}" ]]; then
+        echo "Repo version was not found in '${version_metadata_path}'." >&2
+        exit 1
+    fi
+
+    printf '%s' "${version_value}"
 }

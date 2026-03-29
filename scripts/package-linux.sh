@@ -182,19 +182,14 @@ assert_compatible_dotnet_sdk
 
 assembly_name="$(basename "${project_full_path}" .csproj)"
 assembly_name_value="$(get_xml_value "${project_full_path}" '//AssemblyName')"
-project_version="$(get_xml_value "${project_full_path}" '//Version')"
-fallback_local_version="$(get_packaging_metadata_value '//PackagingMetadata/FallbackLocalVersion')"
+repo_version="$(get_repo_version)"
 
 if [[ -n "${assembly_name_value}" ]]; then
     assembly_name="${assembly_name_value}"
 fi
 
 if [[ -z "${package_version}" ]]; then
-    package_version="${project_version}"
-fi
-
-if [[ -z "${package_version}" ]]; then
-    package_version="${fallback_local_version}"
+    package_version="${repo_version}"
 fi
 
 if [[ -z "${artifact_base_name}" ]]; then

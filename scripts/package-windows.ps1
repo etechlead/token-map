@@ -44,12 +44,8 @@ function Get-ProjectMetadata {
         $assemblyName = [System.IO.Path]::GetFileNameWithoutExtension($ProjectFilePath)
     }
 
-    $versionNode = $projectXml.SelectSingleNode("//Version")
-    $projectVersion = if ($null -ne $versionNode) { $versionNode.InnerText } else { $null }
-
     return @{
         AssemblyName = $assemblyName
-        Version = $projectVersion
     }
 }
 
@@ -187,7 +183,6 @@ function New-WindowsPortableArchive {
 }
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$fallbackVersionFromMetadata = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/FallbackLocalVersion"
 $windowsSetupIconPath = Get-PackagingMetadataValue -RepoRoot $repoRoot -XPath "//PackagingMetadata/Windows/SetupIconPath"
 
 if ([string]::IsNullOrWhiteSpace($ProjectPath)) {
@@ -204,17 +199,14 @@ if ([string]::IsNullOrWhiteSpace($Publisher)) {
 
 $projectFullPath = (Resolve-Path (Join-Path $repoRoot $ProjectPath)).Path
 $metadata = Get-ProjectMetadata -ProjectFilePath $projectFullPath
+$repoVersion = Get-RepoVersion -RepoRoot $repoRoot
 $artifactPlatformLabel = Get-ArtifactPlatformLabel -RuntimeId $RuntimeIdentifier
-$fallbackVersion = if (-not [string]::IsNullOrWhiteSpace($fallbackVersionFromMetadata)) { $fallbackVersionFromMetadata } else { "0.2.0" }
 $resolvedVersion =
     if (-not [string]::IsNullOrWhiteSpace($Version)) {
         $Version
     }
-    elseif (-not [string]::IsNullOrWhiteSpace($metadata.Version)) {
-        $metadata.Version
-    }
     else {
-        $fallbackVersion
+        $repoVersion
     }
 
 $installerPublishDir = Join-Path $repoRoot ".artifacts/windows-package-inputs/installer/$RuntimeIdentifier"

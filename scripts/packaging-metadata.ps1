@@ -11,6 +11,15 @@ function Get-PackagingMetadataPath {
     return Join-Path $RepoRoot "packaging\release-metadata.xml"
 }
 
+function Get-VersionMetadataPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    return Join-Path $RepoRoot "Version.props"
+}
+
 function Get-XmlDocument {
     param(
         [Parameter(Mandatory = $true)]
@@ -56,4 +65,30 @@ function Get-PackagingMetadataValue {
 
     $metadataPath = Get-PackagingMetadataPath -RepoRoot $RepoRoot
     return Get-XmlValue -Path $metadataPath -XPath $XPath
+}
+
+function Get-VersionMetadataValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot,
+        [Parameter(Mandatory = $true)]
+        [string]$XPath
+    )
+
+    $metadataPath = Get-VersionMetadataPath -RepoRoot $RepoRoot
+    return Get-XmlValue -Path $metadataPath -XPath $XPath
+}
+
+function Get-RepoVersion {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$RepoRoot
+    )
+
+    $version = Get-VersionMetadataValue -RepoRoot $RepoRoot -XPath "//TokenMapVersion"
+    if ([string]::IsNullOrWhiteSpace($version)) {
+        throw "Repo version was not found in '$(Get-VersionMetadataPath -RepoRoot $RepoRoot)'."
+    }
+
+    return $version
 }

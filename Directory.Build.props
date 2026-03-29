@@ -1,4 +1,6 @@
 <Project>
+  <Import Project="Version.props" Condition="Exists('$(MSBuildThisFileDirectory)Version.props')" />
+
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);**\.artifacts\**;**/.artifacts/**</DefaultItemExcludes>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
