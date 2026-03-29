@@ -18,6 +18,7 @@
 ## Read Order And Router
 - Start with root `AGENTS.md`, then this file.
 - For most implementation tasks, read `architecture.md` for current technical boundaries and sources of truth, then `workflow.md` for the concise request-to-code flow.
+- Read `logging.md` when the request touches structured logging, startup failure handling, global exception capture, or the shell-level user-facing runtime issue flow.
 - Read `tools.md` for internal harnesses, screenshot capture, visual diffs, and repo tooling.
 - Read `ui-principles.md` only for UI-facing changes and interaction constraints.
 - Read `versioning.md` when the request touches application version display, release tags, GitHub Releases, or packaged artifact naming.
