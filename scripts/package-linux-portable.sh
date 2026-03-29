@@ -18,7 +18,6 @@ portable_readme_name="${PORTABLE_README_NAME:-README.txt}"
 icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/app-icon.svg}"
 launcher_source_path="${LAUNCHER_SOURCE_PATH:-packaging/linux/tokenmap}"
 desktop_source_path="${DESKTOP_SOURCE_PATH:-packaging/linux/tokenmap-portable.desktop}"
-desktop_install_script_source_path="${DESKTOP_INSTALL_SCRIPT_SOURCE_PATH:-packaging/linux/install-portable-desktop-entry.sh}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -27,7 +26,6 @@ portable_output_root_path="${output_root_full_path}/portable"
 icon_source_full_path="${repo_root}/${icon_source_path}"
 launcher_source_full_path="${repo_root}/${launcher_source_path}"
 desktop_source_full_path="${repo_root}/${desktop_source_path}"
-desktop_install_script_source_full_path="${repo_root}/${desktop_install_script_source_path}"
 
 require_command() {
     local command_name="$1"
@@ -77,7 +75,6 @@ portable_root_path="${portable_output_root_path}/${artifact_name}"
 portable_app_directory_path="${portable_root_path}/${portable_app_directory_name}"
 portable_launcher_path="${portable_root_path}/tokenmap"
 portable_desktop_path="${portable_root_path}/tokenmap.desktop"
-portable_install_script_path="${portable_root_path}/install-desktop-entry.sh"
 portable_icon_path="${portable_root_path}/tokenmap.svg"
 portable_readme_path="${portable_root_path}/${portable_readme_name}"
 portable_archive_path="${output_root_full_path}/${artifact_name}.tar.gz"
@@ -90,11 +87,6 @@ fi
 
 if [[ ! -f "${desktop_source_full_path}" ]]; then
     echo "Portable desktop entry template was not found at '${desktop_source_full_path}'." >&2
-    exit 1
-fi
-
-if [[ ! -f "${desktop_install_script_source_full_path}" ]]; then
-    echo "Portable desktop install script template was not found at '${desktop_install_script_source_full_path}'." >&2
     exit 1
 fi
 
@@ -124,10 +116,9 @@ fi
 cp -R "${publish_directory_path}/." "${portable_app_directory_path}/"
 cp "${launcher_source_full_path}" "${portable_launcher_path}"
 cp "${desktop_source_full_path}" "${portable_desktop_path}"
-cp "${desktop_install_script_source_full_path}" "${portable_install_script_path}"
 cp "${icon_source_full_path}" "${portable_icon_path}"
 
-chmod 0755 "${portable_launcher_path}" "${portable_install_script_path}" "${portable_app_directory_path}/${assembly_name}"
+chmod 0755 "${portable_launcher_path}" "${portable_app_directory_path}/${assembly_name}"
 chmod 0644 "${portable_desktop_path}" "${portable_icon_path}"
 
 cat > "${portable_readme_path}" <<EOF
@@ -137,14 +128,11 @@ TokenMap Linux portable bundle
 Start the app from this folder:
   ./tokenmap
 
-Optional desktop integration for the current user:
-  ./install-desktop-entry.sh
-
 Notes:
 - The app binaries live under ./${portable_app_directory_name}/ so you do not need to browse the publish output directly.
+- The portable desktop entry is available as ./tokenmap.desktop if you want to launch it from a file manager.
 - If the files are not marked executable after extraction, run:
-    chmod +x ./tokenmap ./install-desktop-entry.sh ./${portable_app_directory_name}/${assembly_name}
-- If you move this portable folder after installing the desktop entry, rerun ./install-desktop-entry.sh.
+    chmod +x ./tokenmap ./${portable_app_directory_name}/${assembly_name}
 EOF
 
 chmod 0644 "${portable_readme_path}"
