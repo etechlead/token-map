@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input.Platform;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using Clever.TokenMap.App.ViewModels;
 
@@ -47,8 +48,10 @@ public partial class ShareSnapshotModalView : UserControl
 
             var renderScaling = Math.Max(1d, TopLevel.GetTopLevel(this)?.RenderScaling ?? 1d);
             var exportSettings = GetBitmapExportSettings(shareCardRoot.Bounds.Size, renderScaling);
-            var bitmap = new RenderTargetBitmap(exportSettings.PixelSize, exportSettings.Dpi);
-            bitmap.Render(shareCardRoot);
+            using var renderTargetBitmap = new RenderTargetBitmap(exportSettings.PixelSize, exportSettings.Dpi);
+            renderTargetBitmap.Render(shareCardRoot);
+
+            var bitmap = CreateClipboardBitmap(renderTargetBitmap);
             try
             {
                 await clipboard.SetBitmapAsync(bitmap);
@@ -108,6 +111,20 @@ public partial class ShareSnapshotModalView : UserControl
         var pixelHeight = Math.Max(1, (int)Math.Ceiling(logicalSize.Height * exportScale));
         var dpi = new Vector(96d * exportScale, 96d * exportScale);
         return new BitmapExportSettings(new PixelSize(pixelWidth, pixelHeight), dpi);
+    }
+
+    internal static WriteableBitmap CreateClipboardBitmap(Bitmap source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+
+        var bitmap = new WriteableBitmap(
+            source.PixelSize,
+            source.Dpi,
+            PixelFormat.Bgra8888,
+            AlphaFormat.Premul);
+        using var framebuffer = bitmap.Lock();
+        source.CopyPixels(framebuffer, AlphaFormat.Premul);
+        return bitmap;
     }
 
     internal readonly record struct BitmapExportSettings(PixelSize PixelSize, Vector Dpi);
