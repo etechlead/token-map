@@ -1,6 +1,6 @@
 # TokenMap - Architecture
 
-Dependency boundaries are enforced in [ArchitectureRulesTests.cs](/Z:/Projects/My/tokenmap/src/tests/Clever.TokenMap.Tests/Architecture/ArchitectureRulesTests.cs).
+Dependency boundaries are enforced in [ArchitectureRulesTests.cs](../tests/Clever.TokenMap.Tests/Architecture/ArchitectureRulesTests.cs).
 This document covers project purpose, canonical ownership, runtime flow, and non-obvious invariants.
 
 ## Projects
