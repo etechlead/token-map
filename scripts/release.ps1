@@ -110,9 +110,7 @@ function Resolve-NotesFilePath {
     param(
         [Parameter(Mandatory = $true)]
         [string]$RepoRoot,
-        [Parameter(Mandatory = $true)]
         [string]$InlineNotes,
-        [Parameter(Mandatory = $true)]
         [string]$RequestedNotesFile
     )
 
