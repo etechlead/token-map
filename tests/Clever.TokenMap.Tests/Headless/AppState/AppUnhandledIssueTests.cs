@@ -24,4 +24,13 @@ public sealed class AppUnhandledIssueTests
         Assert.Contains("TokenMap failed to start.", message, StringComparison.Ordinal);
         Assert.Contains(logsDirectoryPath, message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void CreateX11PlatformOptions_DisablesDbusMenu()
+    {
+        var options = Program.CreateX11PlatformOptions();
+
+        Assert.Equal("tokenmap", options.WmClass);
+        Assert.False(options.UseDBusMenu);
+    }
 }

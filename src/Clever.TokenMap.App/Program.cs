@@ -35,12 +35,18 @@ public static class Program
                     Win32CompositionMode.RedirectionSurface,
                 ],
             })
-            .With(new X11PlatformOptions
-            {
-                WmClass = "tokenmap",
-            })
+            .With(CreateX11PlatformOptions())
             .UsePlatformDetect()
             .LogToTrace();
+
+    internal static X11PlatformOptions CreateX11PlatformOptions() =>
+        new()
+        {
+            WmClass = "tokenmap",
+            // TokenMap doesn't export a native global menu, and some Linux desktops do not
+            // provide the AppMenu registrar service that Avalonia probes by default.
+            UseDBusMenu = false,
+        };
 
     private static void HandleStartupFailure(Exception exception)
     {
