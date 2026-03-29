@@ -164,7 +164,7 @@ public sealed class ArchitectureRulesTests
             .As("non-UI app services");
 
     private static readonly IObjectProvider<IType> AppCompositionRoots =
-        Types().That().Are(typeof(Clever.TokenMap.App.App), typeof(Clever.TokenMap.App.AppComposition))
+        Types().That().Are(typeof(Clever.TokenMap.App.App), typeof(App.AppComposition))
             .As("app composition roots");
 
     private static readonly IObjectProvider<IType> NonCompositionRootAppTypes =

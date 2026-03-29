@@ -462,7 +462,7 @@ public sealed class TreemapControl : Control
     {
         var formattedText = new FormattedText(
             message,
-            culture: System.Globalization.CultureInfo.InvariantCulture,
+            culture: CultureInfo.InvariantCulture,
             flowDirection: FlowDirection.LeftToRight,
             typeface: Typeface.Default,
             emSize: 12,
@@ -735,7 +735,7 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var extension = node.Kind == Core.Enums.ProjectNodeKind.File
+        var extension = node.Kind == ProjectNodeKind.File
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
@@ -858,7 +858,7 @@ public sealed class TreemapControl : Control
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var extension = node.Kind == Core.Enums.ProjectNodeKind.File
+        var extension = node.Kind == ProjectNodeKind.File
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
@@ -999,7 +999,7 @@ public sealed class TreemapControl : Control
     internal string? GetMetricValueLabel(ProjectNode node, Rect bounds)
     {
         if (!ShowMetricValues ||
-            node.Kind != Core.Enums.ProjectNodeKind.File ||
+            node.Kind != ProjectNodeKind.File ||
             !TreemapVisualRules.CanDrawLabel(node, bounds) ||
             !TreemapVisualRules.CanDrawMetricValueLabel(node, bounds))
         {
@@ -1062,8 +1062,8 @@ public sealed class TreemapControl : Control
     private static string GetKindText(ProjectNode node) =>
         node.Kind switch
         {
-            Core.Enums.ProjectNodeKind.Root => "Root",
-            Core.Enums.ProjectNodeKind.Directory => "Directory",
+            ProjectNodeKind.Root => "Root",
+            ProjectNodeKind.Directory => "Directory",
             _ => "File",
         };
 
@@ -1073,7 +1073,7 @@ public sealed class TreemapControl : Control
             : value.ToString("N0", CultureInfo.CurrentCulture);
 
     private static bool IsLeafNode(ProjectNode node) =>
-        node.Kind == Core.Enums.ProjectNodeKind.File || node.Children.Count == 0;
+        node.Kind == ProjectNodeKind.File || node.Children.Count == 0;
 
     internal static bool IsDrillDownGesture(
         PointerType pointerType,
@@ -1103,7 +1103,7 @@ public sealed class TreemapControl : Control
 
     private static bool CanDrillDown(ProjectNode? node) =>
         node is not null &&
-        node.Kind != Core.Enums.ProjectNodeKind.File &&
+        node.Kind != ProjectNodeKind.File &&
         node.Children.Count > 0;
 
 }

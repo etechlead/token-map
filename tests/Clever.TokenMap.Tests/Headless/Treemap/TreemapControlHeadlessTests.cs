@@ -467,7 +467,7 @@ public sealed class TreemapControlHeadlessTests
             Name = "src",
             FullPath = "C:\\Demo\\src",
             RelativePath = "src",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Directory,
+            Kind = ProjectNodeKind.Directory,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 42,
                 NonEmptyLines: 11,
@@ -489,7 +489,7 @@ public sealed class TreemapControlHeadlessTests
             Name = "LICENSE",
             FullPath = "C:\\Demo\\LICENSE",
             RelativePath = "LICENSE",
-            Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+            Kind = ProjectNodeKind.File,
             Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                 Tokens: 42,
                 NonEmptyLines: 11,
@@ -514,7 +514,7 @@ public sealed class TreemapControlHeadlessTests
                 Name = "Demo",
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
-                Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Root,
+                Kind = ProjectNodeKind.Root,
                 Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                     Tokens: 0,
                     NonEmptyLines: 0,
@@ -529,7 +529,7 @@ public sealed class TreemapControlHeadlessTests
                         Name = "image.ico",
                         FullPath = "C:\\Demo\\image.ico",
                         RelativePath = "image.ico",
-                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Kind = ProjectNodeKind.File,
                         SkippedReason = SkippedReason.Binary,
                         Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                             Tokens: 0,
@@ -556,7 +556,7 @@ public sealed class TreemapControlHeadlessTests
                 Name = "Demo",
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
-                Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.Root,
+                Kind = ProjectNodeKind.Root,
                 Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                     Tokens: 105,
                     NonEmptyLines: 100,
@@ -571,7 +571,7 @@ public sealed class TreemapControlHeadlessTests
                         Name = "a.cs",
                         FullPath = "C:\\Demo\\a.cs",
                         RelativePath = "a.cs",
-                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Kind = ProjectNodeKind.File,
                         Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                             Tokens: 80,
                             NonEmptyLines: 10,
@@ -585,7 +585,7 @@ public sealed class TreemapControlHeadlessTests
                         Name = "b.cs",
                         FullPath = "C:\\Demo\\b.cs",
                         RelativePath = "b.cs",
-                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Kind = ProjectNodeKind.File,
                         Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                             Tokens: 20,
                             NonEmptyLines: 90,
@@ -599,7 +599,7 @@ public sealed class TreemapControlHeadlessTests
                         Name = "c.cs",
                         FullPath = "C:\\Demo\\c.cs",
                         RelativePath = "c.cs",
-                        Kind = Clever.TokenMap.Core.Enums.ProjectNodeKind.File,
+                        Kind = ProjectNodeKind.File,
                         Metrics = new Clever.TokenMap.Core.Models.NodeMetrics(
                             Tokens: 5,
                             NonEmptyLines: 0,

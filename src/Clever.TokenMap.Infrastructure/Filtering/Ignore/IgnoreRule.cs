@@ -1,4 +1,4 @@
-using GitIgnoreRule = global::Ignore.IgnoreRule;
+using GitIgnoreRule = Ignore.IgnoreRule;
 
 namespace Clever.TokenMap.Infrastructure.Filtering.Ignore;
 

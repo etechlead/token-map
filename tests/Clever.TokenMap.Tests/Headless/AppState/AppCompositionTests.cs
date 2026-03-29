@@ -12,7 +12,7 @@ public sealed class AppCompositionTests
     {
         var application = Assert.IsType<Clever.TokenMap.App.App>(Application.Current);
 
-        var serviceProvider = Clever.TokenMap.App.AppComposition.CreateServiceProvider(application);
+        var serviceProvider = App.AppComposition.CreateServiceProvider(application);
         try
         {
             var exception = Record.Exception(() => serviceProvider.GetRequiredService<AppMainWindow>());

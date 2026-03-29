@@ -26,7 +26,7 @@ public partial class ProjectTreePaneView : UserControl
     {
         InitializeComponent();
         this.FindControl<DataGrid>("ProjectTreeTable")?.AddHandler(
-            InputElement.KeyDownEvent,
+            KeyDownEvent,
             ProjectTreeTable_OnKeyDown,
             RoutingStrategies.Tunnel,
             handledEventsToo: true);

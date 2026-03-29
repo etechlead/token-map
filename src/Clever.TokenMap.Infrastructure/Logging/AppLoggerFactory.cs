@@ -18,7 +18,7 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
     private const string ConsoleOutputTemplate =
         "{Timestamp:HH:mm:ss} [{Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}";
 
-    private readonly Serilog.ILogger _logger;
+    private readonly ILogger _logger;
 
     public AppLoggerFactory(
         LoggingSettings settings,
@@ -81,9 +81,9 @@ public sealed class AppLoggerFactory : IAppLoggerFactory, IDisposable
 
     private sealed class AppLogger : IAppLogger
     {
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger _logger;
 
-        public AppLogger(Serilog.ILogger logger)
+        public AppLogger(ILogger logger)
         {
             _logger = logger;
         }

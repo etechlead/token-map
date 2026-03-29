@@ -5,7 +5,7 @@ public sealed class AppUnhandledIssueTests
     [Fact]
     public void CreateDispatcherUnhandledIssue_UsesBannerForRecoverableExceptions()
     {
-        var issue = Clever.TokenMap.App.App.CreateDispatcherUnhandledIssue(
+        var issue = App.App.CreateDispatcherUnhandledIssue(
             new InvalidOperationException("boom"));
 
         Assert.False(issue.IsFatal);
@@ -17,7 +17,7 @@ public sealed class AppUnhandledIssueTests
     {
         var logsDirectoryPath = "C:\\Logs\\TokenMap";
 
-        var message = Clever.TokenMap.App.Program.BuildStartupFailureMessage(logsDirectoryPath);
+        var message = App.Program.BuildStartupFailureMessage(logsDirectoryPath);
 
         Assert.Contains("TokenMap failed to start.", message, StringComparison.Ordinal);
         Assert.Contains(logsDirectoryPath, message, StringComparison.Ordinal);

@@ -262,14 +262,14 @@ public sealed class IgnorePolicyScannerTests
         throw new InvalidOperationException("Repository root was not found.");
     }
 
-    private static HashSet<string> GetRelativePaths(Clever.TokenMap.Core.Models.ProjectNode node)
+    private static HashSet<string> GetRelativePaths(ProjectNode node)
     {
         var relativePaths = new HashSet<string>(StringComparer.Ordinal);
         Collect(node, relativePaths);
         return relativePaths;
     }
 
-    private static void Collect(Clever.TokenMap.Core.Models.ProjectNode node, HashSet<string> relativePaths)
+    private static void Collect(ProjectNode node, HashSet<string> relativePaths)
     {
         if (!string.IsNullOrEmpty(node.RelativePath))
         {
