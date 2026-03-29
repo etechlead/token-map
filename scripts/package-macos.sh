@@ -125,6 +125,66 @@ ad_hoc_sign_bundle() {
     codesign --force --deep -s - "${bundle_path}"
 }
 
+initialize_dmg_layout() {
+    # Finder stores item positions relative to the content area, so keep the
+    # layout in a few semantic values and derive the rest in one place.
+    dmg_window_left=120
+    dmg_window_top=120
+    dmg_window_width=640
+    dmg_window_height=380
+    dmg_icon_size=128
+    dmg_text_size=13
+    dmg_item_center_gap=300
+    dmg_item_y=108
+
+    dmg_window_right=$((dmg_window_left + dmg_window_width))
+    dmg_window_bottom=$((dmg_window_top + dmg_window_height))
+
+    local content_center_x=$((dmg_window_width / 2))
+    dmg_left_item_x=$((content_center_x - dmg_item_center_gap / 2))
+    dmg_right_item_x=$((content_center_x + dmg_item_center_gap / 2))
+}
+
+customize_dmg_finder_layout() {
+    local mounted_volume_name="$1"
+
+    if ! command -v osascript >/dev/null 2>&1; then
+        return 1
+    fi
+
+    osascript <<EOF
+tell application "Finder"
+    tell disk "${mounted_volume_name}"
+        open
+        set current view of container window to icon view
+        set toolbar visible of container window to false
+        set statusbar visible of container window to false
+        set bounds of container window to {${dmg_window_left}, ${dmg_window_top}, ${dmg_window_right}, ${dmg_window_bottom}}
+        set theViewOptions to the icon view options of container window
+        set arrangement of theViewOptions to not arranged
+        set icon size of theViewOptions to ${dmg_icon_size}
+        set text size of theViewOptions to ${dmg_text_size}
+
+        if not (exists item "Applications") then
+            error "Applications link was not found."
+        end if
+
+        set position of item "${bundle_name}.app" to {${dmg_left_item_x}, ${dmg_item_y}}
+        set position of item "Applications" to {${dmg_right_item_x}, ${dmg_item_y}}
+        update without registering applications
+        delay 2
+        close
+        open
+        update without registering applications
+        delay 2
+        close
+    end tell
+end tell
+EOF
+}
+
+initialize_dmg_layout
+
 rm -rf "${output_root_full_path}"
 mkdir -p "${bundle_macos_path}" "${bundle_resources_path}" "${staging_directory_path}"
 
@@ -222,35 +282,8 @@ if [[ -z "${mount_directory_path}" || ! -d "${mount_directory_path}" ]]; then
     exit 1
 fi
 
-if command -v osascript >/dev/null 2>&1; then
-    if ! osascript <<EOF
-tell application "Finder"
-    tell disk "${mounted_volume_name}"
-        open
-        set current view of container window to icon view
-        set toolbar visible of container window to false
-        set statusbar visible of container window to false
-        set bounds of container window to {120, 120, 760, 420}
-        set theViewOptions to the icon view options of container window
-        set arrangement of theViewOptions to not arranged
-        set icon size of theViewOptions to 128
-        set text size of theViewOptions to 14
-
-        if not (exists item "Applications") then
-            error "Applications link was not found."
-        end if
-
-        set position of item "${bundle_name}.app" to {160, 150}
-        set position of item "Applications" to {460, 150}
-        update without registering applications
-        delay 1
-        close
-    end tell
-end tell
-EOF
-    then
-        echo "Finder customization failed; keeping the fallback DMG layout." >&2
-    fi
+if ! customize_dmg_finder_layout "${mounted_volume_name}"; then
+    echo "Finder customization failed; keeping the fallback DMG layout." >&2
 fi
 
 if [[ -f "${icon_source_full_path}" ]] && command -v SetFile >/dev/null 2>&1; then
