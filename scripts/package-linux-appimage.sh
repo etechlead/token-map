@@ -19,8 +19,7 @@ icon_file_name="${ICON_FILE_NAME:-tokenmap.svg}"
 icon_source_path="${ICON_SOURCE_PATH:-src/Clever.TokenMap.App/Assets/app-icon.svg}"
 launcher_source_path="${LAUNCHER_SOURCE_PATH:-packaging/linux/tokenmap}"
 desktop_source_path="${DESKTOP_SOURCE_PATH:-packaging/linux/tokenmap.desktop}"
-linuxdeploy_url="${LINUXDEPLOY_URL:-https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage}"
-linuxdeploy_plugin_appimage_url="${LINUXDEPLOY_PLUGIN_APPIMAGE_URL:-https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage}"
+appimagetool_url="${APPIMAGETOOL_URL:-https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage}"
 
 project_full_path="${repo_root}/${project_path}"
 output_root_full_path="${repo_root}/${output_root}"
@@ -31,6 +30,7 @@ appdir_install_directory_path="${appdir_path}/${install_root}"
 appdir_bin_directory_path="${appdir_path}/usr/bin"
 appdir_applications_directory_path="${appdir_path}/usr/share/applications"
 appdir_icons_directory_path="${appdir_path}/usr/share/icons/hicolor/scalable/apps"
+apprun_path="${appdir_path}/AppRun"
 appdir_desktop_entry_path="${appdir_path}/${desktop_entry_name}"
 appdir_icon_path="${appdir_path}/${icon_file_name}"
 launcher_install_path="${appdir_bin_directory_path}/${package_name}"
@@ -39,8 +39,7 @@ icon_install_path="${appdir_icons_directory_path}/${icon_file_name}"
 icon_source_full_path="${repo_root}/${icon_source_path}"
 launcher_source_full_path="${repo_root}/${launcher_source_path}"
 desktop_source_full_path="${repo_root}/${desktop_source_path}"
-linuxdeploy_path="${tools_directory_path}/linuxdeploy-x86_64.AppImage"
-linuxdeploy_plugin_appimage_path="${tools_directory_path}/linuxdeploy-plugin-appimage-x86_64.AppImage"
+appimagetool_path="${tools_directory_path}/appimagetool-x86_64.AppImage"
 
 require_command() {
     local command_name="$1"
@@ -137,33 +136,25 @@ fi
 
 cp -R "${publish_directory_path}/." "${appdir_install_directory_path}/"
 cp "${launcher_source_full_path}" "${launcher_install_path}"
+cp "${launcher_source_full_path}" "${apprun_path}"
 cp "${desktop_source_full_path}" "${desktop_install_path}"
 cp "${desktop_source_full_path}" "${appdir_desktop_entry_path}"
 cp "${icon_source_full_path}" "${icon_install_path}"
 cp "${icon_source_full_path}" "${appdir_icon_path}"
 
-chmod 0755 "${launcher_install_path}" "${appdir_install_directory_path}/${assembly_name}"
+chmod 0755 "${launcher_install_path}" "${apprun_path}" "${appdir_install_directory_path}/${assembly_name}"
 
-if [[ ! -f "${linuxdeploy_path}" ]]; then
-    download_file "${linuxdeploy_url}" "${linuxdeploy_path}"
+if [[ ! -f "${appimagetool_path}" ]]; then
+    download_file "${appimagetool_url}" "${appimagetool_path}"
 fi
 
-if [[ ! -f "${linuxdeploy_plugin_appimage_path}" ]]; then
-    download_file "${linuxdeploy_plugin_appimage_url}" "${linuxdeploy_plugin_appimage_path}"
-fi
-
-chmod 0755 "${linuxdeploy_path}" "${linuxdeploy_plugin_appimage_path}"
+chmod 0755 "${appimagetool_path}"
 
 export APPIMAGE_EXTRACT_AND_RUN=1
-export LDAI_OUTPUT="${appimage_path}"
-export LDAI_NO_APPSTREAM=1
+export ARCH=x86_64
+export VERSION="${package_version}"
 
-"${linuxdeploy_path}" \
-    --appdir "${appdir_path}" \
-    --desktop-file "${appdir_desktop_entry_path}" \
-    --icon-file "${appdir_icon_path}" \
-    --executable "${launcher_install_path}" \
-    --output appimage
+"${appimagetool_path}" "${appdir_path}" "${appimage_path}"
 
 if [[ ! -f "${appimage_path}" ]]; then
     echo "Expected AppImage was not found at '${appimage_path}'." >&2
