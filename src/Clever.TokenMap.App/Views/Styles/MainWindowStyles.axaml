@@ -611,7 +611,12 @@
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
-
+    <Style Selector="TextBox.share-project-name">
+        <Setter Property="MinHeight" Value="36" />
+        <Setter Property="Padding" Value="10,0" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="LineHeight" Value="18" />
+    </Style>
     <Style Selector="Border.segmented-toggle-panel">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />

@@ -34,18 +34,20 @@
                     <Grid Margin="0,24,0,18"
                           RowDefinitions="Auto,*,Auto">
                         <StackPanel Spacing="10">
-                            <StackPanel Name="ShareTopSectionWithProjectName"
-                                        Spacing="10"
-                                        IsVisible="{Binding ShowProjectName}">
+                            <Grid Name="ShareTopSectionWithProjectName"
+                                  RowDefinitions="38,10,Auto"
+                                  IsVisible="{Binding ShowProjectName}">
                                 <TextBlock Name="ShareProjectTitleText"
                                            MaxWidth="248"
+                                           VerticalAlignment="Center"
                                            FontSize="30"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TokenMapShareCardPrimaryTextBrush}"
                                            Text="{Binding DisplayProjectName}"
                                            TextTrimming="CharacterEllipsis" />
 
-                                <StackPanel Spacing="4">
+                                <StackPanel Grid.Row="2"
+                                            Spacing="4">
                                     <Grid Name="ShareTokenValueHost"
                                           Width="236"
                                           HorizontalAlignment="Left">
@@ -65,7 +67,7 @@
                                                Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
                                                Text="tokens" />
                                 </StackPanel>
-                            </StackPanel>
+                            </Grid>
 
                             <StackPanel Name="ShareTopSectionWithoutProjectName"
                                         Spacing="4"
@@ -170,7 +172,6 @@
                                   Grid.Column="2"
                                   Width="12"
                                   Height="12"
-                                  Margin="0,2,0,0"
                                   Stretch="Uniform"
                                   VerticalAlignment="Center"
                                   Fill="{DynamicResource TokenMapShareCardFooterIconBrush}"

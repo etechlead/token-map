@@ -1,8 +1,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
+using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Styling;
+using Avalonia.VisualTree;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Tests.Headless.Support;
@@ -151,6 +153,79 @@ public sealed class ShareSnapshotModalTests
     }
 
     [AvaloniaFact]
+    public async Task ShareSnapshotModal_ProjectTitle_KeepsVisibleGapAboveTokenValue()
+    {
+        var demoRootPath = GetTestFolderPath("Demo");
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
+        window.DataContext = viewModel;
+
+        try
+        {
+            window.Show();
+            await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+            viewModel.OpenShareSnapshotCommand.Execute(null);
+            window.UpdateLayout();
+
+            var titleBounds = GetRenderedBounds<TextBlock, Border>(window, "ShareProjectTitleText", "ShareCardRoot");
+            var tokenBounds = GetRenderedBounds<TextBlock, Border>(window, "ShareTokenValueText", "ShareCardRoot");
+            var gap = tokenBounds.Top - titleBounds.Bottom;
+
+            Assert.True(
+                gap >= 8,
+                $"Expected share card title and token value to keep a visible vertical gap, got {gap:F2}px.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task ShareSnapshotModal_ProjectNameTextBox_UsesCenteredSingleLineLayout()
+    {
+        var demoRootPath = GetTestFolderPath("Demo");
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(selectedFolderPath: demoRootPath);
+        window.DataContext = viewModel;
+
+        try
+        {
+            window.Show();
+            await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+            viewModel.OpenShareSnapshotCommand.Execute(null);
+            window.UpdateLayout();
+
+            var projectNameTextBox = FindNamedDescendant<TextBox>(window, "ProjectNameTextBox");
+
+            Assert.NotNull(projectNameTextBox);
+            Assert.Equal(VerticalAlignment.Center, projectNameTextBox.VerticalContentAlignment);
+            Assert.Equal(new Thickness(10, 0), projectNameTextBox.Padding);
+
+            var textPresenter = projectNameTextBox
+                .GetVisualDescendants()
+                .OfType<Control>()
+                .FirstOrDefault(control => control.GetType().Name == "TextPresenter");
+
+            Assert.NotNull(textPresenter);
+
+            var presenterTransform = textPresenter.TransformToVisual(projectNameTextBox);
+            Assert.NotNull(presenterTransform);
+
+            var presenterBounds = new Rect(textPresenter.Bounds.Size).TransformToAABB(presenterTransform.Value);
+            var textBoxCenterY = projectNameTextBox.Bounds.Height / 2d;
+
+            Assert.True(
+                Math.Abs(presenterBounds.Center.Y - textBoxCenterY) <= 2,
+                $"Expected share project name text presenter to stay vertically centered, got presenterCenterY={presenterBounds.Center.Y:F2}, textBoxCenterY={textBoxCenterY:F2}.");
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task ShareSnapshotModal_FooterElements_StayWithinFooterRow()
     {
         var demoRootPath = GetTestFolderPath("Demo");
@@ -206,6 +281,9 @@ public sealed class ShareSnapshotModalTests
             Assert.True(
                 iconBounds.Right <= textBounds.X + 0.5,
                 $"Expected share footer icon to stay before the repository text, got icon={iconBounds}, text={textBounds}.");
+            Assert.True(
+                Math.Abs(iconBounds.Center.Y - textBounds.Center.Y) <= 1.5,
+                $"Expected share footer icon and repository text to stay vertically centered together, got icon={iconBounds}, text={textBounds}.");
         }
         finally
         {
