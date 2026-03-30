@@ -53,6 +53,8 @@
                                      Color="#0A5FC2" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
                                      Color="#DCEBFF" />
+                    <SolidColorBrush x:Key="TokenMapAccentHoverForegroundBrush"
+                                     Color="#1F2933" />
                     <LinearGradientBrush x:Key="TokenMapShareCardBackgroundBrush"
                                          StartPoint="0,0"
                                          EndPoint="1,1">
@@ -134,6 +136,8 @@
                                      Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"
                                      Color="#16314D" />
+                    <SolidColorBrush x:Key="TokenMapAccentHoverForegroundBrush"
+                                     Color="#FFFFFF" />
                     <LinearGradientBrush x:Key="TokenMapShareCardBackgroundBrush"
                                          StartPoint="0,0"
                                          EndPoint="1,1">

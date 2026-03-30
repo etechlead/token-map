@@ -289,6 +289,12 @@
         <Setter Property="VerticalAlignment" Value="Center" />
         <Setter Property="IsHitTestVisible" Value="False" />
     </Style>
+    <Style Selector="PathIcon.action-button-icon">
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+    </Style>
     <Style Selector="Path.context-menu-icon">
         <Setter Property="Width" Value="16" />
         <Setter Property="Height" Value="16" />
@@ -305,28 +311,26 @@
         <Setter Property="Background" Value="{DynamicResource TokenMapAccentBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
-    <Style Selector="SplitButton.action-split-button:pointerover">
-        <Setter Property="Background" Value="{DynamicResource TokenMapAccentHoverBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentHoverBrush}" />
+    <Style Selector="SplitButton.action-split-button /template/ Button#PART_PrimaryButton">
+        <Setter Property="Foreground" Value="White" />
     </Style>
-    <Style Selector="SplitButton.action-split-button:pressed">
-        <Setter Property="Background" Value="{DynamicResource TokenMapAccentPressedBrush}" />
-        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+    <Style Selector="SplitButton.action-split-button /template/ Button#PART_PrimaryButton:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentHoverForegroundBrush}" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button /template/ Button#PART_SecondaryButton">
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+    <Style Selector="SplitButton.action-split-button /template/ Button#PART_SecondaryButton:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentHoverForegroundBrush}" />
     </Style>
     <Style Selector="SplitButton.action-split-button TextBlock.action-button-label">
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
     </Style>
-    <Style Selector="SplitButton.action-split-button Path.action-button-icon">
-        <Setter Property="Fill" Value="White" />
-    </Style>
-    <Style Selector="SplitButton.action-split-button /template/ ToggleButton">
-        <Setter Property="Foreground" Value="White" />
+    <Style Selector="SplitButton.action-split-button PathIcon.action-button-icon">
+        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
     </Style>
     <Style Selector="SplitButton.action-split-button /template/ PathIcon">
-        <Setter Property="Foreground" Value="White" />
-    </Style>
-    <Style Selector="SplitButton.action-split-button /template/ Path">
-        <Setter Property="Fill" Value="White" />
+        <Setter Property="Foreground" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
     </Style>
     <Style Selector="TextBlock.tree-table-name">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
@@ -607,6 +611,7 @@
     <Style Selector="CheckBox">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
     </Style>
+
     <Style Selector="Border.segmented-toggle-panel">
         <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
