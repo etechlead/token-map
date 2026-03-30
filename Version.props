@@ -1,5 +1,5 @@
 <Project>
   <PropertyGroup>
-    <TokenMapVersion>0.2.3</TokenMapVersion>
+    <TokenMapVersion>0.2.4-local</TokenMapVersion>
   </PropertyGroup>
 </Project>
