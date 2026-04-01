@@ -10,7 +10,5 @@ public sealed class MetricSetBuilder : IMetricSink
 
     public void SetNotApplicable(MetricId id) => _values[id] = MetricValue.NotApplicable();
 
-    public void SetFailure(MetricId id, string? failureMessage = null) => _values[id] = MetricValue.Failed(failureMessage);
-
     public MetricSet Build() => new(_values);
 }

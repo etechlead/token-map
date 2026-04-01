@@ -11,6 +11,8 @@ public interface IReadOnlySettingsState : INotifyPropertyChanged
 {
     MetricId SelectedMetric { get; }
 
+    IReadOnlyList<MetricId> VisibleMetricIds { get; }
+
     bool RespectGitIgnore { get; }
 
     bool UseGlobalExcludes { get; }

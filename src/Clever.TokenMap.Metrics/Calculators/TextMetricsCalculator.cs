@@ -1,16 +1,10 @@
 using Clever.TokenMap.Core.Metrics;
 
-namespace Clever.TokenMap.Metrics;
+namespace Clever.TokenMap.Metrics.Calculators;
 
 public sealed class TextMetricsCalculator : IFileMetricCalculator
 {
     public int Order => 100;
-
-    public IReadOnlyCollection<MetricId> Outputs { get; } =
-    [
-        MetricIds.Tokens,
-        MetricIds.NonEmptyLines,
-    ];
 
     public async ValueTask ComputeAsync(
         IFileMetricContext context,

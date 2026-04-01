@@ -6,21 +6,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.Views.Sections;
 
 public partial class ProjectTreePaneView : UserControl
 {
+    private const int ProjectTreeStaticColumnCount = 2;
     private static readonly TimeSpan ProjectTreeSingleClickSelectionDelay = TimeSpan.FromMilliseconds(250);
     private readonly Dictionary<DataGridColumn, string> _projectTreeTableBaseHeaders = [];
     private readonly ProjectNodeContextMenuController _projectNodeContextMenuController;
     private CancellationTokenSource? _pendingProjectTreeSelectionSync;
     private bool _projectTreeSelectionChangeTriggeredByPointer;
+    private ToolbarViewModel? _toolbarViewModel;
 
     public ProjectTreePaneView()
     {
@@ -33,8 +37,13 @@ public partial class ProjectTreePaneView : UserControl
         _projectNodeContextMenuController = new ProjectNodeContextMenuController(
             this,
             () => DataContext as MainWindowViewModel);
-        DataContextChanged += (_, _) => ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
-        AttachedToVisualTree += (_, _) => ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
+        DataContextChanged += (_, _) => HandleDataContextChanged();
+        AttachedToVisualTree += (_, _) =>
+        {
+            ScheduleRefreshProjectTreeMetricColumns();
+            ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
+        };
+        DetachedFromVisualTree += (_, _) => DetachToolbarSubscription();
     }
 
     private void ProjectTreeExpandCollapseButton_OnClick(object? sender, RoutedEventArgs e)
@@ -72,12 +81,12 @@ public partial class ProjectTreePaneView : UserControl
                           string.Equals(column.Header?.ToString(), header.Content?.ToString(), StringComparison.Ordinal));
 
             if (clickedColumn is null ||
-                !TryMapSortColumn(clickedColumn.SortMemberPath, out var sortColumn))
+                !TryMapSortColumn(clickedColumn.SortMemberPath, out var sortColumn, out var metricId))
             {
                 return;
             }
 
-            ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn);
+            ApplyProjectTreeSort(viewModel, grid, clickedColumn, sortColumn, metricId);
             e.Handled = true;
             return;
         }
@@ -296,8 +305,9 @@ public partial class ProjectTreePaneView : UserControl
         EnsureProjectTreeTableBaseHeaders(grid);
 
         var sortedColumn = grid.Columns.FirstOrDefault(column =>
-            TryMapSortColumn(column.SortMemberPath, out var sortColumn) &&
-            sortColumn == viewModel.Tree.CurrentSortColumn);
+            TryMapSortColumn(column.SortMemberPath, out var sortColumn, out var metricId) &&
+            sortColumn == viewModel.Tree.CurrentSortColumn &&
+            (sortColumn != ProjectTreeSortColumn.Metric || metricId == viewModel.Tree.CurrentMetricSortId));
 
         if (sortedColumn is null)
         {
@@ -312,6 +322,125 @@ public partial class ProjectTreePaneView : UserControl
         Dispatcher.UIThread.Post(
             ApplyProjectTreeTableHeaderStateFromViewModel,
             DispatcherPriority.Loaded);
+    }
+
+    private void HandleDataContextChanged()
+    {
+        AttachToolbarSubscription();
+        ScheduleRefreshProjectTreeMetricColumns();
+        ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
+    }
+
+    private void AttachToolbarSubscription()
+    {
+        var nextToolbar = (DataContext as MainWindowViewModel)?.Toolbar;
+        if (ReferenceEquals(_toolbarViewModel, nextToolbar))
+        {
+            return;
+        }
+
+        DetachToolbarSubscription();
+        _toolbarViewModel = nextToolbar;
+        if (_toolbarViewModel is not null)
+        {
+            _toolbarViewModel.PropertyChanged += ToolbarViewModel_OnPropertyChanged;
+        }
+    }
+
+    private void DetachToolbarSubscription()
+    {
+        if (_toolbarViewModel is null)
+        {
+            return;
+        }
+
+        _toolbarViewModel.PropertyChanged -= ToolbarViewModel_OnPropertyChanged;
+        _toolbarViewModel = null;
+    }
+
+    private void ToolbarViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ToolbarViewModel.VisibleMetricDefinitions))
+        {
+            ScheduleRefreshProjectTreeMetricColumns();
+        }
+    }
+
+    private void ScheduleRefreshProjectTreeMetricColumns()
+    {
+        Dispatcher.UIThread.Post(
+            RefreshProjectTreeMetricColumns,
+            DispatcherPriority.Loaded);
+    }
+
+    private void RefreshProjectTreeMetricColumns()
+    {
+        var grid = this.FindControl<DataGrid>("ProjectTreeTable");
+        if (grid is null)
+        {
+            return;
+        }
+
+        ClearProjectTreeMetricColumns(grid);
+
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        foreach (var definition in viewModel.Toolbar.VisibleMetricDefinitions)
+        {
+            grid.Columns.Add(CreateMetricColumn(definition));
+        }
+
+        EnsureProjectTreeTableBaseHeaders(grid);
+        ApplyProjectTreeTableHeaderStateFromViewModel();
+    }
+
+    private void ClearProjectTreeMetricColumns(DataGrid grid)
+    {
+        while (grid.Columns.Count > ProjectTreeStaticColumnCount)
+        {
+            var removedColumn = grid.Columns[grid.Columns.Count - 1];
+            grid.Columns.RemoveAt(grid.Columns.Count - 1);
+            _projectTreeTableBaseHeaders.Remove(removedColumn);
+        }
+    }
+
+    private static DataGridTemplateColumn CreateMetricColumn(MetricDefinition definition)
+    {
+        return new DataGridTemplateColumn
+        {
+            Header = definition.ShortName,
+            SortMemberPath = GetMetricSortMemberPath(definition.Id),
+            Width = GetMetricColumnWidth(definition),
+            CellTemplate = new FuncDataTemplate<ProjectTreeNodeViewModel>((node, _) =>
+            {
+                var textBlock = new TextBlock
+                {
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Text = node?.GetMetricText(definition.Id) ?? string.Empty,
+                };
+                textBlock.Classes.Add("tree-table-number");
+                return textBlock;
+            }),
+        };
+    }
+
+    private static DataGridLength GetMetricColumnWidth(MetricDefinition definition)
+    {
+        if (definition.Unit == MetricUnit.Bytes)
+        {
+            return new DataGridLength(88);
+        }
+
+        return definition.ShortName.Length switch
+        {
+            <= 5 => new DataGridLength(72),
+            <= 8 => new DataGridLength(92),
+            <= 12 => new DataGridLength(108),
+            _ => new DataGridLength(124),
+        };
     }
 
     private static void ScheduleScrollSelectedProjectTreeRowIntoView(DataGrid grid)
@@ -359,10 +488,19 @@ public partial class ProjectTreePaneView : UserControl
         MainWindowViewModel viewModel,
         DataGrid grid,
         DataGridColumn clickedColumn,
-        ProjectTreeSortColumn sortColumn)
+        ProjectTreeSortColumn sortColumn,
+        MetricId metricId)
     {
         var direction = GetNextSortDirection(clickedColumn, sortColumn);
-        viewModel.Tree.SortBy(sortColumn, direction);
+        if (sortColumn == ProjectTreeSortColumn.Metric)
+        {
+            viewModel.Tree.SortByMetric(metricId, direction);
+        }
+        else
+        {
+            viewModel.Tree.SortBy(sortColumn, direction);
+        }
+
         UpdateProjectTreeTableHeaderState(grid, clickedColumn, direction);
     }
 
@@ -438,30 +576,32 @@ public partial class ProjectTreePaneView : UserControl
         return null;
     }
 
-    private static bool TryMapSortColumn(string? sortMemberPath, out ProjectTreeSortColumn column)
+    private static bool TryMapSortColumn(string? sortMemberPath, out ProjectTreeSortColumn column, out MetricId metricId)
     {
+        metricId = default;
         switch (sortMemberPath)
         {
             case "ParentShare":
                 column = ProjectTreeSortColumn.ParentShare;
                 return true;
-            case "Size":
-                column = ProjectTreeSortColumn.Size;
-                return true;
-            case "Lines":
-                column = ProjectTreeSortColumn.Lines;
-                return true;
-            case "Tokens":
-                column = ProjectTreeSortColumn.Tokens;
-                return true;
             case "Name":
                 column = ProjectTreeSortColumn.Name;
                 return true;
             default:
+                if (sortMemberPath is not null &&
+                    sortMemberPath.StartsWith("Metric:", StringComparison.Ordinal))
+                {
+                    column = ProjectTreeSortColumn.Metric;
+                    metricId = DefaultMetricCatalog.NormalizeMetricId(new MetricId(sortMemberPath["Metric:".Length..]));
+                    return true;
+                }
+
                 column = default;
                 return false;
         }
     }
+
+    private static string GetMetricSortMemberPath(MetricId metricId) => $"Metric:{metricId.Value}";
 
 }
 

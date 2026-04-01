@@ -7,6 +7,4 @@ public interface IMetricSink
     void SetValue(MetricId id, double value);
 
     void SetNotApplicable(MetricId id);
-
-    void SetFailure(MetricId id, string? failureMessage = null);
 }

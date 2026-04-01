@@ -1,3 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
@@ -15,9 +19,17 @@ public sealed class ToolbarViewModelTests
     {
         var viewModel = CreateViewModel(new SettingsState());
 
-        Assert.True(viewModel.IsTokensMetricSelected);
-        Assert.False(viewModel.IsLinesMetricSelected);
-        Assert.False(viewModel.IsSizeMetricSelected);
+        Assert.Equal(MetricIds.Tokens, viewModel.SelectedMetric);
+        Assert.Collection(
+            viewModel.VisibleTreemapMetricOptions,
+            option => Assert.Equal(MetricIds.Tokens, option.Definition.Id),
+            option => Assert.Equal(MetricIds.NonEmptyLines, option.Definition.Id),
+            option => Assert.Equal(MetricIds.FileSizeBytes, option.Definition.Id));
+        Assert.Equal(
+            MetricIds.Tokens,
+            Assert.Single(viewModel.VisibleTreemapMetricOptions, option => option.IsSelected).Definition.Id);
+        Assert.True(viewModel.ShowTreemapMetricButtons);
+        Assert.False(viewModel.ShowTreemapMetricSelector);
         Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
@@ -25,20 +37,24 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
-    public void SelectingLinesRadio_StoresCanonicalLineMetric()
+    public void SelectingLinesOption_StoresCanonicalLineMetric()
     {
         var state = new SettingsState();
         var viewModel = CreateViewModel(state);
 
-        viewModel.IsLinesMetricSelected = true;
+        viewModel.SelectedTreemapMetricOption = Assert.Single(
+            viewModel.VisibleTreemapMetricOptions,
+            option => option.Definition.Id == MetricIds.NonEmptyLines);
 
         Assert.Equal(MetricIds.NonEmptyLines, state.SelectedMetric);
-        Assert.False(viewModel.IsTokensMetricSelected);
-        Assert.True(viewModel.IsLinesMetricSelected);
+        Assert.Equal(MetricIds.NonEmptyLines, viewModel.SelectedMetric);
+        Assert.Equal(
+            MetricIds.NonEmptyLines,
+            Assert.Single(viewModel.VisibleTreemapMetricOptions, option => option.IsSelected).Definition.Id);
     }
 
     [Fact]
-    public void CanonicalLinesMetric_MapsToLinesRadio()
+    public void CanonicalLinesMetric_MapsToSelectedOption()
     {
         var state = new SettingsState
         {
@@ -46,23 +62,58 @@ public sealed class ToolbarViewModelTests
         };
         var viewModel = CreateViewModel(state);
 
-        Assert.False(viewModel.IsTokensMetricSelected);
-        Assert.True(viewModel.IsLinesMetricSelected);
-        Assert.False(viewModel.IsSizeMetricSelected);
+        Assert.Equal(MetricIds.NonEmptyLines, viewModel.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, viewModel.SelectedTreemapMetricOption?.Definition.Id);
     }
 
     [Fact]
-    public void SelectingSizeRadio_StoresCanonicalSizeMetric()
+    public void SelectingSizeOption_StoresCanonicalSizeMetric()
     {
         var state = new SettingsState();
         var viewModel = CreateViewModel(state);
 
-        viewModel.IsSizeMetricSelected = true;
+        viewModel.SelectedTreemapMetricOption = Assert.Single(
+            viewModel.VisibleTreemapMetricOptions,
+            option => option.Definition.Id == MetricIds.FileSizeBytes);
 
         Assert.Equal(MetricIds.FileSizeBytes, state.SelectedMetric);
-        Assert.False(viewModel.IsTokensMetricSelected);
-        Assert.False(viewModel.IsLinesMetricSelected);
-        Assert.True(viewModel.IsSizeMetricSelected);
+        Assert.Equal(MetricIds.FileSizeBytes, viewModel.SelectedMetric);
+        Assert.Equal(MetricIds.FileSizeBytes, viewModel.SelectedTreemapMetricOption?.Definition.Id);
+    }
+
+    [Fact]
+    public void HidingSelectedMetric_FallsBackToFirstVisibleMetric()
+    {
+        var state = new SettingsState
+        {
+            SelectedMetric = MetricIds.FileSizeBytes,
+        };
+        var viewModel = CreateViewModel(state);
+
+        var sizeOption = Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.FileSizeBytes);
+        sizeOption.IsVisible = false;
+
+        Assert.Equal(MetricIds.Tokens, state.SelectedMetric);
+        Assert.DoesNotContain(state.VisibleMetricIds, metricId => metricId == MetricIds.FileSizeBytes);
+        Assert.Equal(MetricIds.Tokens, viewModel.SelectedTreemapMetricOption?.Definition.Id);
+    }
+
+    [Fact]
+    public void LastVisibleMetric_ToggleIsDisabled()
+    {
+        var state = new SettingsState();
+        state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
+        state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
+        var viewModel = CreateViewModel(state);
+
+        var tokensOption = Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.Tokens);
+
+        Assert.True(tokensOption.IsVisible);
+        Assert.False(tokensOption.IsToggleEnabled);
     }
 
     [Fact]
@@ -160,6 +211,12 @@ public sealed class ToolbarViewModelTests
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
         public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
+
+        public void SetMetricVisibility(MetricId metric, bool isVisible) => MutableState.SetMetricVisibility(metric, isVisible);
+
+        public void ResetVisibleMetricIdsToDefault() => MutableState.ResetVisibleMetricIdsToDefault();
+
+        public void ShowAllMetricIds() => MutableState.ShowAllMetricIds();
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

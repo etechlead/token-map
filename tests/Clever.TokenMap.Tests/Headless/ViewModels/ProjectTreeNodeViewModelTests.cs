@@ -38,9 +38,9 @@ public sealed class ProjectTreeNodeViewModelTests
         parentNode: parentNode,
         parentShareMetric: MetricIds.Tokens);
 
-        Assert.Equal("n/a", skippedFileNode.TokensText);
-        Assert.Equal("n/a", skippedFileNode.LinesText);
-        Assert.Equal($"167{decimalSeparator}8 KB", skippedFileNode.SizeText);
+        Assert.Equal("n/a", skippedFileNode.GetMetricText(MetricIds.Tokens));
+        Assert.Equal("n/a", skippedFileNode.GetMetricText(MetricIds.NonEmptyLines));
+        Assert.Equal($"167{decimalSeparator}8 KB", skippedFileNode.GetMetricText(MetricIds.FileSizeBytes));
         Assert.Equal("n/a", skippedFileNode.ParentShareText);
         Assert.Null(skippedFileNode.ParentShareRatio);
     }

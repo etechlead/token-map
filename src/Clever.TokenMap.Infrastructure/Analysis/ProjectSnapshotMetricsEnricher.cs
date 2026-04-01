@@ -7,6 +7,7 @@ using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
+using Clever.TokenMap.Metrics.Calculators;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 
@@ -342,8 +343,6 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         CancellationToken cancellationToken)
     {
         var context = new FileMetricContext(
-            snapshot,
-            node,
             fileSizeBytes,
             artifacts: new Dictionary<Type, object?>
             {

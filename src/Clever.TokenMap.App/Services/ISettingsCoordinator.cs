@@ -18,6 +18,12 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     void SetSelectedMetric(MetricId metric);
 
+    void SetMetricVisibility(MetricId metric, bool isVisible);
+
+    void ResetVisibleMetricIdsToDefault();
+
+    void ShowAllMetricIds();
+
     void SetRespectGitIgnore(bool value);
 
     void SetUseGlobalExcludes(bool value);

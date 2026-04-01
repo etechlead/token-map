@@ -75,6 +75,16 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 settings.Analysis.SelectedMetric = selectedMetric;
             }
 
+            if (analysis.VisibleMetricIds is { } visibleMetricIds)
+            {
+                settings.Analysis.VisibleMetricIds =
+                [
+                    .. visibleMetricIds
+                        .Where(value => !string.IsNullOrWhiteSpace(value))
+                        .Select(value => new MetricId(value!))
+                ];
+            }
+
             if (analysis.RespectGitIgnore is { } respectGitIgnore)
             {
                 settings.Analysis.RespectGitIgnore = respectGitIgnore;
@@ -125,6 +135,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             Analysis = new PersistedAnalysisSettings
             {
                 SelectedMetric = settings.Analysis.SelectedMetric,
+                VisibleMetricIds = [.. settings.Analysis.VisibleMetricIds.Select(metricId => metricId.Value)],
                 RespectGitIgnore = settings.Analysis.RespectGitIgnore,
                 UseGlobalExcludes = settings.Analysis.UseGlobalExcludes,
                 GlobalExcludes = [.. settings.Analysis.GlobalExcludes],
@@ -160,6 +171,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         [JsonConverter(typeof(NullableMetricIdConverter))]
         public MetricId? SelectedMetric { get; set; }
+
+        public List<string>? VisibleMetricIds { get; set; }
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? RespectGitIgnore { get; set; }

@@ -2,7 +2,6 @@ namespace Clever.TokenMap.Core.Metrics;
 
 public enum MetricRollupKind
 {
-    None = 0,
-    Sum = 1,
-    Max = 2,
+    Sum = 0,
+    Max = 1,
 }

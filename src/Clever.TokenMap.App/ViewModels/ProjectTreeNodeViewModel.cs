@@ -45,12 +45,6 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public bool IsCollapsed => !IsExpanded;
 
-    public string SizeText => FormatMetric(MetricIds.FileSizeBytes);
-
-    public string LinesText => FormatMetric(MetricIds.NonEmptyLines);
-
-    public string TokensText => FormatMetric(MetricIds.Tokens);
-
     public double? ParentShareRatio { get; }
 
     public double ParentShareDisplayValue => Math.Clamp(ParentShareRatio ?? 0d, 0d, 1d);
@@ -128,7 +122,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         };
     }
 
-    private string FormatMetric(MetricId metricId) =>
+    public string GetMetricText(MetricId metricId) =>
         MetricValueFormatter.Format(metricId, Node.ComputedMetrics.GetOrDefault(metricId), CultureInfo.CurrentCulture);
 
     internal static double? TryCalculateParentShareRatio(ProjectNode node, ProjectNode? parentNode, MetricId metricId)

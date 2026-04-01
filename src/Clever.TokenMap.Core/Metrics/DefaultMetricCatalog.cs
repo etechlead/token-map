@@ -56,4 +56,12 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
 
     public bool TryGet(MetricId id, out MetricDefinition definition) =>
         _definitionsById.TryGetValue(id, out definition!);
+
+    public static IReadOnlyList<MetricId> GetDefaultVisibleMetricIds() =>
+        [.. Definitions
+            .Where(definition => definition.VisibleByDefault)
+            .Select(definition => definition.Id)];
+
+    public static IReadOnlyList<MetricId> GetAllMetricIds() =>
+        [.. Definitions.Select(definition => definition.Id)];
 }

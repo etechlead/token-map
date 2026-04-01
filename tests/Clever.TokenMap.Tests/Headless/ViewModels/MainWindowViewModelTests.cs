@@ -95,7 +95,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal($"66{decimalSeparator}7%", alphaByTokens.ParentShareText);
         Assert.Equal(1, analyzer.CallCount);
 
-        viewModel.Toolbar.IsSizeMetricSelected = true;
+        viewModel.Toolbar.SelectedMetric = MetricIds.FileSizeBytes;
 
         var alphaBySize = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
         Assert.Equal($"33{decimalSeparator}3%", alphaBySize.ParentShareText);

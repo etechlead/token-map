@@ -104,39 +104,6 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Tokens"
-                                            SortMemberPath="Tokens"
-                                            Width="92">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                <TextBlock Classes="tree-table-number"
-                                           VerticalAlignment="Center"
-                                           Text="{Binding TokensText}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Lines"
-                                            SortMemberPath="Lines"
-                                            Width="72">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                <TextBlock Classes="tree-table-number"
-                                           VerticalAlignment="Center"
-                                           Text="{Binding LinesText}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                    <DataGridTemplateColumn Header="Size"
-                                            SortMemberPath="Size"
-                                            Width="88">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
-                                <TextBlock Classes="tree-table-number"
-                                           VerticalAlignment="Center"
-                                           Text="{Binding SizeText}" />
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>

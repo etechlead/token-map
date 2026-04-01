@@ -20,7 +20,8 @@ public sealed class ProjectTreeViewModelTests
 
         viewModel.LoadRoot(root);
 
-        Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
+        Assert.Equal(ProjectTreeSortColumn.Metric, viewModel.CurrentSortColumn);
+        Assert.Equal(MetricIds.Tokens, viewModel.CurrentMetricSortId);
         Assert.Equal(ListSortDirection.Descending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
@@ -37,12 +38,13 @@ public sealed class ProjectTreeViewModelTests
             ("Alpha.cs", 10, 10, 1),
             ("Beta.cs", 20, 20, 1)));
 
-        viewModel.SortBy(ProjectTreeSortColumn.Tokens, ListSortDirection.Ascending);
+        viewModel.SortByMetric(MetricIds.Tokens, ListSortDirection.Ascending);
         viewModel.LoadRoot(CreateRootWithChildren(
             ("Gamma.cs", 30, 30, 1),
             ("Delta.cs", 5, 5, 1)));
 
-        Assert.Equal(ProjectTreeSortColumn.Tokens, viewModel.CurrentSortColumn);
+        Assert.Equal(ProjectTreeSortColumn.Metric, viewModel.CurrentSortColumn);
+        Assert.Equal(MetricIds.Tokens, viewModel.CurrentMetricSortId);
         Assert.Equal(ListSortDirection.Ascending, viewModel.CurrentSortDirection);
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
@@ -90,13 +92,31 @@ public sealed class ProjectTreeViewModelTests
         };
 
         viewModel.LoadRoot(root);
-        viewModel.SortBy(ProjectTreeSortColumn.Tokens, ListSortDirection.Descending);
+        viewModel.SortByMetric(MetricIds.Tokens, ListSortDirection.Descending);
 
         Assert.Collection(
             viewModel.VisibleNodes.Select(node => node.Name),
             name => Assert.Equal("Demo", name),
             name => Assert.Equal("B.cs", name),
             name => Assert.Equal("A.cs", name));
+    }
+
+    [Fact]
+    public void SetVisibleMetrics_FallsBackToFirstVisibleMetricSort()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateRootWithChildren(
+            ("Alpha.cs", 10, 10, 1),
+            ("Beta.cs", 20, 20, 1)));
+        viewModel.SortByMetric(MetricIds.FileSizeBytes, ListSortDirection.Descending);
+
+        viewModel.SetVisibleMetrics([MetricIds.NonEmptyLines, MetricIds.FileSizeBytes]);
+        Assert.Equal(MetricIds.FileSizeBytes, viewModel.CurrentMetricSortId);
+
+        viewModel.SetVisibleMetrics([MetricIds.NonEmptyLines]);
+
+        Assert.Equal(ProjectTreeSortColumn.Metric, viewModel.CurrentSortColumn);
+        Assert.Equal(MetricIds.NonEmptyLines, viewModel.CurrentMetricSortId);
     }
 
     [Fact]

@@ -95,6 +95,7 @@ internal sealed class AppSettingsSession
         lock (_syncLock)
         {
             _currentSettings.Analysis.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(State.SelectedMetric);
+            _currentSettings.Analysis.VisibleMetricIds = [.. State.VisibleMetricIds];
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.UseGlobalExcludes = State.UseGlobalExcludes;
             _currentSettings.Analysis.GlobalExcludes = [.. State.GlobalExcludes];
@@ -194,6 +195,7 @@ internal sealed class AppSettingsSession
         _isApplyingSettings = true;
         try
         {
+            State.ReplaceVisibleMetricIds(_currentSettings.Analysis.VisibleMetricIds);
             State.SelectedMetric = _currentSettings.Analysis.SelectedMetric;
             State.RespectGitIgnore = _currentSettings.Analysis.RespectGitIgnore;
             State.UseGlobalExcludes = _currentSettings.Analysis.UseGlobalExcludes;
@@ -212,6 +214,7 @@ internal sealed class AppSettingsSession
 
     private static bool IsPersistedStateProperty(string? propertyName) =>
         propertyName is nameof(SettingsState.SelectedMetric) or
+        nameof(SettingsState.VisibleMetricIds) or
         nameof(SettingsState.RespectGitIgnore) or
         nameof(SettingsState.UseGlobalExcludes) or
         nameof(SettingsState.GlobalExcludes) or

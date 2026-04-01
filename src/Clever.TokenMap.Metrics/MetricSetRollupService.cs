@@ -41,8 +41,7 @@ public sealed class MetricSetRollupService
                     builder.SetValue(definition.Id, values.Max());
                     break;
                 default:
-                    builder.SetNotApplicable(definition.Id);
-                    break;
+                    throw new InvalidOperationException($"Unsupported rollup kind '{definition.DirectoryRollup}'.");
             }
         }
 

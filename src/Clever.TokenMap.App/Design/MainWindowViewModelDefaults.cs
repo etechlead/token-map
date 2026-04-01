@@ -97,6 +97,12 @@ internal static class MainWindowViewModelDefaults
 
         public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
 
+        public void SetMetricVisibility(MetricId metric, bool isVisible) => MutableState.SetMetricVisibility(metric, isVisible);
+
+        public void ResetVisibleMetricIdsToDefault() => MutableState.ResetVisibleMetricIdsToDefault();
+
+        public void ShowAllMetricIds() => MutableState.ShowAllMetricIds();
+
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 
         public void SetUseGlobalExcludes(bool value) => MutableState.UseGlobalExcludes = value;

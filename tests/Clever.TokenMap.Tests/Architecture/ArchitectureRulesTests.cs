@@ -12,6 +12,7 @@ using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Settings;
 using Clever.TokenMap.Metrics;
+using Clever.TokenMap.Metrics.Calculators;
 using Clever.TokenMap.Treemap;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using static ArchUnitNET.Fluent.Slices.SliceRuleDefinition;

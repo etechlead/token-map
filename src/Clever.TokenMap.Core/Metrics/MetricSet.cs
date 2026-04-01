@@ -27,9 +27,6 @@ public sealed class MetricSet
 
     public IReadOnlyDictionary<MetricId, MetricValue> Values => _values;
 
-    public bool TryGet(MetricId id, out MetricValue value) =>
-        _values.TryGetValue(id, out value);
-
     public MetricValue GetOrDefault(MetricId id) =>
         _values.TryGetValue(id, out var value)
             ? value
