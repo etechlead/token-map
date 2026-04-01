@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
@@ -77,20 +78,23 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 
     public void SetCompleted(ProjectSnapshot snapshot)
     {
+        var tokenCount = snapshot.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) ?? 0;
+        var nonEmptyLineCount = snapshot.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.NonEmptyLines) ?? 0;
+        var fileCount = snapshot.Root.Summary.DescendantFileCount;
         _acceptProgressUpdates = false;
         SummaryText = snapshot.Diagnostics.Count == 0
             ? $"Analysis completed for {snapshot.Root.Name}."
             : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Diagnostics.Count:N0} diagnostics.";
         TotalsText =
-            $"{snapshot.Root.Metrics.Tokens:N0} tokens - {snapshot.Root.Metrics.NonEmptyLines:N0} non-empty lines - {snapshot.Root.Metrics.DescendantFileCount:N0} files - {snapshot.Diagnostics.Count:N0} diagnostics";
+            $"{tokenCount:N0} tokens - {nonEmptyLineCount:N0} non-empty lines - {fileCount:N0} files - {snapshot.Diagnostics.Count:N0} diagnostics";
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
         IsProgressPillVisible = false;
         ProgressPillText = string.Empty;
-        TokenSummaryValue = snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
-        LineSummaryValue = snapshot.Root.Metrics.NonEmptyLines.ToString("N0", CultureInfo.CurrentCulture);
-        FileSummaryValue = snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
+        TokenSummaryValue = tokenCount.ToString("N0", CultureInfo.CurrentCulture);
+        LineSummaryValue = nonEmptyLineCount.ToString("N0", CultureInfo.CurrentCulture);
+        FileSummaryValue = fileCount.ToString("N0", CultureInfo.CurrentCulture);
         WarningSummaryValue = snapshot.Diagnostics.Count.ToString("N0", CultureInfo.CurrentCulture);
     }
 

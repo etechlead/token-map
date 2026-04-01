@@ -16,5 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj" />
+    <ProjectReference Include="..\Clever.TokenMap.Metrics\Clever.TokenMap.Metrics.csproj" />
   </ItemGroup>
 </Project>

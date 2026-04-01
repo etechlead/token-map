@@ -1,4 +1,4 @@
-using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Tests.Support;
 
@@ -10,7 +10,7 @@ public sealed class InMemoryCacheStoreTests
     public async Task Cache_IsPartitionedByRootAndUsesRelativePathKeys()
     {
         var store = new InMemoryCacheStore();
-        var metrics = new NodeMetrics(12, 3, 1024, 1, 0);
+        var metrics = MetricTestData.CreateComputedMetrics(tokens: 12, nonEmptyLines: 3, fileSizeBytes: 1024);
         var timestamp = DateTimeOffset.UtcNow;
         var rootPathA = TestPaths.Folder("RepoA");
         var rootPathB = TestPaths.Folder("RepoB");
@@ -38,7 +38,7 @@ public sealed class InMemoryCacheStoreTests
             timestamp,
             CancellationToken.None);
 
-        Assert.Equal(metrics, sameRootHit);
+        Assert.Equal(metrics.Values, sameRootHit?.Values);
         Assert.Null(otherRootMiss);
     }
 }

@@ -3,12 +3,13 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.State;
 
 public interface IReadOnlySettingsState : INotifyPropertyChanged
 {
-    AnalysisMetric SelectedMetric { get; }
+    MetricId SelectedMetric { get; }
 
     bool RespectGitIgnore { get; }
 

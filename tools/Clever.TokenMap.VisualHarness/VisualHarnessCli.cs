@@ -1,5 +1,6 @@
 using System.Text;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.VisualHarness;
 
@@ -174,14 +175,14 @@ internal static class VisualHarnessCli
             defaultFactory: () => ThemePreference.Dark,
             defaultValueDescription: CliParsing.GetEnumToken(ThemePreference.Dark),
             allowedValues: CliParsing.GetEnumTokens(Enum.GetValues<ThemePreference>()));
-        var metric = new CliValueOption<AnalysisMetric>(
+        var metric = new CliValueOption<MetricId>(
             "--metric",
             "METRIC",
             "Select which analysis metric drives labels and treemap weighting.",
-            CliParsing.ParseEnumToken<AnalysisMetric>,
-            defaultFactory: () => AnalysisMetric.Tokens,
-            defaultValueDescription: CliParsing.GetEnumToken(AnalysisMetric.Tokens),
-            allowedValues: CliParsing.GetEnumTokens(Enum.GetValues<AnalysisMetric>()));
+            CliParsing.ParseMetricId,
+            defaultFactory: () => MetricIds.Tokens,
+            defaultValueDescription: CliParsing.GetMetricToken(MetricIds.Tokens),
+            allowedValues: CliParsing.GetMetricTokens());
         var surfaces = new CliValueOption<IReadOnlyList<CaptureSurface>>(
             "--surface",
             "SURFACES",
@@ -458,7 +459,7 @@ internal sealed record CaptureCommandDefinition(
     CliValueOption<string> ProjectRootOption,
     CliValueOption<string> OutputDirectoryOption,
     CliValueOption<ThemePreference> ThemeOption,
-    CliValueOption<AnalysisMetric> MetricOption,
+    CliValueOption<MetricId> MetricOption,
     CliValueOption<IReadOnlyList<TreemapPalette>> PaletteOption,
     CliValueOption<IReadOnlyList<CaptureSurface>> SurfaceOption,
     CliFlagOption? CompareOption,

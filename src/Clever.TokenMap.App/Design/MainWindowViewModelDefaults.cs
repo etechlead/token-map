@@ -9,6 +9,7 @@ using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.Design;
 
@@ -94,7 +95,7 @@ internal static class MainWindowViewModelDefaults
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-        public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
+        public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

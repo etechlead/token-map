@@ -4,6 +4,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.Infrastructure.Settings;
@@ -47,10 +48,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         ArgumentNullException.ThrowIfNull(settings);
 
         var normalizedSettings = AppSettingsCanonicalizer.Normalize(settings.Clone());
+        var persistedSettings = ToPersistedSettings(normalizedSettings);
 
         JsonSettingsFileHelper.TrySave(
             _settingsFilePath,
-            normalizedSettings,
+            persistedSettings,
             SerializerOptions,
             "app settings",
             IssueCodePrefix,
@@ -117,6 +119,29 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         AppSettingsCanonicalizer.Normalize(settings);
     }
 
+    private static PersistedAppSettings ToPersistedSettings(AppSettings settings) =>
+        new()
+        {
+            Analysis = new PersistedAnalysisSettings
+            {
+                SelectedMetric = settings.Analysis.SelectedMetric,
+                RespectGitIgnore = settings.Analysis.RespectGitIgnore,
+                UseGlobalExcludes = settings.Analysis.UseGlobalExcludes,
+                GlobalExcludes = [.. settings.Analysis.GlobalExcludes],
+            },
+            Appearance = new PersistedAppearanceSettings
+            {
+                ThemePreference = settings.Appearance.ThemePreference,
+                TreemapPalette = settings.Appearance.TreemapPalette,
+                ShowTreemapMetricValues = settings.Appearance.ShowTreemapMetricValues,
+            },
+            Logging = new PersistedLoggingSettings
+            {
+                MinLevel = settings.Logging.MinLevel,
+            },
+            RecentFolderPaths = [.. settings.RecentFolderPaths],
+        };
+
     private static List<string> NormalizeGlobalExcludes(IEnumerable<string?> persistedEntries) =>
         [.. GlobalExcludeList.Normalize(persistedEntries.OfType<string>())];
 
@@ -133,8 +158,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
 
     private sealed class PersistedAnalysisSettings
     {
-        [JsonConverter(typeof(NullableStringEnumConverter<AnalysisMetric>))]
-        public AnalysisMetric? SelectedMetric { get; set; }
+        [JsonConverter(typeof(NullableMetricIdConverter))]
+        public MetricId? SelectedMetric { get; set; }
 
         [JsonConverter(typeof(NullableBooleanConverter))]
         public bool? RespectGitIgnore { get; set; }
@@ -228,6 +253,37 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             if (value is { } enumValue)
             {
                 writer.WriteStringValue(enumValue.ToString());
+                return;
+            }
+
+            writer.WriteNullValue();
+        }
+    }
+
+    private sealed class NullableMetricIdConverter : JsonConverter<MetricId?>
+    {
+        public override MetricId? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return null;
+            }
+
+            if (reader.TokenType == JsonTokenType.String &&
+                reader.GetString() is { Length: > 0 } value)
+            {
+                return new MetricId(value);
+            }
+
+            using var _ = JsonDocument.ParseValue(ref reader);
+            return null;
+        }
+
+        public override void Write(Utf8JsonWriter writer, MetricId? value, JsonSerializerOptions options)
+        {
+            if (value is { } metricId)
+            {
+                writer.WriteStringValue(metricId.Value);
                 return;
             }
 

@@ -3,6 +3,7 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -62,41 +63,41 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     public bool IsTokensMetricSelected
     {
-        get => SelectedMetric == AnalysisMetric.Tokens;
+        get => SelectedMetric == MetricIds.Tokens;
         set
         {
             if (value)
             {
-                SelectedMetric = AnalysisMetric.Tokens;
+                SelectedMetric = MetricIds.Tokens;
             }
         }
     }
 
     public bool IsLinesMetricSelected
     {
-        get => SelectedMetric == AnalysisMetric.Lines;
+        get => SelectedMetric == MetricIds.NonEmptyLines;
         set
         {
             if (value)
             {
-                SelectedMetric = AnalysisMetric.Lines;
+                SelectedMetric = MetricIds.NonEmptyLines;
             }
         }
     }
 
     public bool IsSizeMetricSelected
     {
-        get => SelectedMetric == AnalysisMetric.Size;
+        get => SelectedMetric == MetricIds.FileSizeBytes;
         set
         {
             if (value)
             {
-                SelectedMetric = AnalysisMetric.Size;
+                SelectedMetric = MetricIds.FileSizeBytes;
             }
         }
     }
 
-    public AnalysisMetric SelectedMetric
+    public MetricId SelectedMetric
     {
         get => _settingsState.SelectedMetric;
         set => _settingsCoordinator.SetSelectedMetric(value);

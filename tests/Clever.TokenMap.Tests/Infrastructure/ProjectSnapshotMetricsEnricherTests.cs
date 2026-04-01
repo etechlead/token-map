@@ -1,9 +1,11 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
+using Clever.TokenMap.Metrics;
 
 namespace Clever.TokenMap.Tests.Infrastructure;
 
@@ -42,25 +44,29 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             ["hello\nworld", "one\n\n  \ntwo"],
             tokenCounter.GetSeenContents().OrderBy(content => content, StringComparer.Ordinal).ToArray());
 
-        Assert.Equal(11, programNode.Metrics.Tokens);
-        Assert.Equal(2, programNode.Metrics.NonEmptyLines);
+        Assert.Equal(11L, programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(1, programNode.Summary.DescendantFileCount);
+        Assert.Equal(0, programNode.Summary.DescendantDirectoryCount);
 
-        Assert.Equal(11, notesNode.Metrics.Tokens);
-        Assert.Equal(2, notesNode.Metrics.NonEmptyLines);
+        Assert.Equal(11L, notesNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(2, notesNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
 
         Assert.Equal(SkippedReason.Binary, imageNode.SkippedReason);
-        Assert.Equal(0, imageNode.Metrics.Tokens);
-        Assert.Equal(0, imageNode.Metrics.NonEmptyLines);
+        Assert.Null(imageNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Null(imageNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.Tokens).Status);
+        Assert.Equal(3L, imageNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.FileSizeBytes));
 
-        Assert.Equal(22, enriched.Root.Metrics.Tokens);
-        Assert.Equal(4, enriched.Root.Metrics.NonEmptyLines);
-        Assert.Equal(3, enriched.Root.Metrics.DescendantFileCount);
-        Assert.Equal(1, enriched.Root.Metrics.DescendantDirectoryCount);
+        Assert.Equal(22L, enriched.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(4, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(3, enriched.Root.Summary.DescendantFileCount);
+        Assert.Equal(1, enriched.Root.Summary.DescendantDirectoryCount);
 
-        Assert.Equal(11, srcNode.Metrics.Tokens);
-        Assert.Equal(2, srcNode.Metrics.NonEmptyLines);
-        Assert.Equal(1, srcNode.Metrics.DescendantFileCount);
-        Assert.Equal(0, srcNode.Metrics.DescendantDirectoryCount);
+        Assert.Equal(11L, srcNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(1, srcNode.Summary.DescendantFileCount);
+        Assert.Equal(0, srcNode.Summary.DescendantDirectoryCount);
     }
 
     [Fact]
@@ -85,9 +91,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             enriched.Diagnostics,
             issue => issue.Context.TryGetValue("FullPath", out var fullPath) &&
                      fullPath.Contains("gone.txt", StringComparison.OrdinalIgnoreCase));
-        Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
-        Assert.Equal(0, enriched.Root.Metrics.Tokens);
-        Assert.Equal(0, enriched.Root.Metrics.NonEmptyLines);
+        Assert.Equal(1, enriched.Root.Summary.DescendantFileCount);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.Tokens).Status);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.NonEmptyLines).Status);
     }
 
     [Fact]
@@ -106,9 +112,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var sampleNode = Assert.Single(enriched.Root.Children, node => node.Name == "sample.txt");
         var emptyNode = Assert.Single(enriched.Root.Children, node => node.Name == "empty.txt");
 
-        Assert.Equal(2, sampleNode.Metrics.NonEmptyLines);
+        Assert.Equal(2, sampleNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
 
-        Assert.Equal(0, emptyNode.Metrics.NonEmptyLines);
+        Assert.Equal(0, emptyNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
     }
 
     [Fact]
@@ -128,13 +134,15 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
         Assert.Same(originalRoot, snapshot.Root);
         Assert.Same(originalChild, snapshot.Root.Children[0]);
-        Assert.Equal(NodeMetrics.Empty, originalRoot.Metrics);
+        Assert.Equal(NodeSummary.Empty, originalRoot.Summary);
+        Assert.Same(MetricSet.Empty, originalRoot.ComputedMetrics);
         Assert.Null(originalChild.SkippedReason);
         Assert.NotSame(originalRoot, enriched.Root);
         Assert.NotSame(originalChild, enriched.Root.Children[0]);
-        Assert.Equal(NodeMetrics.Empty, originalChild.Metrics);
-        Assert.Equal(2, enriched.Root.Metrics.NonEmptyLines);
-        Assert.Equal(1, enriched.Root.Metrics.DescendantFileCount);
+        Assert.Equal(NodeSummary.Empty, originalChild.Summary);
+        Assert.Same(MetricSet.Empty, originalChild.ComputedMetrics);
+        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(1, enriched.Root.Summary.DescendantFileCount);
     }
 
     [Fact]
@@ -158,8 +166,8 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.True(seenContents.Count > 1);
         Assert.All(seenContents, chunk => Assert.True(chunk.Length <= 3));
         Assert.Equal("ab\ncd\nef", string.Concat(seenContents));
-        Assert.Equal(8, sampleNode.Metrics.Tokens);
-        Assert.Equal(3, sampleNode.Metrics.NonEmptyLines);
+        Assert.Equal(8L, sampleNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(3, sampleNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
     }
 
     [Fact]
@@ -183,8 +191,8 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var seenContents = tokenCounter.GetSeenContents();
         Assert.True(seenContents.Count > 1);
         Assert.Equal(content, string.Concat(seenContents));
-        Assert.Equal(content.Length, sampleNode.Metrics.Tokens);
-        Assert.Equal(1, sampleNode.Metrics.NonEmptyLines);
+        Assert.Equal((long)content.Length, sampleNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(1, sampleNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
     }
 
     [Fact]
@@ -205,7 +213,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
         var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
 
-        Assert.Equal(4, enriched.Root.Metrics.DescendantFileCount);
+        Assert.Equal(4, enriched.Root.Summary.DescendantFileCount);
         Assert.Equal(2, tokenCounter.MaxConcurrency);
     }
 

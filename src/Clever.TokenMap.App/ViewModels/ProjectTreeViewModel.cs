@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -18,7 +19,7 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     private readonly HashSet<string> _expandedNodeIds = new(StringComparer.Ordinal);
     private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Tokens;
     private ListSortDirection _currentSortDirection = ListSortDirection.Descending;
-    private AnalysisMetric _shareMetric = AnalysisMetric.Tokens;
+    private MetricId _shareMetric = MetricIds.Tokens;
     private ProjectNode? _rootNode;
     private string? _selectedNodeId;
 
@@ -110,9 +111,9 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
         RestoreSelectedNodeAfterRebuild();
     }
 
-    public void SetShareMetric(AnalysisMetric metric)
+    public void SetShareMetric(MetricId metric)
     {
-        var normalizedMetric = NormalizeShareMetric(metric);
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
         if (_shareMetric == normalizedMetric)
         {
             return;
@@ -367,13 +368,11 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     private static IComparable GetSortValue(ProjectNode node, ProjectTreeSortColumn column) =>
         column switch
         {
-            ProjectTreeSortColumn.Size => node.Metrics.FileSizeBytes,
-            ProjectTreeSortColumn.Lines => node.Metrics.NonEmptyLines,
-            ProjectTreeSortColumn.Tokens => node.Metrics.Tokens,
+            ProjectTreeSortColumn.Size => node.ComputedMetrics.TryGetRoundedInt64(MetricIds.FileSizeBytes) ?? 0,
+            ProjectTreeSortColumn.Lines => node.ComputedMetrics.TryGetRoundedInt64(MetricIds.NonEmptyLines) ?? 0,
+            ProjectTreeSortColumn.Tokens => node.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) ?? 0,
             _ => node.Name,
         };
-
-    private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) => metric.Normalize();
 }
 
 public enum ProjectTreeSortColumn

@@ -4,7 +4,9 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.AppState;
 
@@ -322,12 +324,8 @@ public sealed class AnalysisSessionControllerTests
                 FullPath = rootPath,
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 42,
-                    NonEmptyLines: 11,
-                    FileSizeBytes: 128,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 0, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
             },
         };
 

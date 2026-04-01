@@ -2,33 +2,28 @@ using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 
 public sealed class ProjectAnalyzer : IProjectAnalyzer
 {
     private readonly IAppLogger _logger;
-    private readonly ProjectSnapshotMetricsEnricher _metricsEnricher;
+    private readonly IProjectSnapshotMetricEngine _metricEngine;
     private readonly int _progressBatchSize;
     private readonly IProjectScanner _projectScanner;
 
     public ProjectAnalyzer(
         IProjectScanner projectScanner,
-        ITextFileDetector textFileDetector,
-        ITokenCounter tokenCounter,
-        ICacheStore? cacheStore = null,
+        IProjectSnapshotMetricEngine metricEngine,
         int progressBatchSize = 64,
         IAppLoggerFactory? loggerFactory = null)
     {
         _projectScanner = projectScanner;
+        _metricEngine = metricEngine;
         _progressBatchSize = progressBatchSize;
         var effectiveLoggerFactory = loggerFactory ?? NullAppLoggerFactory.Instance;
         _logger = effectiveLoggerFactory.CreateLogger<ProjectAnalyzer>();
-        _metricsEnricher = new ProjectSnapshotMetricsEnricher(
-            textFileDetector,
-            tokenCounter,
-            cacheStore,
-            effectiveLoggerFactory.CreateLogger<ProjectSnapshotMetricsEnricher>());
     }
 
     public async Task<ProjectSnapshot> AnalyzeAsync(
@@ -68,28 +63,30 @@ public sealed class ProjectAnalyzer : IProjectAnalyzer
 
             bufferedProgress.Flush();
 
-            var enrichedSnapshot = await _metricsEnricher.EnrichAsync(
+            var enrichedSnapshot = await _metricEngine.EnrichAsync(
                 scannedSnapshot,
                 bufferedProgress,
                 cancellationToken);
 
             bufferedProgress.Report(new AnalysisProgress(
                 Phase: "Completed",
-                ProcessedNodeCount: enrichedSnapshot.Root.Metrics.DescendantFileCount,
-                TotalNodeCount: enrichedSnapshot.Root.Metrics.DescendantFileCount,
+                ProcessedNodeCount: enrichedSnapshot.Root.Summary.DescendantFileCount,
+                TotalNodeCount: enrichedSnapshot.Root.Summary.DescendantFileCount,
                 CurrentPath: null));
             bufferedProgress.Flush();
 
             var duration = DateTimeOffset.Now - startedAt;
+            var tokenCount = enrichedSnapshot.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) ?? 0;
+            var nonEmptyLineCount = enrichedSnapshot.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines) ?? 0;
             _logger.LogInformation(
                 "Analysis completed.",
                 eventCode: "analysis.completed",
                 context: AppIssueContext.Create(
                     ("RootPath", rootPath),
                     ("DurationSeconds", duration.TotalSeconds),
-                    ("FileCount", enrichedSnapshot.Root.Metrics.DescendantFileCount),
-                    ("TokenCount", enrichedSnapshot.Root.Metrics.Tokens),
-                    ("NonEmptyLineCount", enrichedSnapshot.Root.Metrics.NonEmptyLines),
+                    ("FileCount", enrichedSnapshot.Root.Summary.DescendantFileCount),
+                    ("TokenCount", tokenCount),
+                    ("NonEmptyLineCount", nonEmptyLineCount),
                     ("DiagnosticCount", enrichedSnapshot.Diagnostics.Count)));
 
             return enrichedSnapshot;

@@ -6,7 +6,8 @@ This document covers project purpose, canonical ownership, runtime flow, and non
 ## Projects
 
 - `Clever.TokenMap.Core`: shared domain layer. Holds analysis models, contracts, enums, path rules, and settings DTOs used across the solution.
-- `Clever.TokenMap.Infrastructure`: local implementation layer. Holds filesystem scanning, ignore evaluation, metrics enrichment, token counting, caching, logging, and settings persistence.
+- `Clever.TokenMap.Metrics`: reusable metrics layer. Holds metric catalogs, calculator contracts, and metric-specific analysis helpers that depend only on core contracts.
+- `Clever.TokenMap.Infrastructure`: local implementation layer. Holds filesystem scanning, ignore evaluation, metrics enrichment orchestration, token counting, caching, logging, and settings persistence.
 - `Clever.TokenMap.Treemap`: treemap UI primitive. Holds the custom-rendered treemap control plus layout and rendering rules.
 - `Clever.TokenMap.App`: desktop shell. Holds runtime composition, app state, app services, view models, and Avalonia views that project snapshots and settings into UI.
 - `Clever.TokenMap.VisualHarness`: repo tooling for visual capture and comparison of UI surfaces and treemap rendering.
@@ -35,5 +36,6 @@ This document covers project purpose, canonical ownership, runtime flow, and non
 - `Clever.TokenMap.App` does not access the filesystem or settings files directly.
 - The scanner defines the included tree and analyzed node set.
 - Metrics enrichment returns a new snapshot; scanner output is not mutated in place.
+- `Clever.TokenMap.Metrics` stays below app/infrastructure orchestration and above core models; UI consumes metric abstractions through core contracts.
 - Token counting stays behind `ITokenCounter`.
 - The treemap stays one custom-rendered control.

@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Treemap;
 
@@ -19,8 +20,8 @@ public sealed class TreemapControl : Control
     private const double TooltipColumnSpacing = 12;
     private const double TooltipMaxWidth = 360;
 
-    public static readonly StyledProperty<AnalysisMetric> MetricProperty =
-        AvaloniaProperty.Register<TreemapControl, AnalysisMetric>(nameof(Metric), AnalysisMetric.Tokens);
+    public static readonly StyledProperty<MetricId> MetricProperty =
+        AvaloniaProperty.Register<TreemapControl, MetricId>(nameof(Metric), MetricIds.Tokens);
 
     public static readonly StyledProperty<ProjectNode?> RootNodeProperty =
         AvaloniaProperty.Register<TreemapControl, ProjectNode?>(nameof(RootNode));
@@ -141,7 +142,7 @@ public sealed class TreemapControl : Control
             HoverBorderBrushProperty);
     }
 
-    public AnalysisMetric Metric
+    public MetricId Metric
     {
         get => GetValue(MetricProperty);
         set => SetValue(MetricProperty, value);
@@ -740,7 +741,7 @@ public sealed class TreemapControl : Control
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatAnalysisMetric(node, node.Metrics.Tokens)}\nShare: {share}\nNon-empty lines: {FormatAnalysisMetric(node, node.Metrics.NonEmptyLines)}\nExt: {extension}\nFiles in subtree: {node.Metrics.DescendantFileCount:N0}";
+        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatMetric(node, MetricIds.Tokens)}\nShare: {share}\nNon-empty lines: {FormatMetric(node, MetricIds.NonEmptyLines)}\nExt: {extension}\nFiles in subtree: {node.Summary.DescendantFileCount:N0}";
     }
 
     private void DrawTooltipOverlay(DrawingContext context)
@@ -866,11 +867,11 @@ public sealed class TreemapControl : Control
         return
         [
             ("Type", GetKindText(node)),
-            ("Tokens", FormatAnalysisMetric(node, node.Metrics.Tokens)),
+            ("Tokens", FormatMetric(node, MetricIds.Tokens)),
             ("Share", share),
-            ("Non-empty lines", FormatAnalysisMetric(node, node.Metrics.NonEmptyLines)),
+            ("Non-empty lines", FormatMetric(node, MetricIds.NonEmptyLines)),
             ("Ext", extension),
-            ("Files in subtree", node.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
+            ("Files in subtree", node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
         ];
     }
 
@@ -1036,15 +1037,12 @@ public sealed class TreemapControl : Control
         return null;
     }
 
-    private long? TryGetMetricValueLabelValue(ProjectNode node)
+    private MetricValue? TryGetMetricValueLabelValue(ProjectNode node)
     {
-        var normalizedMetric = Metric.Normalize();
-        if (normalizedMetric != AnalysisMetric.Size && node.SkippedReason is not null)
-        {
-            return null;
-        }
-
-        return normalizedMetric.GetValue(node.Metrics);
+        var metricValue = node.ComputedMetrics.GetOrDefault(DefaultMetricCatalog.NormalizeMetricId(Metric));
+        return metricValue.HasValue
+            ? metricValue
+            : null;
     }
 
     private static Rect GetCenteredMetricBounds(ProjectNode node, Rect bounds, FormattedText metricLabel)
@@ -1055,7 +1053,8 @@ public sealed class TreemapControl : Control
         return new Rect(x, y, metricLabel.Width, metricLabel.Height);
     }
 
-    private double GetMetricValue(ProjectNode node) => Metric.GetValue(node.Metrics);
+    private double GetMetricValue(ProjectNode node) =>
+        node.ComputedMetrics.TryGetNumber(DefaultMetricCatalog.NormalizeMetricId(Metric)) ?? 0;
 
     private static string FormatShare(double current, double total) =>
         total <= 0 || current <= 0 ? "n/a" : $"{current / total:P1}";
@@ -1068,10 +1067,8 @@ public sealed class TreemapControl : Control
             _ => "File",
         };
 
-    private static string FormatAnalysisMetric(ProjectNode node, long value) =>
-        node.SkippedReason is not null
-            ? "n/a"
-            : value.ToString("N0", CultureInfo.CurrentCulture);
+    private static string FormatMetric(ProjectNode node, MetricId metricId) =>
+        MetricValueFormatter.Format(metricId, node.ComputedMetrics.GetOrDefault(metricId), CultureInfo.CurrentCulture);
 
     private static bool IsLeafNode(ProjectNode node) =>
         node.Kind == ProjectNodeKind.File || node.Children.Count == 0;

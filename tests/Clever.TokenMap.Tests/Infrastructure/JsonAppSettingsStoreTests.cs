@@ -1,6 +1,7 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Settings;
 
@@ -20,7 +21,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.Tokens, settings.Analysis.SelectedMetric);
         Assert.True(settings.Analysis.RespectGitIgnore);
         Assert.True(settings.Analysis.UseGlobalExcludes);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, settings.Analysis.GlobalExcludes);
@@ -39,7 +40,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             """
             {
               "analysis": {
-                "selectedMetric": "Lines",
+                "selectedMetric": "non_empty_lines",
                 "selectedTokenProfile": 123,
                 "respectGitIgnore": false,
                 "useGlobalExcludes": false,
@@ -71,7 +72,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.Lines, settings.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, settings.Analysis.SelectedMetric);
         Assert.False(settings.Analysis.RespectGitIgnore);
         Assert.False(settings.Analysis.UseGlobalExcludes);
         Assert.Collection(
@@ -111,7 +112,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.Tokens, settings.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Light, settings.Appearance.ThemePreference);
     }
 
@@ -167,7 +168,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.Tokens, settings.Analysis.SelectedMetric);
         Assert.Contains(
             logger.Entries,
             entry => entry.Level == AppLogLevel.Warning &&
@@ -215,7 +216,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = AnalysisMetric.Size;
+        settings.Analysis.SelectedMetric = MetricIds.FileSizeBytes;
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.UseGlobalExcludes = false;
         settings.Analysis.GlobalExcludes = [" node_modules\\ ", "", "/src//generated/**", "!nested/scripts/"];
@@ -238,7 +239,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
 
         var reloaded = store.Load();
 
-        Assert.Equal(AnalysisMetric.Size, reloaded.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.FileSizeBytes, reloaded.Analysis.SelectedMetric);
         Assert.False(reloaded.Analysis.RespectGitIgnore);
         Assert.False(reloaded.Analysis.UseGlobalExcludes);
         Assert.Collection(
@@ -261,13 +262,13 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
     {
         var store = CreateStore();
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = AnalysisMetric.Lines;
+        settings.Analysis.SelectedMetric = MetricIds.NonEmptyLines;
 
         store.Save(settings);
 
         var persistedJson = File.ReadAllText(GetSettingsFilePath());
 
-        Assert.Contains(@"""selectedMetric"": ""Lines""", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""selectedMetric"": ""non_empty_lines""", persistedJson, StringComparison.Ordinal);
     }
 
     public void Dispose()

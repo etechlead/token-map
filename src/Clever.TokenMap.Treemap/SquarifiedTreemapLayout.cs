@@ -1,6 +1,7 @@
 using Avalonia;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Treemap;
 
@@ -9,7 +10,7 @@ public sealed class SquarifiedTreemapLayout
     public IReadOnlyList<TreemapNodeVisual> Calculate(
         ProjectNode rootNode,
         Rect bounds,
-        AnalysisMetric metric,
+        MetricId metric,
         bool includeDirectoryHeaders = true,
         double minLeafAreaRatio = 0)
     {
@@ -20,15 +21,16 @@ public sealed class SquarifiedTreemapLayout
             return [];
         }
 
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
         var minimumLeafWeight = Math.Max(0, minLeafAreaRatio) <= 0
             ? 0
-            : GetWeight(rootNode, metric) * Math.Max(0, minLeafAreaRatio);
+            : GetWeight(rootNode, normalizedMetric) * Math.Max(0, minLeafAreaRatio);
         var effectiveWeightCache = new Dictionary<ProjectNode, double>();
         var visuals = new List<TreemapNodeVisual>();
         LayoutNode(
             rootNode,
             bounds,
-            metric,
+            normalizedMetric,
             visuals,
             depth: 0,
             includeDirectoryHeaders,
@@ -40,7 +42,7 @@ public sealed class SquarifiedTreemapLayout
     private void LayoutNode(
         ProjectNode node,
         Rect bounds,
-        AnalysisMetric metric,
+        MetricId metric,
         List<TreemapNodeVisual> visuals,
         int depth,
         bool includeDirectoryHeaders,
@@ -114,7 +116,7 @@ public sealed class SquarifiedTreemapLayout
         IReadOnlyList<WeightedNode> row,
         Rect bounds,
         List<TreemapNodeVisual> visuals,
-        AnalysisMetric metric,
+        MetricId metric,
         int depth,
         bool includeDirectoryHeaders,
         double minimumLeafWeight,
@@ -229,7 +231,7 @@ public sealed class SquarifiedTreemapLayout
 
     private static double GetEffectiveWeight(
         ProjectNode node,
-        AnalysisMetric metric,
+        MetricId metric,
         double minimumLeafWeight,
         Dictionary<ProjectNode, double> effectiveWeightCache)
     {
@@ -259,8 +261,8 @@ public sealed class SquarifiedTreemapLayout
         return effectiveWeight;
     }
 
-    private static double GetWeight(ProjectNode node, AnalysisMetric metric) =>
-        metric.GetValue(node.Metrics);
+    private static double GetWeight(ProjectNode node, MetricId metricId) =>
+        node.ComputedMetrics.TryGetNumber(metricId) ?? 0;
 
     private sealed record WeightedNode(ProjectNode Node, double Weight)
     {

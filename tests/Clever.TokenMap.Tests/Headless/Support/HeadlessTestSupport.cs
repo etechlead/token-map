@@ -8,6 +8,7 @@ using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
@@ -29,12 +30,8 @@ internal static class HeadlessTestSupport
                 FullPath = TestPaths.Folder("Demo"),
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 42,
-                    NonEmptyLines: 11,
-                    FileSizeBytes: 128,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
                 Children =
                 {
                     new ProjectNode
@@ -44,12 +41,8 @@ internal static class HeadlessTestSupport
                         FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "Program.cs"),
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 42,
-                            NonEmptyLines: 11,
-                            FileSizeBytes: 128,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
                     },
                 },
             },
@@ -68,12 +61,8 @@ internal static class HeadlessTestSupport
                 FullPath = TestPaths.Folder("Demo"),
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 42,
-                    NonEmptyLines: 11,
-                    FileSizeBytes: 128,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 1),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 1),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
                 Children =
                 {
                     new ProjectNode
@@ -83,12 +72,8 @@ internal static class HeadlessTestSupport
                         FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "src"),
                         RelativePath = "src",
                         Kind = ProjectNodeKind.Directory,
-                        Metrics = new NodeMetrics(
-                            Tokens: 42,
-                            NonEmptyLines: 11,
-                            FileSizeBytes: 128,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
                         Children =
                         {
                             new ProjectNode
@@ -98,12 +83,8 @@ internal static class HeadlessTestSupport
                                 FullPath = TestPaths.CombineUnder(TestPaths.Folder("Demo"), "src", "Program.cs"),
                                 RelativePath = "src/Program.cs",
                                 Kind = ProjectNodeKind.File,
-                                Metrics = new NodeMetrics(
-                                    Tokens: 42,
-                                    NonEmptyLines: 11,
-                                    FileSizeBytes: 128,
-                                    DescendantFileCount: 1,
-                                    DescendantDirectoryCount: 0),
+                                Summary = MetricTestData.CreateFileSummary(),
+                                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
                             },
                         },
                     },
@@ -121,12 +102,11 @@ internal static class HeadlessTestSupport
             FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
-            Metrics = new NodeMetrics(
-                Tokens: children.Sum(item => item.Tokens),
-                NonEmptyLines: children.Sum(item => item.NonEmptyLines),
-                FileSizeBytes: children.Sum(item => item.FileSizeBytes),
-                DescendantFileCount: children.Length,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: children.Length, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                tokens: children.Sum(item => item.Tokens),
+                nonEmptyLines: children.Sum(item => item.NonEmptyLines),
+                fileSizeBytes: children.Sum(item => item.FileSizeBytes)),
         };
 
         foreach (var item in children)
@@ -138,12 +118,11 @@ internal static class HeadlessTestSupport
                 FullPath = Path.Combine(demoRootPath, item.Name),
                 RelativePath = item.Name,
                 Kind = ProjectNodeKind.File,
-                Metrics = new NodeMetrics(
-                    Tokens: item.Tokens,
-                    NonEmptyLines: item.NonEmptyLines,
-                    FileSizeBytes: item.FileSizeBytes,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateFileSummary(),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                    tokens: item.Tokens,
+                    nonEmptyLines: item.NonEmptyLines,
+                    fileSizeBytes: item.FileSizeBytes),
             });
         }
 
@@ -233,7 +212,7 @@ internal static class HeadlessTestSupport
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-        public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
+        public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

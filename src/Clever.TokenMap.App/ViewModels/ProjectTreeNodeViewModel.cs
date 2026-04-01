@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
@@ -17,7 +18,7 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         int depth = 0,
         bool isExpanded = false,
         ProjectNode? parentNode = null,
-        AnalysisMetric parentShareMetric = AnalysisMetric.Tokens)
+        MetricId parentShareMetric = default)
     {
         Node = node;
         Depth = depth;
@@ -44,11 +45,11 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
 
     public bool IsCollapsed => !IsExpanded;
 
-    public string SizeText => FormatFileSize(Node.Metrics.FileSizeBytes);
+    public string SizeText => FormatMetric(MetricIds.FileSizeBytes);
 
-    public string LinesText => FormatAnalysisMetric(Node.Metrics.NonEmptyLines);
+    public string LinesText => FormatMetric(MetricIds.NonEmptyLines);
 
-    public string TokensText => FormatAnalysisMetric(Node.Metrics.Tokens);
+    public string TokensText => FormatMetric(MetricIds.Tokens);
 
     public double? ParentShareRatio { get; }
 
@@ -127,23 +128,12 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         };
     }
 
-    private static string FormatFileSize(long bytes) =>
-        bytes switch
-        {
-            >= 1024L * 1024L * 1024L => $"{bytes / 1024d / 1024d / 1024d:F1} GB",
-            >= 1024 * 1024 => $"{bytes / 1024d / 1024d:F1} MB",
-            >= 1024 => $"{bytes / 1024d:F1} KB",
-            _ => $"{bytes} B",
-        };
+    private string FormatMetric(MetricId metricId) =>
+        MetricValueFormatter.Format(metricId, Node.ComputedMetrics.GetOrDefault(metricId), CultureInfo.CurrentCulture);
 
-    private string FormatAnalysisMetric(long value) =>
-        Node.SkippedReason is not null
-            ? "n/a"
-            : value.ToString("N0", CultureInfo.CurrentCulture);
-
-    internal static double? TryCalculateParentShareRatio(ProjectNode node, ProjectNode? parentNode, AnalysisMetric metric)
+    internal static double? TryCalculateParentShareRatio(ProjectNode node, ProjectNode? parentNode, MetricId metricId)
     {
-        var normalizedMetric = metric.Normalize();
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metricId);
 
         if (node.Kind == ProjectNodeKind.Root && parentNode is null)
         {
@@ -170,15 +160,10 @@ public partial class ProjectTreeNodeViewModel : ViewModelBase
         return currentValue.Value / parentValue.Value;
     }
 
-    internal static double? TryGetMetricValue(ProjectNode node, AnalysisMetric metric)
+    internal static double? TryGetMetricValue(ProjectNode node, MetricId metricId)
     {
-        var normalizedMetric = metric.Normalize();
-        if (normalizedMetric != AnalysisMetric.Size && node.SkippedReason is not null)
-        {
-            return null;
-        }
-
-        return normalizedMetric.GetValue(node.Metrics);
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metricId);
+        return node.ComputedMetrics.TryGetNumber(normalizedMetric);
     }
 
     private static string FormatParentShare(double? ratio) =>

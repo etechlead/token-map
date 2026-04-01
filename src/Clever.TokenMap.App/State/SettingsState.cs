@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -26,7 +27,7 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     }
 
     [ObservableProperty]
-    private AnalysisMetric selectedMetric = AnalysisMetric.Tokens;
+    private MetricId selectedMetric = MetricIds.Tokens;
 
     [ObservableProperty]
     private bool respectGitIgnore = true;

@@ -3,6 +3,7 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
@@ -31,7 +32,7 @@ public sealed class ToolbarViewModelTests
 
         viewModel.IsLinesMetricSelected = true;
 
-        Assert.Equal(AnalysisMetric.Lines, state.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, state.SelectedMetric);
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.True(viewModel.IsLinesMetricSelected);
     }
@@ -41,7 +42,7 @@ public sealed class ToolbarViewModelTests
     {
         var state = new SettingsState
         {
-            SelectedMetric = AnalysisMetric.Lines,
+            SelectedMetric = MetricIds.NonEmptyLines,
         };
         var viewModel = CreateViewModel(state);
 
@@ -58,7 +59,7 @@ public sealed class ToolbarViewModelTests
 
         viewModel.IsSizeMetricSelected = true;
 
-        Assert.Equal(AnalysisMetric.Size, state.SelectedMetric);
+        Assert.Equal(MetricIds.FileSizeBytes, state.SelectedMetric);
         Assert.False(viewModel.IsTokensMetricSelected);
         Assert.False(viewModel.IsLinesMetricSelected);
         Assert.True(viewModel.IsSizeMetricSelected);
@@ -158,7 +159,7 @@ public sealed class ToolbarViewModelTests
 
         public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-        public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
+        public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

@@ -81,12 +81,16 @@ public static class AppComposition
         services.AddSingleton<ITokenCounter, MicrosoftMlTokenCounter>();
         services.AddSingleton<ICacheStore>(sp =>
             new InMemoryCacheStore(sp.GetRequiredService<PathNormalizer>()));
-        services.AddSingleton<IProjectAnalyzer>(sp =>
-            new ProjectAnalyzer(
-                sp.GetRequiredService<IProjectScanner>(),
+        services.AddSingleton<IProjectSnapshotMetricEngine>(sp =>
+            new ProjectSnapshotMetricsEnricher(
                 sp.GetRequiredService<ITextFileDetector>(),
                 sp.GetRequiredService<ITokenCounter>(),
                 sp.GetRequiredService<ICacheStore>(),
+                sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<ProjectSnapshotMetricsEnricher>()));
+        services.AddSingleton<IProjectAnalyzer>(sp =>
+            new ProjectAnalyzer(
+                sp.GetRequiredService<IProjectScanner>(),
+                sp.GetRequiredService<IProjectSnapshotMetricEngine>(),
                 loggerFactory: sp.GetRequiredService<IAppLoggerFactory>()));
         services.AddSingleton<IFolderPickerService>(sp =>
             new WindowFolderPickerService(() => sp.GetRequiredService<MainWindow>()));

@@ -10,6 +10,7 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.VisualHarness;
@@ -81,7 +82,7 @@ internal static class VisualCaptureRunner
         var report = new CaptureRunReport(
             Scenario: options.Source.ToString().ToLowerInvariant(),
             Theme: options.ThemePreference.ToString(),
-            Metric: options.Metric.ToString(),
+            Metric: CliParsing.GetMetricToken(options.Metric),
             ProjectRoot: options.ProjectRoot,
             OutputDirectory: options.OutputDirectory,
             GeneratedAtUtc: DateTimeOffset.UtcNow,
@@ -281,7 +282,17 @@ internal static class VisualCaptureRunner
         }
 
         var root = snapshot.Root;
-        var metrics = root.Metrics;
+        var computedMetricValues = root.ComputedMetrics.Values.ToDictionary(entry => entry.Key, entry => entry.Value);
+        if (overrides.Tokens is { } tokens)
+        {
+            computedMetricValues[MetricIds.Tokens] = MetricValue.From(tokens);
+        }
+
+        if (overrides.Lines is { } lines)
+        {
+            computedMetricValues[MetricIds.NonEmptyLines] = MetricValue.From(lines);
+        }
+
         var updatedRoot = new ProjectNode
         {
             Id = root.Id,
@@ -289,12 +300,11 @@ internal static class VisualCaptureRunner
             FullPath = root.FullPath,
             RelativePath = root.RelativePath,
             Kind = root.Kind,
-            Metrics = metrics with
+            Summary = root.Summary with
             {
-                Tokens = overrides.Tokens ?? metrics.Tokens,
-                NonEmptyLines = overrides.Lines ?? metrics.NonEmptyLines,
-                DescendantFileCount = overrides.Files ?? metrics.DescendantFileCount,
+                DescendantFileCount = overrides.Files ?? root.Summary.DescendantFileCount,
             },
+            ComputedMetrics = new MetricSet(computedMetricValues),
             SkippedReason = root.SkippedReason,
         };
 

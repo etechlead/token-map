@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Core.Settings;
@@ -12,7 +13,7 @@ public static class AppSettingsCanonicalizer
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        settings.Analysis.SelectedMetric = settings.Analysis.SelectedMetric.Normalize();
+        settings.Analysis.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(settings.Analysis.SelectedMetric);
         settings.Appearance.TreemapPalette = NormalizeTreemapPalette(settings.Appearance.TreemapPalette);
         settings.Analysis.GlobalExcludes = [.. GlobalExcludeList.Normalize(settings.Analysis.GlobalExcludes)];
         settings.RecentFolderPaths = NormalizeRecentFolderPaths(settings.RecentFolderPaths);

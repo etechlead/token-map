@@ -1,6 +1,8 @@
 using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Support;
 using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.Tests.Treemap;
@@ -22,7 +24,7 @@ public sealed class TreemapColorRulesTests
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("src/app/b.cs");
-        var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.Tokens);
 
         var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
         var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
@@ -36,7 +38,7 @@ public sealed class TreemapColorRulesTests
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("tests/app/a.cs");
-        var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.Tokens);
 
         var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
         var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
@@ -60,7 +62,7 @@ public sealed class TreemapColorRulesTests
     {
         var first = CreateFile("src/app/a.cs");
         var second = CreateFile("src\\app\\b.cs");
-        var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.Tokens);
 
         var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Plain, context);
         var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Plain, context);
@@ -73,7 +75,7 @@ public sealed class TreemapColorRulesTests
     {
         var larger = CreateFile("src/app/a.cs", tokens: 600);
         var smaller = CreateFile("src/app/b.cs", tokens: 40);
-        var context = TreemapColorRules.CreatePaletteContext([larger, smaller], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([larger, smaller], MetricIds.Tokens);
 
         var largerColor = TreemapColorRules.GetLeafColor(larger, TreemapPalette.Weighted, context);
         var smallerColor = TreemapColorRules.GetLeafColor(smaller, TreemapPalette.Weighted, context);
@@ -88,8 +90,8 @@ public sealed class TreemapColorRulesTests
     {
         var first = CreateFile("src/app/a.cs", tokens: 900, totalLines: 50, fileSizeBytes: 50);
         var second = CreateFile("src/app/b.cs", tokens: 60, totalLines: 600, fileSizeBytes: 600);
-        var tokensContext = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
-        var linesContext = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Lines);
+        var tokensContext = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.Tokens);
+        var linesContext = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.NonEmptyLines);
 
         var tokensColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Weighted, tokensContext);
         var linesColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Weighted, linesContext);
@@ -103,7 +105,7 @@ public sealed class TreemapColorRulesTests
     {
         var larger = CreateFile("src/app/a.cs", tokens: 800);
         var smaller = CreateFile("src/app/b.cs", tokens: 30);
-        var context = TreemapColorRules.CreatePaletteContext([larger, smaller], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([larger, smaller], MetricIds.Tokens);
 
         var largerColor = TreemapColorRules.GetLeafColor(larger, TreemapPalette.Studio, context);
         var smallerColor = TreemapColorRules.GetLeafColor(smaller, TreemapPalette.Studio, context);
@@ -117,7 +119,7 @@ public sealed class TreemapColorRulesTests
     {
         var first = CreateFile("src/app/a.cs", tokens: 200);
         var second = CreateFile("tests/app/a.cs", tokens: 200);
-        var context = TreemapColorRules.CreatePaletteContext([first, second], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([first, second], MetricIds.Tokens);
 
         var firstColor = TreemapColorRules.GetLeafColor(first, TreemapPalette.Studio, context);
         var secondColor = TreemapColorRules.GetLeafColor(second, TreemapPalette.Studio, context);
@@ -131,7 +133,7 @@ public sealed class TreemapColorRulesTests
         var nodes = Enumerable.Range(0, 12)
             .Select(index => CreateFile($"group-{index}/item.cs", tokens: 200))
             .ToArray();
-        var context = TreemapColorRules.CreatePaletteContext(nodes, AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext(nodes, MetricIds.Tokens);
 
         var distinctColors = nodes
             .Select(node => TreemapColorRules.GetLeafColor(node, TreemapPalette.Studio, context))
@@ -148,9 +150,9 @@ public sealed class TreemapColorRulesTests
         var second = CreateFile("b.cs", tokens: 100);
         var third = CreateFile("c.cs", tokens: 1_000);
 
-        var context = TreemapColorRules.CreatePaletteContext([first, second, third], AnalysisMetric.Tokens);
+        var context = TreemapColorRules.CreatePaletteContext([first, second, third], MetricIds.Tokens);
 
-        Assert.Equal(AnalysisMetric.Tokens, context.Metric);
+        Assert.Equal(MetricIds.Tokens, context.Metric);
         Assert.Equal(10, context.MinLeafWeight);
         Assert.Equal(1_000, context.MaxLeafWeight);
     }
@@ -170,12 +172,10 @@ public sealed class TreemapColorRulesTests
             FullPath = $"C:\\root\\{relativePath.Replace('/', '\\')}",
             RelativePath = relativePath,
             Kind = ProjectNodeKind.File,
-            Metrics = new NodeMetrics(
-                Tokens: tokens,
-                NonEmptyLines: totalLines,
-                FileSizeBytes: fileSizeBytes,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateFileSummary(),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                tokens: tokens,
+                nonEmptyLines: totalLines,
+                fileSizeBytes: fileSizeBytes),
         };
 }
-

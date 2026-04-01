@@ -6,8 +6,10 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
 using Clever.TokenMap.Treemap;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using PathShape = Avalonia.Controls.Shapes.Path;
@@ -412,12 +414,11 @@ public sealed class ShareSnapshotModalTests
                 FullPath = stressRepoPath,
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: scenario.Tokens,
-                    NonEmptyLines: scenario.NonEmptyLines,
-                    FileSizeBytes: scenario.Tokens * 8L,
-                    DescendantFileCount: fileCount,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: fileCount, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                    tokens: scenario.Tokens,
+                    nonEmptyLines: scenario.NonEmptyLines,
+                    fileSizeBytes: scenario.Tokens * 8L),
                 Children =
                 {
                     new ProjectNode
@@ -427,12 +428,11 @@ public sealed class ShareSnapshotModalTests
                         FullPath = Path.Combine(stressRepoPath, "src"),
                         RelativePath = "src",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: childTokens,
-                            NonEmptyLines: childLines,
-                            FileSizeBytes: childTokens * 8L,
-                            DescendantFileCount: Math.Max(1, fileCount / 2),
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                            tokens: childTokens,
+                            nonEmptyLines: childLines,
+                            fileSizeBytes: childTokens * 8L),
                     },
                     new ProjectNode
                     {
@@ -441,12 +441,11 @@ public sealed class ShareSnapshotModalTests
                         FullPath = Path.Combine(stressRepoPath, "tests"),
                         RelativePath = "tests",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: remainingTokens,
-                            NonEmptyLines: remainingLines,
-                            FileSizeBytes: remainingTokens * 8L,
-                            DescendantFileCount: Math.Max(1, fileCount - Math.Max(1, fileCount / 2)),
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(
+                            tokens: remainingTokens,
+                            nonEmptyLines: remainingLines,
+                            fileSizeBytes: remainingTokens * 8L),
                     },
                 },
             },

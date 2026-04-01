@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Logging;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.App.Services;
@@ -93,7 +94,7 @@ internal sealed class AppSettingsSession
 
         lock (_syncLock)
         {
-            _currentSettings.Analysis.SelectedMetric = State.SelectedMetric;
+            _currentSettings.Analysis.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(State.SelectedMetric);
             _currentSettings.Analysis.RespectGitIgnore = State.RespectGitIgnore;
             _currentSettings.Analysis.UseGlobalExcludes = State.UseGlobalExcludes;
             _currentSettings.Analysis.GlobalExcludes = [.. State.GlobalExcludes];

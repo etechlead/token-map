@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
@@ -28,8 +29,10 @@ public sealed class ProjectAnalyzerTests : IDisposable
         var second = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
 
         Assert.Equal(1, tokenCounter.CallCount);
-        Assert.Equal(first.Root.Metrics.Tokens, second.Root.Metrics.Tokens);
-        Assert.Equal(5, second.Root.Metrics.Tokens);
+        Assert.Equal(
+            first.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens),
+            second.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(5, second.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
     }
 
     [Fact]
@@ -50,8 +53,8 @@ public sealed class ProjectAnalyzerTests : IDisposable
         var second = await analyzer.AnalyzeAsync(rootB, ScanOptions.Default, progress: null, CancellationToken.None);
 
         Assert.Equal(2, tokenCounter.CallCount);
-        Assert.Equal(5, first.Root.Metrics.Tokens);
-        Assert.Equal(10, second.Root.Metrics.Tokens);
+        Assert.Equal(5, first.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(10, second.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
     }
 
     [Fact]
@@ -71,8 +74,8 @@ public sealed class ProjectAnalyzerTests : IDisposable
         var second = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
 
         Assert.Equal(2, tokenCounter.CallCount);
-        Assert.Equal(5, first.Root.Metrics.Tokens);
-        Assert.Equal(10, second.Root.Metrics.Tokens);
+        Assert.Equal(5, first.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.Equal(10, second.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
     }
 
     [Fact]
@@ -86,16 +89,17 @@ public sealed class ProjectAnalyzerTests : IDisposable
         var progress = new CapturingProgress();
         var analyzer = new ProjectAnalyzer(
             new FileSystemProjectScanner(),
-            new AlwaysTextDetector(),
-            new RecordingTokenCounter(),
-            cacheStore: new InMemoryCacheStore(),
+            new ProjectSnapshotMetricsEnricher(
+                new AlwaysTextDetector(),
+                new RecordingTokenCounter(),
+                cacheStore: new InMemoryCacheStore()),
             progressBatchSize: 3);
 
         var snapshot = await analyzer.AnalyzeAsync(_rootPath, ScanOptions.Default, progress, CancellationToken.None);
 
         var progressEvents = progress.GetSnapshot();
 
-        Assert.Equal(7, snapshot.Root.Metrics.DescendantFileCount);
+        Assert.Equal(7, snapshot.Root.Summary.DescendantFileCount);
         Assert.Contains(progressEvents, value => value.Phase == "Initializing");
         Assert.Contains(progressEvents, value => value.Phase == "ScanningTree");
         Assert.Contains(progressEvents, value => value.Phase == "AnalyzingFiles");
@@ -110,9 +114,10 @@ public sealed class ProjectAnalyzerTests : IDisposable
 
         var analyzer = new ProjectAnalyzer(
             new FileSystemProjectScanner(),
-            new AlwaysTextDetector(),
-            new BlockingTokenCounter(),
-            cacheStore: null,
+            new ProjectSnapshotMetricsEnricher(
+                new AlwaysTextDetector(),
+                new BlockingTokenCounter(),
+                cacheStore: null),
             progressBatchSize: 2);
 
         using var cancellationTokenSource = new CancellationTokenSource();
@@ -134,9 +139,10 @@ public sealed class ProjectAnalyzerTests : IDisposable
     private ProjectAnalyzer CreateAnalyzer(ITokenCounter tokenCounter, ICacheStore cacheStore) =>
         new(
             new FileSystemProjectScanner(),
-            new AlwaysTextDetector(),
-            tokenCounter,
-            cacheStore,
+            new ProjectSnapshotMetricsEnricher(
+                new AlwaysTextDetector(),
+                tokenCounter,
+                cacheStore),
             progressBatchSize: 2);
 
     private sealed class AlwaysTextDetector : ITextFileDetector

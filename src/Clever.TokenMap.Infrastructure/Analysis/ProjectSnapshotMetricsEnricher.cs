@@ -5,10 +5,12 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Metrics;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 
-public sealed class ProjectSnapshotMetricsEnricher
+public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngine
 {
     private const long LargeFileTokenizationThresholdBytes = 1024L * 1024L;
     private const int LargeFileChunkSizeChars = 256 * 1024;
@@ -17,7 +19,9 @@ public sealed class ProjectSnapshotMetricsEnricher
     private readonly int _largeFileChunkSizeChars;
     private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
+    private readonly IReadOnlyList<IFileMetricCalculator> _fileMetricCalculators;
     private readonly int _maxDegreeOfParallelism;
+    private readonly MetricSetRollupService _metricSetRollupService;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
 
@@ -28,7 +32,9 @@ public sealed class ProjectSnapshotMetricsEnricher
         IAppLogger? logger = null,
         long largeFileTokenizationThresholdBytes = LargeFileTokenizationThresholdBytes,
         int largeFileChunkSizeChars = LargeFileChunkSizeChars,
-        int? maxDegreeOfParallelism = null)
+        int? maxDegreeOfParallelism = null,
+        IMetricCatalog? metricCatalog = null,
+        IEnumerable<IFileMetricCalculator>? fileMetricCalculators = null)
     {
         _cacheStore = cacheStore;
         _largeFileChunkSizeChars = largeFileChunkSizeChars > 0
@@ -43,6 +49,11 @@ public sealed class ProjectSnapshotMetricsEnricher
             : GetDefaultMaxDegreeOfParallelism();
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
+        var effectiveMetricCatalog = metricCatalog ?? DefaultMetricCatalog.Instance;
+        _fileMetricCalculators = (fileMetricCalculators ?? CreateDefaultFileMetricCalculators())
+            .OrderBy(calculator => calculator.Order)
+            .ToArray();
+        _metricSetRollupService = new MetricSetRollupService(effectiveMetricCatalog);
     }
 
     public Task<ProjectSnapshot> EnrichAsync(ProjectSnapshot snapshot, CancellationToken cancellationToken) =>
@@ -73,7 +84,7 @@ public sealed class ProjectSnapshotMetricsEnricher
                 async (fileWorkItem, ct) =>
                 {
                     var enrichedFile = await EnrichFileNodeAsync(
-                        snapshot.RootPath,
+                        snapshot,
                         fileWorkItem.Node,
                         diagnostics,
                         ct).ConfigureAwait(false);
@@ -113,6 +124,12 @@ public sealed class ProjectSnapshotMetricsEnricher
             ? maxDegreeOfParallelism
             : throw new ArgumentOutOfRangeException(nameof(maxDegreeOfParallelism));
 
+    private static IReadOnlyList<IFileMetricCalculator> CreateDefaultFileMetricCalculators() =>
+    [
+        new FileSizeMetricCalculator(),
+        new TextMetricsCalculator(),
+    ];
+
     private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
     {
         var fileWorkItems = new List<FileWorkItem>();
@@ -134,7 +151,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
     }
 
-    private static ProjectNode RebuildEnrichedTree(
+    private ProjectNode RebuildEnrichedTree(
         ProjectNode node,
         IReadOnlyList<ProjectNode?> enrichedFiles,
         ref int nextFileIndex,
@@ -159,12 +176,18 @@ public sealed class ProjectSnapshotMetricsEnricher
                 cancellationToken));
         }
 
-        var metrics = AggregateNode(enrichedChildren, node.Kind);
-        return CloneNode(node, metrics, node.SkippedReason, enrichedChildren);
+        var computedMetrics = _metricSetRollupService.Rollup(enrichedChildren.Select(child => child.ComputedMetrics));
+        var summary = AggregateDirectorySummary(enrichedChildren, node.Kind);
+        return CloneNode(
+            node,
+            summary,
+            computedMetrics,
+            node.SkippedReason,
+            enrichedChildren);
     }
 
     private async Task<ProjectNode> EnrichFileNodeAsync(
-        string rootPath,
+        ProjectSnapshot snapshot,
         ProjectNode node,
         ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
@@ -174,13 +197,18 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (node.SkippedReason is not null)
         {
-            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), node.SkippedReason);
+            var skippedComputedMetrics = CreateSkippedComputedMetrics(fileSizeBytes);
+            return CloneNode(
+                node,
+                CreateFileSummary(),
+                skippedComputedMetrics,
+                node.SkippedReason);
         }
 
         if (fileState.Exists && _cacheStore is not null)
         {
             var cachedMetrics = await TryRestoreCachedMetricsAsync(
-                rootPath,
+                snapshot.RootPath,
                 node.RelativePath,
                 fileState,
                 cancellationToken);
@@ -190,10 +218,14 @@ public sealed class ProjectSnapshotMetricsEnricher
                     "Restored cached metrics for the file.",
                     eventCode: "analysis.cache_hit",
                     context: AppIssueContext.Create(
-                        ("RootPath", rootPath),
+                        ("RootPath", snapshot.RootPath),
                         ("RelativePath", node.RelativePath),
                         ("FullPath", node.FullPath)));
-                return CloneNode(node, cachedMetrics, node.SkippedReason);
+                return CloneNode(
+                    node,
+                    CreateFileSummary(),
+                    cachedMetrics,
+                    node.SkippedReason);
             }
         }
 
@@ -209,15 +241,21 @@ public sealed class ProjectSnapshotMetricsEnricher
 
         if (!isText)
         {
-            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Binary);
+            var skippedComputedMetrics = CreateSkippedComputedMetrics(fileSizeBytes);
+            return CloneNode(
+                node,
+                CreateFileSummary(),
+                skippedComputedMetrics,
+                SkippedReason.Binary);
         }
 
-        TextAnalysisResult textAnalysis;
+        TextMetricsArtifact textMetricsArtifact;
         try
         {
-            textAnalysis = fileState.FileSizeBytes > _largeFileTokenizationThresholdBytes
+            var textAnalysis = fileState.FileSizeBytes > _largeFileTokenizationThresholdBytes
                 ? await AnalyzeLargeTextFileAsync(node.FullPath, diagnostics, cancellationToken).ConfigureAwait(false)
                 : await AnalyzeSmallTextFileAsync(node.FullPath, diagnostics, cancellationToken).ConfigureAwait(false);
+            textMetricsArtifact = new TextMetricsArtifact(textAnalysis.Tokens, textAnalysis.NonEmptyLineCount);
         }
         catch (Exception exception) when (IsRecoverableFileException(exception))
         {
@@ -233,68 +271,43 @@ public sealed class ProjectSnapshotMetricsEnricher
                 "Decoding a text file failed during analysis.",
                 eventCode: "analysis.decode_failed",
                 context: AppIssueContext.Create(("FullPath", node.FullPath)));
-            return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), SkippedReason.Unsupported);
+            var skippedComputedMetrics = CreateSkippedComputedMetrics(fileSizeBytes);
+            return CloneNode(
+                node,
+                CreateFileSummary(),
+                skippedComputedMetrics,
+                SkippedReason.Unsupported);
         }
 
-        var metrics = new NodeMetrics(
-            Tokens: textAnalysis.Tokens,
-            NonEmptyLines: textAnalysis.NonEmptyLineCount,
-            FileSizeBytes: fileSizeBytes,
-            DescendantFileCount: 1,
-            DescendantDirectoryCount: 0);
+        var computedMetrics = await ComputeFileMetricsAsync(
+            snapshot,
+            node,
+            fileSizeBytes,
+            textMetricsArtifact,
+            cancellationToken).ConfigureAwait(false);
 
         if (fileState.Exists && _cacheStore is not null)
         {
             await _cacheStore.SetFileMetricsAsync(
-                rootPath,
+                snapshot.RootPath,
                 node.RelativePath,
                 fileState.FileSizeBytes,
                 fileState.LastWriteTimeUtc,
-                metrics,
+                computedMetrics,
                 cancellationToken);
         }
 
-        return CloneNode(node, metrics, node.SkippedReason);
-    }
-
-    private static NodeMetrics AggregateNode(IEnumerable<ProjectNode> children, ProjectNodeKind kind)
-    {
-        if (kind == ProjectNodeKind.File)
-        {
-            return NodeMetrics.Empty;
-        }
-
-        long tokens = 0;
-        var nonEmptyLines = 0;
-        long fileSizeBytes = 0;
-        var descendantFileCount = 0;
-        var descendantDirectoryCount = 0;
-
-        foreach (var child in children)
-        {
-            tokens += child.Metrics.Tokens;
-            nonEmptyLines += child.Metrics.NonEmptyLines;
-            fileSizeBytes += child.Metrics.FileSizeBytes;
-            descendantFileCount += child.Metrics.DescendantFileCount;
-            descendantDirectoryCount += child.Metrics.DescendantDirectoryCount;
-
-            if (child.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
-            {
-                descendantDirectoryCount++;
-            }
-        }
-
-        return new NodeMetrics(
-            Tokens: tokens,
-            NonEmptyLines: nonEmptyLines,
-            FileSizeBytes: fileSizeBytes,
-            DescendantFileCount: descendantFileCount,
-            DescendantDirectoryCount: descendantDirectoryCount);
+        return CloneNode(
+            node,
+            CreateFileSummary(),
+            computedMetrics,
+            node.SkippedReason);
     }
 
     private static ProjectNode CloneNode(
         ProjectNode source,
-        NodeMetrics metrics,
+        NodeSummary summary,
+        MetricSet computedMetrics,
         SkippedReason? skippedReason,
         IEnumerable<ProjectNode>? children = null)
     {
@@ -305,7 +318,8 @@ public sealed class ProjectSnapshotMetricsEnricher
             FullPath = source.FullPath,
             RelativePath = source.RelativePath,
             Kind = source.Kind,
-            Metrics = metrics,
+            Summary = summary,
+            ComputedMetrics = computedMetrics,
             SkippedReason = skippedReason,
         };
 
@@ -320,13 +334,74 @@ public sealed class ProjectSnapshotMetricsEnricher
         return clone;
     }
 
-    private static NodeMetrics CreateSkippedFileMetrics(long fileSizeBytes) =>
+    private async Task<MetricSet> ComputeFileMetricsAsync(
+        ProjectSnapshot snapshot,
+        ProjectNode node,
+        long fileSizeBytes,
+        TextMetricsArtifact textMetricsArtifact,
+        CancellationToken cancellationToken)
+    {
+        var context = new FileMetricContext(
+            snapshot,
+            node,
+            fileSizeBytes,
+            artifacts: new Dictionary<Type, object?>
+            {
+                [typeof(TextMetricsArtifact)] = textMetricsArtifact,
+            });
+        var builder = new MetricSetBuilder();
+
+        foreach (var calculator in _fileMetricCalculators)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await calculator.ComputeAsync(context, builder, cancellationToken).ConfigureAwait(false);
+        }
+
+        return builder.Build();
+    }
+
+    private static NodeSummary AggregateDirectorySummary(
+        IEnumerable<ProjectNode> children,
+        ProjectNodeKind kind)
+    {
+        if (kind == ProjectNodeKind.File)
+        {
+            return NodeSummary.Empty;
+        }
+
+        var materializedChildren = children.ToArray();
+        var descendantFileCount = 0;
+        var descendantDirectoryCount = 0;
+
+        foreach (var child in materializedChildren)
+        {
+            descendantFileCount += child.Summary.DescendantFileCount;
+            descendantDirectoryCount += child.Summary.DescendantDirectoryCount;
+
+            if (child.Kind is ProjectNodeKind.Directory or ProjectNodeKind.Root)
+            {
+                descendantDirectoryCount++;
+            }
+        }
+
+        return new NodeSummary(
+            DescendantFileCount: descendantFileCount,
+            DescendantDirectoryCount: descendantDirectoryCount);
+    }
+
+    private static NodeSummary CreateFileSummary() =>
         new(
-            Tokens: 0,
-            NonEmptyLines: 0,
-            FileSizeBytes: fileSizeBytes,
             DescendantFileCount: 1,
             DescendantDirectoryCount: 0);
+
+    private static MetricSet CreateSkippedComputedMetrics(long fileSizeBytes)
+    {
+        var builder = new MetricSetBuilder();
+        builder.SetValue(MetricIds.FileSizeBytes, fileSizeBytes);
+        builder.SetNotApplicable(MetricIds.Tokens);
+        builder.SetNotApplicable(MetricIds.NonEmptyLines);
+        return builder.Build();
+    }
 
     private async Task<TextAnalysisResult> AnalyzeSmallTextFileAsync(
         string fullPath,
@@ -490,7 +565,7 @@ public sealed class ProjectSnapshotMetricsEnricher
         }
     }
 
-    private async Task<NodeMetrics?> TryRestoreCachedMetricsAsync(
+    private async Task<MetricSet?> TryRestoreCachedMetricsAsync(
         string rootPath,
         string relativePath,
         FileState fileState,
@@ -532,7 +607,12 @@ public sealed class ProjectSnapshotMetricsEnricher
             "Analyzing a file during metrics enrichment failed.",
             eventCode: "analysis.file_analyze_failed",
             context: AppIssueContext.Create(("FullPath", node.FullPath)));
-        return CloneNode(node, CreateSkippedFileMetrics(fileSizeBytes), skippedReason);
+        var skippedComputedMetrics = CreateSkippedComputedMetrics(fileSizeBytes);
+        return CloneNode(
+            node,
+            CreateFileSummary(),
+            skippedComputedMetrics,
+            skippedReason);
     }
 
     private static AnalysisIssue CreateDiagnostic(
