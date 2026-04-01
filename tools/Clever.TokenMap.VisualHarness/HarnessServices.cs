@@ -6,6 +6,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
@@ -19,10 +20,15 @@ internal static class HarnessComposition
     public static IProjectAnalyzer CreateDefaultProjectAnalyzer(IAppLoggerFactory? loggerFactory = null) =>
         new ProjectAnalyzer(
             new FileSystemProjectScanner(logger: loggerFactory?.CreateLogger<FileSystemProjectScanner>()),
+            CreateDefaultMetricEngine(loggerFactory),
+            loggerFactory: loggerFactory);
+
+    private static ProjectSnapshotMetricsEnricher CreateDefaultMetricEngine(IAppLoggerFactory? loggerFactory) =>
+        new ProjectSnapshotMetricsEnricher(
             new HeuristicTextFileDetector(),
             new MicrosoftMlTokenCounter(),
             new InMemoryCacheStore(),
-            loggerFactory: loggerFactory);
+            loggerFactory?.CreateLogger<ProjectSnapshotMetricsEnricher>());
 
     public static AnalysisSessionController CreateAnalysisSessionController(
         IProjectAnalyzer projectAnalyzer,
@@ -115,7 +121,13 @@ internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettings
 
     public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) => baseOptions;
 
-    public void SetSelectedMetric(AnalysisMetric metric) => MutableState.SelectedMetric = metric;
+    public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
+
+    public void SetMetricVisibility(MetricId metric, bool isVisible) => MutableState.SetMetricVisibility(metric, isVisible);
+
+    public void ResetVisibleMetricIdsToDefault() => MutableState.ResetVisibleMetricIdsToDefault();
+
+    public void ShowAllMetricIds() => MutableState.ShowAllMetricIds();
 
     public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

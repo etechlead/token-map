@@ -1,8 +1,12 @@
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -13,9 +17,16 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
+    private readonly RelayCommand _resetVisibleMetricIdsCommand;
+    private readonly RelayCommand _showAllMetricIdsCommand;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly IReadOnlyCurrentFolderSettingsState _currentFolderSettingsState;
     private readonly IReadOnlySettingsState _settingsState;
+    private readonly IReadOnlyList<MetricDefinition> _allMetricDefinitions;
+    private readonly ObservableCollection<MetricSelectionOptionViewModel> _visibleTreemapMetricOptions = [];
+    private readonly ObservableCollection<MetricVisibilityOptionViewModel> _metricVisibilityOptions = [];
+    private IReadOnlyList<MetricDefinition> _visibleMetricDefinitions = [];
+    private MetricSelectionOptionViewModel? _selectedTreemapMetricOption;
 
     public ToolbarViewModel(
         ISettingsCoordinator settingsCoordinator,
@@ -34,6 +45,20 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
+        _resetVisibleMetricIdsCommand = new RelayCommand(_settingsCoordinator.ResetVisibleMetricIdsToDefault);
+        _showAllMetricIdsCommand = new RelayCommand(_settingsCoordinator.ShowAllMetricIds);
+        _allMetricDefinitions = DefaultMetricCatalog.Instance.GetAll();
+
+        VisibleTreemapMetricOptions = new ReadOnlyObservableCollection<MetricSelectionOptionViewModel>(_visibleTreemapMetricOptions);
+        MetricVisibilityOptions = new ReadOnlyObservableCollection<MetricVisibilityOptionViewModel>(_metricVisibilityOptions);
+        foreach (var definition in _allMetricDefinitions)
+        {
+            _metricVisibilityOptions.Add(new MetricVisibilityOptionViewModel(
+                definition,
+                _settingsCoordinator.SetMetricVisibility));
+        }
+
+        RefreshMetricPresentation();
     }
 
     public IAsyncRelayCommand OpenFolderCommand { get; }
@@ -48,6 +73,14 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
 
+    public IRelayCommand ResetVisibleMetricIdsCommand => _resetVisibleMetricIdsCommand;
+
+    public IRelayCommand ShowAllMetricIdsCommand => _showAllMetricIdsCommand;
+
+    public ReadOnlyObservableCollection<MetricSelectionOptionViewModel> VisibleTreemapMetricOptions { get; }
+
+    public ReadOnlyObservableCollection<MetricVisibilityOptionViewModel> MetricVisibilityOptions { get; }
+
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
 
@@ -60,46 +93,35 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     [ObservableProperty]
     private bool isRescanVisible;
 
-    public bool IsTokensMetricSelected
-    {
-        get => SelectedMetric == AnalysisMetric.Tokens;
-        set
-        {
-            if (value)
-            {
-                SelectedMetric = AnalysisMetric.Tokens;
-            }
-        }
-    }
-
-    public bool IsLinesMetricSelected
-    {
-        get => SelectedMetric == AnalysisMetric.Lines;
-        set
-        {
-            if (value)
-            {
-                SelectedMetric = AnalysisMetric.Lines;
-            }
-        }
-    }
-
-    public bool IsSizeMetricSelected
-    {
-        get => SelectedMetric == AnalysisMetric.Size;
-        set
-        {
-            if (value)
-            {
-                SelectedMetric = AnalysisMetric.Size;
-            }
-        }
-    }
-
-    public AnalysisMetric SelectedMetric
+    public MetricId SelectedMetric
     {
         get => _settingsState.SelectedMetric;
         set => _settingsCoordinator.SetSelectedMetric(value);
+    }
+
+    public IReadOnlyList<MetricDefinition> VisibleMetricDefinitions => _visibleMetricDefinitions;
+
+    public bool ShowTreemapMetricButtons => VisibleTreemapMetricOptions.Count <= 7;
+
+    public bool ShowTreemapMetricSelector => VisibleTreemapMetricOptions.Count > 7;
+
+    public MetricSelectionOptionViewModel? SelectedTreemapMetricOption
+    {
+        get => _selectedTreemapMetricOption;
+        set
+        {
+            if (ReferenceEquals(_selectedTreemapMetricOption, value))
+            {
+                return;
+            }
+
+            _selectedTreemapMetricOption = value;
+            OnPropertyChanged(nameof(SelectedTreemapMetricOption));
+            if (value is not null && value.Definition.Id != SelectedMetric)
+            {
+                SelectedMetric = value.Definition.Id;
+            }
+        }
     }
 
     public bool ShowTreemapMetricValues
@@ -211,9 +233,10 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         {
             case nameof(IReadOnlySettingsState.SelectedMetric):
                 OnPropertyChanged(nameof(SelectedMetric));
-                OnPropertyChanged(nameof(IsTokensMetricSelected));
-                OnPropertyChanged(nameof(IsLinesMetricSelected));
-                OnPropertyChanged(nameof(IsSizeMetricSelected));
+                RefreshMetricSelection();
+                break;
+            case nameof(IReadOnlySettingsState.VisibleMetricIds):
+                RefreshMetricPresentation();
                 break;
             case nameof(IReadOnlySettingsState.RespectGitIgnore):
                 OnPropertyChanged(nameof(RespectGitIgnore));
@@ -256,4 +279,68 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     public ScanOptions BuildScanOptions() =>
         _settingsCoordinator.BuildCurrentScanOptions();
+
+    private void RefreshMetricPresentation()
+    {
+        var visibleMetricIdSet = _settingsState.VisibleMetricIds.ToHashSet();
+        _visibleMetricDefinitions = _allMetricDefinitions
+            .Where(definition => visibleMetricIdSet.Contains(definition.Id))
+            .ToArray();
+        OnPropertyChanged(nameof(VisibleMetricDefinitions));
+
+        RefreshMetricVisibilityOptions(visibleMetricIdSet);
+        RebuildVisibleTreemapMetricOptions();
+        OnPropertyChanged(nameof(ShowTreemapMetricButtons));
+        OnPropertyChanged(nameof(ShowTreemapMetricSelector));
+    }
+
+    private void RefreshMetricVisibilityOptions(HashSet<MetricId> visibleMetricIdSet)
+    {
+        foreach (var option in _metricVisibilityOptions)
+        {
+            var isVisible = visibleMetricIdSet.Contains(option.Definition.Id);
+            var isToggleEnabled = isVisible
+                ? visibleMetricIdSet.Count > 1
+                : true;
+            option.Sync(isVisible, isToggleEnabled);
+        }
+    }
+
+    private void RebuildVisibleTreemapMetricOptions()
+    {
+        _visibleTreemapMetricOptions.Clear();
+        var visibleTreemapMetrics = _visibleMetricDefinitions
+            .Where(definition => definition.SupportsTreemapWeight)
+            .ToArray();
+        for (var index = 0; index < visibleTreemapMetrics.Length; index++)
+        {
+            var definition = visibleTreemapMetrics[index];
+            var option = new MetricSelectionOptionViewModel(definition, metricId => SelectedMetric = metricId);
+            option.Sync(definition.Id == SelectedMetric, index, visibleTreemapMetrics.Length);
+            _visibleTreemapMetricOptions.Add(option);
+        }
+
+        RefreshMetricSelection();
+    }
+
+    private void RefreshMetricSelection()
+    {
+        MetricSelectionOptionViewModel? selectedOption = null;
+        for (var index = 0; index < _visibleTreemapMetricOptions.Count; index++)
+        {
+            var option = _visibleTreemapMetricOptions[index];
+            var isSelected = option.Definition.Id == SelectedMetric;
+            option.Sync(isSelected, index, _visibleTreemapMetricOptions.Count);
+            if (isSelected)
+            {
+                selectedOption = option;
+            }
+        }
+
+        if (!ReferenceEquals(_selectedTreemapMetricOption, selectedOption))
+        {
+            _selectedTreemapMetricOption = selectedOption;
+            OnPropertyChanged(nameof(SelectedTreemapMetricOption));
+        }
+    }
 }

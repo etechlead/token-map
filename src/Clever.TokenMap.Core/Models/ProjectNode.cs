@@ -1,4 +1,5 @@
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Core.Models;
 
@@ -14,7 +15,9 @@ public sealed class ProjectNode
 
     public required ProjectNodeKind Kind { get; init; }
 
-    public NodeMetrics Metrics { get; init; } = NodeMetrics.Empty;
+    public NodeSummary Summary { get; init; } = NodeSummary.Empty;
+
+    public MetricSet ComputedMetrics { get; init; } = MetricSet.Empty;
 
     public SkippedReason? SkippedReason { get; init; }
 

@@ -1,23 +1,23 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using Clever.TokenMap.Core.Interfaces;
-using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Infrastructure.Caching;
 
 public sealed class InMemoryCacheStore : ICacheStore
 {
-    private readonly ConcurrentDictionary<CacheKey, NodeMetrics> _entries;
+    private readonly ConcurrentDictionary<CacheKey, MetricSet> _entries;
     private readonly PathNormalizer _pathNormalizer;
 
     public InMemoryCacheStore(PathNormalizer? pathNormalizer = null)
     {
         _pathNormalizer = pathNormalizer ?? new PathNormalizer();
-        _entries = new ConcurrentDictionary<CacheKey, NodeMetrics>(new CacheKeyComparer(_pathNormalizer.PathComparer));
+        _entries = new ConcurrentDictionary<CacheKey, MetricSet>(new CacheKeyComparer(_pathNormalizer.PathComparer));
     }
 
-    public ValueTask<NodeMetrics?> TryGetFileMetricsAsync(
+    public ValueTask<MetricSet?> TryGetFileMetricsAsync(
         string rootPath,
         string relativePath,
         long fileSizeBytes,
@@ -35,7 +35,7 @@ public sealed class InMemoryCacheStore : ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
-        NodeMetrics metrics,
+        MetricSet metrics,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(metrics);

@@ -7,9 +7,12 @@ using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Settings;
+using Clever.TokenMap.Metrics;
+using Clever.TokenMap.Metrics.Calculators;
 using Clever.TokenMap.Treemap;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
 using static ArchUnitNET.Fluent.Slices.SliceRuleDefinition;
@@ -23,12 +26,14 @@ public sealed class ArchitectureRulesTests
             typeof(App.App).Assembly,
             typeof(ProjectNode).Assembly,
             typeof(ProjectAnalyzer).Assembly,
+            typeof(FileSizeMetricCalculator).Assembly,
             typeof(TreemapControl).Assembly)
         .Build();
 
     private static readonly string AppAssemblyName = typeof(App.App).Assembly.GetName().Name!;
     private static readonly string CoreAssemblyName = typeof(ProjectNode).Assembly.GetName().Name!;
     private static readonly string InfrastructureAssemblyName = typeof(ProjectAnalyzer).Assembly.GetName().Name!;
+    private static readonly string MetricsAssemblyName = typeof(FileSizeMetricCalculator).Assembly.GetName().Name!;
     private static readonly string TreemapAssemblyName = typeof(TreemapControl).Assembly.GetName().Name!;
 
     private static readonly IObjectProvider<IType> AppAssembly =
@@ -40,11 +45,15 @@ public sealed class ArchitectureRulesTests
     private static readonly IObjectProvider<IType> InfrastructureAssembly =
         Types().That().ResideInAssembly(InfrastructureAssemblyName).As("Clever.TokenMap.Infrastructure");
 
+    private static readonly IObjectProvider<IType> MetricsAssembly =
+        Types().That().ResideInAssembly(MetricsAssemblyName).As("Clever.TokenMap.Metrics");
+
     private static readonly IObjectProvider<IType> TreemapAssembly =
         Types().That().ResideInAssembly(TreemapAssemblyName).As("Clever.TokenMap.Treemap");
 
     private static readonly IObjectProvider<IType> NonCoreProductAssemblies =
         Types().That().ResideInAssembly(AppAssemblyName)
+            .Or().ResideInAssembly(MetricsAssemblyName)
             .Or().ResideInAssembly(InfrastructureAssemblyName)
             .Or().ResideInAssembly(TreemapAssemblyName)
             .As("non-core product assemblies");
@@ -199,13 +208,42 @@ public sealed class ArchitectureRulesTests
             .Check(Architecture);
 
     [Fact]
+    public void Metrics_Should_Not_Depend_On_App_Infrastructure_Or_Treemap() =>
+        Types().That().Are(MetricsAssembly).Should()
+            .NotDependOnAny(
+                Types().That().ResideInAssembly(AppAssemblyName)
+                    .Or().ResideInAssembly(InfrastructureAssemblyName)
+                    .Or().ResideInAssembly(TreemapAssemblyName)
+                    .As("app, infrastructure, and treemap assemblies"))
+            .Because("metrics should stay a reusable layer below infrastructure orchestration and above core")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void Metrics_Should_Not_Depend_On_Avalonia_Types() =>
+        Types().That().Are(MetricsAssembly).Should()
+            .NotDependOnAny(AvaloniaTypes)
+            .Because("metrics should stay independent from desktop UI frameworks")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
     public void Treemap_Should_Not_Depend_On_App_Or_Infrastructure() =>
         Types().That().Are(TreemapAssembly).Should()
             .NotDependOnAny(
                 Types().That().ResideInAssembly(AppAssemblyName)
                     .Or().ResideInAssembly(InfrastructureAssemblyName)
-                    .As("app and infrastructure assemblies"))
+                    .Or().ResideInAssembly(MetricsAssemblyName)
+                    .As("app, infrastructure, and metrics assemblies"))
             .Because("the treemap control should stay reusable and UI-focused")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+    [Fact]
+    public void App_Should_Not_Depend_On_Metrics_Types() =>
+        Types().That().Are(AppAssembly).Should()
+            .NotDependOnAny(MetricsAssembly)
+            .Because("the app should consume metric abstractions through core and infrastructure, not metrics implementations")
             .WithoutRequiringPositiveResults()
             .Check(Architecture);
 

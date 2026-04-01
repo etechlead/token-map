@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Core.Settings;
 
@@ -27,7 +28,9 @@ public sealed class AppSettings
 
 public sealed class AnalysisSettings
 {
-    public AnalysisMetric SelectedMetric { get; set; } = AnalysisMetric.Tokens;
+    public MetricId SelectedMetric { get; set; } = MetricIds.Tokens;
+
+    public List<MetricId> VisibleMetricIds { get; set; } = [.. DefaultMetricCatalog.GetDefaultVisibleMetricIds()];
 
     public bool RespectGitIgnore { get; set; } = true;
 
@@ -39,6 +42,7 @@ public sealed class AnalysisSettings
         new()
         {
             SelectedMetric = SelectedMetric,
+            VisibleMetricIds = [.. VisibleMetricIds],
             RespectGitIgnore = RespectGitIgnore,
             UseGlobalExcludes = UseGlobalExcludes,
             GlobalExcludes = [.. GlobalExcludes],

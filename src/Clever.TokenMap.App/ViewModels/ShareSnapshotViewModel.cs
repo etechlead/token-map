@@ -3,6 +3,7 @@ using System.Globalization;
 using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
@@ -31,15 +32,21 @@ public partial class ShareSnapshotViewModel : ViewModelBase
 
     public ProjectNode PreviewRootNode => Snapshot.Root;
 
-    public AnalysisMetric TreemapMetric { get; } = AnalysisMetric.Tokens;
+    public MetricId TreemapMetric { get; } = MetricIds.Tokens;
 
     public TreemapPalette PreviewTreemapPalette { get; } = TreemapPalette.Plain;
 
-    public string TokenValue => Snapshot.Root.Metrics.Tokens.ToString("N0", CultureInfo.CurrentCulture);
+    public string TokenValue => MetricValueFormatter.Format(
+        MetricIds.Tokens,
+        Snapshot.Root.ComputedMetrics.GetOrDefault(MetricIds.Tokens),
+        CultureInfo.CurrentCulture);
 
-    public string LineValue => Snapshot.Root.Metrics.NonEmptyLines.ToString("N0", CultureInfo.CurrentCulture);
+    public string LineValue => MetricValueFormatter.Format(
+        MetricIds.NonEmptyLines,
+        Snapshot.Root.ComputedMetrics.GetOrDefault(MetricIds.NonEmptyLines),
+        CultureInfo.CurrentCulture);
 
-    public string FileValue => Snapshot.Root.Metrics.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
+    public string FileValue => Snapshot.Root.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture);
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowProjectName))]

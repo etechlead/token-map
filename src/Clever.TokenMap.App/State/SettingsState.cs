@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -17,6 +18,7 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     private static readonly StringComparer RecentFolderComparer = PathComparison.Comparer;
 
     private readonly ObservableCollection<string> _recentFolderPaths = [];
+    private List<MetricId> _visibleMetricIds = [.. DefaultMetricCatalog.GetDefaultVisibleMetricIds()];
     private List<string> _globalExcludes = [.. GlobalExcludeDefaults.DefaultEntries];
 
     public SettingsState()
@@ -26,7 +28,7 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     }
 
     [ObservableProperty]
-    private AnalysisMetric selectedMetric = AnalysisMetric.Tokens;
+    private MetricId selectedMetric = MetricIds.Tokens;
 
     [ObservableProperty]
     private bool respectGitIgnore = true;
@@ -44,6 +46,8 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     private bool showTreemapMetricValues = true;
 
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
+
+    public IReadOnlyList<MetricId> VisibleMetricIds => _visibleMetricIds;
 
     public IReadOnlyList<string> GlobalExcludes => _globalExcludes;
 
@@ -112,6 +116,34 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         OnPropertyChanged(nameof(GlobalExcludes));
     }
 
+    public void SetMetricVisibility(MetricId metricId, bool isVisible)
+    {
+        var normalizedMetricId = DefaultMetricCatalog.NormalizeMetricId(metricId);
+        if (isVisible)
+        {
+            if (_visibleMetricIds.Contains(normalizedMetricId))
+            {
+                return;
+            }
+
+            ReplaceVisibleMetricIdsCore([.. _visibleMetricIds, normalizedMetricId]);
+            return;
+        }
+
+        if (!_visibleMetricIds.Contains(normalizedMetricId) || _visibleMetricIds.Count <= 1)
+        {
+            return;
+        }
+
+        ReplaceVisibleMetricIdsCore(_visibleMetricIds.Where(id => id != normalizedMetricId));
+    }
+
+    public void ResetVisibleMetricIdsToDefault() =>
+        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetDefaultVisibleMetricIds());
+
+    public void ShowAllMetricIds() =>
+        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetAllMetricIds());
+
     internal void ReplaceRecentFolderPaths(IEnumerable<string> folderPaths)
     {
         ArgumentNullException.ThrowIfNull(folderPaths);
@@ -128,6 +160,29 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         ArgumentNullException.ThrowIfNull(entries);
         _globalExcludes = GlobalExcludeList.Normalize(entries).ToList();
         OnPropertyChanged(nameof(GlobalExcludes));
+    }
+
+    internal void ReplaceVisibleMetricIds(IEnumerable<MetricId> metricIds)
+    {
+        ArgumentNullException.ThrowIfNull(metricIds);
+        ReplaceVisibleMetricIdsCore(metricIds);
+    }
+
+    private void ReplaceVisibleMetricIdsCore(IEnumerable<MetricId> metricIds)
+    {
+        var normalizedMetricIds = AppSettingsCanonicalizer.NormalizeVisibleMetricIds(metricIds);
+        if (_visibleMetricIds.SequenceEqual(normalizedMetricIds))
+        {
+            return;
+        }
+
+        _visibleMetricIds = normalizedMetricIds;
+        if (!_visibleMetricIds.Contains(SelectedMetric))
+        {
+            SelectedMetric = _visibleMetricIds[0];
+        }
+
+        OnPropertyChanged(nameof(VisibleMetricIds));
     }
 
     private int IndexOfRecentFolder(string folderPath)

@@ -60,6 +60,45 @@
                     <Border Classes="toolbar-group">
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
+                                       Text="Metrics" />
+                            <ItemsControl Name="VisibleMetricsItemsControl"
+                                          ItemsSource="{Binding Toolbar.MetricVisibilityOptions}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="6" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MetricVisibilityOptionViewModel">
+                                        <CheckBox Content="{Binding Label}"
+                                                  IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                                  IsEnabled="{Binding IsToggleEnabled}"
+                                                  ToolTip.Tip="{Binding Description}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Grid ColumnDefinitions="Auto,Auto,*"
+                                  ColumnSpacing="8">
+                                <Button Name="MetricsResetDefaultsButton"
+                                        Classes="action-button"
+                                        Padding="10,4"
+                                        MinHeight="28"
+                                        Command="{Binding Toolbar.ResetVisibleMetricIdsCommand}"
+                                        Content="Reset defaults" />
+                                <Button Name="MetricsShowAllButton"
+                                        Grid.Column="1"
+                                        Classes="action-button"
+                                        Padding="10,4"
+                                        MinHeight="28"
+                                        Command="{Binding Toolbar.ShowAllMetricIdsCommand}"
+                                        Content="Show all" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="toolbar-group">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="toolbar-group-title"
                                        Text="Scan" />
                             <CheckBox Name="RespectGitIgnoreCheckBox"
                                       Content="Respect .gitignore"

@@ -2,6 +2,7 @@ using System.Globalization;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
@@ -20,12 +21,8 @@ public sealed class ProjectTreeNodeViewModelTests
             FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
-            Metrics = new NodeMetrics(
-                Tokens: 100,
-                NonEmptyLines: 50,
-                FileSizeBytes: 171_801,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 100, nonEmptyLines: 50, fileSizeBytes: 171_801),
         };
         var skippedFileNode = new ProjectTreeNodeViewModel(new ProjectNode
         {
@@ -35,19 +32,15 @@ public sealed class ProjectTreeNodeViewModelTests
             RelativePath = "image.ico",
             Kind = ProjectNodeKind.File,
             SkippedReason = SkippedReason.Binary,
-            Metrics = new NodeMetrics(
-                Tokens: 0,
-                NonEmptyLines: 0,
-                FileSizeBytes: 171_801,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateFileSummary(),
+            ComputedMetrics = MetricTestData.CreateSkippedComputedMetrics(fileSizeBytes: 171_801),
         },
         parentNode: parentNode,
-        parentShareMetric: AnalysisMetric.Tokens);
+        parentShareMetric: MetricIds.Tokens);
 
-        Assert.Equal("n/a", skippedFileNode.TokensText);
-        Assert.Equal("n/a", skippedFileNode.LinesText);
-        Assert.Equal($"167{decimalSeparator}8 KB", skippedFileNode.SizeText);
+        Assert.Equal("n/a", skippedFileNode.GetMetricText(MetricIds.Tokens));
+        Assert.Equal("n/a", skippedFileNode.GetMetricText(MetricIds.NonEmptyLines));
+        Assert.Equal($"167{decimalSeparator}8 KB", skippedFileNode.GetMetricText(MetricIds.FileSizeBytes));
         Assert.Equal("n/a", skippedFileNode.ParentShareText);
         Assert.Null(skippedFileNode.ParentShareRatio);
     }
@@ -65,12 +58,8 @@ public sealed class ProjectTreeNodeViewModelTests
             FullPath = demoRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
-            Metrics = new NodeMetrics(
-                Tokens: 30,
-                NonEmptyLines: 12,
-                FileSizeBytes: 90,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 30, nonEmptyLines: 12, fileSizeBytes: 90),
         };
         var childNode = new ProjectNode
         {
@@ -79,19 +68,15 @@ public sealed class ProjectTreeNodeViewModelTests
             FullPath = TestPaths.CombineUnder(demoRootPath, "Alpha.cs"),
             RelativePath = "Alpha.cs",
             Kind = ProjectNodeKind.File,
-            Metrics = new NodeMetrics(
-                Tokens: 10,
-                NonEmptyLines: 4,
-                FileSizeBytes: 30,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateFileSummary(),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 10, nonEmptyLines: 4, fileSizeBytes: 30),
         };
         var rootViewModel = new ProjectTreeNodeViewModel(rootNode);
         var childViewModel = new ProjectTreeNodeViewModel(
             childNode,
             depth: 1,
             parentNode: rootNode,
-            parentShareMetric: AnalysisMetric.Tokens);
+            parentShareMetric: MetricIds.Tokens);
         var zeroMetricParent = new ProjectNode
         {
             Id = "/zero",
@@ -99,12 +84,13 @@ public sealed class ProjectTreeNodeViewModelTests
             FullPath = zeroRootPath,
             RelativePath = string.Empty,
             Kind = ProjectNodeKind.Root,
-            Metrics = NodeMetrics.Empty,
+            Summary = NodeSummary.Empty,
+            ComputedMetrics = MetricSet.Empty,
         };
         var childWithZeroParent = new ProjectTreeNodeViewModel(
             childNode,
             parentNode: zeroMetricParent,
-            parentShareMetric: AnalysisMetric.Tokens);
+            parentShareMetric: MetricIds.Tokens);
 
         Assert.Equal($"100{decimalSeparator}0%", rootViewModel.ParentShareText);
         Assert.NotNull(childViewModel.ParentShareRatio);

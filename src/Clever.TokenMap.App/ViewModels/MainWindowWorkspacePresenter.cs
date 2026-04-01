@@ -32,6 +32,7 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         _summary = summary;
 
         _tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
+        _tree.SetVisibleMetrics(_settingsCoordinator.State.VisibleMetricIds);
         _tree.SelectedNodeChanged += TreeOnSelectedNodeChanged;
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
         _settingsCoordinator.State.PropertyChanged += SettingsStateOnPropertyChanged;
@@ -159,6 +160,11 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         if (e.PropertyName == nameof(IReadOnlySettingsState.SelectedMetric))
         {
             _tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
+        }
+
+        if (e.PropertyName == nameof(IReadOnlySettingsState.VisibleMetricIds))
+        {
+            _tree.SetVisibleMetrics(_settingsCoordinator.State.VisibleMetricIds);
         }
     }
 

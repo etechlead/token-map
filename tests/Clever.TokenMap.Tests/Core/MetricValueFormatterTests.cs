@@ -1,6 +1,5 @@
 using System.Globalization;
-using Clever.TokenMap.Core.Enums;
-using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Tests.Core;
 
@@ -13,7 +12,7 @@ public sealed class MetricValueFormatterTests
     [InlineData(1_300_000, "1.3M")]
     public void FormatCompact_CountMetrics_UsesHumanReadableUnits(long value, string expected)
     {
-        var result = MetricValueFormatter.FormatCompact(AnalysisMetric.Tokens, value, CultureInfo.InvariantCulture);
+        var result = MetricValueFormatter.FormatCompact(MetricIds.Tokens, MetricValue.From(value), CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, result);
     }
@@ -25,7 +24,7 @@ public sealed class MetricValueFormatterTests
     [InlineData(12 * 1024 * 1024, "12 MB")]
     public void FormatCompact_SizeMetric_UsesBinaryUnits(long value, string expected)
     {
-        var result = MetricValueFormatter.FormatCompact(AnalysisMetric.Size, value, CultureInfo.InvariantCulture);
+        var result = MetricValueFormatter.FormatCompact(MetricIds.FileSizeBytes, MetricValue.From(value), CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, result);
     }

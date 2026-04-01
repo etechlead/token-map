@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.VisualHarness;
 
@@ -123,12 +124,13 @@ internal static class PaletteDemoSnapshotFactory
             });
         }
 
-        var metrics = new NodeMetrics(
-            Tokens: children.Sum(item => item.Metrics.Tokens),
-            NonEmptyLines: children.Sum(item => item.Metrics.NonEmptyLines),
-            FileSizeBytes: children.Sum(item => item.Metrics.FileSizeBytes),
-            DescendantFileCount: children.Sum(item => item.Kind == ProjectNodeKind.File ? 1 : item.Metrics.DescendantFileCount),
-            DescendantDirectoryCount: children.Sum(item => item.Kind == ProjectNodeKind.Directory ? item.Metrics.DescendantDirectoryCount + 1 : 0));
+        var computedMetrics = CreateComputedMetrics(
+            tokens: children.Sum(item => item.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) ?? 0),
+            nonEmptyLines: children.Sum(item => item.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines) ?? 0),
+            fileSizeBytes: children.Sum(item => item.ComputedMetrics.TryGetRoundedInt64(MetricIds.FileSizeBytes) ?? 0));
+        var summary = new NodeSummary(
+            DescendantFileCount: children.Sum(item => item.Kind == ProjectNodeKind.File ? 1 : item.Summary.DescendantFileCount),
+            DescendantDirectoryCount: children.Sum(item => item.Kind == ProjectNodeKind.Directory ? item.Summary.DescendantDirectoryCount + 1 : 0));
 
         var node = new ProjectNode
         {
@@ -137,7 +139,8 @@ internal static class PaletteDemoSnapshotFactory
             FullPath = fullPath,
             RelativePath = relativePath,
             Kind = isRoot ? ProjectNodeKind.Root : ProjectNodeKind.Directory,
-            Metrics = metrics,
+            Summary = summary,
+            ComputedMetrics = computedMetrics,
         };
         node.Children.AddRange(children);
         return node;
@@ -153,17 +156,21 @@ internal static class PaletteDemoSnapshotFactory
             FullPath = Path.Combine(parentFullPath, file.Name),
             RelativePath = relativePath,
             Kind = ProjectNodeKind.File,
-            Metrics = new NodeMetrics(
-                Tokens: file.Tokens,
-                NonEmptyLines: file.NonEmptyLines,
-                FileSizeBytes: file.FileSizeBytes,
+            Summary = new NodeSummary(
                 DescendantFileCount: 1,
                 DescendantDirectoryCount: 0),
+            ComputedMetrics = CreateComputedMetrics(file.Tokens, file.NonEmptyLines, file.FileSizeBytes),
         };
     }
 
     private static string AppendPath(string basePath, string segment) =>
         string.IsNullOrWhiteSpace(basePath) ? segment : $"{basePath}/{segment}";
+
+    private static MetricSet CreateComputedMetrics(long tokens, int nonEmptyLines, long fileSizeBytes) =>
+        MetricSet.From(
+            (MetricIds.Tokens, MetricValue.From(tokens)),
+            (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
+            (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)));
 
     private abstract record NodeSpec(string Name);
 

@@ -6,6 +6,7 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
 
@@ -71,8 +72,17 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public ScanOptions Resolve(string? rootPath, ScanOptions baseOptions) =>
         _folderSettingsSession.Resolve(rootPath, baseOptions);
 
-    public void SetSelectedMetric(AnalysisMetric metric) =>
-        MutableState.SelectedMetric = metric;
+    public void SetSelectedMetric(MetricId metric) =>
+        MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
+
+    public void SetMetricVisibility(MetricId metric, bool isVisible) =>
+        MutableState.SetMetricVisibility(metric, isVisible);
+
+    public void ResetVisibleMetricIdsToDefault() =>
+        MutableState.ResetVisibleMetricIdsToDefault();
+
+    public void ShowAllMetricIds() =>
+        MutableState.ShowAllMetricIds();
 
     public void SetRespectGitIgnore(bool value) =>
         MutableState.RespectGitIgnore = value;

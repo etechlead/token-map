@@ -8,8 +8,10 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Treemap;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
+using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.Treemap;
 
@@ -258,7 +260,7 @@ public sealed class TreemapControlHeadlessTests
     public void TreemapControl_HoverSkippedBinaryFile_ShowsNaForAnalysisMetrics()
     {
         var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
-        var control = CreateControl(CreateSnapshotWithSkippedBinaryFile(), AnalysisMetric.Size);
+        var control = CreateControl(CreateSnapshotWithSkippedBinaryFile(), MetricIds.FileSizeBytes);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -277,7 +279,7 @@ public sealed class TreemapControlHeadlessTests
     {
         var expectedShareText = (0.1d).ToString("P1", CultureInfo.CurrentCulture);
         var snapshot = CreateMetricSensitiveSnapshot();
-        var control = CreateControl(snapshot, AnalysisMetric.Lines);
+        var control = CreateControl(snapshot, MetricIds.NonEmptyLines);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -331,7 +333,7 @@ public sealed class TreemapControlHeadlessTests
     public void TreemapControl_GetMetricValueLabel_ReturnsNull_ForSkippedBinaryFileTokensAndLines()
     {
         var snapshot = CreateSnapshotWithSkippedBinaryFile();
-        var control = CreateControl(snapshot, AnalysisMetric.Tokens, showMetricValues: true);
+        var control = CreateControl(snapshot, MetricIds.Tokens, showMetricValues: true);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -340,7 +342,7 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Null(control.GetMetricValueLabel(skippedFile, new Rect(0, 0, 160, 80)));
 
-        control.Metric = AnalysisMetric.Lines;
+        control.Metric = MetricIds.NonEmptyLines;
 
         Assert.Null(control.GetMetricValueLabel(skippedFile, new Rect(0, 0, 160, 80)));
     }
@@ -349,7 +351,7 @@ public sealed class TreemapControlHeadlessTests
     public void TreemapControl_GetMetricValueLabel_ChangesWithSelectedMetric()
     {
         var snapshot = CreateMetricSensitiveSnapshot();
-        var control = CreateControl(snapshot, AnalysisMetric.Tokens, showMetricValues: true);
+        var control = CreateControl(snapshot, MetricIds.Tokens, showMetricValues: true);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -358,11 +360,11 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Equal("80", control.GetMetricValueLabel(visual.Node, visual.Bounds));
 
-        control.Metric = AnalysisMetric.Lines;
+        control.Metric = MetricIds.NonEmptyLines;
 
         Assert.Equal("10", control.GetMetricValueLabel(visual.Node, visual.Bounds));
 
-        control.Metric = AnalysisMetric.Size;
+        control.Metric = MetricIds.FileSizeBytes;
 
         Assert.Equal("50 B", control.GetMetricValueLabel(visual.Node, visual.Bounds));
     }
@@ -371,7 +373,7 @@ public sealed class TreemapControlHeadlessTests
     public void TreemapControl_ChangingMetric_RecomputesVisuals()
     {
         var snapshot = CreateMetricSensitiveSnapshot();
-        var control = CreateControl(snapshot, AnalysisMetric.Tokens);
+        var control = CreateControl(snapshot, MetricIds.Tokens);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -380,13 +382,13 @@ public sealed class TreemapControlHeadlessTests
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
             .First();
 
-        control.Metric = AnalysisMetric.Lines;
+        control.Metric = MetricIds.NonEmptyLines;
 
         var largestByLines = control.NodeVisuals
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
             .First();
 
-        control.Metric = AnalysisMetric.Size;
+        control.Metric = MetricIds.FileSizeBytes;
 
         var largestBySize = control.NodeVisuals
             .OrderByDescending(item => item.Bounds.Width * item.Bounds.Height)
@@ -418,14 +420,14 @@ public sealed class TreemapControlHeadlessTests
 
     private static TreemapControl CreateControl(
         ProjectSnapshot? snapshot = null,
-        AnalysisMetric metric = AnalysisMetric.Tokens,
+        MetricId metric = default,
         bool showMetricValues = false) =>
         new()
         {
             Width = 320,
             Height = 180,
             RootNode = (snapshot ?? CreateSnapshot()).Root,
-            Metric = metric,
+            Metric = metric == default ? MetricIds.Tokens : metric,
             ShowMetricValues = showMetricValues,
         };
 
@@ -470,12 +472,8 @@ public sealed class TreemapControlHeadlessTests
             FullPath = "C:\\Demo\\src",
             RelativePath = "src",
             Kind = ProjectNodeKind.Directory,
-            Metrics = new NodeMetrics(
-                Tokens: 42,
-                NonEmptyLines: 11,
-                FileSizeBytes: 128,
-                DescendantFileCount: 0,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 0, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
         });
 
         return snapshot;
@@ -492,12 +490,8 @@ public sealed class TreemapControlHeadlessTests
             FullPath = "C:\\Demo\\LICENSE",
             RelativePath = "LICENSE",
             Kind = ProjectNodeKind.File,
-            Metrics = new NodeMetrics(
-                Tokens: 42,
-                NonEmptyLines: 11,
-                FileSizeBytes: 128,
-                DescendantFileCount: 1,
-                DescendantDirectoryCount: 0),
+            Summary = MetricTestData.CreateFileSummary(),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
         });
 
         return snapshot;
@@ -517,12 +511,8 @@ public sealed class TreemapControlHeadlessTests
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 0,
-                    NonEmptyLines: 0,
-                    FileSizeBytes: 171_801,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 0, nonEmptyLines: 0, fileSizeBytes: 171_801),
                 Children =
                 {
                     new ProjectNode
@@ -533,12 +523,8 @@ public sealed class TreemapControlHeadlessTests
                         RelativePath = "image.ico",
                         Kind = ProjectNodeKind.File,
                         SkippedReason = SkippedReason.Binary,
-                        Metrics = new NodeMetrics(
-                            Tokens: 0,
-                            NonEmptyLines: 0,
-                            FileSizeBytes: 171_801,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateSkippedComputedMetrics(fileSizeBytes: 171_801),
                     },
                 },
             },
@@ -559,12 +545,8 @@ public sealed class TreemapControlHeadlessTests
                 FullPath = "C:\\Demo",
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
-                Metrics = new NodeMetrics(
-                    Tokens: 105,
-                    NonEmptyLines: 100,
-                    FileSizeBytes: 350,
-                    DescendantFileCount: 3,
-                    DescendantDirectoryCount: 0),
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 3, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 105, nonEmptyLines: 100, fileSizeBytes: 350),
                 Children =
                 {
                     new ProjectNode
@@ -574,12 +556,8 @@ public sealed class TreemapControlHeadlessTests
                         FullPath = "C:\\Demo\\a.cs",
                         RelativePath = "a.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 80,
-                            NonEmptyLines: 10,
-                            FileSizeBytes: 50,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 80, nonEmptyLines: 10, fileSizeBytes: 50),
                     },
                     new ProjectNode
                     {
@@ -588,12 +566,8 @@ public sealed class TreemapControlHeadlessTests
                         FullPath = "C:\\Demo\\b.cs",
                         RelativePath = "b.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 20,
-                            NonEmptyLines: 90,
-                            FileSizeBytes: 75,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 20, nonEmptyLines: 90, fileSizeBytes: 75),
                     },
                     new ProjectNode
                     {
@@ -602,12 +576,8 @@ public sealed class TreemapControlHeadlessTests
                         FullPath = "C:\\Demo\\c.cs",
                         RelativePath = "c.cs",
                         Kind = ProjectNodeKind.File,
-                        Metrics = new NodeMetrics(
-                            Tokens: 5,
-                            NonEmptyLines: 0,
-                            FileSizeBytes: 225,
-                            DescendantFileCount: 1,
-                            DescendantDirectoryCount: 0),
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 5, nonEmptyLines: 0, fileSizeBytes: 225),
                     },
                 },
             },

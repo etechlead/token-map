@@ -248,7 +248,7 @@ public sealed class FileSystemProjectScanner : IProjectScanner
             FullPath = normalizedFullPath,
             RelativePath = normalizedRelativePath,
             Kind = PathNormalizer.GetNodeKind(isDirectory, isRoot),
-            Metrics = NodeMetrics.Empty,
+            Summary = NodeSummary.Empty,
             SkippedReason = skippedReason,
         };
     }

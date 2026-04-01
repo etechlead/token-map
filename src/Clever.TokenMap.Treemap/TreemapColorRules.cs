@@ -1,11 +1,12 @@
 using Avalonia.Media;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Treemap;
 
 internal readonly record struct TreemapPaletteContext(
-    AnalysisMetric Metric,
+    MetricId Metric,
     long MinLeafWeight,
     long MaxLeafWeight);
 
@@ -39,14 +40,15 @@ internal static class TreemapColorRules
         new(334, -2, 0.15, 0.46, 0.34, 0.74),
     ];
 
-    public static TreemapPaletteContext CreatePaletteContext(IEnumerable<ProjectNode> leafNodes, AnalysisMetric metric)
+    public static TreemapPaletteContext CreatePaletteContext(IEnumerable<ProjectNode> leafNodes, MetricId metric)
     {
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
         var minLeafWeight = long.MaxValue;
         var maxLeafWeight = 0L;
 
         foreach (var node in leafNodes)
         {
-            var weight = GetMetricValue(node, metric);
+            var weight = GetMetricValue(node, normalizedMetric);
             if (weight <= 0)
             {
                 continue;
@@ -62,7 +64,7 @@ internal static class TreemapColorRules
         }
 
         return new TreemapPaletteContext(
-            metric,
+            normalizedMetric,
             minLeafWeight == long.MaxValue ? maxLeafWeight : minLeafWeight,
             maxLeafWeight);
     }
@@ -178,8 +180,8 @@ internal static class TreemapColorRules
         return Math.Clamp((currentWeight - minWeight) / (maxWeight - minWeight), 0d, 1d);
     }
 
-    private static long GetMetricValue(ProjectNode node, AnalysisMetric metric) =>
-        metric.GetValue(node.Metrics);
+    private static long GetMetricValue(ProjectNode node, MetricId metricId) =>
+        node.ComputedMetrics.TryGetRoundedInt64(metricId) ?? 0;
 
     private static int GetStableHash(string seed)
     {

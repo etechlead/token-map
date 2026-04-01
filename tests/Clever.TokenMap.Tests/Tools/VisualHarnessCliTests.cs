@@ -1,4 +1,5 @@
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.VisualHarness;
 
 namespace Clever.TokenMap.Tests.Tools;
@@ -36,7 +37,7 @@ public sealed class VisualHarnessCliTests
         var options = CaptureOptions.ParseCapture(["capture"]);
 
         Assert.Equal(ThemePreference.Dark, options.ThemePreference);
-        Assert.Equal(AnalysisMetric.Tokens, options.Metric);
+        Assert.Equal(MetricIds.Tokens, options.Metric);
         Assert.Equal([CaptureSurface.Main], options.Surfaces);
         Assert.Equal([TreemapPalette.Weighted], options.Palettes);
         Assert.False(options.GenerateComparisons);

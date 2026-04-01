@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Settings;
 
@@ -21,14 +22,14 @@ public sealed class JsonAppSettingsStoreHotspotTests : IDisposable
             """
             {
               "analysis": {
-                "selectedMetric": "Tokens",
+                "selectedMetric": "tokens",
             """);
 
         var store = CreateStore();
 
         var settings = store.Load();
 
-        Assert.Equal(AnalysisMetric.Tokens, settings.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.Tokens, settings.Analysis.SelectedMetric);
         Assert.True(settings.Analysis.RespectGitIgnore);
         Assert.True(settings.Analysis.UseGlobalExcludes);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, settings.Analysis.GlobalExcludes);
@@ -53,7 +54,7 @@ public sealed class JsonAppSettingsStoreHotspotTests : IDisposable
         {
             var store = CreateStore();
             var settings = AppSettings.CreateDefault();
-            settings.Analysis.SelectedMetric = AnalysisMetric.Size;
+            settings.Analysis.SelectedMetric = MetricIds.FileSizeBytes;
             settings.Analysis.GlobalExcludes = [" node_modules\\ ", "/src//generated/**"];
 
             store.Save(settings);
@@ -69,7 +70,7 @@ public sealed class JsonAppSettingsStoreHotspotTests : IDisposable
             return;
         }
 
-        Assert.Contains(@"""selectedMetric"": ""Size""", finalContents);
+        Assert.Contains(@"""selectedMetric"": ""file_size_bytes""", finalContents);
     }
 
     public void Dispose()

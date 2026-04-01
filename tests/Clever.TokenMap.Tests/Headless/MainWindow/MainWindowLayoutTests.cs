@@ -10,6 +10,7 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Treemap;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
@@ -80,9 +81,9 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var tokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
-        var linesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
-        var sizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
+        var tokensButton = FindTreemapMetricButton(window, MetricIds.Tokens);
+        var linesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
+        var sizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
         var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
 
         Assert.NotNull(tokensButton);
@@ -94,13 +95,13 @@ public sealed class MainWindowLayoutTests
         Assert.False(sizeButton.IsChecked);
         Assert.True(showValuesCheckBox.IsChecked);
 
-        viewModel.Toolbar.IsSizeMetricSelected = true;
+        viewModel.Toolbar.SelectedMetric = MetricIds.FileSizeBytes;
         window.UpdateLayout();
         Assert.False(tokensButton.IsChecked);
         Assert.False(linesButton.IsChecked);
         Assert.True(sizeButton.IsChecked);
 
-        viewModel.Toolbar.IsLinesMetricSelected = true;
+        viewModel.Toolbar.SelectedMetric = MetricIds.NonEmptyLines;
         window.UpdateLayout();
         Assert.False(tokensButton.IsChecked);
         Assert.True(linesButton.IsChecked);
@@ -236,9 +237,9 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
-        var metricTokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
-        var metricLinesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
-        var metricSizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
+        var metricTokensButton = FindTreemapMetricButton(window, MetricIds.Tokens);
+        var metricLinesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
+        var metricSizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
         var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
         var themeSystemButton = FindNamedDescendant<ToggleButton>(window, "ThemeSystemButton");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
@@ -521,9 +522,9 @@ public sealed class MainWindowLayoutTests
         var tokenSummaryText = FindNamedDescendant<TextBlock>(window, "TokenSummaryValueText");
         var lineSummaryText = FindNamedDescendant<TextBlock>(window, "LineSummaryValueText");
         var fileSummaryText = FindNamedDescendant<TextBlock>(window, "FileSummaryValueText");
-        var metricTokensButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricTokensButton");
-        var metricLinesButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricLinesButton");
-        var metricSizeButton = FindNamedDescendant<ToggleButton>(window, "TreemapMetricSizeButton");
+        var metricTokensButton = FindTreemapMetricButton(window, MetricIds.Tokens);
+        var metricLinesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
+        var metricSizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
         var startSurface = FindNamedDescendant<Control>(window, "RecentFoldersStartSurface");
         var rescanButton = FindNamedDescendant<Button>(window, "RescanButton");
 
@@ -645,5 +646,23 @@ public sealed class MainWindowLayoutTests
 
             throw new InvalidOperationException("This path should have been cancelled.");
         }
+    }
+
+    private static ToggleButton? FindTreemapMetricButton(Window window, MetricId metricId)
+    {
+        var expectedLabel = DefaultMetricCatalog.Instance
+            .GetAll()
+            .FirstOrDefault(definition => definition.Id == metricId)?
+            .ShortName;
+        if (string.IsNullOrWhiteSpace(expectedLabel))
+        {
+            return null;
+        }
+
+        return window.GetVisualDescendants()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(button =>
+                button.Classes.Contains("treemap-metric-button") &&
+                string.Equals(button.Content?.ToString(), expectedLabel, StringComparison.Ordinal));
     }
 }

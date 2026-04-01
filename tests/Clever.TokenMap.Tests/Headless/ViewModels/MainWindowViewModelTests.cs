@@ -2,6 +2,7 @@ using System.Globalization;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Tests.Headless.Support;
 using Clever.TokenMap.Tests.Support;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
@@ -33,7 +34,8 @@ public sealed class MainWindowViewModelTests
             FullPath = "C:\\Demo\\src",
             RelativePath = "src",
             Kind = ProjectNodeKind.Directory,
-            Metrics = NodeMetrics.Empty,
+            Summary = NodeSummary.Empty,
+            ComputedMetrics = MetricSet.Empty,
         });
 
         Assert.True(viewModel.ExcludesEditor.IsOpen);
@@ -93,7 +95,7 @@ public sealed class MainWindowViewModelTests
         Assert.Equal($"66{decimalSeparator}7%", alphaByTokens.ParentShareText);
         Assert.Equal(1, analyzer.CallCount);
 
-        viewModel.Toolbar.IsSizeMetricSelected = true;
+        viewModel.Toolbar.SelectedMetric = MetricIds.FileSizeBytes;
 
         var alphaBySize = Assert.Single(viewModel.Tree.VisibleNodes, node => node.Name == "Alpha.cs");
         Assert.Equal($"33{decimalSeparator}3%", alphaBySize.ParentShareText);

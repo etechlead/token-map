@@ -194,39 +194,9 @@ public sealed class MainWindowTreemapIntegrationTests
 
     private static ProjectSnapshot CreateWideSnapshot(int fileCount)
     {
-        var root = new ProjectNode
-        {
-            Id = "/",
-            Name = "Demo",
-            FullPath = "C:\\Demo",
-            RelativePath = string.Empty,
-            Kind = ProjectNodeKind.Root,
-            Metrics = new NodeMetrics(
-                Tokens: fileCount,
-                NonEmptyLines: fileCount * 9,
-                FileSizeBytes: fileCount * 100,
-                DescendantFileCount: fileCount,
-                DescendantDirectoryCount: 0),
-        };
-
-        for (var index = 0; index < fileCount; index++)
-        {
-            var fileName = $"File-{index:D3}.cs";
-            root.Children.Add(new ProjectNode
-            {
-                Id = fileName,
-                Name = fileName,
-                FullPath = $"C:\\Demo\\{fileName}",
-                RelativePath = fileName,
-                Kind = ProjectNodeKind.File,
-                Metrics = new NodeMetrics(
-                    Tokens: 1,
-                    NonEmptyLines: 9,
-                    FileSizeBytes: 100,
-                    DescendantFileCount: 1,
-                    DescendantDirectoryCount: 0),
-            });
-        }
+        var root = CreateRootWithChildren(
+            [.. Enumerable.Range(0, fileCount)
+                .Select(index => ($"File-{index:D3}.cs", FileSizeBytes: 100L, Tokens: 1, NonEmptyLines: 9))]);
 
         return new ProjectSnapshot
         {

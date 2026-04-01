@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Tests.Support;
 
@@ -13,7 +14,7 @@ public sealed class SettingsCoordinatorTests
     public void Constructor_AppliesPersistedSettingsToStateWithoutSaving()
     {
         var settings = AppSettings.CreateDefault();
-        settings.Analysis.SelectedMetric = AnalysisMetric.Lines;
+        settings.Analysis.SelectedMetric = MetricIds.NonEmptyLines;
         settings.Analysis.RespectGitIgnore = false;
         settings.Analysis.UseGlobalExcludes = false;
         settings.Analysis.GlobalExcludes = ["bin/", "obj/"];
@@ -25,7 +26,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        Assert.Equal(AnalysisMetric.Lines, coordinator.State.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
         Assert.False(coordinator.State.UseGlobalExcludes);
         Assert.Collection(
@@ -65,7 +66,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+        coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         coordinator.SetTreemapPalette(TreemapPalette.Weighted);
         coordinator.SetShowTreemapMetricValues(false);
         coordinator.ReplaceGlobalExcludes(["bin/", "obj/"]);
@@ -73,7 +74,7 @@ public sealed class SettingsCoordinatorTests
         await store.WaitForSaveAsync();
 
         Assert.Equal(1, store.SaveCallCount);
-        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(TreemapPalette.Weighted, store.LastSavedSettings.Appearance.TreemapPalette);
         Assert.False(store.LastSavedSettings.Appearance.ShowTreemapMetricValues);
         Assert.Collection(
@@ -95,7 +96,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromMilliseconds(25));
 
-            coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+            coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
 
             await store.WaitForSaveAsync();
 
@@ -139,7 +140,7 @@ public sealed class SettingsCoordinatorTests
                 new RecordingThemeService(),
                 debounceDelay: TimeSpan.FromSeconds(5));
 
-            coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+            coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
 
             await coordinator.FlushAsync();
 
@@ -160,7 +161,7 @@ public sealed class SettingsCoordinatorTests
             new RecordingThemeService(),
             debounceDelay: TimeSpan.FromMilliseconds(25));
 
-        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+        coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         await store.WaitForSaveStartedAsync(1);
 
         coordinator.SetThemePreference(ThemePreference.Dark);
@@ -169,7 +170,7 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(2, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
     }
 
@@ -183,7 +184,7 @@ public sealed class SettingsCoordinatorTests
         var themeService = new RecordingThemeService();
         var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
-        coordinator.SetSelectedMetric(AnalysisMetric.Lines);
+        coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         coordinator.SetThemePreference(ThemePreference.Dark);
         coordinator.SetTreemapPalette(TreemapPalette.Studio);
         coordinator.SetShowTreemapMetricValues(false);
@@ -195,7 +196,7 @@ public sealed class SettingsCoordinatorTests
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(AnalysisMetric.Lines, store.LastSavedSettings!.Analysis.SelectedMetric);
+        Assert.Equal(MetricIds.NonEmptyLines, store.LastSavedSettings!.Analysis.SelectedMetric);
         Assert.Equal(ThemePreference.Dark, store.LastSavedSettings.Appearance.ThemePreference);
         Assert.Equal(TreemapPalette.Studio, store.LastSavedSettings.Appearance.TreemapPalette);
         Assert.False(store.LastSavedSettings.Appearance.ShowTreemapMetricValues);

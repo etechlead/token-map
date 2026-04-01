@@ -1,6 +1,8 @@
 using Avalonia;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Tests.Support;
 using Clever.TokenMap.Treemap;
 
 namespace Clever.TokenMap.Tests.Treemap;
@@ -170,11 +172,9 @@ public sealed class TreemapVisualRulesTests
             FullPath = $"C:\\root\\{relativePath.Replace('/', '\\')}",
             RelativePath = relativePath,
             Kind = kind,
-            Metrics = new NodeMetrics(
-                Tokens: 100,
-                NonEmptyLines: 20,
-                FileSizeBytes: 100,
-                DescendantFileCount: kind == ProjectNodeKind.File ? 1 : 0,
-                DescendantDirectoryCount: kind == ProjectNodeKind.Directory ? 1 : 0),
+            Summary = kind == ProjectNodeKind.File
+                ? MetricTestData.CreateFileSummary()
+                : MetricTestData.CreateDirectorySummary(descendantFileCount: 0, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 100, nonEmptyLines: 20, fileSizeBytes: 100),
         };
 }

@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Paths;
 
 namespace Clever.TokenMap.Core.Settings;
@@ -12,7 +13,10 @@ public static class AppSettingsCanonicalizer
     {
         ArgumentNullException.ThrowIfNull(settings);
 
-        settings.Analysis.SelectedMetric = settings.Analysis.SelectedMetric.Normalize();
+        settings.Analysis.VisibleMetricIds = NormalizeVisibleMetricIds(settings.Analysis.VisibleMetricIds);
+        settings.Analysis.SelectedMetric = NormalizeSelectedMetric(
+            settings.Analysis.SelectedMetric,
+            settings.Analysis.VisibleMetricIds);
         settings.Appearance.TreemapPalette = NormalizeTreemapPalette(settings.Appearance.TreemapPalette);
         settings.Analysis.GlobalExcludes = [.. GlobalExcludeList.Normalize(settings.Analysis.GlobalExcludes)];
         settings.RecentFolderPaths = NormalizeRecentFolderPaths(settings.RecentFolderPaths);
@@ -52,6 +56,40 @@ public static class AppSettingsCanonicalizer
         }
 
         return normalizedPaths;
+    }
+
+    public static List<MetricId> NormalizeVisibleMetricIds(IEnumerable<MetricId>? metricIds)
+    {
+        var requestedIds = metricIds?
+            .Select(metricId => DefaultMetricCatalog.NormalizeMetricId(metricId))
+            .ToHashSet()
+            ?? [];
+        var visibleMetricIds = DefaultMetricCatalog.Instance
+            .GetAll()
+            .Where(definition => requestedIds.Contains(definition.Id))
+            .Select(definition => definition.Id)
+            .ToList();
+
+        if (visibleMetricIds.Count > 0)
+        {
+            return visibleMetricIds;
+        }
+
+        visibleMetricIds = [.. DefaultMetricCatalog.GetDefaultVisibleMetricIds()];
+        if (visibleMetricIds.Count > 0)
+        {
+            return visibleMetricIds;
+        }
+
+        return [.. DefaultMetricCatalog.GetAllMetricIds().Take(1)];
+    }
+
+    private static MetricId NormalizeSelectedMetric(MetricId selectedMetric, List<MetricId> visibleMetricIds)
+    {
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(selectedMetric);
+        return visibleMetricIds.Contains(normalizedMetric)
+            ? normalizedMetric
+            : visibleMetricIds[0];
     }
 
     private static string? NormalizeFolderPath(string? path) =>

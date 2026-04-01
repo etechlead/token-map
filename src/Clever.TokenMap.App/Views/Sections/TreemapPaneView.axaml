@@ -20,31 +20,47 @@
                            Text="Treemap" />
                 <Border Grid.Column="1"
                         Classes="segmented-toggle-panel treemap-metric-switcher"
-                        VerticalAlignment="Center">
-                    <Grid ColumnDefinitions="*,Auto,*,Auto,*">
-                        <ToggleButton Name="TreemapMetricTokensButton"
-                                      Classes="segmented-toggle-button treemap-metric-button start"
-                                      IsChecked="{Binding Toolbar.IsTokensMetricSelected, Mode=TwoWay}"
-                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                      Content="Tokens" />
-                        <Border Grid.Column="1"
-                                Classes="segmented-toggle-divider" />
-                        <ToggleButton Name="TreemapMetricLinesButton"
-                                      Grid.Column="2"
-                                      Classes="segmented-toggle-button treemap-metric-button middle"
-                                      IsChecked="{Binding Toolbar.IsLinesMetricSelected, Mode=TwoWay}"
-                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                      Content="Lines" />
-                        <Border Grid.Column="3"
-                                Classes="segmented-toggle-divider" />
-                        <ToggleButton Name="TreemapMetricSizeButton"
-                                      Grid.Column="4"
-                                      Classes="segmented-toggle-button treemap-metric-button end"
-                                      IsChecked="{Binding Toolbar.IsSizeMetricSelected, Mode=TwoWay}"
-                                      IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                                      Content="Size" />
-                    </Grid>
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding Toolbar.ShowTreemapMetricButtons}">
+                    <ItemsControl Name="TreemapMetricButtonsItemsControl"
+                                  ItemsSource="{Binding Toolbar.VisibleTreemapMetricOptions}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MetricSelectionOptionViewModel">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Border Classes="segmented-toggle-divider"
+                                            IsVisible="{Binding ShowLeadingDivider}" />
+                                    <ToggleButton Grid.Column="1"
+                                                  Classes="segmented-toggle-button treemap-metric-button"
+                                                  Classes.start="{Binding IsFirst}"
+                                                  Classes.middle="{Binding IsMiddle}"
+                                                  Classes.end="{Binding IsLast}"
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                  IsEnabled="{Binding #TreemapPaneRoot.DataContext.Toolbar.CanChangeMetric}"
+                                                  Content="{Binding Label}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </Border>
+                <ComboBox Name="TreemapMetricComboBox"
+                          Grid.Column="1"
+                          Width="180"
+                          VerticalAlignment="Center"
+                          IsVisible="{Binding Toolbar.ShowTreemapMetricSelector}"
+                          IsEnabled="{Binding Toolbar.CanChangeMetric}"
+                          ItemsSource="{Binding Toolbar.VisibleTreemapMetricOptions}"
+                          SelectedItem="{Binding Toolbar.SelectedTreemapMetricOption, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:MetricSelectionOptionViewModel">
+                            <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
                 <CheckBox Grid.Column="2"
                           Name="TreemapShowValuesCheckBox"
                           VerticalAlignment="Center"

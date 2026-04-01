@@ -1,7 +1,8 @@
 using System;
+using System.Collections.Generic;
 using Clever.TokenMap.App.State;
-using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.ViewModels;
 
@@ -29,5 +30,7 @@ public interface IProjectTreeWorkspaceView
 
     void SelectNodeById(string? nodeId);
 
-    void SetShareMetric(AnalysisMetric metric);
+    void SetShareMetric(MetricId metric);
+
+    void SetVisibleMetrics(IReadOnlyList<MetricId> metricIds);
 }

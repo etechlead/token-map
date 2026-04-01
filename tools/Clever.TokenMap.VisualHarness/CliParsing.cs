@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.VisualHarness;
 
@@ -75,6 +76,37 @@ internal static class CliParsing
     public static int ParseInt(string value) => int.Parse(value, CultureInfo.InvariantCulture);
 
     public static long ParseLong(string value) => long.Parse(value, CultureInfo.InvariantCulture);
+
+    public static IReadOnlyList<string> GetMetricTokens() =>
+    [
+        "tokens",
+        "lines",
+        "size",
+    ];
+
+    public static string GetMetricToken(MetricId metricId)
+    {
+        var normalizedMetricId = DefaultMetricCatalog.NormalizeMetricId(metricId);
+        return normalizedMetricId == MetricIds.NonEmptyLines
+            ? "lines"
+            : normalizedMetricId == MetricIds.FileSizeBytes
+                ? "size"
+                : "tokens";
+    }
+
+    public static MetricId ParseMetricId(string value)
+    {
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "tokens" => MetricIds.Tokens,
+            "lines" => MetricIds.NonEmptyLines,
+            "size" => MetricIds.FileSizeBytes,
+            "non_empty_lines" => MetricIds.NonEmptyLines,
+            "file_size_bytes" => MetricIds.FileSizeBytes,
+            _ => throw new InvalidOperationException(
+                $"Unsupported metric '{value}'. Expected {string.Join(", ", GetMetricTokens())}."),
+        };
+    }
 
     public static IReadOnlyList<string> GetEnumTokens<TEnum>(IEnumerable<TEnum> values)
         where TEnum : struct, Enum =>

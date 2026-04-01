@@ -1,10 +1,10 @@
-using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Core.Interfaces;
 
 public interface ICacheStore
 {
-    ValueTask<NodeMetrics?> TryGetFileMetricsAsync(
+    ValueTask<MetricSet?> TryGetFileMetricsAsync(
         string rootPath,
         string relativePath,
         long fileSizeBytes,
@@ -16,6 +16,6 @@ public interface ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
-        NodeMetrics metrics,
+        MetricSet metrics,
         CancellationToken cancellationToken);
 }

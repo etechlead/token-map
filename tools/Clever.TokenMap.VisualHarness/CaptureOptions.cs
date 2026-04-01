@@ -1,4 +1,5 @@
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.VisualHarness;
 
@@ -26,7 +27,7 @@ internal sealed record ShareMetricOverrides(
 internal sealed record CaptureOptions(
     string OutputDirectory,
     ThemePreference ThemePreference,
-    AnalysisMetric Metric,
+    MetricId Metric,
     CaptureSource Source,
     string ProjectRoot,
     IReadOnlyList<TreemapPalette> Palettes,

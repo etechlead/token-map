@@ -5,6 +5,8 @@ using System.ComponentModel;
 using System.Linq;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Settings;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -16,9 +18,11 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     private readonly Dictionary<string, string?> _parentNodeIdsById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, ProjectTreeNodeViewModel> _visibleNodesById = new(StringComparer.Ordinal);
     private readonly HashSet<string> _expandedNodeIds = new(StringComparer.Ordinal);
-    private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Tokens;
+    private ProjectTreeSortColumn _currentSortColumn = ProjectTreeSortColumn.Metric;
     private ListSortDirection _currentSortDirection = ListSortDirection.Descending;
-    private AnalysisMetric _shareMetric = AnalysisMetric.Tokens;
+    private MetricId _currentMetricSortId = MetricIds.Tokens;
+    private MetricId _shareMetric = MetricIds.Tokens;
+    private IReadOnlyList<MetricId> _visibleMetricIds = DefaultMetricCatalog.GetDefaultVisibleMetricIds();
     private ProjectNode? _rootNode;
     private string? _selectedNodeId;
 
@@ -34,6 +38,8 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     public IRelayCommand<ProjectTreeNodeViewModel?> ToggleNodeCommand { get; }
 
     public ProjectTreeSortColumn CurrentSortColumn => _currentSortColumn;
+
+    public MetricId CurrentMetricSortId => _currentMetricSortId;
 
     public ListSortDirection CurrentSortDirection => _currentSortDirection;
 
@@ -106,19 +112,54 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     {
         _currentSortColumn = column;
         _currentSortDirection = direction;
+        if (_currentSortColumn == ProjectTreeSortColumn.Metric)
+        {
+            _currentMetricSortId = DefaultMetricCatalog.NormalizeMetricId(_currentMetricSortId);
+        }
+
         RebuildVisibleNodes();
         RestoreSelectedNodeAfterRebuild();
     }
 
-    public void SetShareMetric(AnalysisMetric metric)
+    public void SortByMetric(MetricId metricId, ListSortDirection direction)
     {
-        var normalizedMetric = NormalizeShareMetric(metric);
+        _currentSortColumn = ProjectTreeSortColumn.Metric;
+        _currentSortDirection = direction;
+        _currentMetricSortId = DefaultMetricCatalog.NormalizeMetricId(metricId);
+        RebuildVisibleNodes();
+        RestoreSelectedNodeAfterRebuild();
+    }
+
+    public void SetShareMetric(MetricId metric)
+    {
+        var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
         if (_shareMetric == normalizedMetric)
         {
             return;
         }
 
         _shareMetric = normalizedMetric;
+        RebuildVisibleNodes();
+        RestoreSelectedNodeAfterRebuild();
+    }
+
+    public void SetVisibleMetrics(IReadOnlyList<MetricId> metricIds)
+    {
+        ArgumentNullException.ThrowIfNull(metricIds);
+
+        var normalizedMetricIds = AppSettingsCanonicalizer.NormalizeVisibleMetricIds(metricIds);
+        if (_visibleMetricIds.SequenceEqual(normalizedMetricIds))
+        {
+            return;
+        }
+
+        _visibleMetricIds = normalizedMetricIds;
+        if (_currentSortColumn == ProjectTreeSortColumn.Metric &&
+            !_visibleMetricIds.Contains(_currentMetricSortId))
+        {
+            _currentMetricSortId = _visibleMetricIds[0];
+        }
+
         RebuildVisibleNodes();
         RestoreSelectedNodeAfterRebuild();
     }
@@ -297,10 +338,10 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
 
         return _currentSortDirection == ListSortDirection.Ascending
             ? node.Children
-                .OrderBy(child => GetSortValue(child, _currentSortColumn))
+                .OrderBy(child => GetSortValue(child))
                 .ThenBy(child => child.Name, StringComparer.OrdinalIgnoreCase)
             : node.Children
-                .OrderByDescending(child => GetSortValue(child, _currentSortColumn))
+                .OrderByDescending(child => GetSortValue(child))
                 .ThenBy(child => child.Name, StringComparer.OrdinalIgnoreCase);
     }
 
@@ -364,23 +405,17 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
         }
     }
 
-    private static IComparable GetSortValue(ProjectNode node, ProjectTreeSortColumn column) =>
-        column switch
+    private IComparable GetSortValue(ProjectNode node) =>
+        _currentSortColumn switch
         {
-            ProjectTreeSortColumn.Size => node.Metrics.FileSizeBytes,
-            ProjectTreeSortColumn.Lines => node.Metrics.NonEmptyLines,
-            ProjectTreeSortColumn.Tokens => node.Metrics.Tokens,
+            ProjectTreeSortColumn.Metric => node.ComputedMetrics.TryGetRoundedInt64(_currentMetricSortId) ?? 0,
             _ => node.Name,
         };
-
-    private static AnalysisMetric NormalizeShareMetric(AnalysisMetric metric) => metric.Normalize();
 }
 
 public enum ProjectTreeSortColumn
 {
     Name,
     ParentShare,
-    Size,
-    Lines,
-    Tokens,
+    Metric,
 }

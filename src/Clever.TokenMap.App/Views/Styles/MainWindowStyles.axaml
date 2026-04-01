@@ -679,9 +679,6 @@
     <Style Selector="ToggleButton.segmented-toggle-button:disabled">
         <Setter Property="Opacity" Value="0.55" />
     </Style>
-    <Style Selector="Border.treemap-metric-switcher">
-        <Setter Property="MinWidth" Value="194" />
-    </Style>
     <Style Selector="ToggleButton.treemap-metric-button">
         <Setter Property="MinHeight" Value="28" />
         <Setter Property="Padding" Value="10,0" />

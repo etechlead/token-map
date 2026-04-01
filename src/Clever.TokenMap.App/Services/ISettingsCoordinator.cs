@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.Services;
 
@@ -15,7 +16,13 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     ScanOptions BuildCurrentScanOptions();
 
-    void SetSelectedMetric(AnalysisMetric metric);
+    void SetSelectedMetric(MetricId metric);
+
+    void SetMetricVisibility(MetricId metric, bool isVisible);
+
+    void ResetVisibleMetricIdsToDefault();
+
+    void ShowAllMetricIds();
 
     void SetRespectGitIgnore(bool value);
 
