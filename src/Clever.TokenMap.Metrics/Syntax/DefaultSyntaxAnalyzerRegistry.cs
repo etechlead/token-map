@@ -1,4 +1,5 @@
 using Clever.TokenMap.Metrics.Syntax.CSharp;
+using Clever.TokenMap.Metrics.Syntax.TypeScript;
 
 namespace Clever.TokenMap.Metrics.Syntax;
 
@@ -8,5 +9,6 @@ public static class DefaultSyntaxAnalyzerRegistry
         new ExtensionSyntaxAnalyzerRegistry(
         [
             new CSharpSyntaxAnalyzer(),
+            new TypeScriptSyntaxAnalyzer(),
         ]);
 }
