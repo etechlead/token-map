@@ -23,34 +23,19 @@ internal static class PythonCallableMetricsWalker
 
     public static bool IsCallable(Node node) => node.IsNamed && CallableNodeTypes.Contains(node.Type);
 
-    public static IReadOnlyList<CallableSyntaxFact> CollectCallables(Node rootNode)
-    {
-        var callables = new List<CallableSyntaxFact>();
-        Traverse(rootNode, node =>
-        {
-            if (!TryGetCallableKind(node, out var callableKind))
-            {
-                return;
-            }
+    public static IReadOnlyList<CallableSyntaxFact> CollectCallables(Node rootNode) =>
+        CallableFactCollector.Collect(
+            rootNode,
+            TryGetCallableKind,
+            TryGetCallableName,
+            GetParameterCount,
+            ComputeMetrics);
 
-            var metrics = ComputeMetrics(node);
-            callables.Add(new CallableSyntaxFact(
-                Name: TryGetCallableName(node),
-                Kind: callableKind,
-                Lines: new LineRange(node.StartPosition.Row + 1, node.EndPosition.Row + 1),
-                ParameterCount: GetParameterCount(node),
-                CyclomaticComplexity: metrics.CyclomaticComplexity,
-                MaxNestingDepth: metrics.MaxNestingDepth));
-        });
-
-        return callables;
-    }
-
-    private static ComplexityMetrics ComputeMetrics(Node callableNode)
+    private static (int CyclomaticComplexity, int MaxNestingDepth) ComputeMetrics(Node callableNode)
     {
         var walker = new Walker(callableNode);
         walker.VisitChildren(callableNode, currentDepth: 0);
-        return new ComplexityMetrics(walker.CyclomaticComplexity, walker.MaxNestingDepth);
+        return (walker.CyclomaticComplexity, walker.MaxNestingDepth);
     }
 
     private static bool TryGetCallableKind(Node node, out CallableKind kind)
@@ -117,17 +102,6 @@ internal static class PythonCallableMetricsWalker
     private static bool IsParameterNode(Node node) => !ParameterPunctuationNodeTypes.Contains(node.Type);
 
     private static bool IsNull(Node? node) => node is null || node.Id == IntPtr.Zero;
-
-    private static void Traverse(Node node, Action<Node> visitor)
-    {
-        visitor(node);
-        foreach (var child in node.Children)
-        {
-            Traverse(child, visitor);
-        }
-    }
-
-    private readonly record struct ComplexityMetrics(int CyclomaticComplexity, int MaxNestingDepth);
 
     private sealed class Walker(Node callableRoot)
     {

@@ -46,6 +46,29 @@ public abstract class TreeSitterSyntaxAnalyzerBase : ISyntaxAnalyzer
         string sourceText,
         CancellationToken cancellationToken);
 
+    protected SyntaxSummaryArtifact CreateStandardSummary(
+        Node rootNode,
+        SyntaxParseQuality parseQuality,
+        string sourceText,
+        IReadOnlyList<CallableSyntaxFact> callables)
+    {
+        var commentSpans = SyntaxNodeTraversal.CollectTextSpans(rootNode, IsCommentNode);
+        var lineCounts = LineClassifier.Classify(sourceText, commentSpans);
+
+        return new SyntaxSummaryArtifact(
+            LanguageId,
+            parseQuality,
+            CodeLineCount: lineCounts.CodeLineCount,
+            CommentLineCount: lineCounts.CommentLineCount,
+            FunctionCount: callables.Count,
+            CyclomaticComplexitySum: callables.Sum(callable => callable.CyclomaticComplexity),
+            CyclomaticComplexityMax: callables.Count == 0 ? 0 : callables.Max(callable => callable.CyclomaticComplexity),
+            MaxNestingDepth: callables.Count == 0 ? 0 : callables.Max(callable => callable.MaxNestingDepth),
+            Callables: callables);
+    }
+
+    protected virtual bool IsCommentNode(Node node) => node.Type == "comment";
+
     private static SyntaxParseQuality DetermineParseQuality(Node rootNode)
     {
         var stack = new Stack<Node>();
