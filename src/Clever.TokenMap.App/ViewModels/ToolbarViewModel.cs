@@ -25,6 +25,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     private readonly IReadOnlyList<MetricDefinition> _allMetricDefinitions;
     private readonly ObservableCollection<MetricSelectionOptionViewModel> _visibleTreemapMetricOptions = [];
     private readonly ObservableCollection<MetricVisibilityOptionViewModel> _metricVisibilityOptions = [];
+    private readonly ObservableCollection<MetricVisibilityOptionViewModel> _treeOnlyMetricVisibilityOptions = [];
     private IReadOnlyList<MetricDefinition> _visibleMetricDefinitions = [];
     private MetricSelectionOptionViewModel? _selectedTreemapMetricOption;
 
@@ -51,11 +52,20 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
         VisibleTreemapMetricOptions = new ReadOnlyObservableCollection<MetricSelectionOptionViewModel>(_visibleTreemapMetricOptions);
         MetricVisibilityOptions = new ReadOnlyObservableCollection<MetricVisibilityOptionViewModel>(_metricVisibilityOptions);
+        TreeOnlyMetricVisibilityOptions = new ReadOnlyObservableCollection<MetricVisibilityOptionViewModel>(_treeOnlyMetricVisibilityOptions);
         foreach (var definition in _allMetricDefinitions)
         {
-            _metricVisibilityOptions.Add(new MetricVisibilityOptionViewModel(
+            var option = new MetricVisibilityOptionViewModel(
                 definition,
-                _settingsCoordinator.SetMetricVisibility));
+                _settingsCoordinator.SetMetricVisibility);
+            if (definition.SupportsTreemapWeight)
+            {
+                _metricVisibilityOptions.Add(option);
+            }
+            else
+            {
+                _treeOnlyMetricVisibilityOptions.Add(option);
+            }
         }
 
         RefreshMetricPresentation();
@@ -81,6 +91,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     public ReadOnlyObservableCollection<MetricVisibilityOptionViewModel> MetricVisibilityOptions { get; }
 
+    public ReadOnlyObservableCollection<MetricVisibilityOptionViewModel> TreeOnlyMetricVisibilityOptions { get; }
+
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
 
@@ -100,6 +112,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     }
 
     public IReadOnlyList<MetricDefinition> VisibleMetricDefinitions => _visibleMetricDefinitions;
+
+    public bool HasTreeOnlyMetricVisibilityOptions => TreeOnlyMetricVisibilityOptions.Count > 0;
 
     public bool ShowTreemapMetricButtons => VisibleTreemapMetricOptions.Count <= 7;
 
@@ -296,7 +310,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
 
     private void RefreshMetricVisibilityOptions(HashSet<MetricId> visibleMetricIdSet)
     {
-        foreach (var option in _metricVisibilityOptions)
+        foreach (var option in _metricVisibilityOptions.Concat(_treeOnlyMetricVisibilityOptions))
         {
             var isVisible = visibleMetricIdSet.Contains(option.Definition.Id);
             var isToggleEnabled = isVisible

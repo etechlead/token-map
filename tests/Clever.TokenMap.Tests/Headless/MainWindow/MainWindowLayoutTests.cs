@@ -324,6 +324,33 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_SettingsDrawer_ShowsTreeOnlyMetricsLegend()
+    {
+        var window = new AppMainWindow
+        {
+            DataContext = CreateMainWindowViewModel(),
+        };
+
+        window.Show();
+
+        var viewModel = Assert.IsType<MainWindowViewModel>(window.DataContext);
+        viewModel.ToggleSettingsCommand.Execute(null);
+        window.UpdateLayout();
+
+        var legend = FindNamedDescendant<TextBlock>(window, "TreeOnlyMetricsLegendText");
+        var divider = FindNamedDescendant<Grid>(window, "TreeOnlyMetricsLegendPanel");
+        var treeOnlyItems = FindNamedDescendant<ItemsControl>(window, "TreeOnlyMetricsItemsControl");
+
+        Assert.NotNull(legend);
+        Assert.NotNull(divider);
+        Assert.NotNull(treeOnlyItems);
+        Assert.True(legend.IsVisible);
+        Assert.True(divider.IsVisible);
+        Assert.True(treeOnlyItems.IsVisible);
+        Assert.Equal("Tree only", legend.Text);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_GlobalExcludesEditor_OpensAndCancelsWithoutSaving()
     {
         var window = new AppMainWindow

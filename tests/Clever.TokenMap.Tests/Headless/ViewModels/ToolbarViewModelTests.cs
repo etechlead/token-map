@@ -117,6 +117,33 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
+    public void MetricVisibilityOptions_AreSplitBetweenTreemapAndTreeOnlyGroups()
+    {
+        var viewModel = CreateViewModel(new SettingsState());
+
+        var funcsOption = Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.FunctionCount);
+        var ccMaxOption = Assert.Single(
+            viewModel.TreeOnlyMetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.CyclomaticComplexityMax);
+        var nestingOption = Assert.Single(
+            viewModel.TreeOnlyMetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.MaxNestingDepth);
+
+        Assert.Equal("Funcs", funcsOption.Label);
+        Assert.Equal("CC max", ccMaxOption.Label);
+        Assert.Equal("Nest", nestingOption.Label);
+        Assert.DoesNotContain(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.CyclomaticComplexityMax);
+        Assert.DoesNotContain(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.MaxNestingDepth);
+        Assert.True(viewModel.HasTreeOnlyMetricVisibilityOptions);
+    }
+
+    [Fact]
     public void SelectingWeightedPalette_StoresPaletteSelection()
     {
         var state = new SettingsState();

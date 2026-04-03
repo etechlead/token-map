@@ -61,8 +61,44 @@
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
                                        Text="Metrics" />
-                            <ItemsControl Name="VisibleMetricsItemsControl"
+                            <ItemsControl Name="TreemapMetricsItemsControl"
                                           ItemsSource="{Binding Toolbar.MetricVisibilityOptions}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="6" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MetricVisibilityOptionViewModel">
+                                        <CheckBox Content="{Binding Label}"
+                                                  IsChecked="{Binding IsVisible, Mode=TwoWay}"
+                                                  IsEnabled="{Binding IsToggleEnabled}"
+                                                  ToolTip.Tip="{Binding Description}" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <Grid Name="TreeOnlyMetricsLegendPanel"
+                                  ColumnDefinitions="*,Auto,*"
+                                  ColumnSpacing="8"
+                                  IsVisible="{Binding Toolbar.HasTreeOnlyMetricVisibilityOptions}">
+                                <Border Name="TreeOnlyMetricsLegendLeft"
+                                        Height="1"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource TokenMapDividerBrush}" />
+                                <TextBlock Name="TreeOnlyMetricsLegendText"
+                                           Grid.Column="1"
+                                           Classes="toolbar-group-title"
+                                           VerticalAlignment="Center"
+                                           Text="Tree only" />
+                                <Border Name="TreeOnlyMetricsLegendRight"
+                                        Grid.Column="2"
+                                        Height="1"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource TokenMapDividerBrush}" />
+                            </Grid>
+                            <ItemsControl Name="TreeOnlyMetricsItemsControl"
+                                          IsVisible="{Binding Toolbar.HasTreeOnlyMetricVisibilityOptions}"
+                                          ItemsSource="{Binding Toolbar.TreeOnlyMetricVisibilityOptions}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <StackPanel Spacing="6" />

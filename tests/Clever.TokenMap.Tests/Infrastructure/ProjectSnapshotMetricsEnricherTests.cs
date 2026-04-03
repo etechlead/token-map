@@ -1,11 +1,13 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
 using Clever.TokenMap.Metrics;
+using Clever.TokenMap.Metrics.Syntax;
 
 namespace Clever.TokenMap.Tests.Infrastructure;
 
@@ -67,6 +69,78 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
         Assert.Equal(1, srcNode.Summary.DescendantFileCount);
         Assert.Equal(0, srcNode.Summary.DescendantDirectoryCount);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_UsesSyntaxArtifactWhenAnalyzerExists()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "Program.cs"), "class Program { }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var syntaxArtifact = new SyntaxSummaryArtifact(
+            LanguageId: "csharp",
+            ParseQuality: SyntaxParseQuality.Full,
+            CodeLineCount: 1,
+            CommentLineCount: 2,
+            FunctionCount: 3,
+            CyclomaticComplexitySum: 7,
+            CyclomaticComplexityMax: 4,
+            MaxNestingDepth: 2,
+            Callables: []);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter(),
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new StaticSyntaxAnalyzer(".cs", syntaxArtifact),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var programNode = Assert.Single(enriched.Root.Children);
+
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
+        Assert.Equal(3, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
+        Assert.Equal(7, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
+        Assert.Equal(4, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
+        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
+        Assert.Equal(3, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
+        Assert.Equal(7, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
+        Assert.Equal(4, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
+        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_TreatsSyntaxAnalyzerFailuresAsWarnings()
+    {
+        var fullPath = Path.Combine(_rootPath, "Program.cs");
+        await File.WriteAllTextAsync(fullPath, "class Program { }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter(),
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new ThrowingSyntaxAnalyzer(".cs", "csharp"),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var programNode = Assert.Single(enriched.Root.Children);
+
+        Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
+        Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CommentLines).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.FunctionCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexitySum).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityMax).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.MaxNestingDepth).Status);
+        Assert.Contains(
+            enriched.Diagnostics,
+            issue => issue.Context.TryGetValue("FullPath", out var path) &&
+                     string.Equals(path, fullPath, StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -294,5 +368,40 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                 }
             }
         }
+    }
+
+    private sealed class StaticSyntaxAnalyzer(string extension, SyntaxSummaryArtifact artifact) : ISyntaxAnalyzer
+    {
+        public string LanguageId => artifact.LanguageId;
+
+        public IReadOnlyCollection<string> FileExtensions { get; } = [extension];
+
+        public bool CanAnalyze(string fullPath) =>
+            string.Equals(Path.GetExtension(fullPath), extension, StringComparison.OrdinalIgnoreCase);
+
+        public ValueTask<SyntaxSummaryArtifact> AnalyzeAsync(
+            string fullPath,
+            string sourceText,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(artifact);
+        }
+    }
+
+    private sealed class ThrowingSyntaxAnalyzer(string extension, string languageId) : ISyntaxAnalyzer
+    {
+        public string LanguageId { get; } = languageId;
+
+        public IReadOnlyCollection<string> FileExtensions { get; } = [extension];
+
+        public bool CanAnalyze(string fullPath) =>
+            string.Equals(Path.GetExtension(fullPath), extension, StringComparison.OrdinalIgnoreCase);
+
+        public ValueTask<SyntaxSummaryArtifact> AnalyzeAsync(
+            string fullPath,
+            string sourceText,
+            CancellationToken cancellationToken) =>
+            throw new InvalidOperationException("boom");
     }
 }

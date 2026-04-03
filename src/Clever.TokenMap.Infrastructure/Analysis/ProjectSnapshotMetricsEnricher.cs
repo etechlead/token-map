@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
@@ -8,6 +9,7 @@ using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators;
+using Clever.TokenMap.Metrics.Syntax;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
 
@@ -23,6 +25,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     private readonly IReadOnlyList<IFileMetricCalculator> _fileMetricCalculators;
     private readonly int _maxDegreeOfParallelism;
     private readonly MetricSetRollupService _metricSetRollupService;
+    private readonly ISyntaxAnalyzerRegistry _syntaxAnalyzerRegistry;
     private readonly ITextFileDetector _textFileDetector;
     private readonly ITokenCounter _tokenCounter;
 
@@ -35,7 +38,8 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         int largeFileChunkSizeChars = LargeFileChunkSizeChars,
         int? maxDegreeOfParallelism = null,
         IMetricCatalog? metricCatalog = null,
-        IEnumerable<IFileMetricCalculator>? fileMetricCalculators = null)
+        IEnumerable<IFileMetricCalculator>? fileMetricCalculators = null,
+        ISyntaxAnalyzerRegistry? syntaxAnalyzerRegistry = null)
     {
         _cacheStore = cacheStore;
         _largeFileChunkSizeChars = largeFileChunkSizeChars > 0
@@ -48,6 +52,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         _maxDegreeOfParallelism = maxDegreeOfParallelism.HasValue
             ? NormalizeMaxDegreeOfParallelism(maxDegreeOfParallelism.Value)
             : GetDefaultMaxDegreeOfParallelism();
+        _syntaxAnalyzerRegistry = syntaxAnalyzerRegistry ?? DefaultSyntaxAnalyzerRegistry.Instance;
         _textFileDetector = textFileDetector;
         _tokenCounter = tokenCounter;
         var effectiveMetricCatalog = metricCatalog ?? DefaultMetricCatalog.Instance;
@@ -129,6 +134,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     [
         new FileSizeMetricCalculator(),
         new TextMetricsCalculator(),
+        new SyntaxMetricsCalculator(),
     ];
 
     private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
@@ -281,10 +287,10 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         }
 
         var computedMetrics = await ComputeFileMetricsAsync(
-            snapshot,
             node,
             fileSizeBytes,
             textMetricsArtifact,
+            diagnostics,
             cancellationToken).ConfigureAwait(false);
 
         if (fileState.Exists && _cacheStore is not null)
@@ -336,10 +342,10 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     }
 
     private async Task<MetricSet> ComputeFileMetricsAsync(
-        ProjectSnapshot snapshot,
         ProjectNode node,
         long fileSizeBytes,
         TextMetricsArtifact textMetricsArtifact,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
         var context = new FileMetricContext(
@@ -347,6 +353,10 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             artifacts: new Dictionary<Type, object?>
             {
                 [typeof(TextMetricsArtifact)] = textMetricsArtifact,
+            },
+            artifactFactories: new Dictionary<Type, FileArtifactFactory>
+            {
+                [typeof(SyntaxSummaryArtifact)] = ct => CreateSyntaxSummaryArtifactAsync(node.FullPath, fileSizeBytes, diagnostics, ct),
             });
         var builder = new MetricSetBuilder();
 
@@ -399,7 +409,77 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetValue(MetricIds.FileSizeBytes, fileSizeBytes);
         builder.SetNotApplicable(MetricIds.Tokens);
         builder.SetNotApplicable(MetricIds.NonEmptyLines);
+        builder.SetNotApplicable(MetricIds.CommentLines);
+        builder.SetNotApplicable(MetricIds.FunctionCount);
+        builder.SetNotApplicable(MetricIds.CyclomaticComplexitySum);
+        builder.SetNotApplicable(MetricIds.CyclomaticComplexityMax);
+        builder.SetNotApplicable(MetricIds.MaxNestingDepth);
         return builder.Build();
+    }
+
+    private async ValueTask<object?> CreateSyntaxSummaryArtifactAsync(
+        string fullPath,
+        long fileSizeBytes,
+        ConcurrentQueue<AnalysisIssue> diagnostics,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (!_syntaxAnalyzerRegistry.TryResolve(fullPath, out var analyzer))
+        {
+            return SyntaxSummaryArtifact.Unsupported();
+        }
+
+        if (fileSizeBytes > _largeFileTokenizationThresholdBytes)
+        {
+            return SyntaxSummaryArtifact.Unsupported(analyzer.LanguageId);
+        }
+
+        try
+        {
+            var sourceText = await File.ReadAllTextAsync(fullPath, cancellationToken).ConfigureAwait(false);
+            return await analyzer.AnalyzeAsync(fullPath, sourceText, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is DecoderFallbackException or InvalidDataException)
+        {
+            diagnostics.Enqueue(CreateDiagnostic(
+                message: $"TokenMap could not decode '{fullPath}' for syntax analysis.",
+                context: AppIssueContext.Create(("FullPath", fullPath))));
+            _logger.LogWarning(
+                exception,
+                "Decoding a text file failed during syntax analysis.",
+                eventCode: "analysis.syntax_decode_failed",
+                context: AppIssueContext.Create(("FullPath", fullPath)));
+            return SyntaxSummaryArtifact.Failed(analyzer.LanguageId);
+        }
+        catch (Exception exception) when (IsRecoverableFileException(exception))
+        {
+            diagnostics.Enqueue(CreateDiagnostic(
+                message: $"TokenMap could not analyze syntax for '{fullPath}'.",
+                context: AppIssueContext.Create(("FullPath", fullPath))));
+            _logger.LogWarning(
+                exception,
+                "Analyzing syntax for a text file failed.",
+                eventCode: "analysis.syntax_file_failed",
+                context: AppIssueContext.Create(("FullPath", fullPath)));
+            return SyntaxSummaryArtifact.Failed(analyzer.LanguageId);
+        }
+        catch (Exception exception)
+        {
+            diagnostics.Enqueue(CreateDiagnostic(
+                message: $"TokenMap could not analyze syntax for '{fullPath}'.",
+                context: AppIssueContext.Create(("FullPath", fullPath))));
+            _logger.LogWarning(
+                exception,
+                "Analyzing syntax for a text file failed.",
+                eventCode: "analysis.syntax_failed",
+                context: AppIssueContext.Create(("FullPath", fullPath), ("LanguageId", analyzer.LanguageId)));
+            return SyntaxSummaryArtifact.Failed(analyzer.LanguageId);
+        }
     }
 
     private async Task<TextAnalysisResult> AnalyzeSmallTextFileAsync(

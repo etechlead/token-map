@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="TreeSitter.DotNet" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Clever.TokenMap.Core\Clever.TokenMap.Core.csproj" />
   </ItemGroup>
 </Project>

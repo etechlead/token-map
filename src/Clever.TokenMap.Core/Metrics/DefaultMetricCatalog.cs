@@ -30,7 +30,52 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "File size in bytes and summed directory size.")
+            "File size in bytes and summed directory size."),
+        new(
+            MetricIds.CommentLines,
+            "Comment lines",
+            "Comments",
+            MetricUnit.Count,
+            MetricRollupKind.Sum,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: true,
+            "Comment-only line count for syntax-supported files and directory rollups."),
+        new(
+            MetricIds.FunctionCount,
+            "Callable count",
+            "Funcs",
+            MetricUnit.Count,
+            MetricRollupKind.Sum,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: true,
+            "Callable count for syntax-supported files and directory rollups."),
+        new(
+            MetricIds.CyclomaticComplexitySum,
+            "Cyclomatic complexity sum",
+            "CC sum",
+            MetricUnit.Count,
+            MetricRollupKind.Sum,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: true,
+            "Summed callable cyclomatic complexity for syntax-supported files and directory rollups."),
+        new(
+            MetricIds.CyclomaticComplexityMax,
+            "Cyclomatic complexity max",
+            "CC max",
+            MetricUnit.Count,
+            MetricRollupKind.Max,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Maximum callable cyclomatic complexity for syntax-supported files and directory rollups."),
+        new(
+            MetricIds.MaxNestingDepth,
+            "Max nesting depth",
+            "Nest",
+            MetricUnit.Count,
+            MetricRollupKind.Max,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Maximum callable nesting depth for syntax-supported files and directory rollups.")
     ];
 
     private readonly Dictionary<MetricId, MetricDefinition> _definitionsById =
