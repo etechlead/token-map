@@ -4,6 +4,7 @@ using Clever.TokenMap.Metrics.Syntax.Java;
 using Clever.TokenMap.Metrics.Syntax.JavaScript;
 using Clever.TokenMap.Metrics.Syntax.Php;
 using Clever.TokenMap.Metrics.Syntax.Python;
+using Clever.TokenMap.Metrics.Syntax.Rust;
 using Clever.TokenMap.Metrics.Syntax.TypeScript;
 
 namespace Clever.TokenMap.Metrics.Syntax;
@@ -19,6 +20,7 @@ public static class DefaultSyntaxAnalyzerRegistry
             new JavaScriptSyntaxAnalyzer(),
             new PhpSyntaxAnalyzer(),
             new PythonSyntaxAnalyzer(),
+            new RustSyntaxAnalyzer(),
             new TypeScriptSyntaxAnalyzer(),
         ]);
 }
