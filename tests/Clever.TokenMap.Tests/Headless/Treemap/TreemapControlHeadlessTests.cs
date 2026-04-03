@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
@@ -62,6 +63,32 @@ public sealed class TreemapControlHeadlessTests
         Assert.Null(control.HoveredNode);
         Assert.Null(control.TooltipText);
         Assert.Null(control.TooltipAnchorPoint);
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_Hover_GroupsVisibleMetricsBeforeHiddenMetricsAndInfo()
+    {
+        var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
+        var control = CreateControl(
+            CreateSnapshotWithExtendedMetrics(),
+            visibleMetricIds: [MetricIds.FileSizeBytes, MetricIds.Tokens]);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        control.UpdateHover(GetCenter(visual));
+
+        var lines = GetTooltipLines(control);
+
+        Assert.Equal(2, lines.Count(line => line == "---"));
+        Assert.True(Array.IndexOf(lines, "File size: 128 B") < Array.IndexOf(lines, "Tokens: 42"));
+        Assert.True(Array.IndexOf(lines, "Tokens: 42") < Array.IndexOf(lines, $"Share: {expectedShareText}"));
+        Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
+        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Comment lines: 7"));
+        Assert.True(Array.IndexOf(lines, "Comment lines: 7") < Array.IndexOf(lines, "Callable count: 3"));
+        Assert.True(Array.LastIndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
+        Assert.True(Array.IndexOf(lines, "Type: File") < Array.IndexOf(lines, "Ext: .cs"));
     }
 
     [AvaloniaFact]
@@ -272,6 +299,27 @@ public sealed class TreemapControlHeadlessTests
         Assert.Contains("Tokens: n/a", control.TooltipText);
         Assert.Contains("Non-empty lines: n/a", control.TooltipText);
         Assert.Contains($"Share: {expectedShareText}", control.TooltipText);
+        Assert.DoesNotContain("Comment lines:", control.TooltipText);
+        Assert.Equal(1, GetTooltipLines(control).Count(line => line == "---"));
+    }
+
+    [AvaloniaFact]
+    public void TreemapControl_Hover_WithoutHiddenComputedMetrics_DoesNotAddExtraSeparator()
+    {
+        var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
+        var control = CreateControl();
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        var visual = Assert.Single(control.NodeVisuals);
+        control.UpdateHover(GetCenter(visual));
+
+        var lines = GetTooltipLines(control);
+
+        Assert.Equal(1, lines.Count(line => line == "---"));
+        Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
+        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
     }
 
     [AvaloniaFact]
@@ -421,7 +469,8 @@ public sealed class TreemapControlHeadlessTests
     private static TreemapControl CreateControl(
         ProjectSnapshot? snapshot = null,
         MetricId metric = default,
-        bool showMetricValues = false) =>
+        bool showMetricValues = false,
+        IReadOnlyList<MetricId>? visibleMetricIds = null) =>
         new()
         {
             Width = 320,
@@ -429,6 +478,7 @@ public sealed class TreemapControlHeadlessTests
             RootNode = (snapshot ?? CreateSnapshot()).Root,
             Metric = metric == default ? MetricIds.Tokens : metric,
             ShowMetricValues = showMetricValues,
+            VisibleMetricIds = visibleMetricIds ?? DefaultMetricCatalog.GetDefaultVisibleMetricIds(),
         };
 
     private static Window CreateHostWindow(TreemapControl control) =>
@@ -582,5 +632,60 @@ public sealed class TreemapControlHeadlessTests
                 },
             },
         };
+    }
+
+    private static ProjectSnapshot CreateSnapshotWithExtendedMetrics()
+    {
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "Program.cs",
+                        Name = "Program.cs",
+                        FullPath = "C:\\Demo\\Program.cs",
+                        RelativePath = "Program.cs",
+                        Kind = ProjectNodeKind.File,
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                    },
+                },
+            },
+        };
+    }
+
+    private static MetricSet CreateExtendedMetricSet(
+        long tokens,
+        int nonEmptyLines,
+        long fileSizeBytes,
+        int commentLines,
+        int functionCount)
+    {
+        return MetricSet.From(
+            (MetricIds.Tokens, MetricValue.From(tokens)),
+            (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
+            (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
+            (MetricIds.CommentLines, MetricValue.From(commentLines)),
+            (MetricIds.FunctionCount, MetricValue.From(functionCount)));
+    }
+
+    private static string[] GetTooltipLines(TreemapControl control)
+    {
+        var tooltipText = control.TooltipText;
+        Assert.NotNull(tooltipText);
+        return tooltipText.Split(Environment.NewLine, StringSplitOptions.None);
     }
 }

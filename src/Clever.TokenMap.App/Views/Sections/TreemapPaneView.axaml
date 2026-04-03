@@ -99,6 +99,7 @@
                                      Name="ProjectTreemapControl"
                                      RootNode="{Binding TreemapRootNode}"
                                      Metric="{Binding Toolbar.SelectedMetric}"
+                                     VisibleMetricIds="{Binding Toolbar.VisibleMetricIds}"
                                      Palette="{Binding Toolbar.SelectedTreemapPalette}"
                                      ShowMetricValues="{Binding Toolbar.ShowTreemapMetricValues}"
                                      SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />

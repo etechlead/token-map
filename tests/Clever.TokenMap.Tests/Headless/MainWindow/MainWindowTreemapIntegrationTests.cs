@@ -3,10 +3,13 @@ using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using System.Globalization;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Tests.Headless.Support;
+using Clever.TokenMap.Tests.Support;
 using Clever.TokenMap.Treemap;
 using AppMainWindow = Clever.TokenMap.App.Views.MainWindow;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
@@ -160,6 +163,36 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.True(showValuesCheckBox.IsChecked);
     }
 
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapTooltip_UpdatesWhenVisibleMetricsChange()
+    {
+        var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshotWithExtendedMetrics());
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        Assert.NotNull(control);
+
+        var visual = Assert.Single(control.NodeVisuals);
+        control.UpdateHover(GetCenter(visual));
+
+        var initialLines = GetTooltipLines(control);
+        Assert.True(Array.IndexOf(initialLines, $"Share: {expectedShareText}") < Array.IndexOf(initialLines, "---"));
+        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Comment lines: 7"));
+
+        var commentLinesOption = Assert.Single(
+            viewModel.Toolbar.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.CommentLines);
+
+        commentLinesOption.IsVisible = true;
+        window.UpdateLayout();
+
+        Assert.Contains(MetricIds.CommentLines, control.VisibleMetricIds);
+
+        var updatedLines = GetTooltipLines(control);
+        Assert.True(Array.IndexOf(updatedLines, "Comment lines: 7") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
+        Assert.Equal(2, updatedLines.Count(line => line == "---"));
+    }
+
     private static async Task<(AppMainWindow Window, MainWindowViewModel ViewModel)> CreateOpenWindowAsync(ProjectSnapshot snapshot)
     {
         var window = new AppMainWindow();
@@ -205,5 +238,60 @@ public sealed class MainWindowTreemapIntegrationTests
             Options = ScanOptions.Default,
             Root = root,
         };
+    }
+
+    private static ProjectSnapshot CreateSnapshotWithExtendedMetrics()
+    {
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
+            {
+                Id = "/",
+                Name = "Demo",
+                FullPath = "C:\\Demo",
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "Program.cs",
+                        Name = "Program.cs",
+                        FullPath = "C:\\Demo\\Program.cs",
+                        RelativePath = "Program.cs",
+                        Kind = ProjectNodeKind.File,
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                    },
+                },
+            },
+        };
+    }
+
+    private static MetricSet CreateExtendedMetricSet(
+        long tokens,
+        int nonEmptyLines,
+        long fileSizeBytes,
+        int commentLines,
+        int functionCount)
+    {
+        return MetricSet.From(
+            (MetricIds.Tokens, MetricValue.From(tokens)),
+            (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
+            (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
+            (MetricIds.CommentLines, MetricValue.From(commentLines)),
+            (MetricIds.FunctionCount, MetricValue.From(functionCount)));
+    }
+
+    private static string[] GetTooltipLines(TreemapControl control)
+    {
+        var tooltipText = control.TooltipText;
+        Assert.NotNull(tooltipText);
+        return tooltipText.Split(Environment.NewLine, StringSplitOptions.None);
     }
 }

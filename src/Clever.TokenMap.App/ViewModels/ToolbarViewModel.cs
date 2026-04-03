@@ -111,6 +111,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         set => _settingsCoordinator.SetSelectedMetric(value);
     }
 
+    public IReadOnlyList<MetricId> VisibleMetricIds => _settingsState.VisibleMetricIds;
+
     public IReadOnlyList<MetricDefinition> VisibleMetricDefinitions => _visibleMetricDefinitions;
 
     public bool HasTreeOnlyMetricVisibilityOptions => TreeOnlyMetricVisibilityOptions.Count > 0;
@@ -250,6 +252,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
                 RefreshMetricSelection();
                 break;
             case nameof(IReadOnlySettingsState.VisibleMetricIds):
+                OnPropertyChanged(nameof(VisibleMetricIds));
                 RefreshMetricPresentation();
                 break;
             case nameof(IReadOnlySettingsState.RespectGitIgnore):

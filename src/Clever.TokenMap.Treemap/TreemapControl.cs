@@ -18,6 +18,8 @@ public sealed class TreemapControl : Control
     private const double TooltipHeaderSpacing = 10;
     private const double TooltipRowSpacing = 6;
     private const double TooltipColumnSpacing = 12;
+    private const double TooltipSeparatorSpacing = 6;
+    private const double TooltipSeparatorThickness = 1;
     private const double TooltipMaxWidth = 360;
 
     public static readonly StyledProperty<MetricId> MetricProperty =
@@ -37,6 +39,11 @@ public sealed class TreemapControl : Control
 
     public static readonly StyledProperty<bool> ShowMetricValuesProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowMetricValues), false);
+
+    public static readonly StyledProperty<IReadOnlyList<MetricId>> VisibleMetricIdsProperty =
+        AvaloniaProperty.Register<TreemapControl, IReadOnlyList<MetricId>>(
+            nameof(VisibleMetricIds),
+            DefaultMetricCatalog.GetDefaultVisibleMetricIds());
 
     public static readonly StyledProperty<bool> ShowDirectoryNodesProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowDirectoryNodes), true);
@@ -118,6 +125,7 @@ public sealed class TreemapControl : Control
             PaletteProperty,
             ShowLabelsProperty,
             ShowMetricValuesProperty,
+            VisibleMetricIdsProperty,
             ShowDirectoryNodesProperty,
             LeafCornerRadiusProperty,
             LeafGapProperty,
@@ -176,6 +184,12 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(ShowMetricValuesProperty);
         set => SetValue(ShowMetricValuesProperty, value);
+    }
+
+    public IReadOnlyList<MetricId> VisibleMetricIds
+    {
+        get => GetValue(VisibleMetricIdsProperty);
+        set => SetValue(VisibleMetricIdsProperty, value);
     }
 
     public bool ShowDirectoryNodes
@@ -342,9 +356,15 @@ public sealed class TreemapControl : Control
             change.Property == PaletteProperty ||
             change.Property == ShowLabelsProperty ||
             change.Property == ShowMetricValuesProperty ||
+            change.Property == VisibleMetricIdsProperty ||
             change.Property == LeafCornerRadiusProperty ||
             change.Property == ShowLeafBordersProperty)
         {
+            if (change.Property == VisibleMetricIdsProperty && HoveredNode is not null)
+            {
+                TooltipText = BuildTooltip(HoveredNode);
+            }
+
             InvalidateVisual();
         }
     }
@@ -734,14 +754,19 @@ public sealed class TreemapControl : Control
     private string BuildTooltip(ProjectNode node)
     {
         var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
-        var share = RootNode is null
-            ? "n/a"
-            : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        var extension = node.Kind == ProjectNodeKind.File
-            ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
-            : "n/a";
+        var lines = new List<string> { relativePath };
 
-        return $"{relativePath}\n{GetKindText(node)}\nTokens: {FormatMetric(node, MetricIds.Tokens)}\nShare: {share}\nNon-empty lines: {FormatMetric(node, MetricIds.NonEmptyLines)}\nExt: {extension}\nFiles in subtree: {node.Summary.DescendantFileCount:N0}";
+        foreach (var item in BuildTooltipItems(node))
+        {
+            lines.Add(item switch
+            {
+                TooltipValueRow row => $"{row.Label}: {row.Value}",
+                TooltipSeparatorItem => "---",
+                _ => string.Empty,
+            });
+        }
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     private void DrawTooltipOverlay(DrawingContext context)
@@ -752,41 +777,50 @@ public sealed class TreemapControl : Control
         }
 
         var pathText = string.IsNullOrWhiteSpace(HoveredNode.RelativePath) ? "(root)" : HoveredNode.RelativePath;
-        var rows = BuildTooltipRows(HoveredNode);
+        var items = BuildTooltipItems(HoveredNode);
 
-        var labelTexts = new List<FormattedText>(rows.Length);
-        var valueTexts = new List<FormattedText>(rows.Length);
+        var renderedItems = new List<TooltipRenderedItem>(items.Count);
         var labelColumnWidth = 0d;
         var valueColumnWidth = 0d;
         var rowsHeight = 0d;
 
-        foreach (var row in rows)
+        for (var index = 0; index < items.Count; index++)
         {
-            var labelText = new FormattedText(
-                row.Label,
-                culture: CultureInfo.CurrentCulture,
-                flowDirection: FlowDirection.LeftToRight,
-                typeface: Typeface.Default,
-                emSize: 11,
-                foreground: TooltipLabelBrush);
-            var valueText = new FormattedText(
-                row.Value,
-                culture: CultureInfo.CurrentCulture,
-                flowDirection: FlowDirection.LeftToRight,
-                typeface: Typeface.Default,
-                emSize: 12,
-                foreground: TooltipValueBrush);
+            var item = items[index];
+            if (item is TooltipValueRow row)
+            {
+                var labelText = new FormattedText(
+                    row.Label,
+                    culture: CultureInfo.CurrentCulture,
+                    flowDirection: FlowDirection.LeftToRight,
+                    typeface: Typeface.Default,
+                    emSize: 11,
+                    foreground: TooltipLabelBrush);
+                var valueText = new FormattedText(
+                    row.Value,
+                    culture: CultureInfo.CurrentCulture,
+                    flowDirection: FlowDirection.LeftToRight,
+                    typeface: Typeface.Default,
+                    emSize: 12,
+                    foreground: TooltipValueBrush);
 
-            labelTexts.Add(labelText);
-            valueTexts.Add(valueText);
-            labelColumnWidth = Math.Max(labelColumnWidth, labelText.Width);
-            valueColumnWidth = Math.Max(valueColumnWidth, valueText.Width);
-            rowsHeight += Math.Max(labelText.Height, valueText.Height);
-        }
+                renderedItems.Add(new TooltipRenderedRow(row, labelText, valueText));
+                labelColumnWidth = Math.Max(labelColumnWidth, labelText.Width);
+                valueColumnWidth = Math.Max(valueColumnWidth, valueText.Width);
+                rowsHeight += Math.Max(labelText.Height, valueText.Height);
+            }
+            else
+            {
+                renderedItems.Add(new TooltipRenderedSeparator());
+                rowsHeight += (TooltipSeparatorSpacing * 2) + TooltipSeparatorThickness;
+            }
 
-        if (rows.Length > 1)
-        {
-            rowsHeight += TooltipRowSpacing * (rows.Length - 1);
+            if (index < items.Count - 1 &&
+                item is TooltipValueRow &&
+                items[index + 1] is TooltipValueRow)
+            {
+                rowsHeight += TooltipRowSpacing;
+            }
         }
 
         var tooltipContentMaxWidth = TooltipMaxWidth - (TooltipPaddingX * 2);
@@ -845,34 +879,157 @@ public sealed class TreemapControl : Control
 
         textY += TooltipHeaderSpacing - TooltipRowSpacing;
 
-        for (var index = 0; index < rows.Length; index++)
+        for (var index = 0; index < renderedItems.Count; index++)
         {
-            var rowHeight = Math.Max(labelTexts[index].Height, valueTexts[index].Height);
-            var valueX = contentBounds.X + labelColumnWidth + TooltipColumnSpacing;
-            context.DrawText(labelTexts[index], new Point(contentBounds.X, textY));
-            context.DrawText(valueTexts[index], new Point(valueX, textY));
-            textY += rowHeight + TooltipRowSpacing;
+            switch (renderedItems[index])
+            {
+                case TooltipRenderedRow row:
+                {
+                    var rowHeight = Math.Max(row.Label.Height, row.Value.Height);
+                    var valueX = contentBounds.X + labelColumnWidth + TooltipColumnSpacing;
+                    context.DrawText(row.Label, new Point(contentBounds.X, textY));
+                    context.DrawText(row.Value, new Point(valueX, textY));
+                    textY += rowHeight;
+                    break;
+                }
+                case TooltipRenderedSeparator:
+                {
+                    textY += TooltipSeparatorSpacing;
+                    var separatorY = textY + (TooltipSeparatorThickness / 2d);
+                    context.DrawLine(
+                        new Pen(TooltipBorderBrush, TooltipSeparatorThickness),
+                        new Point(contentBounds.X, separatorY),
+                        new Point(contentBounds.Right, separatorY));
+                    textY += TooltipSeparatorThickness + TooltipSeparatorSpacing;
+                    break;
+                }
+            }
+
+            if (index < renderedItems.Count - 1 &&
+                renderedItems[index] is TooltipRenderedRow &&
+                renderedItems[index + 1] is TooltipRenderedRow)
+            {
+                textY += TooltipRowSpacing;
+            }
         }
     }
 
-    private (string Label, string Value)[] BuildTooltipRows(ProjectNode node)
+    private List<TooltipItem> BuildTooltipItems(ProjectNode node)
     {
+        var items = new List<TooltipItem>();
+        var visibleMetricRows = BuildVisibleMetricRows(node);
+        var hiddenMetricRows = BuildHiddenMetricRows(node);
+        var infoRows = BuildInfoRows(node);
+
+        AppendTooltipSection(items, visibleMetricRows);
+        AppendTooltipSection(items, hiddenMetricRows);
+        AppendTooltipSection(items, infoRows);
+
+        return items;
+    }
+
+    private List<TooltipValueRow> BuildVisibleMetricRows(ProjectNode node)
+    {
+        var rows = new List<TooltipValueRow>();
+        foreach (var metricId in GetNormalizedVisibleMetricIds())
+        {
+            if (!TryGetMetricLabel(metricId, out var label))
+            {
+                continue;
+            }
+
+            rows.Add(new TooltipValueRow(label, FormatMetric(node, metricId)));
+        }
+
         var share = RootNode is null
             ? "n/a"
             : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
+        rows.Add(new TooltipValueRow("Share", share));
+        return rows;
+    }
+
+    private List<TooltipValueRow> BuildHiddenMetricRows(ProjectNode node)
+    {
+        var visibleMetricIds = GetNormalizedVisibleMetricIds().ToHashSet();
+        var rows = new List<TooltipValueRow>();
+
+        foreach (var definition in DefaultMetricCatalog.Instance.GetAll())
+        {
+            if (visibleMetricIds.Contains(definition.Id) ||
+                !node.ComputedMetrics.Values.TryGetValue(definition.Id, out var value) ||
+                !value.HasValue)
+            {
+                continue;
+            }
+
+            rows.Add(new TooltipValueRow(definition.DisplayName, MetricValueFormatter.Format(definition.Id, value, CultureInfo.CurrentCulture)));
+        }
+
+        return rows;
+    }
+
+    private static List<TooltipValueRow> BuildInfoRows(ProjectNode node)
+    {
         var extension = node.Kind == ProjectNodeKind.File
             ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
             : "n/a";
 
         return
         [
-            ("Type", GetKindText(node)),
-            ("Tokens", FormatMetric(node, MetricIds.Tokens)),
-            ("Share", share),
-            ("Non-empty lines", FormatMetric(node, MetricIds.NonEmptyLines)),
-            ("Ext", extension),
-            ("Files in subtree", node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
+            new("Type", GetKindText(node)),
+            new("Ext", extension),
+            new("Files in subtree", node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
         ];
+    }
+
+    private static void AppendTooltipSection(List<TooltipItem> items, List<TooltipValueRow> sectionRows)
+    {
+        if (sectionRows.Count == 0)
+        {
+            return;
+        }
+
+        if (items.Count > 0)
+        {
+            items.Add(new TooltipSeparatorItem());
+        }
+
+        items.AddRange(sectionRows);
+    }
+
+    private IReadOnlyList<MetricId> GetNormalizedVisibleMetricIds()
+    {
+        if (VisibleMetricIds.Count == 0)
+        {
+            return DefaultMetricCatalog.GetDefaultVisibleMetricIds();
+        }
+
+        var normalizedMetricIds = new List<MetricId>(VisibleMetricIds.Count);
+        var seenMetricIds = new HashSet<MetricId>();
+        foreach (var metricId in VisibleMetricIds)
+        {
+            var normalizedMetricId = DefaultMetricCatalog.NormalizeMetricId(metricId);
+            if (seenMetricIds.Add(normalizedMetricId))
+            {
+                normalizedMetricIds.Add(normalizedMetricId);
+            }
+        }
+
+        return normalizedMetricIds.Count == 0
+            ? DefaultMetricCatalog.GetDefaultVisibleMetricIds()
+            : normalizedMetricIds;
+    }
+
+    private static bool TryGetMetricLabel(MetricId metricId, out string label)
+    {
+        if (DefaultMetricCatalog.Instance.TryGet(metricId, out var definition))
+        {
+            label = definition.DisplayName;
+            return true;
+        }
+
+        label = string.Empty;
+        return false;
     }
 
     private static List<FormattedText> WrapTooltipText(
@@ -1104,4 +1261,18 @@ public sealed class TreemapControl : Control
         node.Kind != ProjectNodeKind.File &&
         node.Children.Count > 0;
 
+    private abstract record TooltipItem;
+
+    private sealed record TooltipValueRow(string Label, string Value) : TooltipItem;
+
+    private sealed record TooltipSeparatorItem : TooltipItem;
+
+    private abstract record TooltipRenderedItem;
+
+    private sealed record TooltipRenderedRow(
+        TooltipValueRow Row,
+        FormattedText Label,
+        FormattedText Value) : TooltipRenderedItem;
+
+    private sealed record TooltipRenderedSeparator : TooltipRenderedItem;
 }
