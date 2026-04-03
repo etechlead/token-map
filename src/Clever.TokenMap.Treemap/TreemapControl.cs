@@ -970,16 +970,24 @@ public sealed class TreemapControl : Control
 
     private static List<TooltipValueRow> BuildInfoRows(ProjectNode node)
     {
-        var extension = node.Kind == ProjectNodeKind.File
-            ? Path.GetExtension(node.Name) is { Length: > 0 } fileExtension ? fileExtension : "(none)"
-            : "n/a";
-
-        return
-        [
+        var rows = new List<TooltipValueRow>
+        {
             new("Type", GetKindText(node)),
-            new("Ext", extension),
-            new("Files in subtree", node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)),
-        ];
+        };
+
+        if (node.Kind == ProjectNodeKind.File)
+        {
+            var extension = Path.GetExtension(node.Name) is { Length: > 0 } fileExtension
+                ? fileExtension
+                : "(none)";
+            rows.Add(new TooltipValueRow("Ext", extension));
+            return rows;
+        }
+
+        rows.Add(new TooltipValueRow(
+            "Files in subtree",
+            node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)));
+        return rows;
     }
 
     private static void AppendTooltipSection(List<TooltipItem> items, List<TooltipValueRow> sectionRows)

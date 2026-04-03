@@ -89,6 +89,7 @@ public sealed class TreemapControlHeadlessTests
         Assert.True(Array.IndexOf(lines, "Comment lines: 7") < Array.IndexOf(lines, "Callable count: 3"));
         Assert.True(Array.LastIndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
         Assert.True(Array.IndexOf(lines, "Type: File") < Array.IndexOf(lines, "Ext: .cs"));
+        Assert.DoesNotContain("Files in subtree: 1", lines);
     }
 
     [AvaloniaFact]
@@ -264,8 +265,8 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Equal("src", control.HoveredNode?.RelativePath);
         Assert.Contains("Directory", control.TooltipText);
-        Assert.Contains("Ext: n/a", control.TooltipText);
         Assert.Contains("Files in subtree: 1", control.TooltipText);
+        Assert.DoesNotContain("Ext:", control.TooltipText);
     }
 
     [AvaloniaFact]
@@ -281,6 +282,7 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Contains("LICENSE", control.TooltipText);
         Assert.Contains("Ext: (none)", control.TooltipText);
+        Assert.DoesNotContain("Files in subtree:", control.TooltipText);
     }
 
     [AvaloniaFact]
@@ -320,6 +322,7 @@ public sealed class TreemapControlHeadlessTests
         Assert.Equal(1, lines.Count(line => line == "---"));
         Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
         Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
+        Assert.DoesNotContain("Files in subtree: 1", lines);
     }
 
     [AvaloniaFact]
