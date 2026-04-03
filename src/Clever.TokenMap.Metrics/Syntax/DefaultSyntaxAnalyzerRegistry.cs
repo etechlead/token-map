@@ -1,4 +1,5 @@
 using Clever.TokenMap.Metrics.Syntax.CSharp;
+using Clever.TokenMap.Metrics.Syntax.Go;
 using Clever.TokenMap.Metrics.Syntax.JavaScript;
 using Clever.TokenMap.Metrics.Syntax.Python;
 using Clever.TokenMap.Metrics.Syntax.TypeScript;
@@ -11,6 +12,7 @@ public static class DefaultSyntaxAnalyzerRegistry
         new ExtensionSyntaxAnalyzerRegistry(
         [
             new CSharpSyntaxAnalyzer(),
+            new GoSyntaxAnalyzer(),
             new JavaScriptSyntaxAnalyzer(),
             new PythonSyntaxAnalyzer(),
             new TypeScriptSyntaxAnalyzer(),
