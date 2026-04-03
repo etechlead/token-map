@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -19,11 +20,21 @@ namespace Clever.TokenMap.App.Views.Sections;
 public partial class ProjectTreePaneView : UserControl
 {
     private const int ProjectTreeStaticColumnCount = 2;
+    private const int ProjectTreeNameColumnIndex = 0;
+    private const double ProjectTreeNameColumnMinimumWidth = 72d;
+    private const double ProjectTreeNameColumnHeaderHorizontalPadding = 16d;
+    private const double ProjectTreeNameColumnCellHorizontalPadding = 16d;
+    private const double ProjectTreeNameColumnChromeWidth = 48d;
+    private const double ProjectTreeNameColumnTrailingPadding = 12d;
     private static readonly TimeSpan ProjectTreeSingleClickSelectionDelay = TimeSpan.FromMilliseconds(250);
     private readonly Dictionary<DataGridColumn, string> _projectTreeTableBaseHeaders = [];
     private readonly ProjectNodeContextMenuController _projectNodeContextMenuController;
     private CancellationTokenSource? _pendingProjectTreeSelectionSync;
     private bool _projectTreeSelectionChangeTriggeredByPointer;
+    private bool _projectTreeNameColumnWidthFrozen;
+    private int _projectTreeNameColumnWidthFreezeVersion;
+    private string? _projectTreeRootNodeId;
+    private INotifyCollectionChanged? _projectTreeVisibleNodes;
     private ToolbarViewModel? _toolbarViewModel;
 
     public ProjectTreePaneView()
@@ -43,7 +54,11 @@ public partial class ProjectTreePaneView : UserControl
             ScheduleRefreshProjectTreeMetricColumns();
             ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
         };
-        DetachedFromVisualTree += (_, _) => DetachToolbarSubscription();
+        DetachedFromVisualTree += (_, _) =>
+        {
+            DetachToolbarSubscription();
+            DetachProjectTreeVisibleNodesSubscription();
+        };
     }
 
     private void ProjectTreeExpandCollapseButton_OnClick(object? sender, RoutedEventArgs e)
@@ -326,9 +341,94 @@ public partial class ProjectTreePaneView : UserControl
 
     private void HandleDataContextChanged()
     {
+        AttachProjectTreeVisibleNodesSubscription();
         AttachToolbarSubscription();
         ScheduleRefreshProjectTreeMetricColumns();
         ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
+        ScheduleApplyInitialProjectTreeNameColumnWidthIfNeeded();
+    }
+
+    private void AttachProjectTreeVisibleNodesSubscription()
+    {
+        var nextVisibleNodes = (DataContext as MainWindowViewModel)?.Tree.VisibleNodes as INotifyCollectionChanged;
+        if (ReferenceEquals(_projectTreeVisibleNodes, nextVisibleNodes))
+        {
+            return;
+        }
+
+        DetachProjectTreeVisibleNodesSubscription();
+        _projectTreeVisibleNodes = nextVisibleNodes;
+        if (_projectTreeVisibleNodes is not null)
+        {
+            _projectTreeVisibleNodes.CollectionChanged += ProjectTreeVisibleNodes_OnCollectionChanged;
+        }
+
+        RefreshProjectTreeNameColumnWidthState();
+    }
+
+    private void DetachProjectTreeVisibleNodesSubscription()
+    {
+        if (_projectTreeVisibleNodes is null)
+        {
+            return;
+        }
+
+        _projectTreeVisibleNodes.CollectionChanged -= ProjectTreeVisibleNodes_OnCollectionChanged;
+        _projectTreeVisibleNodes = null;
+    }
+
+    private void ProjectTreeVisibleNodes_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        RefreshProjectTreeNameColumnWidthState();
+    }
+
+    private void RefreshProjectTreeNameColumnWidthState()
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            ResetProjectTreeNameColumnWidthState();
+            return;
+        }
+
+        var rootNodeId = viewModel.Tree.VisibleNodes.FirstOrDefault()?.Node.Id;
+        if (string.IsNullOrWhiteSpace(rootNodeId))
+        {
+            if (!viewModel.HasSnapshot)
+            {
+                ResetProjectTreeNameColumnWidthState();
+            }
+
+            return;
+        }
+
+        var isNewTree = !string.Equals(_projectTreeRootNodeId, rootNodeId, StringComparison.Ordinal);
+        _projectTreeRootNodeId = rootNodeId;
+
+        if (isNewTree)
+        {
+            _projectTreeNameColumnWidthFrozen = false;
+            ScheduleApplyInitialProjectTreeNameColumnWidthIfNeeded();
+            return;
+        }
+
+        if (!_projectTreeNameColumnWidthFrozen)
+        {
+            ScheduleApplyInitialProjectTreeNameColumnWidthIfNeeded();
+        }
+    }
+
+    private void ResetProjectTreeNameColumnWidthState()
+    {
+        _projectTreeRootNodeId = null;
+        _projectTreeNameColumnWidthFrozen = false;
+        _projectTreeNameColumnWidthFreezeVersion++;
+
+        if (this.FindControl<DataGrid>("ProjectTreeTable") is { } grid &&
+            TryGetProjectTreeNameColumn(grid, out var nameColumn))
+        {
+            nameColumn.MinWidth = 20d;
+            nameColumn.Width = DataGridLength.Auto;
+        }
     }
 
     private void AttachToolbarSubscription()
@@ -395,6 +495,7 @@ public partial class ProjectTreePaneView : UserControl
 
         EnsureProjectTreeTableBaseHeaders(grid);
         ApplyProjectTreeTableHeaderStateFromViewModel();
+        ScheduleApplyInitialProjectTreeNameColumnWidthIfNeeded();
     }
 
     private void ClearProjectTreeMetricColumns(DataGrid grid)
@@ -602,6 +703,91 @@ public partial class ProjectTreePaneView : UserControl
     }
 
     private static string GetMetricSortMemberPath(MetricId metricId) => $"Metric:{metricId.Value}";
+
+    private void ScheduleApplyInitialProjectTreeNameColumnWidthIfNeeded()
+    {
+        if (_projectTreeNameColumnWidthFrozen)
+        {
+            return;
+        }
+
+        var version = ++_projectTreeNameColumnWidthFreezeVersion;
+        Dispatcher.UIThread.Post(
+            () => ApplyInitialProjectTreeNameColumnWidth(version),
+            DispatcherPriority.Loaded);
+    }
+
+    private void ApplyInitialProjectTreeNameColumnWidth(int version)
+    {
+        if (version != _projectTreeNameColumnWidthFreezeVersion)
+        {
+            return;
+        }
+
+        if (DataContext is not MainWindowViewModel viewModel ||
+            viewModel.Tree.VisibleNodes.Count == 0)
+        {
+            return;
+        }
+
+        var grid = this.FindControl<DataGrid>("ProjectTreeTable");
+        if (grid is null ||
+            !TryGetProjectTreeNameColumn(grid, out var nameColumn))
+        {
+            return;
+        }
+
+        var width = CalculateInitialProjectTreeNameColumnWidth(grid, viewModel);
+        nameColumn.MinWidth = width;
+        nameColumn.Width = new DataGridLength(width);
+        _projectTreeNameColumnWidthFrozen = true;
+    }
+
+    private static double CalculateInitialProjectTreeNameColumnWidth(DataGrid grid, MainWindowViewModel viewModel)
+    {
+        var headerWidth = MeasureProjectTreeTextWidth(grid, "Name") + ProjectTreeNameColumnHeaderHorizontalPadding;
+        var visibleNodeWidth = viewModel.Tree.VisibleNodes.Count == 0
+            ? 0d
+            : viewModel.Tree.VisibleNodes.Max(node =>
+                node.IndentOffset +
+                ProjectTreeNameColumnChromeWidth +
+                MeasureProjectTreeTextWidth(grid, node.Name) +
+                ProjectTreeNameColumnCellHorizontalPadding +
+                ProjectTreeNameColumnTrailingPadding);
+
+        return Math.Ceiling(Math.Max(ProjectTreeNameColumnMinimumWidth, Math.Max(headerWidth, visibleNodeWidth)));
+    }
+
+    private static double MeasureProjectTreeTextWidth(Control _, string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return 0d;
+        }
+
+        var probe = new TextBlock
+        {
+            Text = text,
+        };
+        probe.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        return probe.DesiredSize.Width;
+    }
+
+    private static bool TryGetProjectTreeNameColumn(DataGrid grid, out DataGridColumn column)
+    {
+        if (grid.Columns.Count > ProjectTreeNameColumnIndex)
+        {
+            var candidate = grid.Columns[ProjectTreeNameColumnIndex];
+            if (string.Equals(candidate.SortMemberPath, "Name", StringComparison.Ordinal))
+            {
+                column = candidate;
+                return true;
+            }
+        }
+
+        column = null!;
+        return false;
+    }
 
 }
 

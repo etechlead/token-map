@@ -34,6 +34,7 @@
                       GridLinesVisibility="Horizontal"
                       HeadersVisibility="Column"
                       IsReadOnly="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                       ItemsSource="{Binding Tree.VisibleNodes}"
                       SelectedItem="{Binding Tree.SelectedNode, Mode=OneWay}"
                       SelectionChanged="ProjectTreeTable_OnSelectionChanged"
@@ -43,7 +44,7 @@
                 <DataGrid.Columns>
                     <DataGridTemplateColumn Header="Name"
                                             SortMemberPath="Name"
-                                            Width="3*">
+                                            Width="Auto">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate x:DataType="vm:ProjectTreeNodeViewModel">
                                 <Grid ColumnDefinitions="Auto,*">
