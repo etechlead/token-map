@@ -95,14 +95,17 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </Grid>
-            <controls:TreemapControl Grid.Row="1"
-                                     Name="ProjectTreemapControl"
-                                     RootNode="{Binding TreemapRootNode}"
-                                     Metric="{Binding Toolbar.SelectedMetric}"
-                                     VisibleMetricIds="{Binding Toolbar.VisibleMetricIds}"
-                                     Palette="{Binding Toolbar.SelectedTreemapPalette}"
-                                     ShowMetricValues="{Binding Toolbar.ShowTreemapMetricValues}"
-                                     SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
+            <Grid Grid.Row="1">
+                <controls:TreemapControl Name="ProjectTreemapControl"
+                                         RootNode="{Binding TreemapRootNode}"
+                                         Metric="{Binding Toolbar.SelectedMetric}"
+                                         VisibleMetricIds="{Binding Toolbar.VisibleMetricIds}"
+                                         Palette="{Binding Toolbar.SelectedTreemapPalette}"
+                                         ShowMetricValues="{Binding Toolbar.ShowTreemapMetricValues}"
+                                         SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
+                <controls:TreemapTooltipOverlay IsHitTestVisible="False"
+                                                Target="{Binding #ProjectTreemapControl}" />
+            </Grid>
         </Grid>
     </Border>
 </UserControl>
