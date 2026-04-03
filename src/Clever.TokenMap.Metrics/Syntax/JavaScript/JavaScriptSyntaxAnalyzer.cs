@@ -2,17 +2,17 @@ using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Metrics.Syntax.JavaScriptLike;
 using TreeSitter;
 
-namespace Clever.TokenMap.Metrics.Syntax.TypeScript;
+namespace Clever.TokenMap.Metrics.Syntax.JavaScript;
 
-public sealed class TypeScriptSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
+public sealed class JavaScriptSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
 {
-    private static readonly IReadOnlyCollection<string> Extensions = [".ts", ".mts", ".cts"];
+    private static readonly IReadOnlyCollection<string> Extensions = [".js", ".mjs", ".cjs"];
 
-    public override string LanguageId => "typescript";
+    public override string LanguageId => "javascript";
 
     public override IReadOnlyCollection<string> FileExtensions => Extensions;
 
-    protected override string TreeSitterLanguageId => "typescript";
+    protected override string TreeSitterLanguageId => "javascript";
 
     protected override SyntaxSummaryArtifact CreateSummary(
         Tree tree,

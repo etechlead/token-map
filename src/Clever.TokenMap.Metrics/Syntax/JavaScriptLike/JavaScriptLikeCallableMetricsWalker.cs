@@ -1,9 +1,9 @@
 using Clever.TokenMap.Core.Analysis.Syntax;
 using TreeSitter;
 
-namespace Clever.TokenMap.Metrics.Syntax.TypeScript;
+namespace Clever.TokenMap.Metrics.Syntax.JavaScriptLike;
 
-internal static class TypeScriptCallableMetricsWalker
+internal static class JavaScriptLikeCallableMetricsWalker
 {
     private static readonly HashSet<string> CallableNodeTypes =
     [
