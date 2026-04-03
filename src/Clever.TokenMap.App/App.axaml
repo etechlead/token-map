@@ -131,7 +131,7 @@
                     <SolidColorBrush x:Key="TokenMapTreemapLeafDarkLabelBrush"
                                      Color="#18212B" />
                     <SolidColorBrush x:Key="TokenMapTreemapHoverBorderBrush"
-                                     Color="#8BC3FF" />
+                                     Color="#6FA9E6" />
                     <SolidColorBrush x:Key="TokenMapAccentStrongBrush"
                                      Color="#8BC3FF" />
                     <SolidColorBrush x:Key="TokenMapAccentSurfaceBrush"

@@ -461,11 +461,13 @@ public sealed class TreemapControlHeadlessTests
         var directoryBorderBrush = Assert.IsType<SolidColorBrush>(control.DirectoryBorderBrush);
         var canvasBackgroundBrush = Assert.IsType<SolidColorBrush>(control.CanvasBackgroundBrush);
         var leafBorderBrush = Assert.IsType<SolidColorBrush>(control.LeafBorderBrush);
+        var selectedBorderBrush = Assert.IsType<SolidColorBrush>(control.SelectedBorderBrush);
         var hoverBorderBrush = Assert.IsType<SolidColorBrush>(control.HoverBorderBrush);
 
         Assert.True(directoryBorderBrush.Color.A > 0, "Directory border brush should be themed, not transparent.");
         Assert.True(canvasBackgroundBrush.Color.A > 0, "Canvas background brush should be themed, not transparent.");
         Assert.True(leafBorderBrush.Color.A > 0, "Leaf border brush should be themed, not transparent.");
+        Assert.True(selectedBorderBrush.Color.A > 0, "Selected border brush should be themed, not transparent.");
         Assert.True(hoverBorderBrush.Color.A > 0, "Hover border brush should be themed, not transparent.");
     }
 

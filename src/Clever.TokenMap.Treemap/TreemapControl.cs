@@ -22,6 +22,7 @@ public sealed class TreemapControl : Control
     private const double TooltipSeparatorSpacing = 6;
     private const double TooltipSeparatorThickness = 1;
     private const double TooltipMaxWidth = 360;
+    private const double InteractiveContrastThickness = 1;
 
     public static readonly StyledProperty<MetricId> MetricProperty =
         AvaloniaProperty.Register<TreemapControl, MetricId>(nameof(Metric), MetricIds.Tokens);
@@ -412,43 +413,18 @@ public sealed class TreemapControl : Control
         foreach (var visual in _nodeVisuals)
         {
             var isLeaf = IsLeafNode(visual.Node);
+            var interactionState = GetInteractionState(visual.Node);
             var leafFillColor = isLeaf
                 ? TreemapColorRules.GetLeafColor(visual.Node, Palette, paletteContext)
                 : default;
-            var borderPen = CreateBorderPen(visual.Node);
             if (isLeaf)
             {
-                var fill = new SolidColorBrush(leafFillColor);
-                if (TryCreateLeafRoundedRect(visual.Bounds) is { } roundedRect)
-                {
-                    context.DrawRectangle(fill, borderPen, roundedRect);
-                }
-                else
-                {
-                    context.FillRectangle(fill, visual.Bounds);
-                    if (borderPen is not null)
-                    {
-                        context.DrawRectangle(borderPen, visual.Bounds);
-                    }
-                }
+                leafFillColor = TreemapInteractionVisuals.GetFillColor(leafFillColor, interactionState);
+                DrawLeafNode(context, visual, leafFillColor, interactionState);
             }
             else if (ShowDirectoryNodes && visual.Bounds.Width >= 12 && visual.Bounds.Height >= 12)
             {
-                context.FillRectangle(DirectoryFillBrush, visual.Bounds);
-
-                var headerBounds = TreemapVisualRules.GetHeaderBounds(
-                    visual.Node,
-                    visual.Bounds,
-                    includeDirectoryHeader: true);
-                if (headerBounds.Height > 0)
-                {
-                    context.FillRectangle(DirectoryHeaderBrush, headerBounds);
-                }
-
-                if (borderPen is not null)
-                {
-                    context.DrawRectangle(borderPen, visual.Bounds);
-                }
+                DrawDirectoryNode(context, visual, interactionState);
             }
 
             if ((isLeaf || ShowDirectoryNodes) &&
@@ -459,6 +435,63 @@ public sealed class TreemapControl : Control
             }
         }
 
+    }
+
+    private void DrawLeafNode(
+        DrawingContext context,
+        TreemapNodeVisual visual,
+        Color fillColor,
+        TreemapInteractionState interactionState)
+    {
+        var fill = new SolidColorBrush(fillColor);
+        if (TryCreateLeafRoundedRect(visual.Bounds) is { } roundedRect)
+        {
+            context.DrawRectangle(fill, pen: null, roundedRect);
+            DrawSelectionOverlay(context, visual.Bounds, interactionState, fillColor);
+            DrawNodeBorder(context, visual.Node, visual.Bounds, fillColor, interactionState);
+            return;
+        }
+
+        context.FillRectangle(fill, visual.Bounds);
+        DrawSelectionOverlay(context, visual.Bounds, interactionState, fillColor);
+        DrawNodeBorder(context, visual.Node, visual.Bounds, fillColor, interactionState);
+    }
+
+    private void DrawDirectoryNode(
+        DrawingContext context,
+        TreemapNodeVisual visual,
+        TreemapInteractionState interactionState)
+    {
+        var directoryFillBrush = DirectoryFillBrush;
+        var directoryHeaderBrush = DirectoryHeaderBrush;
+        var referenceColor = TryGetSolidColor(DirectoryFillBrush) ?? Colors.Transparent;
+
+        if (TryGetSolidColor(DirectoryFillBrush) is { } fillColor)
+        {
+            var interactiveFillColor = TreemapInteractionVisuals.GetFillColor(fillColor, interactionState);
+            directoryFillBrush = new SolidColorBrush(interactiveFillColor);
+            referenceColor = interactiveFillColor;
+        }
+
+        if (TryGetSolidColor(DirectoryHeaderBrush) is { } headerColor)
+        {
+            directoryHeaderBrush = new SolidColorBrush(
+                TreemapInteractionVisuals.GetFillColor(headerColor, interactionState));
+        }
+
+        context.FillRectangle(directoryFillBrush, visual.Bounds);
+
+        var headerBounds = TreemapVisualRules.GetHeaderBounds(
+            visual.Node,
+            visual.Bounds,
+            includeDirectoryHeader: true);
+        if (headerBounds.Height > 0)
+        {
+            context.FillRectangle(directoryHeaderBrush, headerBounds);
+        }
+
+        DrawSelectionOverlay(context, visual.Bounds, interactionState, referenceColor);
+        DrawNodeBorder(context, visual.Node, visual.Bounds, referenceColor, interactionState);
     }
 
     protected override void OnPointerMoved(PointerEventArgs e)
@@ -720,25 +753,84 @@ public sealed class TreemapControl : Control
         return true;
     }
 
-    private Pen? CreateBorderPen(ProjectNode node)
+    private void DrawNodeBorder(
+        DrawingContext context,
+        ProjectNode node,
+        Rect bounds,
+        Color fillColor,
+        TreemapInteractionState interactionState)
     {
-        var isSelected = SelectedNode?.Id == node.Id;
-        var isHovered = HoveredNode?.Id == node.Id;
+        var isLeaf = IsLeafNode(node);
+        if (!isLeaf && !ShowDirectoryNodes)
+        {
+            return;
+        }
+
+        if (interactionState == TreemapInteractionState.None)
+        {
+            DrawBorderRectangle(context, bounds, CreateDefaultBorderPen(node), isLeaf);
+            return;
+        }
+
+        var accentThickness = TreemapInteractionVisuals.GetAccentThickness(interactionState);
+        var accentBrush = interactionState == TreemapInteractionState.Selected
+            ? SelectedBorderBrush
+            : HoverBorderBrush;
+        DrawBorderRectangle(context, bounds, new Pen(accentBrush, accentThickness), isLeaf);
+
+        var innerBounds = TreemapVisualRules.Inset(bounds, Math.Max(accentThickness, 1d));
+        if (innerBounds.Width <= 2 || innerBounds.Height <= 2)
+        {
+            return;
+        }
+
+        var contrastBrush = new SolidColorBrush(TreemapInteractionVisuals.GetContrastBorderColor(fillColor));
+        DrawBorderRectangle(context, innerBounds, new Pen(contrastBrush, InteractiveContrastThickness), isLeaf);
+    }
+
+    private static void DrawSelectionOverlay(
+        DrawingContext context,
+        Rect bounds,
+        TreemapInteractionState interactionState,
+        Color fillColor)
+    {
+        if (!TreemapInteractionVisuals.ShouldDrawStripeOverlay(bounds, interactionState))
+        {
+            return;
+        }
+
+        var stripeBounds = TreemapInteractionVisuals.GetStripeBounds(
+            bounds,
+            TreemapInteractionVisuals.GetAccentThickness(interactionState));
+        if (stripeBounds.Width <= 0 || stripeBounds.Height <= 0)
+        {
+            return;
+        }
+
+        var stripePen = new Pen(
+            new SolidColorBrush(TreemapInteractionVisuals.GetStripeColor(fillColor)),
+            TreemapInteractionVisuals.GetStripeThickness());
+        var stripeSpacing = TreemapInteractionVisuals.GetStripeSpacing();
+        var startX = stripeBounds.Left - stripeBounds.Height;
+        var endX = stripeBounds.Right + stripeBounds.Height;
+
+        using var clip = context.PushClip(stripeBounds);
+        for (var x = startX; x <= endX; x += stripeSpacing)
+        {
+            context.DrawLine(
+                stripePen,
+                new Point(x, stripeBounds.Bottom),
+                new Point(x + stripeBounds.Height, stripeBounds.Top));
+        }
+    }
+
+    private Pen? CreateDefaultBorderPen(ProjectNode node)
+    {
         var isLeaf = IsLeafNode(node);
 
         if (!isLeaf && !ShowDirectoryNodes)
         {
             return null;
-        }
-
-        if (isSelected)
-        {
-            return new Pen(SelectedBorderBrush, 2);
-        }
-
-        if (isHovered)
-        {
-            return new Pen(HoverBorderBrush, 1);
         }
 
         if (isLeaf && !ShowLeafBorders)
@@ -750,6 +842,41 @@ public sealed class TreemapControl : Control
             ? new Pen(LeafBorderBrush, 1)
             : new Pen(DirectoryBorderBrush, 1);
     }
+
+    private void DrawBorderRectangle(DrawingContext context, Rect bounds, Pen? pen, bool isLeaf)
+    {
+        if (pen is null)
+        {
+            return;
+        }
+
+        if (isLeaf && TryCreateLeafRoundedRect(bounds) is { } roundedRect)
+        {
+            context.DrawRectangle(brush: null, pen, roundedRect);
+            return;
+        }
+
+        context.DrawRectangle(pen, bounds);
+    }
+
+    private TreemapInteractionState GetInteractionState(ProjectNode node)
+    {
+        if (SelectedNode?.Id == node.Id)
+        {
+            return TreemapInteractionState.Selected;
+        }
+
+        return HoveredNode?.Id == node.Id
+            ? TreemapInteractionState.Hovered
+            : TreemapInteractionState.None;
+    }
+
+    private static Color? TryGetSolidColor(IBrush brush) =>
+        brush switch
+        {
+            ISolidColorBrush solidColorBrush => solidColorBrush.Color,
+            _ => null,
+        };
 
     private RoundedRect? TryCreateLeafRoundedRect(Rect bounds)
     {
