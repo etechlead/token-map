@@ -145,4 +145,97 @@ public sealed class CSharpSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
     }
+
+    [Fact]
+    public async Task AnalyzeAsync_DoesNotLetLocalFunctionComplexityLeakIntoParentCallable()
+    {
+        const string sourceText = """
+            class C
+            {
+                int M()
+                {
+                    int Local(int x)
+                    {
+                        if (x > 0)
+                        {
+                            return x;
+                        }
+
+                        return 0;
+                    }
+
+                    return 0;
+                }
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
+
+        Assert.Equal(2, summary.FunctionCount);
+
+        var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
+        Assert.Equal(1, callables[0].CyclomaticComplexity);
+        Assert.Equal(0, callables[0].MaxNestingDepth);
+        Assert.Equal(2, callables[1].CyclomaticComplexity);
+        Assert.Equal(1, callables[1].MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_TreatsElseIfChainAsSingleNestingLevel()
+    {
+        const string sourceText = """
+            class C
+            {
+                int M(int x)
+                {
+                    if (x == 0)
+                    {
+                        return 0;
+                    }
+                    else if (x == 1)
+                    {
+                        return 1;
+                    }
+                    else if (x == 2)
+                    {
+                        return 2;
+                    }
+
+                    return 3;
+                }
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(4, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsGuardedSwitchArmButNotDefaultArm()
+    {
+        const string sourceText = """
+            class C
+            {
+                int M(int x)
+                {
+                    switch (x)
+                    {
+                        case > 0 when x < 10:
+                            return x;
+                        default:
+                            return 0;
+                    }
+                }
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(3, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
 }

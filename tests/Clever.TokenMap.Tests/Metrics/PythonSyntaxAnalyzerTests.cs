@@ -138,4 +138,84 @@ public sealed class PythonSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
     }
+
+    [Fact]
+    public async Task AnalyzeAsync_TreatsDocstringsAsCodeNotComments()
+    {
+        const string sourceText = """
+            def top():
+                '''Module-like docstring.'''
+                return 0
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
+
+        Assert.Equal(0, summary.CommentLineCount);
+        Assert.Equal(3, summary.CodeLineCount);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_DoesNotLetNestedFunctionComplexityLeakIntoParentCallable()
+    {
+        const string sourceText = """
+            def top():
+                def local(x):
+                    if x > 0:
+                        return x
+                    return 0
+
+                return 1
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
+
+        Assert.Equal(2, summary.FunctionCount);
+
+        var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
+        Assert.Equal(1, callables[0].CyclomaticComplexity);
+        Assert.Equal(0, callables[0].MaxNestingDepth);
+        Assert.Equal(2, callables[1].CyclomaticComplexity);
+        Assert.Equal(1, callables[1].MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_TreatsElifChainAsSingleNestingLevel()
+    {
+        const string sourceText = """
+            def top(x):
+                if x == 0:
+                    return 0
+                elif x == 1:
+                    return 1
+                elif x == 2:
+                    return 2
+
+                return 3
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(4, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsGuardedMatchArmButNotWildcardCatchAll()
+    {
+        const string sourceText = """
+            def top(x):
+                match x:
+                    case 1 if x > 0:
+                        return 1
+                    case _:
+                        return 0
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(3, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
 }

@@ -138,4 +138,77 @@ public sealed class JavaScriptSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
     }
+
+    [Fact]
+    public async Task AnalyzeAsync_DoesNotLetNestedArrowComplexityLeakIntoParentCallable()
+    {
+        const string sourceText = """
+            function top() {
+              const fn = x => {
+                if (x > 0) {
+                  return x;
+                }
+
+                return 0;
+              };
+
+              return 1;
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.js", sourceText, CancellationToken.None);
+
+        Assert.Equal(2, summary.FunctionCount);
+
+        var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
+        Assert.Equal(1, callables[0].CyclomaticComplexity);
+        Assert.Equal(0, callables[0].MaxNestingDepth);
+        Assert.Equal(2, callables[1].CyclomaticComplexity);
+        Assert.Equal(1, callables[1].MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_TreatsElseIfChainAsSingleNestingLevel()
+    {
+        const string sourceText = """
+            function top(x) {
+              if (x === 0) {
+                return 0;
+              } else if (x === 1) {
+                return 1;
+              } else if (x === 2) {
+                return 2;
+              }
+
+              return 3;
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.js", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(4, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_DoesNotCountDefaultSwitchArmAsAdditionalDecision()
+    {
+        const string sourceText = """
+            function top(x) {
+              switch (x) {
+                case 1:
+                  return 1;
+                default:
+                  return 0;
+              }
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.js", sourceText, CancellationToken.None);
+
+        var callable = Assert.Single(summary.Callables);
+        Assert.Equal(2, callable.CyclomaticComplexity);
+        Assert.Equal(1, callable.MaxNestingDepth);
+    }
 }
