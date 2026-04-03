@@ -21,6 +21,15 @@ public sealed class CSharpSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = CSharpCallableMetricsWalker.CollectCallables(tree.RootNode);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
+        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
     }
+
+    private static bool IsCountedTypeDeclaration(Node node) =>
+        node.Type is "class_declaration"
+            or "struct_declaration"
+            or "interface_declaration"
+            or "enum_declaration"
+            or "record_declaration"
+            or "record_struct_declaration";
 }

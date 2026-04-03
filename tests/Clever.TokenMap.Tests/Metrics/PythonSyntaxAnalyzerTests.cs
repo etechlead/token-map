@@ -63,6 +63,7 @@ public sealed class PythonSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(5, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(14, summary.CyclomaticComplexitySum);
         Assert.Equal(5, summary.CyclomaticComplexityMax);
         Assert.Equal(2, summary.MaxNestingDepth);
@@ -217,5 +218,23 @@ public sealed class PythonSyntaxAnalyzerTests
         var callable = Assert.Single(summary.Callables);
         Assert.Equal(3, callable.CyclomaticComplexity);
         Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsTopLevelClassesButNotLocalClasses()
+    {
+        const string sourceText = """
+            class TopLevel:
+                pass
+
+            def top():
+                class Local:
+                    pass
+                return Local()
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
+
+        Assert.Equal(1, summary.TypeCount);
     }
 }

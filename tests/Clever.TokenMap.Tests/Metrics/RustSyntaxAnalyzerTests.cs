@@ -77,6 +77,7 @@ public sealed class RustSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(4, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(14, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(3, summary.MaxNestingDepth);
@@ -242,5 +243,25 @@ public sealed class RustSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("broken.rs", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsSupportedNamedTypesButNotAliasesOrLocalTypes()
+    {
+        const string sourceText = """
+            struct Box;
+            enum Kind { Box }
+            trait Shape {}
+            union Value { int_value: i32 }
+            type Alias = i32;
+
+            fn top() {
+                struct Local;
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.rs", sourceText, CancellationToken.None);
+
+        Assert.Equal(4, summary.TypeCount);
     }
 }

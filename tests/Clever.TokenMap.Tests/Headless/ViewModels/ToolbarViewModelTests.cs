@@ -124,6 +124,12 @@ public sealed class ToolbarViewModelTests
         var funcsOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.FunctionCount);
+        var totalParamsOption = Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.TotalParameterCount);
+        var typeCountOption = Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.TypeCount);
         var ccMaxOption = Assert.Single(
             viewModel.TreeOnlyMetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.CyclomaticComplexityMax);
@@ -132,6 +138,8 @@ public sealed class ToolbarViewModelTests
             option => option.Definition.Id == MetricIds.MaxNestingDepth);
 
         Assert.Equal("Funcs", funcsOption.Label);
+        Assert.Equal("Params", totalParamsOption.Label);
+        Assert.Equal("Types", typeCountOption.Label);
         Assert.Equal("CC max", ccMaxOption.Label);
         Assert.Equal("Nest", nestingOption.Label);
         Assert.DoesNotContain(
@@ -140,6 +148,12 @@ public sealed class ToolbarViewModelTests
         Assert.DoesNotContain(
             viewModel.MetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.MaxNestingDepth);
+        Assert.DoesNotContain(
+            viewModel.TreeOnlyMetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.TotalParameterCount);
+        Assert.DoesNotContain(
+            viewModel.TreeOnlyMetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.TypeCount);
         Assert.True(viewModel.HasTreeOnlyMetricVisibilityOptions);
     }
 

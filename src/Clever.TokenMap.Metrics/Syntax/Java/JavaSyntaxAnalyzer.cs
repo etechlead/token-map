@@ -21,9 +21,14 @@ public sealed class JavaSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = JavaCallableMetricsWalker.CollectCallables(tree.RootNode);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
+        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
     }
 
     protected override bool IsCommentNode(Node node) =>
         node.Type is "line_comment" or "block_comment";
+
+    private static bool IsCountedTypeDeclaration(Node node) =>
+        node.Type is "class_declaration" or "interface_declaration" or "enum_declaration" or "record_declaration" &&
+        !HasAncestor(node, JavaCallableMetricsWalker.IsCallable);
 }

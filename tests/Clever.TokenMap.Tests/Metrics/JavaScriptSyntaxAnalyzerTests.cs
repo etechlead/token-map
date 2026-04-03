@@ -70,6 +70,7 @@ public sealed class JavaScriptSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(4, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(13, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(3, summary.MaxNestingDepth);
@@ -210,5 +211,22 @@ public sealed class JavaScriptSyntaxAnalyzerTests
         var callable = Assert.Single(summary.Callables);
         Assert.Equal(2, callable.CyclomaticComplexity);
         Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsTopLevelClassesButNotLocalClasses()
+    {
+        const string sourceText = """
+            class TopLevel {}
+
+            function top() {
+              class Local {}
+              return new Local();
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.js", sourceText, CancellationToken.None);
+
+        Assert.Equal(1, summary.TypeCount);
     }
 }

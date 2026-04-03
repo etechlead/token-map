@@ -80,6 +80,7 @@ public sealed class CSharpSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(5, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(13, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(1, summary.MaxNestingDepth);
@@ -237,5 +238,23 @@ public sealed class CSharpSyntaxAnalyzerTests
         var callable = Assert.Single(summary.Callables);
         Assert.Equal(3, callable.CyclomaticComplexity);
         Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsNamedTypesButNotDelegates()
+    {
+        const string sourceText = """
+            delegate int Transformer(int value);
+
+            class C {}
+            struct S {}
+            interface I {}
+            enum E { One }
+            record R(int Value);
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
+
+        Assert.Equal(5, summary.TypeCount);
     }
 }

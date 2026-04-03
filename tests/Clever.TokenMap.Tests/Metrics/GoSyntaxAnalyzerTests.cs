@@ -78,6 +78,7 @@ public sealed class GoSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(3, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(11, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(3, summary.MaxNestingDepth);
@@ -241,5 +242,27 @@ public sealed class GoSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("broken.go", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsDefinedTypesButNotAliasesOrLocalTypes()
+    {
+        const string sourceText = """
+            package sample
+
+            type Box struct{}
+            type Reader interface { Read([]byte) (int, error) }
+            type Age int
+            type Alias = int
+
+            func top() int {
+                type Local struct{}
+                return 0
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.go", sourceText, CancellationToken.None);
+
+        Assert.Equal(3, summary.TypeCount);
     }
 }

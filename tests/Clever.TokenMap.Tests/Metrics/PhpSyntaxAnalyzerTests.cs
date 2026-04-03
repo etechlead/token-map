@@ -81,6 +81,7 @@ public sealed class PhpSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(6, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(15, summary.CyclomaticComplexitySum);
         Assert.Equal(5, summary.CyclomaticComplexityMax);
         Assert.Equal(2, summary.MaxNestingDepth);
@@ -258,5 +259,26 @@ public sealed class PhpSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("broken.php", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsSupportedNamedTypesButNotTraitsOrLocalClasses()
+    {
+        const string sourceText = """
+            <?php
+
+            class Box {}
+            interface Shape {}
+            enum Kind { case Box; }
+            trait SharedBox {}
+
+            function top(): void {
+                class LocalBox {}
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.php", sourceText, CancellationToken.None);
+
+        Assert.Equal(3, summary.TypeCount);
     }
 }

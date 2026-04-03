@@ -84,10 +84,16 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             CodeLineCount: 1,
             CommentLineCount: 2,
             FunctionCount: 3,
+            TypeCount: 2,
             CyclomaticComplexitySum: 7,
             CyclomaticComplexityMax: 4,
             MaxNestingDepth: 2,
-            Callables: []);
+            Callables:
+            [
+                new CallableSyntaxFact("First", CallableKind.Method, new LineRange(1, 1), 2, 3, 1),
+                new CallableSyntaxFact("Second", CallableKind.Method, new LineRange(2, 2), 5, 4, 2),
+                new CallableSyntaxFact("Third", CallableKind.Method, new LineRange(3, 3), 1, 0, 0),
+            ]);
         var enricher = new ProjectSnapshotMetricsEnricher(
             new HeuristicTextFileDetector(),
             new RecordingTokenCounter(),
@@ -99,13 +105,21 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
         var programNode = Assert.Single(enriched.Root.Children);
 
+        Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
         Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
         Assert.Equal(3, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
+        Assert.Equal(8, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
+        Assert.Equal(5, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
         Assert.Equal(7, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
         Assert.Equal(4, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
         Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
+        Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
         Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
         Assert.Equal(3, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
+        Assert.Equal(8, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
+        Assert.Equal(5, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
+        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
         Assert.Equal(7, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
         Assert.Equal(4, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
         Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
@@ -132,8 +146,12 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
         Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
         Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CodeLines).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CommentLines).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.FunctionCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.TotalParameterCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.MaxParameterCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.TypeCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexitySum).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityMax).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.MaxNestingDepth).Status);
@@ -242,6 +260,67 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal("ab\ncd\nef", string.Concat(seenContents));
         Assert.Equal(8L, sampleNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
         Assert.Equal(3, sampleNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_UsesSeparateSyntaxThresholdForLargeFiles()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "Program.cs"), "class Program { int Run(int x, int y) { return x + y; } }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var syntaxArtifact = new SyntaxSummaryArtifact(
+            LanguageId: "csharp",
+            ParseQuality: SyntaxParseQuality.Full,
+            CodeLineCount: 1,
+            CommentLineCount: 0,
+            FunctionCount: 1,
+            TypeCount: 1,
+            CyclomaticComplexitySum: 1,
+            CyclomaticComplexityMax: 1,
+            MaxNestingDepth: 0,
+            Callables:
+            [
+                new CallableSyntaxFact("Run", CallableKind.Method, new LineRange(1, 1), 2, 1, 0),
+            ]);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            new RecordingTokenCounter(),
+            largeFileTokenizationThresholdBytes: 1,
+            largeFileSyntaxAnalysisThresholdBytes: long.MaxValue,
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new StaticSyntaxAnalyzer(".cs", syntaxArtifact),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var programNode = Assert.Single(enriched.Root.Children);
+
+        Assert.True(programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) > 0);
+        Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
+        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
+        Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
+    }
+
+    [Fact]
+    public async Task EnrichAsync_MarksNewSyntaxMetricsAsNotApplicableForBinaryFiles()
+    {
+        await File.WriteAllBytesAsync(Path.Combine(_rootPath, "image.bin"), [0x42, 0x00, 0x43]);
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter());
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var imageNode = Assert.Single(enriched.Root.Children);
+
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CodeLines).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TotalParameterCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.MaxParameterCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TypeCount).Status);
     }
 
     [Fact]

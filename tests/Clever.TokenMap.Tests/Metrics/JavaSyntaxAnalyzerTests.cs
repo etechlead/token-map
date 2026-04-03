@@ -69,6 +69,7 @@ public sealed class JavaSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(3, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(11, summary.CyclomaticComplexitySum);
         Assert.Equal(7, summary.CyclomaticComplexityMax);
         Assert.Equal(3, summary.MaxNestingDepth);
@@ -226,5 +227,25 @@ public sealed class JavaSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("broken.java", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsSupportedNamedTypesButNotLocalClasses()
+    {
+        const string sourceText = """
+            class Box {
+                void run() {
+                    class Local {}
+                }
+            }
+
+            interface Shape {}
+            enum Kind { Box }
+            record Data(int value) {}
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.java", sourceText, CancellationToken.None);
+
+        Assert.Equal(4, summary.TypeCount);
     }
 }

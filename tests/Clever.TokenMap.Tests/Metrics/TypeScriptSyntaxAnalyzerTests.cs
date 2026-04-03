@@ -70,6 +70,7 @@ public sealed class TypeScriptSyntaxAnalyzerTests
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
         Assert.Equal(4, summary.FunctionCount);
+        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(13, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(3, summary.MaxNestingDepth);
@@ -210,5 +211,25 @@ public sealed class TypeScriptSyntaxAnalyzerTests
         var callable = Assert.Single(summary.Callables);
         Assert.Equal(2, callable.CyclomaticComplexity);
         Assert.Equal(1, callable.MaxNestingDepth);
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_CountsSupportedNamedTypesButNotAliasesOrLocalClasses()
+    {
+        const string sourceText = """
+            interface Shape {}
+            enum Kind { Box }
+            class Box {}
+            type Alias = number;
+
+            function top() {
+              class Local {}
+              return 0;
+            }
+            """;
+
+        var summary = await _analyzer.AnalyzeAsync("sample.ts", sourceText, CancellationToken.None);
+
+        Assert.Equal(3, summary.TypeCount);
     }
 }

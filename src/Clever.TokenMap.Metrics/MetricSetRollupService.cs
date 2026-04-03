@@ -40,6 +40,9 @@ public sealed class MetricSetRollupService
                 case MetricRollupKind.Max:
                     builder.SetValue(definition.Id, values.Max());
                     break;
+                case MetricRollupKind.None:
+                    builder.SetNotApplicable(definition.Id);
+                    break;
                 default:
                     throw new InvalidOperationException($"Unsupported rollup kind '{definition.DirectoryRollup}'.");
             }

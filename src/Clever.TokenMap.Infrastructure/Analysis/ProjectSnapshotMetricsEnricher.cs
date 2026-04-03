@@ -16,10 +16,12 @@ namespace Clever.TokenMap.Infrastructure.Analysis;
 public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngine
 {
     private const long LargeFileTokenizationThresholdBytes = 1024L * 1024L;
+    private const long LargeFileSyntaxAnalysisThresholdBytes = 4L * 1024L * 1024L;
     private const int LargeFileChunkSizeChars = 256 * 1024;
 
     private readonly ICacheStore? _cacheStore;
     private readonly int _largeFileChunkSizeChars;
+    private readonly long _largeFileSyntaxAnalysisThresholdBytes;
     private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
     private readonly IReadOnlyList<IFileMetricCalculator> _fileMetricCalculators;
@@ -35,6 +37,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         ICacheStore? cacheStore = null,
         IAppLogger? logger = null,
         long largeFileTokenizationThresholdBytes = LargeFileTokenizationThresholdBytes,
+        long largeFileSyntaxAnalysisThresholdBytes = LargeFileSyntaxAnalysisThresholdBytes,
         int largeFileChunkSizeChars = LargeFileChunkSizeChars,
         int? maxDegreeOfParallelism = null,
         IMetricCatalog? metricCatalog = null,
@@ -48,6 +51,9 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         _largeFileTokenizationThresholdBytes = largeFileTokenizationThresholdBytes >= 0
             ? largeFileTokenizationThresholdBytes
             : throw new ArgumentOutOfRangeException(nameof(largeFileTokenizationThresholdBytes));
+        _largeFileSyntaxAnalysisThresholdBytes = largeFileSyntaxAnalysisThresholdBytes >= 0
+            ? largeFileSyntaxAnalysisThresholdBytes
+            : throw new ArgumentOutOfRangeException(nameof(largeFileSyntaxAnalysisThresholdBytes));
         _logger = logger ?? NullAppLogger.Instance;
         _maxDegreeOfParallelism = maxDegreeOfParallelism.HasValue
             ? NormalizeMaxDegreeOfParallelism(maxDegreeOfParallelism.Value)
@@ -409,8 +415,12 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetValue(MetricIds.FileSizeBytes, fileSizeBytes);
         builder.SetNotApplicable(MetricIds.Tokens);
         builder.SetNotApplicable(MetricIds.NonEmptyLines);
+        builder.SetNotApplicable(MetricIds.CodeLines);
         builder.SetNotApplicable(MetricIds.CommentLines);
         builder.SetNotApplicable(MetricIds.FunctionCount);
+        builder.SetNotApplicable(MetricIds.TotalParameterCount);
+        builder.SetNotApplicable(MetricIds.MaxParameterCount);
+        builder.SetNotApplicable(MetricIds.TypeCount);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexitySum);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexityMax);
         builder.SetNotApplicable(MetricIds.MaxNestingDepth);
@@ -430,7 +440,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             return SyntaxSummaryArtifact.Unsupported();
         }
 
-        if (fileSizeBytes > _largeFileTokenizationThresholdBytes)
+        if (fileSizeBytes > _largeFileSyntaxAnalysisThresholdBytes)
         {
             return SyntaxSummaryArtifact.Unsupported(analyzer.LanguageId);
         }

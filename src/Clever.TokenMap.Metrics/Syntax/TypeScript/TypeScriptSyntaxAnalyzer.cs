@@ -22,6 +22,11 @@ public sealed class TypeScriptSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = JavaScriptLikeCallableMetricsWalker.CollectCallables(tree.RootNode);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
+        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
     }
+
+    private static bool IsCountedTypeDeclaration(Node node) =>
+        node.Type is "class_declaration" or "interface_declaration" or "enum_declaration" &&
+        !HasAncestor(node, JavaScriptLikeCallableMetricsWalker.IsCallable);
 }

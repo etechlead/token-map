@@ -15,9 +15,13 @@ internal static class MetricTestData
         MetricSet.From(
             (MetricIds.Tokens, MetricValue.NotApplicable()),
             (MetricIds.NonEmptyLines, MetricValue.NotApplicable()),
+            (MetricIds.CodeLines, MetricValue.NotApplicable()),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
             (MetricIds.CommentLines, MetricValue.NotApplicable()),
             (MetricIds.FunctionCount, MetricValue.NotApplicable()),
+            (MetricIds.TotalParameterCount, MetricValue.NotApplicable()),
+            (MetricIds.MaxParameterCount, MetricValue.NotApplicable()),
+            (MetricIds.TypeCount, MetricValue.NotApplicable()),
             (MetricIds.CyclomaticComplexitySum, MetricValue.NotApplicable()),
             (MetricIds.CyclomaticComplexityMax, MetricValue.NotApplicable()),
             (MetricIds.MaxNestingDepth, MetricValue.NotApplicable()));
