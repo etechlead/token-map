@@ -9,6 +9,7 @@ public interface ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
+        string? contextFingerprint,
         CancellationToken cancellationToken);
 
     ValueTask SetFileMetricsAsync(
@@ -16,6 +17,7 @@ public interface ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
+        string? contextFingerprint,
         MetricSet metrics,
         CancellationToken cancellationToken);
 }

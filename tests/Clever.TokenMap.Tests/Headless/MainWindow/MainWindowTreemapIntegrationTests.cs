@@ -306,7 +306,8 @@ public sealed class MainWindowTreemapIntegrationTests
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
             (MetricIds.ComplexityPointsV0, MetricValue.From(complexity)),
-            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)));
+            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)),
+            (MetricIds.RefactorPriorityPointsV0, MetricValue.From(22)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)

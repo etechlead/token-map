@@ -16,4 +16,5 @@ public static class MetricIds
     public static readonly MetricId LongParameterListCount = new("long_parameter_list_count");
     public static readonly MetricId CallableHotspotPointsV0 = new("callable_hotspot_points_v0");
     public static readonly MetricId ComplexityPointsV0 = new("complexity_points_v0");
+    public static readonly MetricId RefactorPriorityPointsV0 = new("refactor_priority_points_v0");
 }

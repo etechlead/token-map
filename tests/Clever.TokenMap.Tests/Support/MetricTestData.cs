@@ -26,7 +26,8 @@ internal static class MetricTestData
             (MetricIds.DeepNestingCallableCount, MetricValue.NotApplicable()),
             (MetricIds.LongParameterListCount, MetricValue.NotApplicable()),
             (MetricIds.CallableHotspotPointsV0, MetricValue.NotApplicable()),
-            (MetricIds.ComplexityPointsV0, MetricValue.NotApplicable()));
+            (MetricIds.ComplexityPointsV0, MetricValue.NotApplicable()),
+            (MetricIds.RefactorPriorityPointsV0, MetricValue.NotApplicable()));
 
     internal static NodeSummary CreateFileSummary() =>
         new(

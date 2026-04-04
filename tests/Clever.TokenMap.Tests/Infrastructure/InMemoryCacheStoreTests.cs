@@ -21,6 +21,7 @@ public sealed class InMemoryCacheStoreTests
             relativePath,
             1024,
             timestamp,
+            contextFingerprint: null,
             metrics,
             CancellationToken.None);
 
@@ -29,6 +30,7 @@ public sealed class InMemoryCacheStoreTests
             "src/Program.cs",
             1024,
             timestamp,
+            contextFingerprint: null,
             CancellationToken.None);
 
         var otherRootMiss = await store.TryGetFileMetricsAsync(
@@ -36,9 +38,47 @@ public sealed class InMemoryCacheStoreTests
             "src/Program.cs",
             1024,
             timestamp,
+            contextFingerprint: null,
             CancellationToken.None);
 
         Assert.Equal(metrics.Values, sameRootHit?.Values);
         Assert.Null(otherRootMiss);
+    }
+
+    [Fact]
+    public async Task Cache_IsPartitionedByContextFingerprint()
+    {
+        var store = new InMemoryCacheStore();
+        var metrics = MetricTestData.CreateComputedMetrics(tokens: 12, nonEmptyLines: 3, fileSizeBytes: 1024);
+        var timestamp = DateTimeOffset.UtcNow;
+        var rootPath = TestPaths.Folder("RepoA");
+        var relativePath = TestPaths.Relative("src", "Program.cs");
+
+        await store.SetFileMetricsAsync(
+            rootPath,
+            relativePath,
+            1024,
+            timestamp,
+            contextFingerprint: "head-a|git90d-v0",
+            metrics,
+            CancellationToken.None);
+
+        var sameFingerprintHit = await store.TryGetFileMetricsAsync(
+            rootPath,
+            relativePath,
+            1024,
+            timestamp,
+            contextFingerprint: "head-a|git90d-v0",
+            CancellationToken.None);
+        var differentFingerprintMiss = await store.TryGetFileMetricsAsync(
+            rootPath,
+            relativePath,
+            1024,
+            timestamp,
+            contextFingerprint: "head-b|git90d-v0",
+            CancellationToken.None);
+
+        Assert.Equal(metrics.Values, sameFingerprintHit?.Values);
+        Assert.Null(differentFingerprintMiss);
     }
 }

@@ -48,7 +48,16 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "Additive callable hotspot points for files and summed directory rollups.")
+            "Additive callable hotspot points for files and summed directory rollups."),
+        new(
+            MetricIds.RefactorPriorityPointsV0,
+            "Refactor Priority",
+            "Priority",
+            MetricUnit.Score,
+            MetricRollupKind.Sum,
+            VisibleByDefault: true,
+            SupportsTreemapWeight: true,
+            "Additive refactor priority points for files and summed directory rollups.")
     ];
 
     private readonly Dictionary<MetricId, MetricDefinition> _definitionsById =

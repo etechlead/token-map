@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Text;
+using Clever.TokenMap.Core.Analysis.Git;
 using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
@@ -7,6 +8,7 @@ using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Infrastructure.Analysis.Git;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators;
 using Clever.TokenMap.Metrics.Calculators.Derived;
@@ -25,6 +27,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     private readonly long _largeFileSyntaxAnalysisThresholdBytes;
     private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
+    private readonly IGitHistorySnapshotProvider? _gitHistorySnapshotProvider;
     private readonly IFileDerivedMetricCalculator[] _fileDerivedMetricCalculators;
     private readonly IReadOnlyList<IFileMetricCalculator> _fileMetricCalculators;
     private readonly int _maxDegreeOfParallelism;
@@ -38,6 +41,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         ITokenCounter tokenCounter,
         ICacheStore? cacheStore = null,
         IAppLogger? logger = null,
+        IGitHistorySnapshotProvider? gitHistorySnapshotProvider = null,
         long largeFileTokenizationThresholdBytes = LargeFileTokenizationThresholdBytes,
         long largeFileSyntaxAnalysisThresholdBytes = LargeFileSyntaxAnalysisThresholdBytes,
         int largeFileChunkSizeChars = LargeFileChunkSizeChars,
@@ -58,6 +62,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             ? largeFileSyntaxAnalysisThresholdBytes
             : throw new ArgumentOutOfRangeException(nameof(largeFileSyntaxAnalysisThresholdBytes));
         _logger = logger ?? NullAppLogger.Instance;
+        _gitHistorySnapshotProvider = gitHistorySnapshotProvider;
         _maxDegreeOfParallelism = maxDegreeOfParallelism.HasValue
             ? NormalizeMaxDegreeOfParallelism(maxDegreeOfParallelism.Value)
             : GetDefaultMaxDegreeOfParallelism();
@@ -85,6 +90,9 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         ArgumentNullException.ThrowIfNull(snapshot);
 
         var diagnostics = new ConcurrentQueue<AnalysisIssue>(snapshot.Diagnostics);
+        var gitHistorySnapshot = await TryCreateGitHistorySnapshotAsync(snapshot.RootPath, cancellationToken)
+            .ConfigureAwait(false);
+        var contextFingerprint = gitHistorySnapshot?.ContextFingerprint;
         var fileWorkItems = CollectFileWorkItems(snapshot.Root);
         var enrichedFiles = new ProjectNode?[fileWorkItems.Count];
         var totalFileCount = fileWorkItems.Count;
@@ -104,6 +112,8 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
                     var enrichedFile = await EnrichFileNodeAsync(
                         snapshot,
                         fileWorkItem.Node,
+                        gitHistorySnapshot,
+                        contextFingerprint,
                         diagnostics,
                         ct).ConfigureAwait(false);
                     enrichedFiles[fileWorkItem.Index] = enrichedFile;
@@ -153,6 +163,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     [
         new CallableHotspotMetricsCalculator(),
         new ComplexityPointsV0DerivedMetricsCalculator(),
+        new RefactorPriorityPointsV0DerivedMetricsCalculator(),
     ];
 
     private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
@@ -214,6 +225,8 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     private async Task<ProjectNode> EnrichFileNodeAsync(
         ProjectSnapshot snapshot,
         ProjectNode node,
+        GitHistorySnapshot? gitHistorySnapshot,
+        string? contextFingerprint,
         ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
@@ -236,6 +249,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
                 snapshot.RootPath,
                 node.RelativePath,
                 fileState,
+                contextFingerprint,
                 cancellationToken);
             if (cachedMetrics is not null)
             {
@@ -308,6 +322,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             node,
             fileSizeBytes,
             textMetricsArtifact,
+            gitHistorySnapshot,
             diagnostics,
             cancellationToken).ConfigureAwait(false);
 
@@ -318,6 +333,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
                 node.RelativePath,
                 fileState.FileSizeBytes,
                 fileState.LastWriteTimeUtc,
+                contextFingerprint,
                 computedMetrics,
                 cancellationToken);
         }
@@ -363,41 +379,50 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         ProjectNode node,
         long fileSizeBytes,
         TextMetricsArtifact textMetricsArtifact,
+        GitHistorySnapshot? gitHistorySnapshot,
         ConcurrentQueue<AnalysisIssue> diagnostics,
         CancellationToken cancellationToken)
     {
+        var artifacts = new Dictionary<Type, object?>
+        {
+            [typeof(TextMetricsArtifact)] = textMetricsArtifact,
+        };
+        if (gitHistorySnapshot?.TryGetFileHistory(node.RelativePath, out var gitFileHistoryArtifact) == true)
+        {
+            artifacts[typeof(GitFileHistoryArtifact)] = gitFileHistoryArtifact;
+        }
+
         var context = new FileMetricContext(
             fileSizeBytes,
-            artifacts: new Dictionary<Type, object?>
-            {
-                [typeof(TextMetricsArtifact)] = textMetricsArtifact,
-            },
+            artifacts: artifacts,
             artifactFactories: new Dictionary<Type, FileArtifactFactory>
             {
                 [typeof(SyntaxSummaryArtifact)] = ct => CreateSyntaxSummaryArtifactAsync(node.FullPath, fileSizeBytes, diagnostics, ct),
             });
-        var builder = new MetricSetBuilder();
+        var rawBuilder = new MetricSetBuilder();
 
         foreach (var calculator in _fileMetricCalculators)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await calculator.ComputeAsync(context, builder, cancellationToken).ConfigureAwait(false);
+            await calculator.ComputeAsync(context, rawBuilder, cancellationToken).ConfigureAwait(false);
         }
 
-        var rawMetrics = builder.Build();
+        var rawMetrics = rawBuilder.Build();
         if (_fileDerivedMetricCalculators.Length == 0)
         {
             return rawMetrics;
         }
 
-        var finalBuilder = new MetricSetBuilder(rawMetrics);
+        var accumulatedMetrics = rawMetrics;
         foreach (var calculator in _fileDerivedMetricCalculators)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await calculator.ComputeAsync(context, rawMetrics, finalBuilder, cancellationToken).ConfigureAwait(false);
+            var derivedBuilder = new MetricSetBuilder(accumulatedMetrics);
+            await calculator.ComputeAsync(context, accumulatedMetrics, derivedBuilder, cancellationToken).ConfigureAwait(false);
+            accumulatedMetrics = derivedBuilder.Build();
         }
 
-        return finalBuilder.Build();
+        return accumulatedMetrics;
     }
 
     private static NodeSummary AggregateDirectorySummary(
@@ -451,6 +476,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.LongParameterListCount);
         builder.SetNotApplicable(MetricIds.CallableHotspotPointsV0);
         builder.SetNotApplicable(MetricIds.ComplexityPointsV0);
+        builder.SetNotApplicable(MetricIds.RefactorPriorityPointsV0);
         return builder.Build();
     }
 
@@ -685,6 +711,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         string rootPath,
         string relativePath,
         FileState fileState,
+        string? contextFingerprint,
         CancellationToken cancellationToken)
     {
         var cachedMetrics = await _cacheStore!.TryGetFileMetricsAsync(
@@ -692,6 +719,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             relativePath,
             fileState.FileSizeBytes,
             fileState.LastWriteTimeUtc,
+            contextFingerprint,
             cancellationToken);
 
         if (cachedMetrics is null)
@@ -700,6 +728,19 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         }
 
         return cachedMetrics;
+    }
+
+    private async Task<GitHistorySnapshot?> TryCreateGitHistorySnapshotAsync(
+        string rootPath,
+        CancellationToken cancellationToken)
+    {
+        if (_gitHistorySnapshotProvider is null)
+        {
+            return null;
+        }
+
+        return await _gitHistorySnapshotProvider.TryCreateAsync(rootPath, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static ProjectNode ApplyRecoverableFileError(

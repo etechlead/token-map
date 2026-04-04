@@ -9,6 +9,7 @@ using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Infrastructure.Analysis;
+using Clever.TokenMap.Infrastructure.Analysis.Git;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Logging;
 using Clever.TokenMap.Infrastructure.Paths;
@@ -82,12 +83,17 @@ public static class AppComposition
         services.AddSingleton<ITokenCounter, MicrosoftMlTokenCounter>();
         services.AddSingleton<ICacheStore>(sp =>
             new InMemoryCacheStore(sp.GetRequiredService<PathNormalizer>()));
+        services.AddSingleton<IGitHistorySnapshotProvider>(sp =>
+            new LibGit2SharpHistorySnapshotProvider(
+                sp.GetRequiredService<PathNormalizer>(),
+                sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<LibGit2SharpHistorySnapshotProvider>()));
         services.AddSingleton<IProjectSnapshotMetricEngine>(sp =>
             new ProjectSnapshotMetricsEnricher(
                 sp.GetRequiredService<ITextFileDetector>(),
                 sp.GetRequiredService<ITokenCounter>(),
                 sp.GetRequiredService<ICacheStore>(),
-                sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<ProjectSnapshotMetricsEnricher>()));
+                sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<ProjectSnapshotMetricsEnricher>(),
+                sp.GetRequiredService<IGitHistorySnapshotProvider>()));
         services.AddSingleton<IProjectAnalyzer>(sp =>
             new ProjectAnalyzer(
                 sp.GetRequiredService<IProjectScanner>(),

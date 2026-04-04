@@ -22,11 +22,12 @@ public sealed class InMemoryCacheStore : ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
+        string? contextFingerprint,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc);
+        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc, contextFingerprint);
         return ValueTask.FromResult(_entries.TryGetValue(key, out var metrics) ? metrics : null);
     }
 
@@ -35,6 +36,7 @@ public sealed class InMemoryCacheStore : ICacheStore
         string relativePath,
         long fileSizeBytes,
         DateTimeOffset lastWriteTimeUtc,
+        string? contextFingerprint,
         MetricSet metrics,
         CancellationToken cancellationToken)
     {
@@ -42,7 +44,7 @@ public sealed class InMemoryCacheStore : ICacheStore
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc);
+        var key = CreateKey(rootPath, relativePath, fileSizeBytes, lastWriteTimeUtc, contextFingerprint);
         _entries[key] = metrics;
 
         return ValueTask.CompletedTask;
@@ -52,18 +54,21 @@ public sealed class InMemoryCacheStore : ICacheStore
         string rootPath,
         string relativePath,
         long fileSizeBytes,
-        DateTimeOffset lastWriteTimeUtc) =>
+        DateTimeOffset lastWriteTimeUtc,
+        string? contextFingerprint) =>
         new(
             _pathNormalizer.NormalizeRootPath(rootPath),
             PathNormalizer.NormalizeRelativePath(relativePath),
             fileSizeBytes,
-            lastWriteTimeUtc);
+            lastWriteTimeUtc,
+            contextFingerprint?.Trim());
 
     private readonly record struct CacheKey(
         string RootPath,
         string RelativePath,
         long FileSizeBytes,
-        DateTimeOffset LastWriteTimeUtc);
+        DateTimeOffset LastWriteTimeUtc,
+        string? ContextFingerprint);
 
     private sealed class CacheKeyComparer(StringComparer pathComparer) : IEqualityComparer<CacheKey>
     {
@@ -71,7 +76,8 @@ public sealed class InMemoryCacheStore : ICacheStore
             pathComparer.Equals(x.RootPath, y.RootPath) &&
             pathComparer.Equals(x.RelativePath, y.RelativePath) &&
             x.FileSizeBytes == y.FileSizeBytes &&
-            x.LastWriteTimeUtc.Equals(y.LastWriteTimeUtc);
+            x.LastWriteTimeUtc.Equals(y.LastWriteTimeUtc) &&
+            StringComparer.Ordinal.Equals(x.ContextFingerprint, y.ContextFingerprint);
 
         public int GetHashCode([DisallowNull] CacheKey obj)
         {
@@ -80,6 +86,7 @@ public sealed class InMemoryCacheStore : ICacheStore
             hash.Add(obj.RelativePath, pathComparer);
             hash.Add(obj.FileSizeBytes);
             hash.Add(obj.LastWriteTimeUtc);
+            hash.Add(obj.ContextFingerprint, StringComparer.Ordinal);
             return hash.ToHashCode();
         }
     }

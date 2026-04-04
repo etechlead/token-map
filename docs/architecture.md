@@ -37,6 +37,8 @@ This document covers project purpose, canonical ownership, runtime flow, and non
 - The scanner defines the included tree and analyzed node set.
 - Metrics enrichment returns a new snapshot; scanner output is not mutated in place.
 - `Clever.TokenMap.Metrics` stays below app/infrastructure orchestration and above core models; UI consumes metric abstractions through core contracts.
-- File metrics flow as raw file metrics, then derived file metrics, then directory rollup; raw parser objects stay inside the metrics layer.
+- File metrics flow as raw file metrics, then chained derived file metrics, then directory rollup; raw parser objects stay inside the metrics layer.
+- Infrastructure may enrich a snapshot with one optional repo-wide git history pass before per-file metrics so product metrics can consume cached per-file git artifacts without per-file repository walks.
+- `Refactor Priority` is the product-facing composite score for refactoring urgency; git-derived change pressure stays an internal input, not a separate public metric.
 - Token counting stays behind `ITokenCounter`.
 - The treemap stays one custom-rendered control.

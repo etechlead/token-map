@@ -1,9 +1,13 @@
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
+using Clever.TokenMap.Core.Analysis.Git;
 using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Infrastructure.Analysis;
+using Clever.TokenMap.Infrastructure.Analysis.Git;
+using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
 using Clever.TokenMap.Metrics;
@@ -113,8 +117,10 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
         Assert.Equal(15.682186234817814, programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
+        Assert.Equal(14.545748987854251, programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
         Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
         Assert.Equal(15.682186234817814, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
+        Assert.Equal(14.545748987854251, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
     }
 
     [Fact]
@@ -308,6 +314,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.LongParameterListCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPointsV0).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.ComplexityPointsV0).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.RefactorPriorityPointsV0).Status);
     }
 
     [Fact]
@@ -439,6 +446,87 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     }
 
     [Fact]
+    public async Task EnrichAsync_ComputesRefactorPriorityWithOptionalGitHistoryAndRollsItUp()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "B.cs"), "class B { }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var syntaxArtifact = new SyntaxSummaryArtifact(
+            LanguageId: "csharp",
+            ParseQuality: SyntaxParseQuality.Full,
+            CodeLineCount: 100,
+            CyclomaticComplexitySum: 20,
+            CyclomaticComplexityMax: 8,
+            MaxNestingDepth: 4,
+            Callables:
+            [
+                new CallableSyntaxFact("Run", CallableKind.Method, new LineRange(1, 30), 6, 11, 4),
+            ]);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter(),
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
+                _rootPath,
+                "head-a",
+                new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer)
+                {
+                    ["A.cs"] = new(400, 12, 4),
+                })),
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new PathMappedSyntaxAnalyzer(new Dictionary<string, SyntaxSummaryArtifact>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["A.cs"] = syntaxArtifact,
+                    ["B.cs"] = syntaxArtifact,
+                }),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var firstFile = Assert.Single(enriched.Root.Children, node => node.Name == "A.cs");
+        var secondFile = Assert.Single(enriched.Root.Children, node => node.Name == "B.cs");
+
+        var firstPriority = firstFile.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
+        var secondPriority = secondFile.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
+        var rootPriority = enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
+
+        Assert.NotNull(firstPriority);
+        Assert.NotNull(secondPriority);
+        Assert.NotNull(rootPriority);
+        Assert.True(firstPriority.Value > secondPriority.Value);
+        Assert.Equal(firstPriority.Value + secondPriority.Value, rootPriority.Value, precision: 12);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_InvalidatesCacheWhenGitContextFingerprintChanges()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "Program.cs"), "alpha");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var tokenCounter = new RecordingTokenCounter();
+        var cacheStore = new InMemoryCacheStore();
+
+        var firstEnricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            tokenCounter,
+            cacheStore: cacheStore,
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(_rootPath, "head-a")));
+        var secondEnricher = new ProjectSnapshotMetricsEnricher(
+            new AlwaysTextDetector(),
+            tokenCounter,
+            cacheStore: cacheStore,
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(_rootPath, "head-b")));
+
+        await firstEnricher.EnrichAsync(snapshot, CancellationToken.None);
+        await firstEnricher.EnrichAsync(snapshot, CancellationToken.None);
+        await secondEnricher.EnrichAsync(snapshot, CancellationToken.None);
+
+        Assert.Equal(2, tokenCounter.GetSeenContents().Count);
+    }
+
+    [Fact]
     public async Task EnrichAsync_ProcessesSingleLongLineAcrossChunks_AsOneNonEmptyLine()
     {
         const string content = "abcdefghijklmnopqrstuvwxyz";
@@ -514,6 +602,15 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             {
                 return _seenContents.ToArray();
             }
+        }
+    }
+
+    private sealed class StubGitHistorySnapshotProvider(GitHistorySnapshot? snapshot) : IGitHistorySnapshotProvider
+    {
+        public ValueTask<GitHistorySnapshot?> TryCreateAsync(string analysisRootPath, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(snapshot);
         }
     }
 
@@ -624,4 +721,14 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             return ValueTask.FromResult(artifact);
         }
     }
+
+    private static GitHistorySnapshot CreateGitHistorySnapshot(
+        string rootPath,
+        string headCommitSha,
+        IReadOnlyDictionary<string, GitFileHistoryArtifact>? fileHistoryByAnalysisRelativePath = null) =>
+        new(
+            rootPath,
+            headCommitSha,
+            fileHistoryByAnalysisRelativePath ??
+            new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer));
 }
