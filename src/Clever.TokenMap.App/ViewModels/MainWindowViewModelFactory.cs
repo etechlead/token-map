@@ -12,6 +12,8 @@ public sealed record MainWindowViewModelFactoryDependencies(
     ISettingsCoordinator SettingsCoordinator,
     IFolderPathService FolderPathService,
     IPathShellService PathShellService,
+    IUiDispatcher UiDispatcher,
+    IFilePreviewContentReader FilePreviewContentReader,
     IAppIssueReporter AppIssueReporter,
     AppIssueState AppIssueState,
     IAppStoragePaths AppStoragePaths,
@@ -25,6 +27,8 @@ public sealed record MainWindowViewModelComposition(
     AboutViewModel About,
     ToolbarViewModel Toolbar,
     ExcludesEditorViewModel ExcludesEditor,
+    FilePreviewState FilePreview,
+    IFilePreviewController FilePreviewController,
     RecentFoldersViewModel RecentFolders,
     AppIssueViewModel Issue,
     ProjectTreeViewModel Tree,
@@ -59,6 +63,11 @@ public static class MainWindowViewModelFactory
                 () => analysisSessionController.IsBusy));
         var tree = new ProjectTreeViewModel();
         var summary = new SummaryViewModel();
+        var filePreview = new FilePreviewState();
+        var filePreviewController = new FilePreviewController(
+            dependencies.FilePreviewContentReader,
+            dependencies.UiDispatcher,
+            filePreview);
         var excludesEditor = new ExcludesEditorViewModel(
             settingsCoordinator,
             analysisSessionController,
@@ -86,11 +95,13 @@ public static class MainWindowViewModelFactory
             about,
             toolbar,
             excludesEditor,
+            filePreview,
             recentFolders,
             issue,
             tree,
             summary,
             dependencies.PathShellService,
+            filePreviewController,
             dependencies.AppIssueReporter);
 
         return new MainWindowViewModelComposition(
@@ -99,6 +110,8 @@ public static class MainWindowViewModelFactory
             about,
             toolbar,
             excludesEditor,
+            filePreview,
+            filePreviewController,
             recentFolders,
             issue,
             tree,

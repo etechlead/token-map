@@ -16,11 +16,13 @@ public sealed class MainWindowDesignViewModel : MainWindowViewModel
             composition.About,
             composition.Toolbar,
             composition.ExcludesEditor,
+            composition.FilePreview,
             composition.RecentFolders,
             composition.Issue,
             composition.Tree,
             composition.Summary,
             composition.PathShellService,
+            composition.FilePreviewController,
             NullAppIssueReporter.Instance)
     {
     }

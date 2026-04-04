@@ -13,4 +13,6 @@ public static class MainWindowZLayers
     public const int ExcludesModal = 90;
     public const int ShareBackdrop = 100;
     public const int ShareModal = 110;
+    public const int FilePreviewBackdrop = 120;
+    public const int FilePreviewModal = 130;
 }

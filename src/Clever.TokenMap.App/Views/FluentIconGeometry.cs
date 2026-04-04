@@ -12,6 +12,7 @@ internal static class FluentIconGeometry
     public const string ArrowSortUp16Regular = "FluentArrowSortUp16RegularGeometry";
     public const string DesktopMac16Regular = "FluentDesktopMac16RegularGeometry";
     public const string DocumentCopy16Regular = "FluentDocumentCopy16RegularGeometry";
+    public const string Eye16Regular = "FluentEye16RegularGeometry";
     public const string FolderOpen16Regular = "FluentFolderOpen16RegularGeometry";
     public const string SubtractCircle16Regular = "FluentSubtractCircle16RegularGeometry";
     public const string TargetArrow16Regular = "FluentTargetArrow16RegularGeometry";

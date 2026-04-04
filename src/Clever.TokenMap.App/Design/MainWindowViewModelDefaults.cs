@@ -10,6 +10,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Preview;
 
 namespace Clever.TokenMap.App.Design;
 
@@ -32,6 +33,8 @@ internal static class MainWindowViewModelDefaults
                 settingsCoordinator,
                 folderPathService,
                 pathShellService,
+                new InlineUiDispatcher(),
+                new NullFilePreviewContentReader(),
                 NullAppIssueReporter.Instance,
                 appIssueState,
                 new DesignAppStoragePaths(),
@@ -148,6 +151,12 @@ internal static class MainWindowViewModelDefaults
         public void RequestShutdown(int exitCode = 0)
         {
         }
+    }
+
+    private sealed class NullFilePreviewContentReader : IFilePreviewContentReader
+    {
+        public Task<FilePreviewContentResult> ReadAsync(string fullPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new FilePreviewContentResult(FilePreviewReadStatus.ReadFailed));
     }
 
     private sealed class DesignAppStoragePaths : IAppStoragePaths

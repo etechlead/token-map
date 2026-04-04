@@ -13,6 +13,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.App.Views.Sections;
@@ -146,7 +147,7 @@ public partial class ProjectTreePaneView : UserControl
         e.Handled = true;
     }
 
-    private void ProjectTreeTable_OnDoubleTapped(object? sender, TappedEventArgs e)
+    private async void ProjectTreeTable_OnDoubleTapped(object? sender, TappedEventArgs e)
     {
         if (DataContext is not MainWindowViewModel viewModel ||
             e.Source is not StyledElement sourceElement)
@@ -161,8 +162,8 @@ public partial class ProjectTreePaneView : UserControl
 
         if (FindAncestor<DataGridRow>(sourceElement) is { DataContext: ProjectTreeNodeViewModel node })
         {
-            HandleProjectTreeRowDoubleTap(viewModel, node);
-            if (node.HasChildren)
+            await HandleProjectTreeRowDoubleTapAsync(viewModel, node);
+            if (node.HasChildren || node.Node.Kind == ProjectNodeKind.File)
             {
                 e.Handled = true;
             }
@@ -223,7 +224,7 @@ public partial class ProjectTreePaneView : UserControl
         ApplyProjectTreeSelection(viewModel, selectedNode);
     }
 
-    private void HandleProjectTreeRowDoubleTap(MainWindowViewModel viewModel, ProjectTreeNodeViewModel node)
+    private async Task HandleProjectTreeRowDoubleTapAsync(MainWindowViewModel viewModel, ProjectTreeNodeViewModel node)
     {
         CancelPendingProjectTreeSelectionSync();
         ApplyProjectTreeSelection(viewModel, node);
@@ -231,6 +232,12 @@ public partial class ProjectTreePaneView : UserControl
         if (node.HasChildren)
         {
             viewModel.Tree.ToggleNodeCommand.Execute(node);
+            return;
+        }
+
+        if (node.Node.Kind == ProjectNodeKind.File)
+        {
+            await viewModel.PreviewNodeAsync(node.Node);
         }
     }
 

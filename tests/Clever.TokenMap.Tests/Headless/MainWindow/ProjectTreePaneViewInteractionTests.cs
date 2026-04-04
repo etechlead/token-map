@@ -96,6 +96,32 @@ public sealed class ProjectTreePaneViewInteractionTests
     }
 
     [AvaloniaFact]
+    public async Task ProjectTreePaneView_DoubleClickOnFile_OpensPreview()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        viewModel.Tree.LoadRoot(CreateRootWithChildren(("Program.cs", 20, 2, 2)));
+
+        var window = new Window
+        {
+            Content = new ProjectTreePaneView
+            {
+                DataContext = viewModel,
+            },
+        };
+
+        await ShowAndRenderAsync(window);
+
+        var fileRow = FindProjectTreeRow(window, "Program.cs");
+        Assert.NotNull(fileRow);
+
+        await DoubleClickAsync(window, fileRow);
+
+        Assert.True(viewModel.IsFilePreviewOpen);
+        Assert.Equal("Program.cs", viewModel.FilePreview.DisplayName);
+        Assert.Equal("Program.cs", viewModel.Tree.SelectedNode?.Node.Id);
+    }
+
+    [AvaloniaFact]
     public async Task ProjectTreePaneView_NameColumn_UsesInitialVisibleContentWidth_AndDoesNotGrowAfterExpansion()
     {
         var snapshot = new ProjectSnapshot

@@ -1,5 +1,10 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Treemap;
 
@@ -22,6 +27,7 @@ public partial class TreemapPaneView : UserControl
         {
             treemap.DrillDownRequested += ProjectTreemapControl_OnDrillDownRequested;
             treemap.ContextRequested += ProjectTreemapControl_OnContextRequested;
+            treemap.DoubleTapped += ProjectTreemapControl_OnDoubleTapped;
         }
     }
 
@@ -67,5 +73,31 @@ public partial class TreemapPaneView : UserControl
         _projectNodeContextMenuController.Show(treemap, targetNode);
         e.Handled = true;
     }
-}
 
+    private async void ProjectTreemapControl_OnDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (sender is not TreemapControl treemap)
+        {
+            return;
+        }
+
+        await HandleTreemapNodeDoubleTapAsync(treemap, e.GetPosition(treemap));
+    }
+
+    internal async Task HandleTreemapNodeDoubleTapAsync(TreemapControl treemap, Point point, CancellationToken cancellationToken = default)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        var targetNode = treemap.HitTestNode(point);
+        if (targetNode?.Kind != ProjectNodeKind.File)
+        {
+            return;
+        }
+
+        treemap.SelectNodeAt(point);
+        await viewModel.PreviewNodeAsync(targetNode, cancellationToken);
+    }
+}

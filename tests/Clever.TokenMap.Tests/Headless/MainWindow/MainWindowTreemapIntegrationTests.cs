@@ -5,6 +5,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using System.Globalization;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.App.Views.Sections;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
@@ -135,6 +136,25 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.NotNull(row);
         Assert.Equal(targetRelativePath, viewModel.Tree.SelectedNode?.Node.RelativePath);
         Assert.Equal(targetRelativePath, (row.DataContext as ProjectTreeNodeViewModel)?.Node.RelativePath);
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapFileDoubleTap_OpensPreview()
+    {
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateNestedSnapshot());
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        Assert.NotNull(control);
+
+        var pane = window.GetVisualDescendants().OfType<TreemapPaneView>().Single();
+        var fileVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src/Program.cs");
+
+        await pane.HandleTreemapNodeDoubleTapAsync(control, GetCenter(fileVisual));
+        window.UpdateLayout();
+
+        Assert.True(viewModel.IsFilePreviewOpen);
+        Assert.Equal("Program.cs", viewModel.FilePreview.DisplayName);
+        Assert.Equal("src/Program.cs", viewModel.SelectedNode?.RelativePath);
     }
 
     [AvaloniaFact]

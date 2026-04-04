@@ -7,6 +7,7 @@ using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Preview;
 using Clever.TokenMap.Infrastructure.Analysis;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
@@ -57,6 +58,8 @@ internal static class HarnessComposition
                     settingsCoordinator,
                     folderPathService,
                     pathShellService,
+                    new InlineUiDispatcher(),
+                    new HarnessFilePreviewContentReader(),
                     NullAppIssueReporter.Instance,
                     appIssueState,
                     new HarnessAppStoragePaths(),
@@ -179,4 +182,10 @@ internal sealed class HarnessAppStoragePaths : IAppStoragePaths
     public string GetFolderSettingsRootPath() => Path.Combine(Path.GetTempPath(), "folder-settings");
 
     public string GetLogsDirectoryPath() => Path.Combine(Path.GetTempPath(), "logs");
+}
+
+internal sealed class HarnessFilePreviewContentReader : IFilePreviewContentReader
+{
+    public Task<FilePreviewContentResult> ReadAsync(string fullPath, CancellationToken cancellationToken = default) =>
+        Task.FromResult(new FilePreviewContentResult(FilePreviewReadStatus.Success, "// visual harness preview"));
 }

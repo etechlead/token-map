@@ -78,6 +78,7 @@ public static class AppComposition
                 pathNormalizer: sp.GetRequiredService<PathNormalizer>(),
                 logger: sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<FileSystemProjectScanner>()));
         services.AddSingleton<ITextFileDetector, HeuristicTextFileDetector>();
+        services.AddSingleton<IFilePreviewContentReader, FilePreviewContentReader>();
         services.AddSingleton<ITokenCounter, MicrosoftMlTokenCounter>();
         services.AddSingleton<ICacheStore>(sp =>
             new InMemoryCacheStore(sp.GetRequiredService<PathNormalizer>()));
@@ -117,6 +118,8 @@ public static class AppComposition
                     sp.GetRequiredService<ISettingsCoordinator>(),
                     sp.GetRequiredService<IFolderPathService>(),
                     sp.GetRequiredService<IPathShellService>(),
+                    sp.GetRequiredService<IUiDispatcher>(),
+                    sp.GetRequiredService<IFilePreviewContentReader>(),
                     sp.GetRequiredService<IAppIssueReporter>(),
                     sp.GetRequiredService<AppIssueState>(),
                     sp.GetRequiredService<IAppStoragePaths>(),

@@ -290,6 +290,20 @@
                                       IsVisible="{Binding IsShareSnapshotOpen}"
                                       ZIndex="{x:Static views:MainWindowZLayers.ShareModal}" />
 
+        <Border Name="FilePreviewBackdrop"
+                Grid.RowSpan="3"
+                Background="#660B1016"
+                IsVisible="{Binding IsFilePreviewOpen}"
+                PointerPressed="FilePreviewBackdrop_OnPointerPressed"
+                ZIndex="{x:Static views:MainWindowZLayers.FilePreviewBackdrop}" />
+
+        <views:FilePreviewModalView Name="FilePreviewModal"
+                                    Grid.RowSpan="3"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    IsVisible="{Binding IsFilePreviewOpen}"
+                                    ZIndex="{x:Static views:MainWindowZLayers.FilePreviewModal}" />
+
         <Border Name="StatusStrip"
                 Grid.Row="2"
                 IsVisible="{Binding Summary.IsProgressVisible}">

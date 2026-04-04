@@ -9,6 +9,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Preview;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
@@ -132,18 +133,21 @@ internal static class HeadlessTestSupport
     internal static MainWindowViewModel CreateMainWindowViewModel(
         string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,
-        IPathShellService? pathShellService = null) =>
+        IPathShellService? pathShellService = null,
+        IFilePreviewContentReader? filePreviewContentReader = null) =>
         CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateSnapshot()),
             selectedFolderPath ?? TestPaths.Folder("Demo"),
             recentFolderPaths,
-            pathShellService);
+            pathShellService,
+            filePreviewContentReader);
 
     internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
         string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,
-        IPathShellService? pathShellService = null)
+        IPathShellService? pathShellService = null,
+        IFilePreviewContentReader? filePreviewContentReader = null)
     {
         var analysisSessionController = new AnalysisSessionController(
             projectAnalyzer,
@@ -159,6 +163,8 @@ internal static class HeadlessTestSupport
                     settingsCoordinator,
                     folderPathService,
                     pathShellService ?? new StubPathShellService(),
+                    new InlineUiDispatcher(),
+                    filePreviewContentReader ?? new StubFilePreviewContentReader(),
                     new TestAppIssueReporter(appIssueState),
                     appIssueState,
                     new StubAppStoragePaths(),
@@ -281,6 +287,12 @@ internal static class HeadlessTestSupport
 
         public Task<bool> TryRevealAsync(string fullPath, bool isDirectory, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+    }
+
+    private sealed class StubFilePreviewContentReader : IFilePreviewContentReader
+    {
+        public Task<FilePreviewContentResult> ReadAsync(string fullPath, CancellationToken cancellationToken = default) =>
+            Task.FromResult(new FilePreviewContentResult(FilePreviewReadStatus.Success, "// preview"));
     }
 
     private sealed class StubApplicationControlService : IApplicationControlService

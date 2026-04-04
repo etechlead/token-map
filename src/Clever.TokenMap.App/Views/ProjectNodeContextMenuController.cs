@@ -1,10 +1,10 @@
 using System;
 using System.Threading.Tasks;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 
 namespace Clever.TokenMap.App.Views;
@@ -17,6 +17,7 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
     private MenuItem? _excludeItem;
+    private MenuItem? _previewItem;
     private MenuItem? _revealItem;
     private MenuItem? _setAsTreemapRootItem;
     private ProjectNode? _currentNode;
@@ -57,21 +58,23 @@ internal sealed class ProjectNodeContextMenuController
         {
             Placement = PlacementMode.Pointer,
         };
-        menu.Items.Add(CreateMenuItem("Open", FluentIconGeometry.FolderOpen16Regular, OpenItem_OnClick));
-        _revealItem = CreateMenuItem(string.Empty, FluentIconGeometry.DesktopMac16Regular, RevealItem_OnClick);
+        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.OpenHeader, ProjectNodeActionPresentation.OpenIconResourceKey, OpenItem_OnClick));
+        _previewItem = CreateMenuItem(ProjectNodeActionPresentation.PreviewHeader, ProjectNodeActionPresentation.PreviewIconResourceKey, PreviewItem_OnClick);
+        menu.Items.Add(_previewItem);
+        _revealItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.RevealIconResourceKey, RevealItem_OnClick);
         menu.Items.Add(_revealItem);
-        _setAsTreemapRootItem = CreateMenuItem("Set as Treemap Root", FluentIconGeometry.TargetArrow16Regular, SetAsTreemapRootItem_OnClick);
+        _setAsTreemapRootItem = CreateMenuItem(ProjectNodeActionPresentation.SetAsTreemapRootHeader, ProjectNodeActionPresentation.SetAsTreemapRootIconResourceKey, SetAsTreemapRootItem_OnClick);
         menu.Items.Add(_setAsTreemapRootItem);
-        _excludeItem = CreateMenuItem("Exclude from Scan", FluentIconGeometry.SubtractCircle16Regular, ExcludeItem_OnClick);
+        _excludeItem = CreateMenuItem(ProjectNodeActionPresentation.ExcludeFromScanHeader, ProjectNodeActionPresentation.ExcludeFromScanIconResourceKey, ExcludeItem_OnClick);
         menu.Items.Add(_excludeItem);
         menu.Items.Add(new Separator());
-        menu.Items.Add(CreateMenuItem("Copy Full Path", FluentIconGeometry.DocumentCopy16Regular, CopyFullPathItem_OnClick));
-        menu.Items.Add(CreateMenuItem("Copy Relative Path", icon: null, CopyRelativePathItem_OnClick));
+        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.CopyFullPathHeader, ProjectNodeActionPresentation.CopyFullPathIconResourceKey, CopyFullPathItem_OnClick));
+        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.CopyRelativePathHeader, icon: null, CopyRelativePathItem_OnClick));
         return menu;
     }
 
     private static MenuItem CreateMenuItem(string header, string iconResourceKey, EventHandler<RoutedEventArgs> clickHandler) =>
-        CreateMenuItem(header, CreateMenuIcon(iconResourceKey), clickHandler);
+        CreateMenuItem(header, ProjectNodeActionPresentation.CreateContextMenuIcon(iconResourceKey), clickHandler);
 
     private static MenuItem CreateMenuItem(string header, Control? icon, EventHandler<RoutedEventArgs> clickHandler)
     {
@@ -85,16 +88,18 @@ internal sealed class ProjectNodeContextMenuController
         return item;
     }
 
-    private static Path CreateMenuIcon(string iconResourceKey)
-    {
-        return FluentIconGeometry.CreatePathIcon(iconResourceKey, "context-menu-icon", 18, 18);
-    }
-
     private void UpdateMenuState()
     {
         var viewModel = _viewModelAccessor();
+        var canPreview = _currentNode?.Kind == ProjectNodeKind.File;
         var canSetTreemapRoot = viewModel?.CanSetTreemapRoot(_currentNode) == true;
         var canExclude = viewModel?.CanExcludeNodeFromFolder(_currentNode) == true;
+        if (_previewItem is not null)
+        {
+            _previewItem.IsVisible = canPreview;
+            _previewItem.IsEnabled = canPreview;
+        }
+
         if (_revealItem is not null)
         {
             _revealItem.Header = viewModel?.RevealMenuHeader ?? "Reveal";
@@ -119,6 +124,16 @@ internal sealed class ProjectNodeContextMenuController
         }
 
         await viewModel.OpenNodeAsync(_currentNode);
+    }
+
+    private async void PreviewItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModelAccessor() is not { } viewModel)
+        {
+            return;
+        }
+
+        await viewModel.PreviewNodeAsync(_currentNode);
     }
 
     private async void RevealItem_OnClick(object? sender, RoutedEventArgs e)

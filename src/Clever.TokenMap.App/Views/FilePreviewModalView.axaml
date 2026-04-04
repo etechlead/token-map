@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:AvaloniaEdit="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.FilePreviewModalView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Classes="panel file-preview-modal"
+            Width="1100"
+            MaxWidth="1100"
+            MinHeight="520">
+        <Grid RowDefinitions="Auto,*,Auto"
+              RowSpacing="14">
+            <Grid RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12"
+                  RowSpacing="4">
+                <TextBlock Name="FilePreviewTitleText"
+                           Classes="panel-title"
+                           VerticalAlignment="Center"
+                           Text="{Binding FilePreview.DisplayName}" />
+                <Button Name="CloseFilePreviewModalButton"
+                        Grid.Column="1"
+                        Classes="close-button"
+                        Command="{Binding CloseFilePreviewCommand}"
+                        ToolTip.Tip="Close file preview">
+                    <Path Classes="close-button-icon"
+                          Data="{StaticResource FluentDismiss20Geometry}" />
+                </Button>
+                <TextBlock Name="FilePreviewPathText"
+                           Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Classes="panel-body file-preview-path"
+                           Text="{Binding FilePreview.DisplayPath}" />
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Border Name="FilePreviewStatusPanel"
+                        Classes="toolbar-group file-preview-status-panel"
+                        Padding="20"
+                        IsVisible="{Binding FilePreview.ShowStatusPanel}">
+                    <StackPanel HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                MaxWidth="520"
+                                Spacing="8">
+                        <TextBlock Name="FilePreviewStatusTitleText"
+                                   Classes="panel-title"
+                                   HorizontalAlignment="Center"
+                                   Text="{Binding FilePreview.StatusTitle}" />
+                        <TextBlock Name="FilePreviewStatusMessageText"
+                                   Classes="panel-body"
+                                   TextAlignment="Center"
+                                   Text="{Binding FilePreview.StatusMessage}" />
+                    </StackPanel>
+                </Border>
+
+                <AvaloniaEdit:TextEditor Name="FilePreviewEditor"
+                                         Background="{DynamicResource TokenMapSurfaceBrush}"
+                                         Foreground="{DynamicResource TokenMapTextBrush}"
+                                         FontFamily="Cascadia Mono, Consolas, monospace"
+                                         HorizontalScrollBarVisibility="Auto"
+                                         IsReadOnly="True"
+                                         ShowLineNumbers="True"
+                                         VerticalScrollBarVisibility="Auto"
+                                         IsVisible="{Binding FilePreview.ShowEditor}" />
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16">
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="FilePreviewOpenDefaultAppButton"
+                            Classes="action-button"
+                            Click="OpenInDefaultAppButton_OnClick"
+                            IsEnabled="{Binding FilePreview.IsPathActionsEnabled}" />
+                    <Button Name="FilePreviewRevealButton"
+                            Classes="action-button"
+                            Click="RevealButton_OnClick"
+                            IsEnabled="{Binding FilePreview.IsPathActionsEnabled}" />
+                    <Button Name="FilePreviewSetTreemapRootButton"
+                            Classes="action-button"
+                            Click="SetAsTreemapRootButton_OnClick"
+                            IsVisible="False"
+                            IsEnabled="False" />
+                    <Button Name="FilePreviewExcludeButton"
+                            Classes="action-button"
+                            Click="ExcludeButton_OnClick"
+                            IsVisible="False"
+                            IsEnabled="False" />
+                    <Button Name="FilePreviewCopyFullPathButton"
+                            Classes="action-button"
+                            Click="CopyFullPathButton_OnClick"
+                            IsEnabled="{Binding FilePreview.IsPathActionsEnabled}" />
+                    <Button Name="FilePreviewCopyRelativePathButton"
+                            Classes="action-button"
+                            Click="CopyRelativePathButton_OnClick"
+                            IsEnabled="{Binding FilePreview.IsPathActionsEnabled}" />
+                </StackPanel>
+
+                <Button Name="CloseFilePreviewButton"
+                        Grid.Column="1"
+                        Classes="action-button primary"
+                        Command="{Binding CloseFilePreviewCommand}"
+                        Content="Close" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

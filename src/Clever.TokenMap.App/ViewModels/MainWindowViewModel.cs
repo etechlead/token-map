@@ -16,8 +16,10 @@ namespace Clever.TokenMap.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IPathShellService _pathShellService;
+    private readonly IFilePreviewController _filePreviewController;
     private readonly IAppIssueReporter _issueReporter;
     private readonly MainWindowWorkspacePresenter _workspacePresenter;
+    private readonly RelayCommand _closeFilePreviewCommand;
     private readonly RelayCommand _closeSettingsCommand;
     private readonly RelayCommand _closeShareSnapshotCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
@@ -37,26 +39,31 @@ public partial class MainWindowViewModel : ViewModelBase
         AboutViewModel about,
         ToolbarViewModel toolbar,
         ExcludesEditorViewModel excludesEditor,
+        FilePreviewState filePreview,
         RecentFoldersViewModel recentFolders,
         AppIssueViewModel issue,
         ProjectTreeViewModel tree,
         SummaryViewModel summary,
         IPathShellService pathShellService,
+        IFilePreviewController filePreviewController,
         IAppIssueReporter issueReporter)
     {
         _workspacePresenter = workspacePresenter;
         _pathShellService = pathShellService;
+        _filePreviewController = filePreviewController;
         _issueReporter = issueReporter;
 
         About = about;
         Toolbar = toolbar;
         ExcludesEditor = excludesEditor;
+        FilePreview = filePreview;
         RecentFolders = recentFolders;
         Issue = issue;
         Tree = tree;
         Summary = summary;
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
+        _closeFilePreviewCommand = new RelayCommand(CloseFilePreview, () => IsFilePreviewOpen);
         _closeSettingsCommand = new RelayCommand(CloseSettings);
         _closeShareSnapshotCommand = new RelayCommand(CloseShareSnapshot);
         _openShareSnapshotCommand = new RelayCommand(OpenShareSnapshot, () => HasSnapshot);
@@ -64,6 +71,7 @@ public partial class MainWindowViewModel : ViewModelBase
         _toggleSettingsCommand = new RelayCommand(ToggleSettings);
 
         _workspacePresenter.PropertyChanged += WorkspacePresenterOnPropertyChanged;
+        FilePreview.PropertyChanged += FilePreviewOnPropertyChanged;
     }
 
     public string WindowTitle => _workspacePresenter.WindowTitle;
@@ -75,6 +83,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public ToolbarViewModel Toolbar { get; }
 
     public ExcludesEditorViewModel ExcludesEditor { get; }
+
+    public FilePreviewState FilePreview { get; }
 
     public RecentFoldersViewModel RecentFolders { get; }
 
@@ -104,9 +114,13 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsShareSnapshotOpen => ShareSnapshot is not null;
 
+    public bool IsFilePreviewOpen => FilePreview.IsOpen;
+
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
     public IRelayCommand CloseSettingsCommand => _closeSettingsCommand;
+
+    public IRelayCommand CloseFilePreviewCommand => _closeFilePreviewCommand;
 
     public IRelayCommand OpenShareSnapshotCommand => _openShareSnapshotCommand;
 
@@ -158,6 +172,14 @@ public partial class MainWindowViewModel : ViewModelBase
             messageFactory: currentNode => $"TokenMap could not reveal '{currentNode.Name}'.",
             technicalMessage: "Revealing a path through the shell failed.",
             cancellationToken: cancellationToken);
+
+    public Task PreviewNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default) =>
+        _filePreviewController.OpenAsync(node, cancellationToken);
+
+    public void CloseFilePreview()
+    {
+        _filePreviewController.Close();
+    }
 
     private async Task OpenPathActionAsync(
         ProjectNode? node,
@@ -239,6 +261,17 @@ public partial class MainWindowViewModel : ViewModelBase
                 ShareSnapshot = CreateShareSnapshotFromCurrentState(ShareSnapshot);
             }
         }
+    }
+
+    private void FilePreviewOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(FilePreviewState.IsOpen))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsFilePreviewOpen));
+        _closeFilePreviewCommand.NotifyCanExecuteChanged();
     }
 
     private ShareSnapshotViewModel? CreateShareSnapshotFromCurrentState(ShareSnapshotViewModel? previousState)

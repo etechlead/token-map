@@ -46,10 +46,31 @@ public partial class MainWindow : Window
         }
     }
 
+    private void FilePreviewBackdrop_OnPointerPressed(object? sender, PointerPressedEventArgs? e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.CloseFilePreviewCommand.Execute(null);
+        if (e is not null)
+        {
+            e.Handled = true;
+        }
+    }
+
     private void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key is not Key.Escape || DataContext is not MainWindowViewModel viewModel)
         {
+            return;
+        }
+
+        if (viewModel.IsFilePreviewOpen)
+        {
+            viewModel.CloseFilePreviewCommand.Execute(null);
+            e.Handled = true;
             return;
         }
 
