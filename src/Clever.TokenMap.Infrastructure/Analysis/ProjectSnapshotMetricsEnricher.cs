@@ -9,6 +9,7 @@ using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators;
+using Clever.TokenMap.Metrics.Calculators.Derived;
 using Clever.TokenMap.Metrics.Syntax;
 
 namespace Clever.TokenMap.Infrastructure.Analysis;
@@ -24,6 +25,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     private readonly long _largeFileSyntaxAnalysisThresholdBytes;
     private readonly long _largeFileTokenizationThresholdBytes;
     private readonly IAppLogger _logger;
+    private readonly IFileDerivedMetricCalculator[] _fileDerivedMetricCalculators;
     private readonly IReadOnlyList<IFileMetricCalculator> _fileMetricCalculators;
     private readonly int _maxDegreeOfParallelism;
     private readonly MetricSetRollupService _metricSetRollupService;
@@ -42,6 +44,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         int? maxDegreeOfParallelism = null,
         IMetricCatalog? metricCatalog = null,
         IEnumerable<IFileMetricCalculator>? fileMetricCalculators = null,
+        IEnumerable<IFileDerivedMetricCalculator>? fileDerivedMetricCalculators = null,
         ISyntaxAnalyzerRegistry? syntaxAnalyzerRegistry = null)
     {
         _cacheStore = cacheStore;
@@ -63,6 +66,9 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         _tokenCounter = tokenCounter;
         var effectiveMetricCatalog = metricCatalog ?? DefaultMetricCatalog.Instance;
         _fileMetricCalculators = (fileMetricCalculators ?? CreateDefaultFileMetricCalculators())
+            .OrderBy(calculator => calculator.Order)
+            .ToArray();
+        _fileDerivedMetricCalculators = (fileDerivedMetricCalculators ?? CreateDefaultFileDerivedMetricCalculators())
             .OrderBy(calculator => calculator.Order)
             .ToArray();
         _metricSetRollupService = new MetricSetRollupService(effectiveMetricCatalog);
@@ -141,6 +147,12 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         new FileSizeMetricCalculator(),
         new TextMetricsCalculator(),
         new SyntaxMetricsCalculator(),
+    ];
+
+    private static IFileDerivedMetricCalculator[] CreateDefaultFileDerivedMetricCalculators() =>
+    [
+        new RatioDerivedMetricsCalculator(),
+        new ComplexityPointsV0DerivedMetricsCalculator(),
     ];
 
     private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
@@ -372,7 +384,20 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
             await calculator.ComputeAsync(context, builder, cancellationToken).ConfigureAwait(false);
         }
 
-        return builder.Build();
+        var rawMetrics = builder.Build();
+        if (_fileDerivedMetricCalculators.Length == 0)
+        {
+            return rawMetrics;
+        }
+
+        var finalBuilder = new MetricSetBuilder(rawMetrics);
+        foreach (var calculator in _fileDerivedMetricCalculators)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await calculator.ComputeAsync(context, rawMetrics, finalBuilder, cancellationToken).ConfigureAwait(false);
+        }
+
+        return finalBuilder.Build();
     }
 
     private static NodeSummary AggregateDirectorySummary(
@@ -424,6 +449,11 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.CyclomaticComplexitySum);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexityMax);
         builder.SetNotApplicable(MetricIds.MaxNestingDepth);
+        builder.SetNotApplicable(MetricIds.AverageParametersPerCallable);
+        builder.SetNotApplicable(MetricIds.AverageCyclomaticComplexityPerCallable);
+        builder.SetNotApplicable(MetricIds.CyclomaticComplexityPerCodeLine);
+        builder.SetNotApplicable(MetricIds.CommentRatio);
+        builder.SetNotApplicable(MetricIds.ComplexityPointsV0);
         return builder.Build();
     }
 

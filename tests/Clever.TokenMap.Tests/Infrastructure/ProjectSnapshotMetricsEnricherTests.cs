@@ -114,6 +114,11 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(7, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
         Assert.Equal(4, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
         Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
+        Assert.Equal(8d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.AverageParametersPerCallable)!.Value, precision: 12);
+        Assert.Equal(7d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.AverageCyclomaticComplexityPerCallable)!.Value, precision: 12);
+        Assert.Equal(7d, programNode.ComputedMetrics.TryGetNumber(MetricIds.CyclomaticComplexityPerCodeLine)!.Value, precision: 12);
+        Assert.Equal(2d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.CommentRatio)!.Value, precision: 12);
+        Assert.Equal(15.682186234817814, programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
         Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
         Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
         Assert.Equal(3, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
@@ -123,6 +128,11 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(7, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
         Assert.Equal(4, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
         Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageParametersPerCallable).Status);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageCyclomaticComplexityPerCallable).Status);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityPerCodeLine).Status);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CommentRatio).Status);
+        Assert.Equal(15.682186234817814, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
     }
 
     [Fact]
@@ -321,6 +331,75 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TotalParameterCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.MaxParameterCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TypeCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.AverageParametersPerCallable).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.AverageCyclomaticComplexityPerCallable).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityPerCodeLine).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CommentRatio).Status);
+        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.ComplexityPointsV0).Status);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_SumsComplexityPointsAcrossDirectories()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "A.cs"), "class A { }");
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "B.cs"), "class B { }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter(),
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new PathMappedSyntaxAnalyzer(new Dictionary<string, SyntaxSummaryArtifact>(StringComparer.OrdinalIgnoreCase)
+                {
+                    ["A.cs"] = new(
+                        LanguageId: "csharp",
+                        ParseQuality: SyntaxParseQuality.Full,
+                        CodeLineCount: 50,
+                        CommentLineCount: 10,
+                        FunctionCount: 2,
+                        TypeCount: 1,
+                        CyclomaticComplexitySum: 10,
+                        CyclomaticComplexityMax: 6,
+                        MaxNestingDepth: 3,
+                        Callables:
+                        [
+                            new CallableSyntaxFact("A1", CallableKind.Method, new LineRange(1, 1), 2, 6, 3),
+                            new CallableSyntaxFact("A2", CallableKind.Method, new LineRange(2, 2), 1, 4, 2),
+                        ]),
+                    ["B.cs"] = new(
+                        LanguageId: "csharp",
+                        ParseQuality: SyntaxParseQuality.Full,
+                        CodeLineCount: 200,
+                        CommentLineCount: 20,
+                        FunctionCount: 4,
+                        TypeCount: 1,
+                        CyclomaticComplexitySum: 25,
+                        CyclomaticComplexityMax: 10,
+                        MaxNestingDepth: 4,
+                        Callables:
+                        [
+                            new CallableSyntaxFact("B1", CallableKind.Method, new LineRange(1, 1), 2, 10, 4),
+                            new CallableSyntaxFact("B2", CallableKind.Method, new LineRange(2, 2), 4, 7, 2),
+                            new CallableSyntaxFact("B3", CallableKind.Method, new LineRange(3, 3), 3, 5, 3),
+                            new CallableSyntaxFact("B4", CallableKind.Method, new LineRange(4, 4), 1, 3, 1),
+                        ]),
+                }),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var firstFile = Assert.Single(enriched.Root.Children, node => node.Name == "A.cs");
+        var secondFile = Assert.Single(enriched.Root.Children, node => node.Name == "B.cs");
+
+        var firstScore = firstFile.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0);
+        var secondScore = secondFile.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0);
+        var rootScore = enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0);
+
+        Assert.NotNull(firstScore);
+        Assert.NotNull(secondScore);
+        Assert.NotNull(rootScore);
+        Assert.Equal(firstScore.Value + secondScore.Value, rootScore.Value, precision: 12);
     }
 
     [Fact]
@@ -482,5 +561,31 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             string sourceText,
             CancellationToken cancellationToken) =>
             throw new InvalidOperationException("boom");
+    }
+
+    private sealed class PathMappedSyntaxAnalyzer(IReadOnlyDictionary<string, SyntaxSummaryArtifact> artifactsByFileName) : ISyntaxAnalyzer
+    {
+        public string LanguageId => "csharp";
+
+        public IReadOnlyCollection<string> FileExtensions { get; } = [".cs"];
+
+        public bool CanAnalyze(string fullPath) =>
+            string.Equals(Path.GetExtension(fullPath), ".cs", StringComparison.OrdinalIgnoreCase);
+
+        public ValueTask<SyntaxSummaryArtifact> AnalyzeAsync(
+            string fullPath,
+            string sourceText,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var fileName = Path.GetFileName(fullPath);
+            if (!artifactsByFileName.TryGetValue(fileName, out var artifact))
+            {
+                throw new KeyNotFoundException($"Missing syntax artifact for '{fileName}'.");
+            }
+
+            return ValueTask.FromResult(artifact);
+        }
     }
 }

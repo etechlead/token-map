@@ -37,6 +37,6 @@ This document covers project purpose, canonical ownership, runtime flow, and non
 - The scanner defines the included tree and analyzed node set.
 - Metrics enrichment returns a new snapshot; scanner output is not mutated in place.
 - `Clever.TokenMap.Metrics` stays below app/infrastructure orchestration and above core models; UI consumes metric abstractions through core contracts.
-- Syntax-based file metrics flow through managed syntax artifacts; raw parser objects stay inside the metrics layer.
+- File metrics flow as raw file metrics, then derived file metrics, then directory rollup; raw parser objects stay inside the metrics layer.
 - Token counting stays behind `ITokenCounter`.
 - The treemap stays one custom-rendered control.

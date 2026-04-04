@@ -14,4 +14,9 @@ public static class MetricIds
     public static readonly MetricId CyclomaticComplexitySum = new("cc_sum");
     public static readonly MetricId CyclomaticComplexityMax = new("cc_max");
     public static readonly MetricId MaxNestingDepth = new("max_nesting_depth");
+    public static readonly MetricId AverageParametersPerCallable = new("avg_parameters_per_callable");
+    public static readonly MetricId AverageCyclomaticComplexityPerCallable = new("avg_cc_per_callable");
+    public static readonly MetricId CyclomaticComplexityPerCodeLine = new("cc_per_code_line");
+    public static readonly MetricId CommentRatio = new("comment_ratio");
+    public static readonly MetricId ComplexityPointsV0 = new("complexity_points_v0");
 }

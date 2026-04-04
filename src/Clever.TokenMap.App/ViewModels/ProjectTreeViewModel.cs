@@ -408,7 +408,7 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
     private IComparable GetSortValue(ProjectNode node) =>
         _currentSortColumn switch
         {
-            ProjectTreeSortColumn.Metric => node.ComputedMetrics.TryGetRoundedInt64(_currentMetricSortId) ?? 0,
+            ProjectTreeSortColumn.Metric => node.ComputedMetrics.TryGetNumber(_currentMetricSortId) ?? 0d,
             _ => node.Name,
         };
 }

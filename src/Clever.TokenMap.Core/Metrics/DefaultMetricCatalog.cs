@@ -111,7 +111,52 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Max,
             VisibleByDefault: false,
             SupportsTreemapWeight: false,
-            "Maximum callable nesting depth for syntax-supported files and directory rollups.")
+            "Maximum callable nesting depth for syntax-supported files and directory rollups."),
+        new(
+            MetricIds.AverageParametersPerCallable,
+            "Average parameters per callable",
+            "Avg params",
+            MetricUnit.Ratio,
+            MetricRollupKind.None,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Average callable parameter count for syntax-supported files."),
+        new(
+            MetricIds.AverageCyclomaticComplexityPerCallable,
+            "Average cyclomatic complexity per callable",
+            "Avg CC",
+            MetricUnit.Ratio,
+            MetricRollupKind.None,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Average callable cyclomatic complexity for syntax-supported files."),
+        new(
+            MetricIds.CyclomaticComplexityPerCodeLine,
+            "Cyclomatic complexity per code line",
+            "CC/line",
+            MetricUnit.Ratio,
+            MetricRollupKind.None,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Cyclomatic complexity sum divided by code lines for syntax-supported files."),
+        new(
+            MetricIds.CommentRatio,
+            "Comment ratio",
+            "Comment %",
+            MetricUnit.Percent,
+            MetricRollupKind.None,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: false,
+            "Comment-only lines divided by code plus comment lines for syntax-supported files."),
+        new(
+            MetricIds.ComplexityPointsV0,
+            "Complexity points v0",
+            "Complexity",
+            MetricUnit.Score,
+            MetricRollupKind.Sum,
+            VisibleByDefault: false,
+            SupportsTreemapWeight: true,
+            "Composite additive complexity points for files and summed directory rollups.")
     ];
 
     private readonly Dictionary<MetricId, MetricDefinition> _definitionsById =

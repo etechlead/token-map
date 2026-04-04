@@ -6,4 +6,5 @@ public enum MetricUnit
     Bytes = 1,
     Ratio = 2,
     Score = 3,
+    Percent = 4,
 }

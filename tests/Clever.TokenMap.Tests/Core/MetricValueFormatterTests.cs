@@ -28,4 +28,15 @@ public sealed class MetricValueFormatterTests
 
         Assert.Equal(expected, result);
     }
+
+    [Theory]
+    [InlineData(0, "0.0%")]
+    [InlineData(0.375, "37.5%")]
+    [InlineData(1, "100.0%")]
+    public void Format_PercentMetric_UsesPercentUnits(double value, string expected)
+    {
+        var result = MetricValueFormatter.Format(MetricIds.CommentRatio, MetricValue.From(value), CultureInfo.InvariantCulture);
+
+        Assert.Equal(expected, result);
+    }
 }
