@@ -13,8 +13,6 @@ public sealed class ExtensionSyntaxAnalyzerRegistry : ISyntaxAnalyzerRegistry
             ?? [];
     }
 
-    public static ExtensionSyntaxAnalyzerRegistry Empty { get; } = new();
-
     public bool TryResolve(string fullPath, out ISyntaxAnalyzer analyzer)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fullPath);

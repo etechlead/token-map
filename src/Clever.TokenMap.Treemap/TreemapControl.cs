@@ -13,15 +13,6 @@ namespace Clever.TokenMap.Treemap;
 
 public sealed class TreemapControl : Control
 {
-    private const double TooltipMargin = 12;
-    private const double TooltipPaddingX = 14;
-    private const double TooltipPaddingY = 12;
-    private const double TooltipHeaderSpacing = 10;
-    private const double TooltipRowSpacing = 6;
-    private const double TooltipColumnSpacing = 12;
-    private const double TooltipSeparatorSpacing = 6;
-    private const double TooltipSeparatorThickness = 1;
-    private const double TooltipMaxWidth = 360;
     private const double InteractiveContrastThickness = 1;
 
     public static readonly StyledProperty<MetricId> MetricProperty =
@@ -1042,106 +1033,6 @@ public sealed class TreemapControl : Control
 
         label = string.Empty;
         return false;
-    }
-
-    private static List<FormattedText> WrapTooltipText(
-        string text,
-        double maxWidth,
-        double fontSize,
-        IBrush foreground,
-        bool preferPathBreaks)
-    {
-        var lines = new List<FormattedText>();
-        if (string.IsNullOrEmpty(text))
-        {
-            return lines;
-        }
-
-        if (!preferPathBreaks)
-        {
-            lines.Add(CreateTooltipText(text, fontSize, foreground));
-            return lines;
-        }
-
-        var tokens = TokenizePath(text);
-        var current = string.Empty;
-
-        foreach (var token in tokens)
-        {
-            var candidate = string.Concat(current, token);
-            if (current.Length == 0 || CreateTooltipText(candidate, fontSize, foreground).Width <= maxWidth)
-            {
-                current = candidate;
-                continue;
-            }
-
-            AppendWrappedToken(lines, current, maxWidth, fontSize, foreground);
-            current = token;
-        }
-
-        if (current.Length > 0)
-        {
-            AppendWrappedToken(lines, current, maxWidth, fontSize, foreground);
-        }
-
-        return lines;
-    }
-
-    private static void AppendWrappedToken(
-        List<FormattedText> lines,
-        string text,
-        double maxWidth,
-        double fontSize,
-        IBrush foreground)
-    {
-        var remaining = text;
-        while (remaining.Length > 0)
-        {
-            var splitLength = remaining.Length;
-            while (splitLength > 1 &&
-                   CreateTooltipText(remaining[..splitLength], fontSize, foreground).Width > maxWidth)
-            {
-                splitLength--;
-            }
-
-            lines.Add(CreateTooltipText(remaining[..splitLength], fontSize, foreground));
-            remaining = remaining[splitLength..];
-        }
-    }
-
-    private static List<string> TokenizePath(string text)
-    {
-        var tokens = new List<string>();
-        var segmentStart = 0;
-
-        for (var index = 0; index < text.Length; index++)
-        {
-            if (text[index] != '/' && text[index] != '\\')
-            {
-                continue;
-            }
-
-            tokens.Add(text[segmentStart..(index + 1)]);
-            segmentStart = index + 1;
-        }
-
-        if (segmentStart < text.Length)
-        {
-            tokens.Add(text[segmentStart..]);
-        }
-
-        return tokens;
-    }
-
-    private static FormattedText CreateTooltipText(string text, double fontSize, IBrush foreground)
-    {
-        return new FormattedText(
-            text,
-            culture: CultureInfo.CurrentCulture,
-            flowDirection: FlowDirection.LeftToRight,
-            typeface: Typeface.Default,
-            emSize: fontSize,
-            foreground: foreground);
     }
 
     private static FormattedText CreateNodeLabelText(string text, double fontSize, IBrush foreground)

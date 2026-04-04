@@ -9,7 +9,5 @@ public readonly record struct MetricValue(
 
     public static MetricValue NotApplicable() => new(0, MetricStatus.NotApplicable);
 
-    public static MetricValue Failed(string? error = null) => new(0, MetricStatus.Failed, error);
-
     public bool HasValue => Status == MetricStatus.Ok;
 }
