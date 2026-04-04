@@ -11,6 +11,7 @@ public sealed class SettingsStateTests
     {
         var state = new SettingsState();
 
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, state.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Weighted, state.SelectedTreemapPalette);
         Assert.True(state.ShowTreemapMetricValues);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, state.GlobalExcludes);

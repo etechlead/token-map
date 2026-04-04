@@ -228,6 +228,8 @@ internal static class HeadlessTestSupport
 
         public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
 
+        public void SetWorkspaceLayoutMode(WorkspaceLayoutMode mode) => MutableState.WorkspaceLayoutMode = mode;
+
         public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;

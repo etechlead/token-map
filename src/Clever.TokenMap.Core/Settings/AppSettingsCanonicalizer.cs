@@ -17,11 +17,17 @@ public static class AppSettingsCanonicalizer
         settings.Analysis.SelectedMetric = NormalizeSelectedMetric(
             settings.Analysis.SelectedMetric,
             settings.Analysis.VisibleMetricIds);
+        settings.Appearance.WorkspaceLayoutMode = NormalizeWorkspaceLayoutMode(settings.Appearance.WorkspaceLayoutMode);
         settings.Appearance.TreemapPalette = NormalizeTreemapPalette(settings.Appearance.TreemapPalette);
         settings.Analysis.GlobalExcludes = [.. GlobalExcludeList.Normalize(settings.Analysis.GlobalExcludes)];
         settings.RecentFolderPaths = NormalizeRecentFolderPaths(settings.RecentFolderPaths);
         return settings;
     }
+
+    public static WorkspaceLayoutMode NormalizeWorkspaceLayoutMode(WorkspaceLayoutMode mode) =>
+        Enum.IsDefined(mode)
+            ? mode
+            : WorkspaceLayoutMode.SideBySide;
 
     public static TreemapPalette NormalizeTreemapPalette(TreemapPalette palette) =>
         Enum.IsDefined(palette)

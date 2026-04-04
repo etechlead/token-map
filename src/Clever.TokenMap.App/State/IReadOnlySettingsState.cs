@@ -19,6 +19,8 @@ public interface IReadOnlySettingsState : INotifyPropertyChanged
 
     ThemePreference SelectedThemePreference { get; }
 
+    WorkspaceLayoutMode WorkspaceLayoutMode { get; }
+
     TreemapPalette SelectedTreemapPalette { get; }
 
     bool ShowTreemapMetricValues { get; }

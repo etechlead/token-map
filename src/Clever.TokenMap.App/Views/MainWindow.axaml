@@ -36,11 +36,14 @@
             <Grid Name="WorkspaceHost"
                   Margin="0,10,0,8"
                   ColumnDefinitions="2*,10,3*">
-                <sections:ProjectTreePaneView Grid.Column="0" />
-                <GridSplitter Grid.Column="1"
+                <sections:ProjectTreePaneView Name="ProjectTreePaneHost"
+                                              Grid.Column="0" />
+                <GridSplitter Name="WorkspaceSplitter"
+                              Grid.Column="1"
                               ResizeDirection="Columns"
                               Background="{DynamicResource TokenMapDividerBrush}" />
-                <sections:TreemapPaneView Grid.Column="2" />
+                <sections:TreemapPaneView Name="TreemapPaneHost"
+                                          Grid.Column="2" />
             </Grid>
 
             <Border Name="RecentFoldersStartSurface"

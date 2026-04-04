@@ -17,6 +17,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     private readonly RelayCommand _selectDarkThemePreferenceCommand;
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
+    private readonly RelayCommand _toggleWorkspaceLayoutCommand;
     private readonly RelayCommand _resetVisibleMetricIdsCommand;
     private readonly RelayCommand _showAllMetricIdsCommand;
     private readonly ISettingsCoordinator _settingsCoordinator;
@@ -46,6 +47,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
+        _toggleWorkspaceLayoutCommand = new RelayCommand(ToggleWorkspaceLayout);
         _resetVisibleMetricIdsCommand = new RelayCommand(_settingsCoordinator.ResetVisibleMetricIdsToDefault);
         _showAllMetricIdsCommand = new RelayCommand(_settingsCoordinator.ShowAllMetricIds);
         _allMetricDefinitions = DefaultMetricCatalog.Instance.GetAll();
@@ -82,6 +84,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public IRelayCommand SelectLightThemePreferenceCommand => _selectLightThemePreferenceCommand;
 
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
+
+    public IRelayCommand ToggleWorkspaceLayoutCommand => _toggleWorkspaceLayoutCommand;
 
     public IRelayCommand ResetVisibleMetricIdsCommand => _resetVisibleMetricIdsCommand;
 
@@ -178,6 +182,26 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         set => _settingsCoordinator.SetThemePreference(value);
     }
 
+    public WorkspaceLayoutMode SelectedWorkspaceLayoutMode
+    {
+        get => _settingsState.WorkspaceLayoutMode;
+        set => _settingsCoordinator.SetWorkspaceLayoutMode(value);
+    }
+
+    public bool IsSideBySideWorkspaceLayout => SelectedWorkspaceLayoutMode == WorkspaceLayoutMode.SideBySide;
+
+    public bool IsStackedWorkspaceLayout
+    {
+        get => SelectedWorkspaceLayoutMode == WorkspaceLayoutMode.Stacked;
+        set => SelectedWorkspaceLayoutMode = value
+            ? WorkspaceLayoutMode.Stacked
+            : WorkspaceLayoutMode.SideBySide;
+    }
+
+    public string WorkspaceLayoutToggleToolTip => IsStackedWorkspaceLayout
+        ? "Switch to side-by-side layout"
+        : "Switch to stacked layout";
+
     public TreemapPalette SelectedTreemapPalette
     {
         get => _settingsState.SelectedTreemapPalette;
@@ -243,6 +267,13 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         SelectedThemePreference = value;
     }
 
+    private void ToggleWorkspaceLayout()
+    {
+        SelectedWorkspaceLayoutMode = IsSideBySideWorkspaceLayout
+            ? WorkspaceLayoutMode.Stacked
+            : WorkspaceLayoutMode.SideBySide;
+    }
+
     private void SettingsStateOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         switch (e.PropertyName)
@@ -266,6 +297,12 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
                 OnPropertyChanged(nameof(IsSystemThemeSelected));
                 OnPropertyChanged(nameof(IsLightThemeSelected));
                 OnPropertyChanged(nameof(IsDarkThemeSelected));
+                break;
+            case nameof(IReadOnlySettingsState.WorkspaceLayoutMode):
+                OnPropertyChanged(nameof(SelectedWorkspaceLayoutMode));
+                OnPropertyChanged(nameof(IsSideBySideWorkspaceLayout));
+                OnPropertyChanged(nameof(IsStackedWorkspaceLayout));
+                OnPropertyChanged(nameof(WorkspaceLayoutToggleToolTip));
                 break;
             case nameof(IReadOnlySettingsState.SelectedTreemapPalette):
                 OnPropertyChanged(nameof(SelectedTreemapPalette));

@@ -106,6 +106,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.Appearance.ThemePreference = themePreference;
         }
 
+        if (persistedSettings?.Appearance?.WorkspaceLayoutMode is { } workspaceLayoutMode)
+        {
+            settings.Appearance.WorkspaceLayoutMode = workspaceLayoutMode;
+        }
+
         if (persistedSettings?.Appearance?.TreemapPalette is { } treemapPalette)
         {
             settings.Appearance.TreemapPalette = treemapPalette;
@@ -143,6 +148,7 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             Appearance = new PersistedAppearanceSettings
             {
                 ThemePreference = settings.Appearance.ThemePreference,
+                WorkspaceLayoutMode = settings.Appearance.WorkspaceLayoutMode,
                 TreemapPalette = settings.Appearance.TreemapPalette,
                 ShowTreemapMetricValues = settings.Appearance.ShowTreemapMetricValues,
             },
@@ -187,6 +193,9 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         [JsonConverter(typeof(NullableStringEnumConverter<ThemePreference>))]
         public ThemePreference? ThemePreference { get; set; }
+
+        [JsonConverter(typeof(NullableStringEnumConverter<WorkspaceLayoutMode>))]
+        public WorkspaceLayoutMode? WorkspaceLayoutMode { get; set; }
 
         [JsonConverter(typeof(NullableStringEnumConverter<TreemapPalette>))]
         public TreemapPalette? TreemapPalette { get; set; }

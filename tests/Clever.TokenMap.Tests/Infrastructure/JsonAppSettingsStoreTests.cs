@@ -26,6 +26,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.True(settings.Analysis.UseGlobalExcludes);
         Assert.Equal(GlobalExcludeDefaults.DefaultEntries, settings.Analysis.GlobalExcludes);
         Assert.Equal(ThemePreference.System, settings.Appearance.ThemePreference);
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, settings.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
         Assert.True(settings.Appearance.ShowTreemapMetricValues);
         Assert.Empty(settings.RecentFolderPaths);
@@ -53,6 +54,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
               },
               "appearance": {
                 "themePreference": "Dark",
+                "workspaceLayoutMode": "Stacked",
                 "treemapPalette": "Studio",
                 "showTreemapMetricValues": false
               },
@@ -81,6 +83,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             entry => Assert.Equal("/src/generated/**", entry),
             entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, settings.Appearance.ThemePreference);
+        Assert.Equal(WorkspaceLayoutMode.Stacked, settings.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Studio, settings.Appearance.TreemapPalette);
         Assert.False(settings.Appearance.ShowTreemapMetricValues);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
@@ -135,6 +138,27 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         var settings = store.Load();
 
         Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
+    }
+
+    [Fact]
+    public void Load_FallsBackToDefault_ForUnknownWorkspaceLayoutMode()
+    {
+        Directory.CreateDirectory(_testRootPath);
+        File.WriteAllText(
+            GetSettingsFilePath(),
+            """
+            {
+              "appearance": {
+                "workspaceLayoutMode": "Diagonal"
+              }
+            }
+            """);
+
+        var store = CreateStore();
+
+        var settings = store.Load();
+
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, settings.Appearance.WorkspaceLayoutMode);
     }
 
     [Fact]
@@ -221,6 +245,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Analysis.UseGlobalExcludes = false;
         settings.Analysis.GlobalExcludes = [" node_modules\\ ", "", "/src//generated/**", "!nested/scripts/"];
         settings.Appearance.ThemePreference = ThemePreference.Dark;
+        settings.Appearance.WorkspaceLayoutMode = WorkspaceLayoutMode.Stacked;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
         settings.Appearance.ShowTreemapMetricValues = false;
         settings.Logging.MinLevel = AppLogLevel.Warning;
@@ -234,6 +259,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.DoesNotContain("useDefaultExcludes", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""useGlobalExcludes"": false", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""globalExcludes"": [", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""workspaceLayoutMode"": ""Stacked""", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""treemapPalette"": ""Weighted""", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""showTreemapMetricValues"": false", persistedJson, StringComparison.Ordinal);
 
@@ -248,6 +274,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
             entry => Assert.Equal("/src/generated/**", entry),
             entry => Assert.Equal("!nested/scripts/", entry));
         Assert.Equal(ThemePreference.Dark, reloaded.Appearance.ThemePreference);
+        Assert.Equal(WorkspaceLayoutMode.Stacked, reloaded.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Weighted, reloaded.Appearance.TreemapPalette);
         Assert.False(reloaded.Appearance.ShowTreemapMetricValues);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);

@@ -32,6 +32,8 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     void SetThemePreference(ThemePreference preference);
 
+    void SetWorkspaceLayoutMode(WorkspaceLayoutMode mode);
+
     void SetTreemapPalette(TreemapPalette palette);
 
     void SetShowTreemapMetricValues(bool value);

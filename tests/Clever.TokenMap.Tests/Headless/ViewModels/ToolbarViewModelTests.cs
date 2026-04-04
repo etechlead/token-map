@@ -34,6 +34,9 @@ public sealed class ToolbarViewModelTests
             Assert.Single(viewModel.VisibleTreemapMetricOptions, option => option.IsSelected).Definition.Id);
         Assert.True(viewModel.ShowTreemapMetricButtons);
         Assert.False(viewModel.ShowTreemapMetricSelector);
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, viewModel.SelectedWorkspaceLayoutMode);
+        Assert.True(viewModel.IsSideBySideWorkspaceLayout);
+        Assert.False(viewModel.IsStackedWorkspaceLayout);
         Assert.False(viewModel.IsPlainTreemapPaletteSelected);
         Assert.True(viewModel.IsWeightedTreemapPaletteSelected);
         Assert.False(viewModel.IsStudioTreemapPaletteSelected);
@@ -204,6 +207,28 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
+    public void ToggleWorkspaceLayoutCommand_SwitchesModes()
+    {
+        var state = new SettingsState();
+        var viewModel = CreateViewModel(state);
+
+        viewModel.ToggleWorkspaceLayoutCommand.Execute(null);
+
+        Assert.Equal(WorkspaceLayoutMode.Stacked, state.WorkspaceLayoutMode);
+        Assert.Equal(WorkspaceLayoutMode.Stacked, viewModel.SelectedWorkspaceLayoutMode);
+        Assert.False(viewModel.IsSideBySideWorkspaceLayout);
+        Assert.True(viewModel.IsStackedWorkspaceLayout);
+        Assert.Equal("Switch to side-by-side layout", viewModel.WorkspaceLayoutToggleToolTip);
+
+        viewModel.ToggleWorkspaceLayoutCommand.Execute(null);
+
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, state.WorkspaceLayoutMode);
+        Assert.True(viewModel.IsSideBySideWorkspaceLayout);
+        Assert.False(viewModel.IsStackedWorkspaceLayout);
+        Assert.Equal("Switch to stacked layout", viewModel.WorkspaceLayoutToggleToolTip);
+    }
+
+    [Fact]
     public void BuildScanOptions_UsesGlobalExcludeSettings()
     {
         var state = new SettingsState
@@ -272,6 +297,8 @@ public sealed class ToolbarViewModelTests
         public void ReplaceGlobalExcludes(IEnumerable<string> entries) => MutableState.ReplaceGlobalExcludes(entries);
 
         public void SetThemePreference(ThemePreference preference) => MutableState.SelectedThemePreference = preference;
+
+        public void SetWorkspaceLayoutMode(WorkspaceLayoutMode mode) => MutableState.WorkspaceLayoutMode = mode;
 
         public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 

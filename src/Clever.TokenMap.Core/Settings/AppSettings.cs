@@ -53,6 +53,8 @@ public sealed class AppearanceSettings
 {
     public ThemePreference ThemePreference { get; set; } = ThemePreference.System;
 
+    public WorkspaceLayoutMode WorkspaceLayoutMode { get; set; } = WorkspaceLayoutMode.SideBySide;
+
     public TreemapPalette TreemapPalette { get; set; } = TreemapPalette.Weighted;
 
     public bool ShowTreemapMetricValues { get; set; } = true;
@@ -61,6 +63,7 @@ public sealed class AppearanceSettings
         new()
         {
             ThemePreference = ThemePreference,
+            WorkspaceLayoutMode = WorkspaceLayoutMode,
             TreemapPalette = TreemapPalette,
             ShowTreemapMetricValues = ShowTreemapMetricValues,
         };

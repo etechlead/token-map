@@ -96,6 +96,9 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public void SetThemePreference(ThemePreference preference) =>
         MutableState.SelectedThemePreference = preference;
 
+    public void SetWorkspaceLayoutMode(WorkspaceLayoutMode mode) =>
+        MutableState.WorkspaceLayoutMode = AppSettingsCanonicalizer.NormalizeWorkspaceLayoutMode(mode);
+
     public void SetTreemapPalette(TreemapPalette palette) =>
         MutableState.SelectedTreemapPalette = palette;
 

@@ -8,6 +8,7 @@ using Avalonia.Styling;
 using Avalonia.VisualTree;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
+using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
@@ -56,10 +57,14 @@ public sealed class MainWindowLayoutTests
 
         window.Show();
 
+        var layoutToggleControl = FindNamedDescendant<Control>(window, "ProjectTreeLayoutToggleButton");
+
         Assert.NotNull(FindNamedDescendant<Control>(window, "ToolbarHost"));
         Assert.NotNull(FindNamedDescendant<Grid>(window, "WorkspaceHost"));
         Assert.NotNull(FindNamedDescendant<Control>(window, "ProjectTreePane"));
         Assert.NotNull(FindNamedDescendant<Control>(window, "TreemapPane"));
+        Assert.IsType<Button>(layoutToggleControl);
+        Assert.NotNull(FindNamedDescendant<GridSplitter>(window, "WorkspaceSplitter"));
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
         Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
         Assert.NotNull(FindNamedDescendant<Border>(window, "ProgressStatusPill"));
@@ -68,6 +73,82 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<Button>(window, "ShareButton"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
         Assert.NotNull(FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton"));
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_UsesSideBySideWorkspaceLayout_ByDefault()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var window = new AppMainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
+        var projectTreePaneHost = FindNamedDescendant<Control>(window, "ProjectTreePaneHost");
+        var treemapPaneHost = FindNamedDescendant<Control>(window, "TreemapPaneHost");
+        var splitter = FindNamedDescendant<GridSplitter>(window, "WorkspaceSplitter");
+        var layoutToggleControl = FindNamedDescendant<Control>(window, "ProjectTreeLayoutToggleButton");
+        var layoutToggleButton = Assert.IsType<Button>(layoutToggleControl);
+
+        Assert.NotNull(workspaceHost);
+        Assert.NotNull(projectTreePaneHost);
+        Assert.NotNull(treemapPaneHost);
+        Assert.NotNull(splitter);
+        Assert.Equal(WorkspaceLayoutMode.SideBySide, viewModel.Toolbar.SelectedWorkspaceLayoutMode);
+        Assert.NotNull(layoutToggleButton.Command);
+        Assert.Equal("Switch to stacked layout", viewModel.Toolbar.WorkspaceLayoutToggleToolTip);
+        Assert.Equal(3, workspaceHost.ColumnDefinitions.Count);
+        Assert.Single(workspaceHost.RowDefinitions);
+        Assert.Equal(0, Grid.GetColumn(projectTreePaneHost));
+        Assert.Equal(1, Grid.GetColumn(splitter));
+        Assert.Equal(2, Grid.GetColumn(treemapPaneHost));
+        Assert.Equal(0, Grid.GetRow(projectTreePaneHost));
+        Assert.Equal(0, Grid.GetRow(splitter));
+        Assert.Equal(0, Grid.GetRow(treemapPaneHost));
+        Assert.Equal(GridResizeDirection.Columns, splitter.ResizeDirection);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_UpdatesWorkspaceLayout_WhenLayoutToggleChanges()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var window = new AppMainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var workspaceHost = FindNamedDescendant<Grid>(window, "WorkspaceHost");
+        var projectTreePaneHost = FindNamedDescendant<Control>(window, "ProjectTreePaneHost");
+        var treemapPaneHost = FindNamedDescendant<Control>(window, "TreemapPaneHost");
+        var splitter = FindNamedDescendant<GridSplitter>(window, "WorkspaceSplitter");
+        var layoutToggleControl = FindNamedDescendant<Control>(window, "ProjectTreeLayoutToggleButton");
+        var layoutToggleButton = Assert.IsType<Button>(layoutToggleControl);
+
+        Assert.NotNull(workspaceHost);
+        Assert.NotNull(projectTreePaneHost);
+        Assert.NotNull(treemapPaneHost);
+        Assert.NotNull(splitter);
+
+        layoutToggleButton.Command!.Execute(layoutToggleButton.CommandParameter);
+        window.UpdateLayout();
+
+        Assert.Equal(WorkspaceLayoutMode.Stacked, viewModel.Toolbar.SelectedWorkspaceLayoutMode);
+        Assert.True(viewModel.Toolbar.IsStackedWorkspaceLayout);
+        Assert.Equal("Switch to side-by-side layout", viewModel.Toolbar.WorkspaceLayoutToggleToolTip);
+        Assert.Single(workspaceHost.ColumnDefinitions);
+        Assert.Equal(3, workspaceHost.RowDefinitions.Count);
+        Assert.Equal(0, Grid.GetColumn(projectTreePaneHost));
+        Assert.Equal(0, Grid.GetColumn(splitter));
+        Assert.Equal(0, Grid.GetColumn(treemapPaneHost));
+        Assert.Equal(0, Grid.GetRow(projectTreePaneHost));
+        Assert.Equal(1, Grid.GetRow(splitter));
+        Assert.Equal(2, Grid.GetRow(treemapPaneHost));
+        Assert.Equal(GridResizeDirection.Rows, splitter.ResizeDirection);
     }
 
     [AvaloniaFact]

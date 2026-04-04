@@ -100,6 +100,7 @@ internal sealed class AppSettingsSession
             _currentSettings.Analysis.UseGlobalExcludes = State.UseGlobalExcludes;
             _currentSettings.Analysis.GlobalExcludes = [.. State.GlobalExcludes];
             _currentSettings.Appearance.ThemePreference = State.SelectedThemePreference;
+            _currentSettings.Appearance.WorkspaceLayoutMode = State.WorkspaceLayoutMode;
             _currentSettings.Appearance.TreemapPalette = State.SelectedTreemapPalette;
             _currentSettings.Appearance.ShowTreemapMetricValues = State.ShowTreemapMetricValues;
             _settingsVersion++;
@@ -201,6 +202,7 @@ internal sealed class AppSettingsSession
             State.UseGlobalExcludes = _currentSettings.Analysis.UseGlobalExcludes;
             State.LoadGlobalExcludes(_currentSettings.Analysis.GlobalExcludes);
             State.SelectedThemePreference = _currentSettings.Appearance.ThemePreference;
+            State.WorkspaceLayoutMode = _currentSettings.Appearance.WorkspaceLayoutMode;
             State.SelectedTreemapPalette = _currentSettings.Appearance.TreemapPalette;
             State.ShowTreemapMetricValues = _currentSettings.Appearance.ShowTreemapMetricValues;
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
@@ -219,6 +221,7 @@ internal sealed class AppSettingsSession
         nameof(SettingsState.UseGlobalExcludes) or
         nameof(SettingsState.GlobalExcludes) or
         nameof(SettingsState.SelectedThemePreference) or
+        nameof(SettingsState.WorkspaceLayoutMode) or
         nameof(SettingsState.SelectedTreemapPalette) or
         nameof(SettingsState.ShowTreemapMetricValues);
 

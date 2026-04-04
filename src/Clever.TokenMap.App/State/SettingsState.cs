@@ -40,6 +40,9 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     private ThemePreference selectedThemePreference = ThemePreference.System;
 
     [ObservableProperty]
+    private WorkspaceLayoutMode workspaceLayoutMode = WorkspaceLayoutMode.SideBySide;
+
+    [ObservableProperty]
     private TreemapPalette selectedTreemapPalette = TreemapPalette.Weighted;
 
     [ObservableProperty]

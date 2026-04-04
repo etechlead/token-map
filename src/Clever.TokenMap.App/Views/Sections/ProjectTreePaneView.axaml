@@ -8,15 +8,31 @@
             Classes="panel">
         <Grid RowDefinitions="Auto,*"
               RowSpacing="8">
-            <Grid ColumnDefinitions="Auto,*"
+            <Grid ColumnDefinitions="Auto,Auto,*"
                   MinHeight="32"
-                  ColumnSpacing="12">
+                  ColumnSpacing="8">
                 <TextBlock Name="ProjectTreeTitleText"
                            Classes="panel-title"
                            VerticalAlignment="Center"
                            Text="Project Tree" />
+                <Button Name="ProjectTreeLayoutToggleButton"
+                        Grid.Column="1"
+                        Classes="workspace-layout-toggle"
+                        VerticalAlignment="Center"
+                        Command="{Binding Toolbar.ToggleWorkspaceLayoutCommand}"
+                        ToolTip.Tip="{Binding Toolbar.WorkspaceLayoutToggleToolTip}">
+                    <Grid Width="16"
+                          Height="16">
+                        <Path Classes="workspace-layout-icon"
+                              Data="{StaticResource FluentLayoutColumnTwo20RegularGeometry}"
+                              IsVisible="{Binding Toolbar.IsStackedWorkspaceLayout}" />
+                        <Path Classes="workspace-layout-icon"
+                              Data="{StaticResource FluentLayoutRowTwo20RegularGeometry}"
+                              IsVisible="{Binding Toolbar.IsSideBySideWorkspaceLayout}" />
+                    </Grid>
+                </Button>
                 <TextBlock Name="ProjectTreeSelectedFolderText"
-                           Grid.Column="1"
+                           Grid.Column="2"
                            Classes="panel-title"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center"
