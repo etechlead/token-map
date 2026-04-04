@@ -182,7 +182,7 @@ public sealed class MainWindowTreemapIntegrationTests
 
         var initialLines = GetTooltipLines(control);
         Assert.True(Array.IndexOf(initialLines, $"Share: {expectedShareText}") < Array.IndexOf(initialLines, "---"));
-        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Complexity: 17.50"));
+        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Complexity: 18"));
 
         complexityOption.IsVisible = true;
         window.UpdateLayout();
@@ -190,7 +190,7 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.Contains(MetricIds.ComplexityPointsV0, control.VisibleMetricIds);
 
         var updatedLines = GetTooltipLines(control);
-        Assert.True(Array.IndexOf(updatedLines, "Complexity: 17.50") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
+        Assert.True(Array.IndexOf(updatedLines, "Complexity: 18") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
         Assert.Equal(1, updatedLines.Count(line => line == "---"));
     }
 

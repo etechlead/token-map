@@ -30,12 +30,23 @@ public sealed class MetricValueFormatterTests
     }
 
     [Theory]
-    [InlineData(3, "3.00")]
-    [InlineData(18.5, "18.50")]
-    [InlineData(1200.25, "1,200.25")]
-    public void Format_ScoreMetric_PreservesFractionalPrecision(double value, string expected)
+    [InlineData(3, "3")]
+    [InlineData(18.5, "19")]
+    [InlineData(1200.25, "1,200")]
+    public void Format_ScoreMetric_RoundsToWholeNumber(double value, string expected)
     {
         var result = MetricValueFormatter.Format(MetricIds.ComplexityPointsV0, MetricValue.From(value), CultureInfo.InvariantCulture);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(4, "4")]
+    [InlineData(17.5, "18")]
+    [InlineData(1_250, "1.2K")]
+    public void FormatCompact_ScoreMetric_RoundsToWholeNumber(double value, string expected)
+    {
+        var result = MetricValueFormatter.FormatCompact(MetricIds.ComplexityPointsV0, MetricValue.From(value), CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, result);
     }

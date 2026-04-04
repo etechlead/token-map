@@ -34,8 +34,8 @@ public static class MetricValueFormatter
                 ? FormatCompactCount(value.Number, effectiveCulture)
                 : FormatFullCount(value.Number, effectiveCulture),
             MetricUnit.Score => compact
-                ? value.Number.ToString("N2", effectiveCulture)
-                : value.Number.ToString("N2", effectiveCulture),
+                ? FormatCompactCount(value.Number, effectiveCulture)
+                : FormatFullCount(value.Number, effectiveCulture),
             _ => compact
                 ? FormatCompactCount(value.Number, effectiveCulture)
                 : FormatFullCount(value.Number, effectiveCulture),
