@@ -21,48 +21,69 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     }
 
     [Fact]
-    public async Task ComputeAsync_BlendsGitChangePressureWhenHistoryIsAvailable()
+    public async Task ComputeAsync_BlendsGitChangeAndBlastRadiusPressureWhenHistoryIsAvailable()
     {
         var result = await ComputeAsync(
             MetricSet.From(
                 (MetricIds.ComplexityPointsV0, MetricValue.From(60)),
                 (MetricIds.CallableHotspotPointsV0, MetricValue.From(5))),
-            new GitFileHistoryArtifact(
-                ChurnLines90d: 210,
-                TouchCount90d: 7,
-                AuthorCount90d: 3));
+            CreateArtifact(
+                churnLines90d: 210,
+                touchCount90d: 7,
+                authorCount90d: 3,
+                uniqueCochangedFileCount90d: 10,
+                strongCochangedFileCount90d: 4,
+                averageCochangeSetSize90d: 3.5d));
 
-        Assert.Equal(57.022727272727273, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(55.95151515151515, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
     }
 
     [Fact]
-    public async Task ComputeAsync_RaisesPriorityForHighChangePressureAtModerateComplexity()
+    public async Task ComputeAsync_UsesZeroHistoryArtifactInsteadOfFallbackWhenGitSnapshotExists()
+    {
+        var result = await ComputeAsync(
+            MetricSet.From(
+                (MetricIds.ComplexityPointsV0, MetricValue.From(60)),
+                (MetricIds.CallableHotspotPointsV0, MetricValue.From(5))),
+            GitFileHistoryArtifact.Zero);
+
+        Assert.Equal(34.8d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+    }
+
+    [Fact]
+    public async Task ComputeAsync_RaisesPriorityForHighBlastRadiusAtModerateComplexity()
     {
         var result = await ComputeAsync(
             MetricSet.From(
                 (MetricIds.ComplexityPointsV0, MetricValue.From(35)),
                 (MetricIds.CallableHotspotPointsV0, MetricValue.From(2))),
-            new GitFileHistoryArtifact(
-                ChurnLines90d: 400,
-                TouchCount90d: 12,
-                AuthorCount90d: 4));
+            CreateArtifact(
+                churnLines90d: 20,
+                touchCount90d: 1,
+                authorCount90d: 1,
+                uniqueCochangedFileCount90d: 20,
+                strongCochangedFileCount90d: 8,
+                averageCochangeSetSize90d: 6d));
 
-        Assert.Equal(49d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(39.2d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
     }
 
     [Fact]
-    public async Task ComputeAsync_KeepsHighComplexityAheadOfLowChangePressurePenalty()
+    public async Task ComputeAsync_KeepsHighIntrinsicComplexityAheadOfLowBlastRadiusPressure()
     {
         var result = await ComputeAsync(
             MetricSet.From(
                 (MetricIds.ComplexityPointsV0, MetricValue.From(90)),
                 (MetricIds.CallableHotspotPointsV0, MetricValue.From(1))),
-            new GitFileHistoryArtifact(
-                ChurnLines90d: 20,
-                TouchCount90d: 1,
-                AuthorCount90d: 1));
+            CreateArtifact(
+                churnLines90d: 20,
+                touchCount90d: 1,
+                authorCount90d: 1,
+                uniqueCochangedFileCount90d: 1,
+                strongCochangedFileCount90d: 0,
+                averageCochangeSetSize90d: 1d));
 
-        Assert.Equal(55.5d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(45.36666666666667, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
     }
 
     [Fact]
@@ -70,13 +91,31 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     {
         var result = await ComputeAsync(
             MetricSet.From((MetricIds.CallableHotspotPointsV0, MetricValue.From(4))),
-            new GitFileHistoryArtifact(
-                ChurnLines90d: 300,
-                TouchCount90d: 8,
-                AuthorCount90d: 2));
+            CreateArtifact(
+                churnLines90d: 300,
+                touchCount90d: 8,
+                authorCount90d: 2,
+                uniqueCochangedFileCount90d: 6,
+                strongCochangedFileCount90d: 2,
+                averageCochangeSetSize90d: 2.5d));
 
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.RefactorPriorityPointsV0).Status);
     }
+
+    private static GitFileHistoryArtifact CreateArtifact(
+        int churnLines90d,
+        int touchCount90d,
+        int authorCount90d,
+        int uniqueCochangedFileCount90d,
+        int strongCochangedFileCount90d,
+        double averageCochangeSetSize90d) =>
+        new(
+            ChurnLines90d: churnLines90d,
+            TouchCount90d: touchCount90d,
+            AuthorCount90d: authorCount90d,
+            UniqueCochangedFileCount90d: uniqueCochangedFileCount90d,
+            StrongCochangedFileCount90d: strongCochangedFileCount90d,
+            AverageCochangeSetSize90d: averageCochangeSetSize90d);
 
     private async Task<MetricSet> ComputeAsync(MetricSet inputMetrics, GitFileHistoryArtifact? gitFileHistoryArtifact = null)
     {

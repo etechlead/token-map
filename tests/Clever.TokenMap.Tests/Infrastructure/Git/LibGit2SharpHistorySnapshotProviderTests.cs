@@ -30,6 +30,9 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
         Assert.Equal(2, history.Value.ChurnLines90d);
         Assert.Equal(2, history.Value.TouchCount90d);
         Assert.Equal(1, history.Value.AuthorCount90d);
+        Assert.Equal(0, history.Value.UniqueCochangedFileCount90d);
+        Assert.Equal(0, history.Value.StrongCochangedFileCount90d);
+        Assert.Equal(0d, history.Value.AverageCochangeSetSize90d, precision: 12);
     }
 
     [Fact]
@@ -48,22 +51,40 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
         Assert.Equal(0, history.Value.ChurnLines90d);
         Assert.Equal(1, history.Value.TouchCount90d);
         Assert.Equal(1, history.Value.AuthorCount90d);
+        Assert.Equal(0, history.Value.UniqueCochangedFileCount90d);
+        Assert.Equal(0, history.Value.StrongCochangedFileCount90d);
+        Assert.Equal(0d, history.Value.AverageCochangeSetSize90d, precision: 12);
     }
 
     [Fact]
-    public async Task TryCreateAsync_FiltersToNestedAnalysisRoot()
+    public async Task TryCreateAsync_FiltersCochangePartnersToNestedAnalysisRoot()
     {
         InitializeRepository();
-        CommitTextFile("src/Program.cs", "class Program {}\n", "dev@example.com", DateTimeOffset.UtcNow.AddDays(-8));
-        CommitTextFile("tests/ProgramTests.cs", "class ProgramTests {}\n", "dev@example.com", DateTimeOffset.UtcNow.AddDays(-7));
+        CommitTextFiles(
+            [("src/Program.cs", "class Program {}\n"), ("tests/ProgramTests.cs", "class ProgramTests {}\n")],
+            "dev@example.com",
+            DateTimeOffset.UtcNow.AddDays(-8));
+        CommitTextFiles(
+            [("src/Program.cs", "class Program { static void Main() { } }\n"), ("src/Utils.cs", "class Utils {}\n")],
+            "dev@example.com",
+            DateTimeOffset.UtcNow.AddDays(-7));
 
         var provider = new LibGit2SharpHistorySnapshotProvider(new PathNormalizer());
 
         var snapshot = await provider.TryCreateAsync(Path.Combine(_rootPath, "src"), CancellationToken.None);
 
         Assert.NotNull(snapshot);
-        var history = Assert.Single(snapshot.FileHistoryByAnalysisRelativePath);
-        Assert.Equal("Program.cs", history.Key);
+        Assert.Equal(2, snapshot.FileHistoryByAnalysisRelativePath.Count);
+
+        var programHistory = snapshot.FileHistoryByAnalysisRelativePath["Program.cs"];
+        Assert.Equal(1, programHistory.UniqueCochangedFileCount90d);
+        Assert.Equal(0, programHistory.StrongCochangedFileCount90d);
+        Assert.Equal(0.5d, programHistory.AverageCochangeSetSize90d, precision: 12);
+
+        var utilsHistory = snapshot.FileHistoryByAnalysisRelativePath["Utils.cs"];
+        Assert.Equal(1, utilsHistory.UniqueCochangedFileCount90d);
+        Assert.Equal(0, utilsHistory.StrongCochangedFileCount90d);
+        Assert.Equal(1d, utilsHistory.AverageCochangeSetSize90d, precision: 12);
     }
 
     [Fact]
@@ -100,6 +121,49 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
         Assert.Equal(2, history.Value.AuthorCount90d);
     }
 
+    [Fact]
+    public async Task TryCreateAsync_ComputesCochangeBlastRadiusSignals()
+    {
+        InitializeRepository();
+        CommitTextFiles(
+            [("A.cs", "class A { }\n"), ("B.cs", "class B { }\n"), ("C.cs", "class C { }\n")],
+            "dev@example.com",
+            DateTimeOffset.UtcNow.AddDays(-12));
+        CommitTextFiles(
+            [("A.cs", "class A { int X => 1; }\n"), ("B.cs", "class B { int X => 1; }\n")],
+            "dev@example.com",
+            DateTimeOffset.UtcNow.AddDays(-11));
+        CommitTextFiles(
+            [("A.cs", "class A { int X => 2; }\n"), ("D.cs", "class D { }\n")],
+            "dev@example.com",
+            DateTimeOffset.UtcNow.AddDays(-10));
+
+        var provider = new LibGit2SharpHistorySnapshotProvider(new PathNormalizer());
+
+        var snapshot = await provider.TryCreateAsync(_rootPath, CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        var history = snapshot.FileHistoryByAnalysisRelativePath["A.cs"];
+        Assert.Equal(3, history.TouchCount90d);
+        Assert.Equal(3, history.UniqueCochangedFileCount90d);
+        Assert.Equal(1, history.StrongCochangedFileCount90d);
+        Assert.Equal(4d / 3d, history.AverageCochangeSetSize90d, precision: 12);
+    }
+
+    [Fact]
+    public async Task TryCreateAsync_ExcludesFilesWithoutRecentCommits()
+    {
+        InitializeRepository();
+        CommitTextFile("A.cs", "class A { }\n", "dev@example.com", DateTimeOffset.UtcNow.AddDays(-120));
+
+        var provider = new LibGit2SharpHistorySnapshotProvider(new PathNormalizer());
+
+        var snapshot = await provider.TryCreateAsync(_rootPath, CancellationToken.None);
+
+        Assert.NotNull(snapshot);
+        Assert.Empty(snapshot.FileHistoryByAnalysisRelativePath);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_rootPath))
@@ -125,10 +189,22 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
 
     private void CommitTextFile(string relativePath, string content, string authorEmail, DateTimeOffset authoredAt)
     {
-        var fullPath = GetFullPath(relativePath);
-        Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-        File.WriteAllText(fullPath, content);
-        CommitPath(relativePath, authorEmail, authoredAt);
+        CommitTextFiles([(relativePath, content)], authorEmail, authoredAt);
+    }
+
+    private void CommitTextFiles(
+        IReadOnlyList<(string RelativePath, string Content)> files,
+        string authorEmail,
+        DateTimeOffset authoredAt)
+    {
+        foreach (var (relativePath, content) in files)
+        {
+            var fullPath = GetFullPath(relativePath);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            File.WriteAllText(fullPath, content);
+        }
+
+        CommitPaths(files.Select(file => file.RelativePath), authorEmail, authoredAt);
     }
 
     private void CommitBinaryFile(string relativePath, byte[] content, string authorEmail, DateTimeOffset authoredAt)
@@ -136,19 +212,22 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
         var fullPath = GetFullPath(relativePath);
         Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
         File.WriteAllBytes(fullPath, content);
-        CommitPath(relativePath, authorEmail, authoredAt);
+        CommitPaths([relativePath], authorEmail, authoredAt);
     }
 
-    private void CommitPath(string relativePath, string authorEmail, DateTimeOffset authoredAt)
+    private void CommitPaths(IEnumerable<string> relativePaths, string authorEmail, DateTimeOffset authoredAt)
     {
         using var repository = new Repository(_rootPath);
-        Commands.Stage(repository, relativePath.Replace('\\', '/'));
+        foreach (var relativePath in relativePaths)
+        {
+            Commands.Stage(repository, relativePath.Replace('\\', '/'));
+        }
 
         var signature = new Signature(
             name: authorEmail.Split('@')[0],
             email: authorEmail,
             when: authoredAt);
-        repository.Commit($"Update {relativePath}", signature, signature);
+        repository.Commit("Update files", signature, signature);
     }
 
     private string GetFullPath(string relativePath) =>

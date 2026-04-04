@@ -10,7 +10,8 @@ public sealed class GitHistorySnapshot
     public GitHistorySnapshot(
         string repositoryRootPath,
         string headCommitSha,
-        IReadOnlyDictionary<string, GitFileHistoryArtifact> fileHistoryByAnalysisRelativePath)
+        IReadOnlyDictionary<string, GitFileHistoryArtifact> fileHistoryByAnalysisRelativePath,
+        DateTimeOffset? historyWindowEndUtc = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(repositoryRootPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(headCommitSha);
@@ -18,7 +19,7 @@ public sealed class GitHistorySnapshot
 
         RepositoryRootPath = repositoryRootPath;
         HeadCommitSha = headCommitSha;
-        ContextFingerprint = $"{HeadCommitSha}|git90d-v0";
+        ContextFingerprint = CreateContextFingerprint(HeadCommitSha, historyWindowEndUtc ?? DateTimeOffset.UtcNow);
         _fileHistoryByAnalysisRelativePath = fileHistoryByAnalysisRelativePath;
     }
 
@@ -35,4 +36,10 @@ public sealed class GitHistorySnapshot
         _fileHistoryByAnalysisRelativePath.TryGetValue(
             PathNormalizer.NormalizeRelativePath(analysisRelativePath),
             out artifact!);
+
+    private static string CreateContextFingerprint(string headCommitSha, DateTimeOffset historyWindowEndUtc)
+    {
+        var normalizedWindowEndUtc = historyWindowEndUtc.ToUniversalTime();
+        return $"{headCommitSha}|git90d-v1|{normalizedWindowEndUtc:yyyyMMdd}";
+    }
 }

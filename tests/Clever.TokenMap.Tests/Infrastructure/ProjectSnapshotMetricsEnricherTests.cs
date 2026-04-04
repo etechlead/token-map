@@ -446,7 +446,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     }
 
     [Fact]
-    public async Task EnrichAsync_ComputesRefactorPriorityWithOptionalGitHistoryAndRollsItUp()
+    public async Task EnrichAsync_ComputesRefactorPriorityWithGitBlastRadiusAndZeroHistoryArtifacts()
     {
         await File.WriteAllTextAsync(Path.Combine(_rootPath, "A.cs"), "class A { }");
         await File.WriteAllTextAsync(Path.Combine(_rootPath, "B.cs"), "class B { }");
@@ -472,7 +472,13 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                 "head-a",
                 new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer)
                 {
-                    ["A.cs"] = new(400, 12, 4),
+                    ["A.cs"] = new(
+                        ChurnLines90d: 400,
+                        TouchCount90d: 12,
+                        AuthorCount90d: 4,
+                        UniqueCochangedFileCount90d: 20,
+                        StrongCochangedFileCount90d: 8,
+                        AverageCochangeSetSize90d: 6d),
                 })),
             syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
             [
@@ -490,11 +496,21 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var firstPriority = firstFile.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
         var secondPriority = secondFile.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
         var rootPriority = enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
+        var secondComplexity = secondFile.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0);
+        var secondHotspotPoints = secondFile.ComputedMetrics.TryGetNumber(MetricIds.CallableHotspotPointsV0);
 
         Assert.NotNull(firstPriority);
         Assert.NotNull(secondPriority);
         Assert.NotNull(rootPriority);
+        Assert.NotNull(secondComplexity);
+        Assert.NotNull(secondHotspotPoints);
+
+        var secondBasePriority =
+            (0.80d * secondComplexity.Value) +
+            (0.20d * (100d * secondHotspotPoints.Value / 10d));
+
         Assert.True(firstPriority.Value > secondPriority.Value);
+        Assert.Equal(0.60d * secondBasePriority, secondPriority.Value, precision: 12);
         Assert.Equal(firstPriority.Value + secondPriority.Value, rootPriority.Value, precision: 12);
     }
 
@@ -512,18 +528,79 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             new AlwaysTextDetector(),
             tokenCounter,
             cacheStore: cacheStore,
-            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(_rootPath, "head-a")));
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
+                _rootPath,
+                "head-a",
+                historyWindowEndUtc: new DateTimeOffset(2026, 04, 04, 0, 0, 0, TimeSpan.Zero))));
         var secondEnricher = new ProjectSnapshotMetricsEnricher(
             new AlwaysTextDetector(),
             tokenCounter,
             cacheStore: cacheStore,
-            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(_rootPath, "head-b")));
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
+                _rootPath,
+                "head-a",
+                historyWindowEndUtc: new DateTimeOffset(2026, 04, 05, 0, 0, 0, TimeSpan.Zero))));
 
         await firstEnricher.EnrichAsync(snapshot, CancellationToken.None);
         await firstEnricher.EnrichAsync(snapshot, CancellationToken.None);
         await secondEnricher.EnrichAsync(snapshot, CancellationToken.None);
 
         Assert.Equal(2, tokenCounter.GetSeenContents().Count);
+    }
+
+    [Fact]
+    public void EnrichAsync_UsesV1GitFingerprintForCacheContext()
+    {
+        var gitHistorySnapshot = CreateGitHistorySnapshot(
+            _rootPath,
+            "head-a",
+            historyWindowEndUtc: new DateTimeOffset(2026, 04, 04, 0, 0, 0, TimeSpan.Zero));
+
+        Assert.Contains("|git90d-v1|20260404", gitHistorySnapshot.ContextFingerprint, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task EnrichAsync_ContinuesWhenGitSnapshotIsUnavailable()
+    {
+        await File.WriteAllTextAsync(Path.Combine(_rootPath, "Program.cs"), "class Program { }");
+
+        var scanner = new FileSystemProjectScanner();
+        var snapshot = await scanner.ScanAsync(_rootPath, ScanOptions.Default, progress: null, CancellationToken.None);
+        var syntaxArtifact = new SyntaxSummaryArtifact(
+            LanguageId: "csharp",
+            ParseQuality: SyntaxParseQuality.Full,
+            CodeLineCount: 1,
+            CyclomaticComplexitySum: 7,
+            CyclomaticComplexityMax: 4,
+            MaxNestingDepth: 2,
+            Callables:
+            [
+                new CallableSyntaxFact("Run", CallableKind.Method, new LineRange(1, 1), 2, 3, 1),
+            ]);
+        var enricher = new ProjectSnapshotMetricsEnricher(
+            new HeuristicTextFileDetector(),
+            new RecordingTokenCounter(),
+            gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(null),
+            syntaxAnalyzerRegistry: new ExtensionSyntaxAnalyzerRegistry(
+            [
+                new StaticSyntaxAnalyzer(".cs", syntaxArtifact),
+            ]));
+
+        var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
+        var programNode = Assert.Single(enriched.Root.Children);
+        var priority = programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPointsV0);
+        var complexity = programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0);
+        var hotspotPoints = programNode.ComputedMetrics.TryGetNumber(MetricIds.CallableHotspotPointsV0);
+
+        Assert.NotNull(priority);
+        Assert.NotNull(complexity);
+        Assert.NotNull(hotspotPoints);
+
+        var basePriority =
+            (0.80d * complexity.Value) +
+            (0.20d * (100d * hotspotPoints.Value / 10d));
+
+        Assert.Equal(basePriority, priority.Value, precision: 12);
     }
 
     [Fact]
@@ -725,10 +802,12 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     private static GitHistorySnapshot CreateGitHistorySnapshot(
         string rootPath,
         string headCommitSha,
-        IReadOnlyDictionary<string, GitFileHistoryArtifact>? fileHistoryByAnalysisRelativePath = null) =>
+        IReadOnlyDictionary<string, GitFileHistoryArtifact>? fileHistoryByAnalysisRelativePath = null,
+        DateTimeOffset? historyWindowEndUtc = null) =>
         new(
             rootPath,
             headCommitSha,
             fileHistoryByAnalysisRelativePath ??
-            new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer));
+            new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer),
+            historyWindowEndUtc);
 }

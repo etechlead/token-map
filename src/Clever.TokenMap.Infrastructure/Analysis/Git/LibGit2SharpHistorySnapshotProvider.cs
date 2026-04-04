@@ -57,7 +57,8 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
             var normalizedRepositoryRootPath = _pathNormalizer.NormalizeRootPath(repository.Info.WorkingDirectory);
             var normalizedAnalysisRootRelativePath = PathNormalizer.NormalizeRelativePath(
                 Path.GetRelativePath(normalizedRepositoryRootPath, normalizedAnalysisRootPath));
-            var cutoffUtc = DateTimeOffset.UtcNow.AddDays(-90);
+            var nowUtc = DateTimeOffset.UtcNow;
+            var cutoffUtc = nowUtc.AddDays(-90);
             var accumulatorsByAnalysisRelativePath =
                 new Dictionary<string, FileHistoryAccumulator>(PathComparison.Comparer);
 
@@ -118,8 +119,9 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                     continue;
                 }
 
+                var touchedPaths = churnByPath.Keys.ToArray();
                 var normalizedAuthorEmail = NormalizeAuthorEmail(commit.Author.Email);
-                foreach (var (analysisRelativePath, churn) in churnByPath)
+                foreach (var analysisRelativePath in touchedPaths)
                 {
                     if (!accumulatorsByAnalysisRelativePath.TryGetValue(analysisRelativePath, out var accumulator))
                     {
@@ -127,7 +129,24 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                         accumulatorsByAnalysisRelativePath.Add(analysisRelativePath, accumulator);
                     }
 
+                    var churn = churnByPath[analysisRelativePath];
                     accumulator.AddCommit(churn, normalizedAuthorEmail);
+                }
+
+                for (var firstIndex = 0; firstIndex < touchedPaths.Length; firstIndex++)
+                {
+                    var firstPath = touchedPaths[firstIndex];
+                    var firstAccumulator = accumulatorsByAnalysisRelativePath[firstPath];
+                    firstAccumulator.AddCochangedPeerCount(touchedPaths.Length - 1);
+
+                    for (var secondIndex = firstIndex + 1; secondIndex < touchedPaths.Length; secondIndex++)
+                    {
+                        var secondPath = touchedPaths[secondIndex];
+                        var secondAccumulator = accumulatorsByAnalysisRelativePath[secondPath];
+
+                        firstAccumulator.AddCochangedPartner(secondPath);
+                        secondAccumulator.AddCochangedPartner(firstPath);
+                    }
                 }
             }
 
@@ -139,7 +158,8 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
             return ValueTask.FromResult<GitHistorySnapshot?>(new GitHistorySnapshot(
                 normalizedRepositoryRootPath,
                 headCommit.Sha,
-                fileHistoryByAnalysisRelativePath));
+                fileHistoryByAnalysisRelativePath,
+                nowUtc));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -192,10 +212,13 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
     private sealed class FileHistoryAccumulator
     {
         private readonly HashSet<string> _authorEmails = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, int> _cochangePartnerTouchCounts = new(PathComparison.Comparer);
 
         public int ChurnLines90d { get; private set; }
 
         public int TouchCount90d { get; private set; }
+
+        public int TotalCochangedPeerCount { get; private set; }
 
         public void AddCommit(int churnLines, string authorEmail)
         {
@@ -211,7 +234,31 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
             }
         }
 
+        public void AddCochangedPeerCount(int cochangedPeerCount)
+        {
+            checked
+            {
+                TotalCochangedPeerCount += cochangedPeerCount;
+            }
+        }
+
+        public void AddCochangedPartner(string analysisRelativePath)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(analysisRelativePath);
+
+            _cochangePartnerTouchCounts.TryGetValue(analysisRelativePath, out var existingCount);
+            _cochangePartnerTouchCounts[analysisRelativePath] = existingCount + 1;
+        }
+
         public GitFileHistoryArtifact ToArtifact() =>
-            new(ChurnLines90d, TouchCount90d, _authorEmails.Count);
+            new(
+                ChurnLines90d,
+                TouchCount90d,
+                _authorEmails.Count,
+                _cochangePartnerTouchCounts.Count,
+                _cochangePartnerTouchCounts.Values.Count(count => count >= 2),
+                TouchCount90d == 0
+                    ? 0d
+                    : (double)TotalCochangedPeerCount / TouchCount90d);
     }
 }

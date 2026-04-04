@@ -387,8 +387,11 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         {
             [typeof(TextMetricsArtifact)] = textMetricsArtifact,
         };
-        if (gitHistorySnapshot?.TryGetFileHistory(node.RelativePath, out var gitFileHistoryArtifact) == true)
+        if (gitHistorySnapshot is not null)
         {
+            var gitFileHistoryArtifact = gitHistorySnapshot.TryGetFileHistory(node.RelativePath, out var historyArtifact)
+                ? historyArtifact
+                : GitFileHistoryArtifact.Zero;
             artifacts[typeof(GitFileHistoryArtifact)] = gitFileHistoryArtifact;
         }
 

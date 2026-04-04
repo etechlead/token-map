@@ -45,9 +45,15 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculator : IFileDeri
                 (0.50d * Normalize(gitFileHistory.ChurnLines90d, good: 20d, bad: 400d)) +
                 (0.35d * Normalize(gitFileHistory.TouchCount90d, good: 1d, bad: 12d)) +
                 (0.15d * Normalize(gitFileHistory.AuthorCount90d, good: 1d, bad: 4d)));
+        var blastRadiusPressure =
+            100d * (
+                (0.50d * Normalize(gitFileHistory.StrongCochangedFileCount90d, good: 0d, bad: 8d)) +
+                (0.30d * Normalize(gitFileHistory.UniqueCochangedFileCount90d, good: 0d, bad: 20d)) +
+                (0.20d * Normalize(gitFileHistory.AverageCochangeSetSize90d, good: 0d, bad: 6d)));
         var refactorPriority =
-            (0.75d * basePriority) +
-            (0.25d * changePressure);
+            (0.60d * basePriority) +
+            (0.20d * changePressure) +
+            (0.20d * blastRadiusPressure);
 
         sink.SetValue(MetricIds.RefactorPriorityPointsV0, refactorPriority);
     }
