@@ -165,15 +165,21 @@ public sealed class MainWindowLayoutTests
         var tokensButton = FindTreemapMetricButton(window, MetricIds.Tokens);
         var linesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
         var sizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
+        var complexityButton = FindTreemapMetricButton(window, MetricIds.ComplexityPointsV0);
+        var hotspotsButton = FindTreemapMetricButton(window, MetricIds.CallableHotspotPointsV0);
         var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
 
         Assert.NotNull(tokensButton);
         Assert.NotNull(linesButton);
         Assert.NotNull(sizeButton);
+        Assert.NotNull(complexityButton);
+        Assert.NotNull(hotspotsButton);
         Assert.NotNull(showValuesCheckBox);
         Assert.True(tokensButton.IsChecked);
         Assert.False(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
+        Assert.False(complexityButton.IsChecked);
+        Assert.False(hotspotsButton.IsChecked);
         Assert.True(showValuesCheckBox.IsChecked);
 
         viewModel.Toolbar.SelectedMetric = MetricIds.FileSizeBytes;
@@ -405,7 +411,7 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
-    public void MainWindow_SettingsDrawer_ShowsTreeOnlyMetricsLegend()
+    public void MainWindow_SettingsDrawer_HidesTreeOnlyMetricsLegend_WhenNoTreeOnlyMetricsExist()
     {
         var window = new AppMainWindow
         {
@@ -425,9 +431,9 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(legend);
         Assert.NotNull(divider);
         Assert.NotNull(treeOnlyItems);
-        Assert.True(legend.IsVisible);
-        Assert.True(divider.IsVisible);
-        Assert.True(treeOnlyItems.IsVisible);
+        Assert.False(viewModel.Toolbar.HasTreeOnlyMetricVisibilityOptions);
+        Assert.False(divider.IsVisible);
+        Assert.False(treeOnlyItems.IsVisible);
         Assert.Equal("Tree only", legend.Text);
     }
 

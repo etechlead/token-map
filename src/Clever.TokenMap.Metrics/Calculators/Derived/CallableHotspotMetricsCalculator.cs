@@ -38,8 +38,6 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
         var callables = syntaxSummary.Callables;
         if (callables.Count == 0)
         {
-            sink.SetValue(MetricIds.MaxCallableLines, 0);
-            sink.SetNotApplicable(MetricIds.AverageCallableLines);
             sink.SetValue(MetricIds.LongCallableCount, 0);
             sink.SetValue(MetricIds.HighCyclomaticComplexityCallableCount, 0);
             sink.SetValue(MetricIds.DeepNestingCallableCount, 0);
@@ -64,8 +62,6 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
             (2 * deepNestingCallableCount) +
             longParameterListCount;
 
-        sink.SetValue(MetricIds.MaxCallableLines, callableLineCounts.Max());
-        sink.SetValue(MetricIds.AverageCallableLines, callableLineCounts.Average());
         sink.SetValue(MetricIds.LongCallableCount, longCallableCount);
         sink.SetValue(MetricIds.HighCyclomaticComplexityCallableCount, highCyclomaticComplexityCallableCount);
         sink.SetValue(MetricIds.DeepNestingCallableCount, deepNestingCallableCount);
@@ -75,8 +71,6 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
 
     private static void SetAllNotApplicable(IMetricSink sink)
     {
-        sink.SetNotApplicable(MetricIds.MaxCallableLines);
-        sink.SetNotApplicable(MetricIds.AverageCallableLines);
         sink.SetNotApplicable(MetricIds.LongCallableCount);
         sink.SetNotApplicable(MetricIds.HighCyclomaticComplexityCallableCount);
         sink.SetNotApplicable(MetricIds.DeepNestingCallableCount);

@@ -21,15 +21,6 @@ public sealed class GoSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = GoCallableMetricsWalker.CollectCallables(tree.RootNode);
-        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
     }
-
-    private static bool IsCountedTypeDeclaration(Node node) =>
-        node.Type == "type_spec" &&
-        !HasAliasChild(node) &&
-        !HasAncestor(node, GoCallableMetricsWalker.IsCallable);
-
-    private static bool HasAliasChild(Node node) =>
-        node.Children.Any(child => child.Type == "=");
 }

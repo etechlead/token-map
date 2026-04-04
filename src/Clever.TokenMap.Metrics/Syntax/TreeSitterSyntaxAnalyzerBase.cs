@@ -50,8 +50,7 @@ public abstract class TreeSitterSyntaxAnalyzerBase : ISyntaxAnalyzer
         Node rootNode,
         SyntaxParseQuality parseQuality,
         string sourceText,
-        IReadOnlyList<CallableSyntaxFact> callables,
-        int typeCount = 0)
+        IReadOnlyList<CallableSyntaxFact> callables)
     {
         var commentSpans = SyntaxNodeTraversal.CollectTextSpans(rootNode, IsCommentNode);
         var lineCounts = LineClassifier.Classify(sourceText, commentSpans);
@@ -60,9 +59,6 @@ public abstract class TreeSitterSyntaxAnalyzerBase : ISyntaxAnalyzer
             LanguageId,
             parseQuality,
             CodeLineCount: lineCounts.CodeLineCount,
-            CommentLineCount: lineCounts.CommentLineCount,
-            FunctionCount: callables.Count,
-            TypeCount: typeCount,
             CyclomaticComplexitySum: callables.Sum(callable => callable.CyclomaticComplexity),
             CyclomaticComplexityMax: callables.Count == 0 ? 0 : callables.Max(callable => callable.CyclomaticComplexity),
             MaxNestingDepth: callables.Count == 0 ? 0 : callables.Max(callable => callable.MaxNestingDepth),
@@ -70,37 +66,6 @@ public abstract class TreeSitterSyntaxAnalyzerBase : ISyntaxAnalyzer
     }
 
     protected virtual bool IsCommentNode(Node node) => node.Type == "comment";
-
-    protected static int CountNodes(Node rootNode, Func<Node, bool> predicate)
-    {
-        ArgumentNullException.ThrowIfNull(predicate);
-
-        var count = 0;
-        SyntaxNodeTraversal.Traverse(rootNode, node =>
-        {
-            if (predicate(node))
-            {
-                count++;
-            }
-        });
-
-        return count;
-    }
-
-    protected static bool HasAncestor(Node node, Func<Node, bool> predicate)
-    {
-        ArgumentNullException.ThrowIfNull(predicate);
-
-        for (var current = node.Parent; current is not null && current.Id != IntPtr.Zero; current = current.Parent)
-        {
-            if (predicate(current))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 
     private static SyntaxParseQuality DetermineParseQuality(Node rootNode)
     {

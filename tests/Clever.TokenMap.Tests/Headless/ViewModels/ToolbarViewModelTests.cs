@@ -25,7 +25,7 @@ public sealed class ToolbarViewModelTests
                 MetricIds.Tokens,
                 MetricIds.NonEmptyLines,
                 MetricIds.FileSizeBytes,
-                MetricIds.HighCyclomaticComplexityCallableCount,
+                MetricIds.ComplexityPointsV0,
                 MetricIds.CallableHotspotPointsV0,
             ],
             viewModel.VisibleTreemapMetricOptions.Select(option => option.Definition.Id).ToArray());
@@ -113,7 +113,7 @@ public sealed class ToolbarViewModelTests
         var state = new SettingsState();
         state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
         state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
-        state.SetMetricVisibility(MetricIds.HighCyclomaticComplexityCallableCount, isVisible: false);
+        state.SetMetricVisibility(MetricIds.ComplexityPointsV0, isVisible: false);
         state.SetMetricVisibility(MetricIds.CallableHotspotPointsV0, isVisible: false);
         var viewModel = CreateViewModel(state);
 
@@ -126,44 +126,22 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
-    public void MetricVisibilityOptions_AreSplitBetweenTreemapAndTreeOnlyGroups()
+    public void MetricVisibilityOptions_ContainOnlyProductMetrics()
     {
         var viewModel = CreateViewModel(new SettingsState());
 
-        var funcsOption = Assert.Single(
+        var complexityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.FunctionCount);
-        var totalParamsOption = Assert.Single(
+            option => option.Definition.Id == MetricIds.ComplexityPointsV0);
+        var hotspotsOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.TotalParameterCount);
-        var typeCountOption = Assert.Single(
-            viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.TypeCount);
-        var ccMaxOption = Assert.Single(
-            viewModel.TreeOnlyMetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.CyclomaticComplexityMax);
-        var nestingOption = Assert.Single(
-            viewModel.TreeOnlyMetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.MaxNestingDepth);
+            option => option.Definition.Id == MetricIds.CallableHotspotPointsV0);
 
-        Assert.Equal("Funcs", funcsOption.Label);
-        Assert.Equal("Params", totalParamsOption.Label);
-        Assert.Equal("Types", typeCountOption.Label);
-        Assert.Equal("CC max", ccMaxOption.Label);
-        Assert.Equal("Nest", nestingOption.Label);
-        Assert.DoesNotContain(
-            viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.CyclomaticComplexityMax);
-        Assert.DoesNotContain(
-            viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.MaxNestingDepth);
-        Assert.DoesNotContain(
-            viewModel.TreeOnlyMetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.TotalParameterCount);
-        Assert.DoesNotContain(
-            viewModel.TreeOnlyMetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.TypeCount);
-        Assert.True(viewModel.HasTreeOnlyMetricVisibilityOptions);
+        Assert.Equal("Complexity", complexityOption.Label);
+        Assert.Equal("Hotspots", hotspotsOption.Label);
+        Assert.Equal(5, viewModel.MetricVisibilityOptions.Count);
+        Assert.Empty(viewModel.TreeOnlyMetricVisibilityOptions);
+        Assert.False(viewModel.HasTreeOnlyMetricVisibilityOptions);
     }
 
     [Fact]

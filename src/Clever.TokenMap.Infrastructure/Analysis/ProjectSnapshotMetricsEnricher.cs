@@ -151,7 +151,6 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
 
     private static IFileDerivedMetricCalculator[] CreateDefaultFileDerivedMetricCalculators() =>
     [
-        new RatioDerivedMetricsCalculator(),
         new CallableHotspotMetricsCalculator(),
         new ComplexityPointsV0DerivedMetricsCalculator(),
     ];
@@ -442,20 +441,10 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.Tokens);
         builder.SetNotApplicable(MetricIds.NonEmptyLines);
         builder.SetNotApplicable(MetricIds.CodeLines);
-        builder.SetNotApplicable(MetricIds.CommentLines);
-        builder.SetNotApplicable(MetricIds.FunctionCount);
-        builder.SetNotApplicable(MetricIds.TotalParameterCount);
         builder.SetNotApplicable(MetricIds.MaxParameterCount);
-        builder.SetNotApplicable(MetricIds.TypeCount);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexitySum);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexityMax);
         builder.SetNotApplicable(MetricIds.MaxNestingDepth);
-        builder.SetNotApplicable(MetricIds.AverageParametersPerCallable);
-        builder.SetNotApplicable(MetricIds.AverageCyclomaticComplexityPerCallable);
-        builder.SetNotApplicable(MetricIds.CyclomaticComplexityPerCodeLine);
-        builder.SetNotApplicable(MetricIds.CommentRatio);
-        builder.SetNotApplicable(MetricIds.MaxCallableLines);
-        builder.SetNotApplicable(MetricIds.AverageCallableLines);
         builder.SetNotApplicable(MetricIds.LongCallableCount);
         builder.SetNotApplicable(MetricIds.HighCyclomaticComplexityCallableCount);
         builder.SetNotApplicable(MetricIds.DeepNestingCallableCount);

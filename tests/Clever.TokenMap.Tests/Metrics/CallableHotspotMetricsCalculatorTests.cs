@@ -19,16 +19,11 @@ public sealed class CallableHotspotMetricsCalculatorTests
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 0,
-            CommentLineCount: 0,
-            FunctionCount: 0,
-            TypeCount: 0,
             CyclomaticComplexitySum: 0,
             CyclomaticComplexityMax: 0,
             MaxNestingDepth: 0,
             Callables: []));
 
-        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.AverageCallableLines).Status);
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
@@ -43,9 +38,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 3,
-            CommentLineCount: 0,
-            FunctionCount: 1,
-            TypeCount: 1,
             CyclomaticComplexitySum: 1,
             CyclomaticComplexityMax: 1,
             MaxNestingDepth: 0,
@@ -54,8 +46,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
                 new CallableSyntaxFact("Run", CallableKind.Method, new LineRange(10, 12), 2, 1, 0),
             ]));
 
-        Assert.Equal(3, result.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(3d, result.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
@@ -70,9 +60,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 35,
-            CommentLineCount: 0,
-            FunctionCount: 1,
-            TypeCount: 1,
             CyclomaticComplexitySum: 12,
             CyclomaticComplexityMax: 12,
             MaxNestingDepth: 5,
@@ -81,8 +68,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
                 new CallableSyntaxFact("Run", CallableKind.Method, new LineRange(20, 50), 5, 12, 5),
             ]));
 
-        Assert.Equal(31, result.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(31d, result.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
@@ -97,9 +82,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 70,
-            CommentLineCount: 0,
-            FunctionCount: 4,
-            TypeCount: 1,
             CyclomaticComplexitySum: 25,
             CyclomaticComplexityMax: 11,
             MaxNestingDepth: 5,
@@ -111,8 +93,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
                 new CallableSyntaxFact("D", CallableKind.Method, new LineRange(57, 88), 7, 14, 4),
             ]));
 
-        Assert.Equal(32, result.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(21d, result.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
@@ -125,8 +105,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
     {
         var result = await ComputeAsync(SyntaxSummaryArtifact.Unsupported("csharp"));
 
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.MaxCallableLines).Status);
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.AverageCallableLines).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.LongCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.HighCyclomaticComplexityCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.DeepNestingCallableCount).Status);
@@ -202,7 +180,6 @@ public sealed class CallableHotspotMetricsCalculatorTests
         };
         var result = await ComputeAsync(summary);
 
-        Assert.True(result.TryGetRoundedInt32(MetricIds.MaxCallableLines) >= 7);
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(3, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));

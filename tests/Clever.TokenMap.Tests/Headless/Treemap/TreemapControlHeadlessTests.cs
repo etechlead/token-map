@@ -71,7 +71,7 @@ public sealed class TreemapControlHeadlessTests
         var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
         var control = CreateControl(
             CreateSnapshotWithExtendedMetrics(),
-            visibleMetricIds: [MetricIds.FileSizeBytes, MetricIds.Tokens]);
+            visibleMetricIds: [MetricIds.FileSizeBytes, MetricIds.Tokens, MetricIds.NonEmptyLines]);
         var window = CreateHostWindow(control);
 
         window.Show();
@@ -83,10 +83,11 @@ public sealed class TreemapControlHeadlessTests
 
         Assert.Equal(2, lines.Count(line => line == "---"));
         Assert.True(Array.IndexOf(lines, "File size: 128 B") < Array.IndexOf(lines, "Tokens: 42"));
-        Assert.True(Array.IndexOf(lines, "Tokens: 42") < Array.IndexOf(lines, $"Share: {expectedShareText}"));
+        Assert.True(Array.IndexOf(lines, "Tokens: 42") < Array.IndexOf(lines, "Non-empty lines: 11"));
+        Assert.True(Array.IndexOf(lines, "Non-empty lines: 11") < Array.IndexOf(lines, $"Share: {expectedShareText}"));
         Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
-        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Comment lines: 7"));
-        Assert.True(Array.IndexOf(lines, "Comment lines: 7") < Array.IndexOf(lines, "Callable count: 3"));
+        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Complexity: 17.50"));
+        Assert.True(Array.IndexOf(lines, "Complexity: 17.50") < Array.IndexOf(lines, "Hotspots: 4.00"));
         Assert.True(Array.LastIndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
         Assert.True(Array.IndexOf(lines, "Type: File") < Array.IndexOf(lines, "Ext: .cs"));
         Assert.DoesNotContain("Files in subtree: 1", lines);
@@ -654,7 +655,7 @@ public sealed class TreemapControlHeadlessTests
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
-                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
                 Children =
                 {
                     new ProjectNode
@@ -665,7 +666,7 @@ public sealed class TreemapControlHeadlessTests
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
                         Summary = MetricTestData.CreateFileSummary(),
-                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
                     },
                 },
             },
@@ -676,15 +677,15 @@ public sealed class TreemapControlHeadlessTests
         long tokens,
         int nonEmptyLines,
         long fileSizeBytes,
-        int commentLines,
-        int functionCount)
+        double complexity,
+        int hotspots)
     {
         return MetricSet.From(
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.CommentLines, MetricValue.From(commentLines)),
-            (MetricIds.FunctionCount, MetricValue.From(functionCount)));
+            (MetricIds.ComplexityPointsV0, MetricValue.From(complexity)),
+            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)

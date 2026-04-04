@@ -168,6 +168,11 @@ public sealed class MainWindowTreemapIntegrationTests
     {
         var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
         var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshotWithExtendedMetrics());
+        var complexityOption = Assert.Single(
+            viewModel.Toolbar.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.ComplexityPointsV0);
+        complexityOption.IsVisible = false;
+        window.UpdateLayout();
 
         var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
         Assert.NotNull(control);
@@ -177,20 +182,16 @@ public sealed class MainWindowTreemapIntegrationTests
 
         var initialLines = GetTooltipLines(control);
         Assert.True(Array.IndexOf(initialLines, $"Share: {expectedShareText}") < Array.IndexOf(initialLines, "---"));
-        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Comment lines: 7"));
+        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Complexity: 17.50"));
 
-        var commentLinesOption = Assert.Single(
-            viewModel.Toolbar.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.CommentLines);
-
-        commentLinesOption.IsVisible = true;
+        complexityOption.IsVisible = true;
         window.UpdateLayout();
 
-        Assert.Contains(MetricIds.CommentLines, control.VisibleMetricIds);
+        Assert.Contains(MetricIds.ComplexityPointsV0, control.VisibleMetricIds);
 
         var updatedLines = GetTooltipLines(control);
-        Assert.True(Array.IndexOf(updatedLines, "Comment lines: 7") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
-        Assert.Equal(2, updatedLines.Count(line => line == "---"));
+        Assert.True(Array.IndexOf(updatedLines, "Complexity: 17.50") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
+        Assert.Equal(1, updatedLines.Count(line => line == "---"));
     }
 
     private static async Task<(AppMainWindow Window, MainWindowViewModel ViewModel)> CreateOpenWindowAsync(ProjectSnapshot snapshot)
@@ -255,7 +256,7 @@ public sealed class MainWindowTreemapIntegrationTests
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
-                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
                 Children =
                 {
                     new ProjectNode
@@ -266,7 +267,7 @@ public sealed class MainWindowTreemapIntegrationTests
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
                         Summary = MetricTestData.CreateFileSummary(),
-                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, commentLines: 7, functionCount: 3),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
                     },
                 },
             },
@@ -277,15 +278,15 @@ public sealed class MainWindowTreemapIntegrationTests
         long tokens,
         int nonEmptyLines,
         long fileSizeBytes,
-        int commentLines,
-        int functionCount)
+        double complexity,
+        int hotspots)
     {
         return MetricSet.From(
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.CommentLines, MetricValue.From(commentLines)),
-            (MetricIds.FunctionCount, MetricValue.From(functionCount)));
+            (MetricIds.ComplexityPointsV0, MetricValue.From(complexity)),
+            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)

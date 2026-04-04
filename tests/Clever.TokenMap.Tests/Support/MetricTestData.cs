@@ -17,14 +17,16 @@ internal static class MetricTestData
             (MetricIds.NonEmptyLines, MetricValue.NotApplicable()),
             (MetricIds.CodeLines, MetricValue.NotApplicable()),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.CommentLines, MetricValue.NotApplicable()),
-            (MetricIds.FunctionCount, MetricValue.NotApplicable()),
-            (MetricIds.TotalParameterCount, MetricValue.NotApplicable()),
             (MetricIds.MaxParameterCount, MetricValue.NotApplicable()),
-            (MetricIds.TypeCount, MetricValue.NotApplicable()),
             (MetricIds.CyclomaticComplexitySum, MetricValue.NotApplicable()),
             (MetricIds.CyclomaticComplexityMax, MetricValue.NotApplicable()),
-            (MetricIds.MaxNestingDepth, MetricValue.NotApplicable()));
+            (MetricIds.MaxNestingDepth, MetricValue.NotApplicable()),
+            (MetricIds.LongCallableCount, MetricValue.NotApplicable()),
+            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.NotApplicable()),
+            (MetricIds.DeepNestingCallableCount, MetricValue.NotApplicable()),
+            (MetricIds.LongParameterListCount, MetricValue.NotApplicable()),
+            (MetricIds.CallableHotspotPointsV0, MetricValue.NotApplicable()),
+            (MetricIds.ComplexityPointsV0, MetricValue.NotApplicable()));
 
     internal static NodeSummary CreateFileSummary() =>
         new(

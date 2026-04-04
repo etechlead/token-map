@@ -20,7 +20,6 @@ public sealed class PythonSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(2, summary.CommentLineCount);
         Assert.Equal(2, summary.CodeLineCount);
     }
 
@@ -62,8 +61,6 @@ public sealed class PythonSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(5, summary.FunctionCount);
-        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(14, summary.CyclomaticComplexitySum);
         Assert.Equal(5, summary.CyclomaticComplexityMax);
         Assert.Equal(2, summary.MaxNestingDepth);
@@ -151,7 +148,6 @@ public sealed class PythonSyntaxAnalyzerTests
 
         var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
 
-        Assert.Equal(0, summary.CommentLineCount);
         Assert.Equal(3, summary.CodeLineCount);
     }
 
@@ -169,8 +165,6 @@ public sealed class PythonSyntaxAnalyzerTests
             """;
 
         var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
-
-        Assert.Equal(2, summary.FunctionCount);
 
         var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
         Assert.Equal(1, callables[0].CyclomaticComplexity);
@@ -220,21 +214,4 @@ public sealed class PythonSyntaxAnalyzerTests
         Assert.Equal(1, callable.MaxNestingDepth);
     }
 
-    [Fact]
-    public async Task AnalyzeAsync_CountsTopLevelClassesButNotLocalClasses()
-    {
-        const string sourceText = """
-            class TopLevel:
-                pass
-
-            def top():
-                class Local:
-                    pass
-                return Local()
-            """;
-
-        var summary = await _analyzer.AnalyzeAsync("sample.py", sourceText, CancellationToken.None);
-
-        Assert.Equal(1, summary.TypeCount);
-    }
 }

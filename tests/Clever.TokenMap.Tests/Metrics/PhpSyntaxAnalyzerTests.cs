@@ -24,7 +24,6 @@ public sealed class PhpSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.php", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(4, summary.CommentLineCount);
         Assert.Equal(4, summary.CodeLineCount);
     }
 
@@ -80,8 +79,6 @@ public sealed class PhpSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.php", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(6, summary.FunctionCount);
-        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(15, summary.CyclomaticComplexitySum);
         Assert.Equal(5, summary.CyclomaticComplexityMax);
         Assert.Equal(2, summary.MaxNestingDepth);
@@ -189,8 +186,6 @@ public sealed class PhpSyntaxAnalyzerTests
 
         var summary = await _analyzer.AnalyzeAsync("sample.php", sourceText, CancellationToken.None);
 
-        Assert.Equal(2, summary.FunctionCount);
-
         var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
         Assert.Equal(1, callables[0].CyclomaticComplexity);
         Assert.Equal(0, callables[0].MaxNestingDepth);
@@ -261,24 +256,4 @@ public sealed class PhpSyntaxAnalyzerTests
         Assert.Equal(SyntaxParseQuality.Recovered, summary.ParseQuality);
     }
 
-    [Fact]
-    public async Task AnalyzeAsync_CountsSupportedNamedTypesButNotTraitsOrLocalClasses()
-    {
-        const string sourceText = """
-            <?php
-
-            class Box {}
-            interface Shape {}
-            enum Kind { case Box; }
-            trait SharedBox {}
-
-            function top(): void {
-                class LocalBox {}
-            }
-            """;
-
-        var summary = await _analyzer.AnalyzeAsync("sample.php", sourceText, CancellationToken.None);
-
-        Assert.Equal(3, summary.TypeCount);
-    }
 }

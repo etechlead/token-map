@@ -32,20 +32,7 @@ public sealed class MetricSetRollupService
                 continue;
             }
 
-            switch (definition.DirectoryRollup)
-            {
-                case MetricRollupKind.Sum:
-                    builder.SetValue(definition.Id, values.Sum());
-                    break;
-                case MetricRollupKind.Max:
-                    builder.SetValue(definition.Id, values.Max());
-                    break;
-                case MetricRollupKind.None:
-                    builder.SetNotApplicable(definition.Id);
-                    break;
-                default:
-                    throw new InvalidOperationException($"Unsupported rollup kind '{definition.DirectoryRollup}'.");
-            }
+            builder.SetValue(definition.Id, values.Sum());
         }
 
         return builder.Build();

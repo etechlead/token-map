@@ -21,14 +21,9 @@ public sealed class RustSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = RustCallableMetricsWalker.CollectCallables(tree.RootNode);
-        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
     }
 
     protected override bool IsCommentNode(Node node) =>
         node.Type is "line_comment" or "block_comment";
-
-    private static bool IsCountedTypeDeclaration(Node node) =>
-        node.Type is "struct_item" or "enum_item" or "trait_item" or "union_item" &&
-        !HasAncestor(node, RustCallableMetricsWalker.IsCallable);
 }

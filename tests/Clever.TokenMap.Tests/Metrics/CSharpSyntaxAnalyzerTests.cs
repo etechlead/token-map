@@ -27,7 +27,6 @@ public sealed class CSharpSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(4, summary.CommentLineCount);
         Assert.Equal(7, summary.CodeLineCount);
     }
 
@@ -79,8 +78,6 @@ public sealed class CSharpSyntaxAnalyzerTests
         var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
 
         Assert.Equal(SyntaxParseQuality.Full, summary.ParseQuality);
-        Assert.Equal(5, summary.FunctionCount);
-        Assert.Equal(1, summary.TypeCount);
         Assert.Equal(13, summary.CyclomaticComplexitySum);
         Assert.Equal(6, summary.CyclomaticComplexityMax);
         Assert.Equal(1, summary.MaxNestingDepth);
@@ -172,8 +169,6 @@ public sealed class CSharpSyntaxAnalyzerTests
 
         var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
 
-        Assert.Equal(2, summary.FunctionCount);
-
         var callables = summary.Callables.OrderBy(callable => callable.Lines.StartLine1Based).ToArray();
         Assert.Equal(1, callables[0].CyclomaticComplexity);
         Assert.Equal(0, callables[0].MaxNestingDepth);
@@ -240,21 +235,4 @@ public sealed class CSharpSyntaxAnalyzerTests
         Assert.Equal(1, callable.MaxNestingDepth);
     }
 
-    [Fact]
-    public async Task AnalyzeAsync_CountsNamedTypesButNotDelegates()
-    {
-        const string sourceText = """
-            delegate int Transformer(int value);
-
-            class C {}
-            struct S {}
-            interface I {}
-            enum E { One }
-            record R(int Value);
-            """;
-
-        var summary = await _analyzer.AnalyzeAsync("sample.cs", sourceText, CancellationToken.None);
-
-        Assert.Equal(5, summary.TypeCount);
-    }
 }

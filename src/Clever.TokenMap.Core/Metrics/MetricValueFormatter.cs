@@ -33,26 +33,14 @@ public static class MetricValueFormatter
             MetricUnit.Count => compact
                 ? FormatCompactCount(value.Number, effectiveCulture)
                 : FormatFullCount(value.Number, effectiveCulture),
-            MetricUnit.AverageCount => compact
-                ? FormatAverageCount(value.Number, effectiveCulture)
-                : FormatAverageCount(value.Number, effectiveCulture),
-            MetricUnit.Ratio => compact
-                ? value.Number.ToString("N2", effectiveCulture)
-                : value.Number.ToString("N2", effectiveCulture),
             MetricUnit.Score => compact
                 ? value.Number.ToString("N2", effectiveCulture)
                 : value.Number.ToString("N2", effectiveCulture),
-            MetricUnit.Percent => compact
-                ? FormatPercent(value.Number, effectiveCulture)
-                : FormatPercent(value.Number, effectiveCulture),
             _ => compact
                 ? FormatCompactCount(value.Number, effectiveCulture)
                 : FormatFullCount(value.Number, effectiveCulture),
         };
     }
-
-    private static string FormatPercent(double value, CultureInfo culture) =>
-        $"{(value * 100d).ToString("N1", culture)}%";
 
     private static string FormatFullCount(double value, CultureInfo culture) =>
         checked((long)Math.Round(value, MidpointRounding.AwayFromZero)).ToString("N0", culture);
@@ -92,9 +80,6 @@ public static class MetricValueFormatter
 
         return roundedValue.ToString("N0", culture);
     }
-
-    private static string FormatAverageCount(double value, CultureInfo culture) =>
-        value.ToString("N2", culture);
 
     private static string FormatFullSize(double value, CultureInfo culture)
     {

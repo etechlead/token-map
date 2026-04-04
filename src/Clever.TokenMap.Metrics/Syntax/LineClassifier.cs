@@ -21,7 +21,6 @@ internal static class LineClassifier
         var lineRanges = BuildLineRanges(sourceText);
 
         var codeLineCount = 0;
-        var commentLineCount = 0;
         foreach (var lineRange in lineRanges)
         {
             var overlappingCommentSpans = GetOverlappingSpans(lineRange, normalizedCommentSpans);
@@ -36,20 +35,14 @@ internal static class LineClassifier
             }
 
             var mergedSpans = MergeSpans(overlappingCommentSpans);
-            var hasCommentContent = mergedSpans.Any(span => ContainsNonWhitespace(sourceText, span.StartIndex, span.EndIndex));
             var hasCodeContent = ContainsNonWhitespaceOutside(sourceText, lineRange, mergedSpans);
             if (hasCodeContent)
             {
                 codeLineCount++;
             }
-
-            if (hasCommentContent && !hasCodeContent)
-            {
-                commentLineCount++;
-            }
         }
 
-        return new LineClassificationResult(codeLineCount, commentLineCount);
+        return new LineClassificationResult(codeLineCount);
     }
 
     private static List<TextSpan> BuildLineRanges(string sourceText)

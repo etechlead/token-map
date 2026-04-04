@@ -21,11 +21,6 @@ public sealed class PythonSyntaxAnalyzer : TreeSitterSyntaxAnalyzerBase
     {
         cancellationToken.ThrowIfCancellationRequested();
         var callables = PythonCallableMetricsWalker.CollectCallables(tree.RootNode);
-        var typeCount = CountNodes(tree.RootNode, IsCountedTypeDeclaration);
-        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables, typeCount);
+        return CreateStandardSummary(tree.RootNode, parseQuality, sourceText, callables);
     }
-
-    private static bool IsCountedTypeDeclaration(Node node) =>
-        node.Type == "class_definition" &&
-        !HasAncestor(node, PythonCallableMetricsWalker.IsCallable);
 }

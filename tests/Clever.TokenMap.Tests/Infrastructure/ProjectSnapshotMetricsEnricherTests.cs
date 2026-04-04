@@ -82,9 +82,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 1,
-            CommentLineCount: 2,
-            FunctionCount: 3,
-            TypeCount: 2,
             CyclomaticComplexitySum: 7,
             CyclomaticComplexityMax: 4,
             MaxNestingDepth: 2,
@@ -106,46 +103,17 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var programNode = Assert.Single(enriched.Root.Children);
 
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
-        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
-        Assert.Equal(3, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
-        Assert.Equal(8, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
         Assert.Equal(5, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
-        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
         Assert.Equal(7, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
         Assert.Equal(4, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
         Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
-        Assert.Equal(8d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.AverageParametersPerCallable)!.Value, precision: 12);
-        Assert.Equal(7d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.AverageCyclomaticComplexityPerCallable)!.Value, precision: 12);
-        Assert.Equal(7d, programNode.ComputedMetrics.TryGetNumber(MetricIds.CyclomaticComplexityPerCodeLine)!.Value, precision: 12);
-        Assert.Equal(2d / 3d, programNode.ComputedMetrics.TryGetNumber(MetricIds.CommentRatio)!.Value, precision: 12);
-        Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(1d, programNode.ComputedMetrics.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(0, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(0, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(0, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
         Assert.Equal(15.682186234817814, programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
-        Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CommentLines));
-        Assert.Equal(3, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.FunctionCount));
-        Assert.Equal(8, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
-        Assert.Equal(5, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
-        Assert.Equal(7, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexitySum));
-        Assert.Equal(4, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CyclomaticComplexityMax));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxNestingDepth));
-        Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(0, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
-        Assert.Equal(0, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
-        Assert.Equal(0, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
-        Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageParametersPerCallable).Status);
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageCyclomaticComplexityPerCallable).Status);
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityPerCodeLine).Status);
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CommentRatio).Status);
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageCallableLines).Status);
         Assert.Equal(15.682186234817814, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
     }
 
@@ -171,11 +139,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens));
         Assert.NotNull(programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.NonEmptyLines));
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CodeLines).Status);
-        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CommentLines).Status);
-        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.FunctionCount).Status);
-        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.TotalParameterCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.MaxParameterCount).Status);
-        Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.TypeCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexitySum).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityMax).Status);
         Assert.Equal(MetricStatus.NotApplicable, programNode.ComputedMetrics.GetOrDefault(MetricIds.MaxNestingDepth).Status);
@@ -297,9 +261,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             LanguageId: "csharp",
             ParseQuality: SyntaxParseQuality.Full,
             CodeLineCount: 1,
-            CommentLineCount: 0,
-            FunctionCount: 1,
-            TypeCount: 1,
             CyclomaticComplexitySum: 1,
             CyclomaticComplexityMax: 1,
             MaxNestingDepth: 0,
@@ -322,9 +283,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
         Assert.True(programNode.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) > 0);
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CodeLines));
-        Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TotalParameterCount));
         Assert.Equal(2, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxParameterCount));
-        Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.TypeCount));
     }
 
     [Fact]
@@ -342,15 +301,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var imageNode = Assert.Single(enriched.Root.Children);
 
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CodeLines).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TotalParameterCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.MaxParameterCount).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.TypeCount).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.AverageParametersPerCallable).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.AverageCyclomaticComplexityPerCallable).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CyclomaticComplexityPerCodeLine).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.CommentRatio).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.MaxCallableLines).Status);
-        Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.AverageCallableLines).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.LongCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.HighCyclomaticComplexityCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, imageNode.ComputedMetrics.GetOrDefault(MetricIds.DeepNestingCallableCount).Status);
@@ -380,9 +331,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                         LanguageId: "csharp",
                         ParseQuality: SyntaxParseQuality.Full,
                         CodeLineCount: 12,
-                        CommentLineCount: 0,
-                        FunctionCount: 2,
-                        TypeCount: 1,
                         CyclomaticComplexitySum: 13,
                         CyclomaticComplexityMax: 10,
                         MaxNestingDepth: 4,
@@ -395,9 +343,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                         LanguageId: "csharp",
                         ParseQuality: SyntaxParseQuality.Full,
                         CodeLineCount: 14,
-                        CommentLineCount: 0,
-                        FunctionCount: 2,
-                        TypeCount: 1,
                         CyclomaticComplexitySum: 16,
                         CyclomaticComplexityMax: 12,
                         MaxNestingDepth: 5,
@@ -415,16 +360,12 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var fileB = Assert.Single(srcNode.Children, node => node.Name == "B.cs");
         var binaryNode = Assert.Single(srcNode.Children, node => node.Name == "image.bin");
 
-        Assert.Equal(31, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(18d, fileA.ComputedMetrics.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(1, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(1, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(1, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(0, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(7, fileA.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
 
-        Assert.Equal(36, fileB.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(23d, fileB.ComputedMetrics.TryGetNumber(MetricIds.AverageCallableLines)!.Value, precision: 12);
         Assert.Equal(1, fileB.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
         Assert.Equal(1, fileB.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(1, fileB.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
@@ -434,21 +375,9 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(SkippedReason.Binary, binaryNode.SkippedReason);
         Assert.Equal(MetricStatus.NotApplicable, binaryNode.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPointsV0).Status);
 
-        Assert.Equal(36, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
-        Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
-        Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
-        Assert.Equal(2, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(16, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
-        Assert.Equal(MetricStatus.NotApplicable, srcNode.ComputedMetrics.GetOrDefault(MetricIds.AverageCallableLines).Status);
 
-        Assert.Equal(36, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.MaxCallableLines));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongCallableCount));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
-        Assert.Equal(2, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(16, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
-        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.AverageCallableLines).Status);
     }
 
     [Fact]
@@ -470,9 +399,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                         LanguageId: "csharp",
                         ParseQuality: SyntaxParseQuality.Full,
                         CodeLineCount: 50,
-                        CommentLineCount: 10,
-                        FunctionCount: 2,
-                        TypeCount: 1,
                         CyclomaticComplexitySum: 10,
                         CyclomaticComplexityMax: 6,
                         MaxNestingDepth: 3,
@@ -485,9 +411,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
                         LanguageId: "csharp",
                         ParseQuality: SyntaxParseQuality.Full,
                         CodeLineCount: 200,
-                        CommentLineCount: 20,
-                        FunctionCount: 4,
-                        TypeCount: 1,
                         CyclomaticComplexitySum: 25,
                         CyclomaticComplexityMax: 10,
                         MaxNestingDepth: 4,
