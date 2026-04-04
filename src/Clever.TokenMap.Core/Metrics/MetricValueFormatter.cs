@@ -33,6 +33,9 @@ public static class MetricValueFormatter
             MetricUnit.Count => compact
                 ? FormatCompactCount(value.Number, effectiveCulture)
                 : FormatFullCount(value.Number, effectiveCulture),
+            MetricUnit.AverageCount => compact
+                ? FormatAverageCount(value.Number, effectiveCulture)
+                : FormatAverageCount(value.Number, effectiveCulture),
             MetricUnit.Ratio => compact
                 ? value.Number.ToString("N2", effectiveCulture)
                 : value.Number.ToString("N2", effectiveCulture),
@@ -89,6 +92,9 @@ public static class MetricValueFormatter
 
         return roundedValue.ToString("N0", culture);
     }
+
+    private static string FormatAverageCount(double value, CultureInfo culture) =>
+        value.ToString("N2", culture);
 
     private static string FormatFullSize(double value, CultureInfo culture)
     {

@@ -18,5 +18,12 @@ public static class MetricIds
     public static readonly MetricId AverageCyclomaticComplexityPerCallable = new("avg_cc_per_callable");
     public static readonly MetricId CyclomaticComplexityPerCodeLine = new("cc_per_code_line");
     public static readonly MetricId CommentRatio = new("comment_ratio");
+    public static readonly MetricId MaxCallableLines = new("max_callable_lines");
+    public static readonly MetricId AverageCallableLines = new("avg_callable_lines");
+    public static readonly MetricId LongCallableCount = new("long_callable_count");
+    public static readonly MetricId HighCyclomaticComplexityCallableCount = new("high_cc_callable_count");
+    public static readonly MetricId DeepNestingCallableCount = new("deep_nesting_callable_count");
+    public static readonly MetricId LongParameterListCount = new("long_parameter_list_count");
+    public static readonly MetricId CallableHotspotPointsV0 = new("callable_hotspot_points_v0");
     public static readonly MetricId ComplexityPointsV0 = new("complexity_points_v0");
 }

@@ -152,6 +152,7 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
     private static IFileDerivedMetricCalculator[] CreateDefaultFileDerivedMetricCalculators() =>
     [
         new RatioDerivedMetricsCalculator(),
+        new CallableHotspotMetricsCalculator(),
         new ComplexityPointsV0DerivedMetricsCalculator(),
     ];
 
@@ -453,6 +454,13 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.AverageCyclomaticComplexityPerCallable);
         builder.SetNotApplicable(MetricIds.CyclomaticComplexityPerCodeLine);
         builder.SetNotApplicable(MetricIds.CommentRatio);
+        builder.SetNotApplicable(MetricIds.MaxCallableLines);
+        builder.SetNotApplicable(MetricIds.AverageCallableLines);
+        builder.SetNotApplicable(MetricIds.LongCallableCount);
+        builder.SetNotApplicable(MetricIds.HighCyclomaticComplexityCallableCount);
+        builder.SetNotApplicable(MetricIds.DeepNestingCallableCount);
+        builder.SetNotApplicable(MetricIds.LongParameterListCount);
+        builder.SetNotApplicable(MetricIds.CallableHotspotPointsV0);
         builder.SetNotApplicable(MetricIds.ComplexityPointsV0);
         return builder.Build();
     }

@@ -39,4 +39,15 @@ public sealed class MetricValueFormatterTests
 
         Assert.Equal(expected, result);
     }
+
+    [Theory]
+    [InlineData(3, "3.00")]
+    [InlineData(18.5, "18.50")]
+    [InlineData(1200.25, "1,200.25")]
+    public void Format_AverageCountMetric_PreservesFractionalPrecision(double value, string expected)
+    {
+        var result = MetricValueFormatter.Format(MetricIds.AverageCallableLines, MetricValue.From(value), CultureInfo.InvariantCulture);
+
+        Assert.Equal(expected, result);
+    }
 }

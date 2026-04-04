@@ -20,11 +20,15 @@ public sealed class ToolbarViewModelTests
         var viewModel = CreateViewModel(new SettingsState());
 
         Assert.Equal(MetricIds.Tokens, viewModel.SelectedMetric);
-        Assert.Collection(
-            viewModel.VisibleTreemapMetricOptions,
-            option => Assert.Equal(MetricIds.Tokens, option.Definition.Id),
-            option => Assert.Equal(MetricIds.NonEmptyLines, option.Definition.Id),
-            option => Assert.Equal(MetricIds.FileSizeBytes, option.Definition.Id));
+        Assert.Equal(
+            [
+                MetricIds.Tokens,
+                MetricIds.NonEmptyLines,
+                MetricIds.FileSizeBytes,
+                MetricIds.HighCyclomaticComplexityCallableCount,
+                MetricIds.CallableHotspotPointsV0,
+            ],
+            viewModel.VisibleTreemapMetricOptions.Select(option => option.Definition.Id).ToArray());
         Assert.Equal(
             MetricIds.Tokens,
             Assert.Single(viewModel.VisibleTreemapMetricOptions, option => option.IsSelected).Definition.Id);
@@ -106,6 +110,8 @@ public sealed class ToolbarViewModelTests
         var state = new SettingsState();
         state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
         state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
+        state.SetMetricVisibility(MetricIds.HighCyclomaticComplexityCallableCount, isVisible: false);
+        state.SetMetricVisibility(MetricIds.CallableHotspotPointsV0, isVisible: false);
         var viewModel = CreateViewModel(state);
 
         var tokensOption = Assert.Single(
