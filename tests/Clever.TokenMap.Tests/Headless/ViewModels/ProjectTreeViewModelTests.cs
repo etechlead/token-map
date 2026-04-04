@@ -197,15 +197,38 @@ public sealed class ProjectTreeViewModelTests
     }
 
     [Fact]
+    public void ToggleNodeCommand_KeepsSelectedDirectoryInstanceStable()
+    {
+        var viewModel = new ProjectTreeViewModel();
+        viewModel.LoadRoot(CreateNestedSnapshot().Root);
+
+        var directoryNode = Assert.Single(viewModel.VisibleNodes, node => node.Node.Id == "src");
+        viewModel.SelectNodeById("src");
+        var selectedBeforeToggle = viewModel.SelectedNode;
+
+        viewModel.ToggleNodeCommand.Execute(directoryNode);
+
+        Assert.Same(selectedBeforeToggle, viewModel.SelectedNode);
+        Assert.Contains(viewModel.VisibleNodes, node => node.Node.Id == "src/Program.cs");
+
+        viewModel.ToggleNodeCommand.Execute(directoryNode);
+
+        Assert.Same(selectedBeforeToggle, viewModel.SelectedNode);
+        Assert.DoesNotContain(viewModel.VisibleNodes, node => node.Node.Id == "src/Program.cs");
+    }
+
+    [Fact]
     public void MoveSelectionRight_ExpandsSelectedDirectory()
     {
         var viewModel = new ProjectTreeViewModel();
         viewModel.LoadRoot(CreateNestedSnapshot().Root);
         viewModel.SelectNodeById("src");
+        var selectedBeforeExpand = viewModel.SelectedNode;
 
         var changed = viewModel.MoveSelectionRight();
 
         Assert.True(changed);
+        Assert.Same(selectedBeforeExpand, viewModel.SelectedNode);
         Assert.Equal("src", viewModel.SelectedNode?.Node.Id);
         Assert.Contains(viewModel.VisibleNodes, node => node.RelativePath == "src/Program.cs");
     }

@@ -96,6 +96,45 @@ public sealed class ProjectTreePaneViewInteractionTests
     }
 
     [AvaloniaFact]
+    public async Task ProjectTreePaneView_DoubleClickOnDirectory_DoesNotJumpViewport()
+    {
+        var snapshot = CreateProjectTreeViewportSnapshot();
+        var viewModel = CreateMainWindowViewModel();
+        viewModel.Tree.LoadRoot(snapshot.Root);
+
+        var window = new Window
+        {
+            Width = 900,
+            Height = 420,
+            Content = new ProjectTreePaneView
+            {
+                DataContext = viewModel,
+            },
+        };
+
+        await ShowAndRenderAsync(window);
+
+        var treeTable = FindNamedDescendant<DataGrid>(window, "ProjectTreeTable");
+        Assert.NotNull(treeTable);
+
+        viewModel.Tree.SelectNodeById("Dir-001");
+        await WaitForUiAsync(window);
+
+        var directoryRow = FindProjectTreeRow(window, "Dir-005");
+        Assert.NotNull(directoryRow);
+        var rowTopBefore = GetTopRelativeTo(directoryRow, treeTable);
+        Assert.InRange(rowTopBefore, 0d, treeTable.Bounds.Height - directoryRow.Bounds.Height);
+
+        await DoubleClickAsync(window, directoryRow);
+
+        directoryRow = FindProjectTreeRow(window, "Dir-005");
+        Assert.NotNull(directoryRow);
+
+        var rowTopAfter = GetTopRelativeTo(directoryRow, treeTable);
+        Assert.Equal(rowTopBefore, rowTopAfter, precision: 3);
+    }
+
+    [AvaloniaFact]
     public async Task ProjectTreePaneView_DoubleClickOnFile_OpensPreview()
     {
         var viewModel = CreateMainWindowViewModel();
@@ -251,5 +290,63 @@ public sealed class ProjectTreePaneViewInteractionTests
         window.GetVisualDescendants()
             .OfType<DataGridRow>()
             .FirstOrDefault(row => row.DataContext is ProjectTreeNodeViewModel node && node.Node.Id == nodeId);
+
+    private static double GetTopRelativeTo(Control control, Visual relativeTo)
+    {
+        var point = control.TranslatePoint(new Point(0, 0), relativeTo);
+        return point?.Y ?? throw new InvalidOperationException("Unable to calculate relative Y position.");
+    }
+
+    private static ProjectSnapshot CreateProjectTreeViewportSnapshot()
+    {
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = GetTestFolderPath("Demo"),
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 61, descendantDirectoryCount: 1),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 100, nonEmptyLines: 100, fileSizeBytes: 100),
+        };
+
+        for (var index = 0; index < 60; index++)
+        {
+            var directoryNode = new ProjectNode
+            {
+                Id = $"Dir-{index:D3}",
+                Name = $"Dir-{index:D3}",
+                FullPath = Path.Combine(GetTestFolderPath("Demo"), $"Dir-{index:D3}"),
+                RelativePath = $"Dir-{index:D3}",
+                Kind = ProjectNodeKind.Directory,
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: index == 5 ? 1 : 0, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 100, nonEmptyLines: 100, fileSizeBytes: 100),
+            };
+
+            if (index == 5)
+            {
+                directoryNode.Children.Add(new ProjectNode
+                {
+                    Id = "Dir-005/Child.cs",
+                    Name = "Child.cs",
+                    FullPath = Path.Combine(GetTestFolderPath("Demo"), "Dir-005", "Child.cs"),
+                    RelativePath = "Dir-005/Child.cs",
+                    Kind = ProjectNodeKind.File,
+                    Summary = MetricTestData.CreateFileSummary(),
+                    ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 10, nonEmptyLines: 10, fileSizeBytes: 10),
+                });
+            }
+
+            root.Children.Add(directoryNode);
+        }
+
+        return new ProjectSnapshot
+        {
+            RootPath = GetTestFolderPath("Demo"),
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = root,
+        };
+    }
 
 }

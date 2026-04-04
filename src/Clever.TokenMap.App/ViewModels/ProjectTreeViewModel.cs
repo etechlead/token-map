@@ -274,10 +274,13 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
         if (!isExpanded && IsSelectedNodeInsideCollapsedBranch(node.Node.Id))
         {
             _selectedNodeId = node.Node.Id;
+            if (!ReferenceEquals(SelectedNode, node))
+            {
+                SelectedNode = node;
+            }
         }
 
-        RebuildVisibleNodes();
-        RestoreSelectedNodeAfterRebuild();
+        ApplyVisibleNodeExpansion(node, isExpanded);
 
         return true;
     }
@@ -322,6 +325,64 @@ public partial class ProjectTreeViewModel : ViewModelBase, IProjectTreeWorkspace
         {
             AddVisibleNodeAndChildren(child, node, depth + 1);
         }
+    }
+
+    private void ApplyVisibleNodeExpansion(ProjectTreeNodeViewModel node, bool isExpanded)
+    {
+        node.IsExpanded = isExpanded;
+
+        var nodeIndex = VisibleNodes.IndexOf(node);
+        if (nodeIndex < 0)
+        {
+            RebuildVisibleNodes();
+            RestoreSelectedNodeAfterRebuild();
+            return;
+        }
+
+        if (isExpanded)
+        {
+            var insertIndex = nodeIndex + 1;
+            foreach (var child in GetSortedChildren(node.Node))
+            {
+                insertIndex = InsertVisibleNodeAndChildren(child, node.Node, node.Depth + 1, insertIndex);
+            }
+
+            return;
+        }
+
+        var removeIndex = nodeIndex + 1;
+        while (removeIndex < VisibleNodes.Count &&
+               VisibleNodes[removeIndex].Depth > node.Depth)
+        {
+            _visibleNodesById.Remove(VisibleNodes[removeIndex].Node.Id);
+            VisibleNodes.RemoveAt(removeIndex);
+        }
+    }
+
+    private int InsertVisibleNodeAndChildren(ProjectNode node, ProjectNode? parentNode, int depth, int insertIndex)
+    {
+        var viewModel = new ProjectTreeNodeViewModel(
+            node,
+            depth,
+            isExpanded: _expandedNodeIds.Contains(node.Id),
+            parentNode: parentNode,
+            parentShareMetric: _shareMetric);
+
+        VisibleNodes.Insert(insertIndex, viewModel);
+        _visibleNodesById[node.Id] = viewModel;
+        insertIndex++;
+
+        if (!_expandedNodeIds.Contains(node.Id))
+        {
+            return insertIndex;
+        }
+
+        foreach (var child in GetSortedChildren(node))
+        {
+            insertIndex = InsertVisibleNodeAndChildren(child, node, depth + 1, insertIndex);
+        }
+
+        return insertIndex;
     }
 
     private IEnumerable<ProjectNode> GetSortedChildren(ProjectNode node)

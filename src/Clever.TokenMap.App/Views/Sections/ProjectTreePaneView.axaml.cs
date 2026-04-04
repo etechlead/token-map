@@ -7,11 +7,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Metrics;
@@ -206,7 +208,10 @@ public partial class ProjectTreePaneView : UserControl
             return;
         }
 
-        ScheduleScrollSelectedProjectTreeRowIntoView(grid);
+        if (!_projectTreeSelectionChangeTriggeredByPointer)
+        {
+            ScheduleScrollSelectedProjectTreeRowIntoView(grid);
+        }
 
         if (ReferenceEquals(viewModel.Tree.SelectedNode, selectedNode))
         {
@@ -554,18 +559,68 @@ public partial class ProjectTreePaneView : UserControl
     private static void ScheduleScrollSelectedProjectTreeRowIntoView(DataGrid grid)
     {
         Dispatcher.UIThread.Post(
-            () => ScrollSelectedProjectTreeRowIntoView(grid),
+            () => ScrollSelectedProjectTreeRowIntoViewIfNeeded(grid),
             DispatcherPriority.Loaded);
     }
 
-    private static void ScrollSelectedProjectTreeRowIntoView(DataGrid grid)
+    private static void ScrollSelectedProjectTreeRowIntoViewIfNeeded(DataGrid grid)
     {
         if (grid.SelectedItem is null || TopLevel.GetTopLevel(grid) is null)
         {
             return;
         }
 
+        if (TryFindSelectedProjectTreeRow(grid, out var selectedRow) &&
+            IsProjectTreeRowFullyVisible(grid, selectedRow))
+        {
+            return;
+        }
+
         grid.ScrollIntoView(grid.SelectedItem, null);
+    }
+
+    private static bool TryFindSelectedProjectTreeRow(DataGrid grid, out DataGridRow selectedRow)
+    {
+        foreach (var row in grid.GetVisualDescendants().OfType<DataGridRow>())
+        {
+            if (ReferenceEquals(row.DataContext, grid.SelectedItem))
+            {
+                selectedRow = row;
+                return true;
+            }
+        }
+
+        selectedRow = null!;
+        return false;
+    }
+
+    private static bool IsProjectTreeRowFullyVisible(DataGrid grid, DataGridRow row)
+    {
+        var topLeft = row.TranslatePoint(new Point(0, 0), grid);
+        var bottomLeft = row.TranslatePoint(new Point(0, row.Bounds.Height), grid);
+        if (topLeft is null || bottomLeft is null)
+        {
+            return false;
+        }
+
+        const double tolerance = 0.5d;
+        var visibleTop = GetProjectTreeViewportTop(grid);
+        var visibleBottom = grid.Bounds.Height - tolerance;
+
+        return topLeft.Value.Y >= visibleTop &&
+               bottomLeft.Value.Y <= visibleBottom;
+    }
+
+    private static double GetProjectTreeViewportTop(DataGrid grid)
+    {
+        var columnHeaders = grid.GetVisualDescendants().OfType<DataGridColumnHeadersPresenter>().FirstOrDefault();
+        if (columnHeaders is null)
+        {
+            return 0d;
+        }
+
+        var headerBottom = columnHeaders.TranslatePoint(new Point(0, columnHeaders.Bounds.Height), grid);
+        return headerBottom?.Y ?? 0d;
     }
 
     private void UpdateProjectTreeTableHeaderState(
