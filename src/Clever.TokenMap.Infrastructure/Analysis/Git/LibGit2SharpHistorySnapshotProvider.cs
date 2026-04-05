@@ -30,7 +30,7 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var normalizedAnalysisRootPath = _pathNormalizer.NormalizeRootPath(analysisRootPath);
+        var normalizedAnalysisRootPath = NormalizeExistingDirectoryPath(analysisRootPath);
         try
         {
             var discoveredRepositoryPath = Repository.Discover(normalizedAnalysisRootPath);
@@ -54,12 +54,8 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                 return ValueTask.FromResult<GitHistorySnapshot?>(null);
             }
 
-            // Repository.Discover preserves the caller's path spelling, which keeps
-            // relative-path mapping stable when the analysis root is reached through
-            // a symlinked alias such as /var -> /private/var on macOS.
-            var discoveredRepositoryRootPath = Path.GetFullPath(
-                Path.Combine(discoveredRepositoryPath, ".."));
-            var normalizedRepositoryRootPath = _pathNormalizer.NormalizeRootPath(discoveredRepositoryRootPath);
+            var discoveredRepositoryRootPath = Path.GetFullPath(Path.Combine(discoveredRepositoryPath, ".."));
+            var normalizedRepositoryRootPath = NormalizeExistingDirectoryPath(discoveredRepositoryRootPath);
             var normalizedAnalysisRootRelativePath = PathNormalizer.NormalizeRelativePath(
                 Path.GetRelativePath(normalizedRepositoryRootPath, normalizedAnalysisRootPath));
             var nowUtc = DateTimeOffset.UtcNow;
@@ -184,6 +180,73 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
         string.IsNullOrWhiteSpace(authorEmail)
             ? string.Empty
             : authorEmail.Trim();
+
+    private string NormalizeExistingDirectoryPath(string path)
+    {
+        var normalizedPath = _pathNormalizer.NormalizeRootPath(path);
+        var resolvedPath = ResolveExistingPathAliases(normalizedPath);
+        return _pathNormalizer.NormalizeRootPath(resolvedPath);
+    }
+
+    private static string ResolveExistingPathAliases(string fullPath)
+    {
+        var normalizedFullPath = Path.GetFullPath(fullPath);
+        var rootPath = Path.GetPathRoot(normalizedFullPath);
+        if (string.IsNullOrEmpty(rootPath))
+        {
+            return normalizedFullPath;
+        }
+
+        var relativePath = normalizedFullPath[rootPath.Length..];
+        if (string.IsNullOrEmpty(relativePath))
+        {
+            return rootPath;
+        }
+
+        var currentPath = rootPath;
+        var pathSegments = relativePath
+            .Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar)
+            .Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var pathSegment in pathSegments)
+        {
+            var candidatePath = Path.Combine(currentPath, pathSegment);
+            if (TryResolveDirectoryAlias(candidatePath, out var resolvedPath))
+            {
+                currentPath = resolvedPath;
+                continue;
+            }
+
+            currentPath = candidatePath;
+        }
+
+        return currentPath;
+    }
+
+    private static bool TryResolveDirectoryAlias(string path, out string resolvedPath)
+    {
+        resolvedPath = string.Empty;
+
+        if (!Directory.Exists(path))
+        {
+            return false;
+        }
+
+        var directoryInfo = new DirectoryInfo(path);
+        if (string.IsNullOrWhiteSpace(directoryInfo.LinkTarget))
+        {
+            return false;
+        }
+
+        var resolvedTarget = directoryInfo.ResolveLinkTarget(returnFinalTarget: true);
+        if (resolvedTarget is null)
+        {
+            return false;
+        }
+
+        resolvedPath = resolvedTarget.FullName;
+        return true;
+    }
 
     private static bool TryMapToAnalysisRelativePath(
         string repositoryRelativePath,
