@@ -1,23 +1,28 @@
 # TokenMap
 
-TokenMap is a desktop app for exploring where a codebase gets heavy.
-Open a local folder and inspect the same project as both a tree and a treemap, measured by tokens, non-empty lines, or file size.
+TokenMap is a desktop app for quickly finding the parts of a local codebase that are large, complex, hotspot-heavy, or likely to be worth refactoring first.
 
 <img src="docs/readme/screenshot.png" alt="TokenMap main window" width="838">
 
 ## Why TokenMap?
 
-- See which folders and files actually dominate a repository instead of guessing from file count alone.
-- Compare token-heavy areas before feeding code to LLM workflows.
-- Spot hotspots before refactors, cleanup, or architecture discussions.
+- See which folders and files actually dominate a repository.
+- Find complexity and hotspot signals before refactors, cleanup, or architecture work.
+- Estimate which parts of a codebase will cost the most tokens in LLM workflows.
+
+## Metrics
+
+- Basic: Tokens, non-empty lines, file size.
+- Derived: Complexity, Hotspots, Refactor Priority.
+- Syntax-aware metrics currently cover C#, TypeScript, JavaScript, Python, Go, Java, PHP, and Rust.
 
 ## How It Works
 
 - TokenMap scans a local folder into one snapshot.
 - `.gitignore`, global excludes, and folder excludes decide what gets in.
 - Only included files are measured and shown.
-- Text files get local token counts, non-empty line counts, and byte size.
-- Folder weight is aggregated from descendants.
+- Metrics are computed locally, and local git history can add extra signals to Refactor Priority.
+- Fully offline: no code is uploaded or sent to external services.
 
 > [!NOTE]
 > Token counts are computed locally with the `o200k_base` tokenizer via `Microsoft.ML.Tokenizers`.
