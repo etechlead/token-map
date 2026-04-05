@@ -27,3 +27,16 @@ dotnet run --project tools/Clever.TokenMap.VisualHarness -- compare --left .arti
 ```
 
 - Capture artifacts land under `.artifacts/visual-harness/`, compare artifacts under `.artifacts/visual-compare/`.
+
+## README Screenshot
+
+- Location: `scripts/capture-readme-screenshot.ps1`
+- Purpose: capture the current main window through `Visual Harness` directly at the `README` screenshot resolution so the docs asset can be refreshed without manual image editing.
+- Use it when you need to refresh `docs/readme/screenshot.png` for releases, documentation updates, or visual checks against the repo's current state.
+
+```powershell
+powershell -File scripts/capture-readme-screenshot.ps1
+```
+
+- By default the script captures the current repo root, writes raw harness artifacts to `.artifacts/visual-harness/readme/`, and updates `docs/readme/screenshot.png`.
+- If `docs/readme/screenshot.png` already exists, its current pixel size is reused automatically as the harness window size so the capture stays in the same native resolution.
