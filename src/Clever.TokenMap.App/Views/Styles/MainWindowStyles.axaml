@@ -740,7 +740,7 @@
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
     <Style Selector="Border.file-preview-modal">
-        <Setter Property="MaxWidth" Value="1200" />
+        <Setter Property="MaxWidth" Value="1400" />
         <Setter Property="Padding" Value="16" />
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -751,6 +751,25 @@
     </Style>
     <Style Selector="Border.file-preview-status-panel">
         <Setter Property="MinHeight" Value="320" />
+    </Style>
+    <Style Selector="Border.file-preview-explainability-pane">
+        <Setter Property="MinWidth" Value="280" />
+    </Style>
+    <Style Selector="Border.file-preview-explainability-card">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Margin" Value="0,0,0,12" />
+    </Style>
+    <Style Selector="TextBlock.file-preview-explainability-note">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
+    </Style>
+    <Style Selector="TextBlock.file-preview-explainability-value">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+    </Style>
+    <Style Selector="TextBlock.file-preview-explainability-contribution">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
     <Style Selector="AvaloniaEdit|TextEditor">
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />

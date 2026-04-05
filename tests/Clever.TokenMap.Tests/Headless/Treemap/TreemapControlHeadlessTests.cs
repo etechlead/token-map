@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -684,8 +684,8 @@ public sealed class TreemapControlHeadlessTests
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.ComplexityPointsV0, MetricValue.From(complexity)),
-            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)));
+            (MetricIds.ComplexityPoints, MetricValue.From(complexity)),
+            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspots)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)
@@ -695,3 +695,4 @@ public sealed class TreemapControlHeadlessTests
         return tooltipText.Split(Environment.NewLine, StringSplitOptions.None);
     }
 }
+

@@ -4,5 +4,4 @@ public enum MetricStatus
 {
     Ok = 0,
     NotApplicable = 1,
-    Failed = 2,
 }

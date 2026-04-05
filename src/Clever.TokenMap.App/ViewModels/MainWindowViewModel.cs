@@ -34,6 +34,9 @@ public partial class MainWindowViewModel : ViewModelBase
     [NotifyPropertyChangedFor(nameof(IsShareSnapshotOpen))]
     private ShareSnapshotViewModel? shareSnapshot;
 
+    [ObservableProperty]
+    private FilePreviewExplainabilityViewModel? filePreviewExplainability;
+
     public MainWindowViewModel(
         MainWindowWorkspacePresenter workspacePresenter,
         AboutViewModel about,
@@ -72,6 +75,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _workspacePresenter.PropertyChanged += WorkspacePresenterOnPropertyChanged;
         FilePreview.PropertyChanged += FilePreviewOnPropertyChanged;
+        FilePreviewExplainability = CreateFilePreviewExplainability();
     }
 
     public string WindowTitle => _workspacePresenter.WindowTitle;
@@ -265,6 +269,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     private void FilePreviewOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(FilePreviewState.Node) ||
+            e.PropertyName == nameof(FilePreviewState.IsOpen))
+        {
+            FilePreviewExplainability = CreateFilePreviewExplainability();
+        }
+
         if (e.PropertyName != nameof(FilePreviewState.IsOpen))
         {
             return;
@@ -273,6 +283,9 @@ public partial class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsFilePreviewOpen));
         _closeFilePreviewCommand.NotifyCanExecuteChanged();
     }
+
+    private FilePreviewExplainabilityViewModel? CreateFilePreviewExplainability() =>
+        FilePreviewExplainabilityViewModel.Create(FilePreview.Node);
 
     private ShareSnapshotViewModel? CreateShareSnapshotFromCurrentState(ShareSnapshotViewModel? previousState)
     {

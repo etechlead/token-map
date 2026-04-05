@@ -1,4 +1,4 @@
-using Clever.TokenMap.Core.Analysis.Syntax;
+﻿using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators.Derived;
@@ -28,7 +28,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
-        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
     }
 
     [Fact]
@@ -50,7 +50,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
-        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
     }
 
     [Fact]
@@ -72,7 +72,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
-        Assert.Equal(8, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
+        Assert.Equal(8, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
-        Assert.Equal(16, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
+        Assert.Equal(16, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.HighCyclomaticComplexityCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.DeepNestingCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.LongParameterListCount).Status);
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.CallableHotspotPointsV0).Status);
+        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
     }
 
     [Theory]
@@ -182,7 +182,7 @@ public sealed class CallableHotspotMetricsCalculatorTests
 
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
-        Assert.Equal(3, result.TryGetRoundedInt32(MetricIds.CallableHotspotPointsV0));
+        Assert.Equal(3, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
     }
 
     private async Task<MetricSet> ComputeAsync(SyntaxSummaryArtifact? syntaxSummary)
@@ -210,3 +210,4 @@ public sealed class CallableHotspotMetricsCalculatorTests
         }
     }
 }
+

@@ -50,6 +50,42 @@ public sealed class FilePreviewModalTests
     }
 
     [AvaloniaFact]
+    public async Task MainWindow_FilePreviewModal_ShowsExplainabilityPaneBesideEditor()
+    {
+        const string previewContent = "class Program { }";
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(snapshot),
+            filePreviewContentReader: new FixedPreviewReader(new FilePreviewContentResult(FilePreviewReadStatus.Success, previewContent)));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.PreviewNodeAsync(file);
+        window.UpdateLayout();
+
+        var pane = FindNamedDescendant<Control>(window, "FilePreviewExplainabilityPane");
+        var splitter = FindNamedDescendant<GridSplitter>(window, "FilePreviewExplainabilitySplitter");
+        var sections = FindNamedDescendant<ItemsControl>(window, "FilePreviewExplainabilitySectionsItemsControl");
+        var editor = FindNamedDescendant<TextEditor>(window, "FilePreviewEditor");
+
+        Assert.NotNull(pane);
+        Assert.NotNull(splitter);
+        Assert.NotNull(sections);
+        Assert.NotNull(editor);
+        Assert.True(pane.IsVisible);
+        Assert.True(splitter.IsVisible);
+        Assert.True(editor.IsVisible);
+        Assert.Contains(
+            sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => text == "Complexity");
+        Assert.Contains(
+            sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => text == "Refactor Priority");
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_FilePreviewModal_UsesContextMenuActionLabels()
     {
         var snapshot = CreateSnapshot();

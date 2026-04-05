@@ -8,22 +8,17 @@ public sealed class GitHistorySnapshot
     private readonly IReadOnlyDictionary<string, GitFileHistoryArtifact> _fileHistoryByAnalysisRelativePath;
 
     public GitHistorySnapshot(
-        string repositoryRootPath,
         string headCommitSha,
         IReadOnlyDictionary<string, GitFileHistoryArtifact> fileHistoryByAnalysisRelativePath,
         DateTimeOffset? historyWindowEndUtc = null)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(repositoryRootPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(headCommitSha);
         ArgumentNullException.ThrowIfNull(fileHistoryByAnalysisRelativePath);
 
-        RepositoryRootPath = repositoryRootPath;
         HeadCommitSha = headCommitSha;
         ContextFingerprint = CreateContextFingerprint(HeadCommitSha, historyWindowEndUtc ?? DateTimeOffset.UtcNow);
         _fileHistoryByAnalysisRelativePath = fileHistoryByAnalysisRelativePath;
     }
-
-    public string RepositoryRootPath { get; }
 
     public string HeadCommitSha { get; }
 

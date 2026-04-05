@@ -5,8 +5,8 @@
              x:Class="Clever.TokenMap.App.Views.FilePreviewModalView"
              x:DataType="vm:MainWindowViewModel">
     <Border Classes="panel file-preview-modal"
-            Width="1100"
-            MaxWidth="1100"
+            Width="1360"
+            MaxWidth="1400"
             MinHeight="520">
         <Grid RowDefinitions="Auto,*,Auto"
               RowSpacing="14">
@@ -33,35 +33,106 @@
                            Text="{Binding FilePreview.DisplayPath}" />
             </Grid>
 
-            <Grid Grid.Row="1">
-                <Border Name="FilePreviewStatusPanel"
-                        Classes="toolbar-group file-preview-status-panel"
-                        Padding="20"
-                        IsVisible="{Binding FilePreview.ShowStatusPanel}">
-                    <StackPanel HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                MaxWidth="520"
-                                Spacing="8">
-                        <TextBlock Name="FilePreviewStatusTitleText"
-                                   Classes="panel-title"
-                                   HorizontalAlignment="Center"
-                                   Text="{Binding FilePreview.StatusTitle}" />
-                        <TextBlock Name="FilePreviewStatusMessageText"
-                                   Classes="panel-body"
-                                   TextAlignment="Center"
-                                   Text="{Binding FilePreview.StatusMessage}" />
-                    </StackPanel>
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="340,8,*"
+                  ColumnSpacing="16">
+                <Border Name="FilePreviewExplainabilityPane"
+                        Classes="toolbar-group file-preview-explainability-pane"
+                        Padding="16"
+                        IsVisible="{Binding FilePreview.IsPathActionsEnabled}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="14">
+                            <TextBlock Name="FilePreviewExplainabilityTitleText"
+                                       Classes="panel-title"
+                                       Text="Explainability" />
+                            <ItemsControl Name="FilePreviewExplainabilitySectionsItemsControl"
+                                          ItemsSource="{Binding FilePreviewExplainability.Sections}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MetricExplainabilitySectionViewModel">
+                                        <Border Classes="toolbar-group file-preview-explainability-card"
+                                                Padding="12">
+                                            <StackPanel Spacing="8">
+                                                <Grid ColumnDefinitions="*,Auto"
+                                                      ColumnSpacing="12">
+                                                    <TextBlock Classes="panel-title"
+                                                               Text="{Binding Title}" />
+                                                    <TextBlock Classes="panel-title"
+                                                               HorizontalAlignment="Right"
+                                                               Text="{Binding ScoreText}" />
+                                                </Grid>
+                                                <TextBlock Classes="panel-body"
+                                                           Text="{Binding Summary}"
+                                                           TextWrapping="Wrap" />
+                                                <TextBlock Classes="panel-body file-preview-explainability-note"
+                                                           IsVisible="{Binding HasNote}"
+                                                           Text="{Binding Note}"
+                                                           TextWrapping="Wrap" />
+                                                <ItemsControl ItemsSource="{Binding Contributors}"
+                                                              IsVisible="{Binding HasContributors}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:MetricExplainabilityContributorViewModel">
+                                                            <Grid ColumnDefinitions="*,Auto,Auto"
+                                                                  ColumnSpacing="8">
+                                                                <TextBlock Classes="panel-body"
+                                                                           Text="{Binding Label}"
+                                                                           TextWrapping="Wrap" />
+                                                                <TextBlock Grid.Column="1"
+                                                                           Classes="panel-body file-preview-explainability-value"
+                                                                           HorizontalAlignment="Right"
+                                                                           Text="{Binding ValueText}" />
+                                                                <TextBlock Grid.Column="2"
+                                                                           Classes="panel-body file-preview-explainability-contribution"
+                                                                           HorizontalAlignment="Right"
+                                                                           Text="{Binding ContributionText}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
                 </Border>
 
-                <AvaloniaEdit:TextEditor Name="FilePreviewEditor"
-                                         Background="{DynamicResource TokenMapSurfaceBrush}"
-                                         Foreground="{DynamicResource TokenMapTextBrush}"
-                                         FontFamily="Cascadia Mono, Consolas, monospace"
-                                         HorizontalScrollBarVisibility="Auto"
-                                         IsReadOnly="True"
-                                         ShowLineNumbers="True"
-                                         VerticalScrollBarVisibility="Auto"
-                                         IsVisible="{Binding FilePreview.ShowEditor}" />
+                <GridSplitter Name="FilePreviewExplainabilitySplitter"
+                              Grid.Column="1"
+                              ResizeDirection="Columns"
+                              Background="{DynamicResource TokenMapDividerBrush}" />
+
+                <Grid Grid.Column="2">
+                    <Border Name="FilePreviewStatusPanel"
+                            Classes="toolbar-group file-preview-status-panel"
+                            Padding="20"
+                            IsVisible="{Binding FilePreview.ShowStatusPanel}">
+                        <StackPanel HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="520"
+                                    Spacing="8">
+                            <TextBlock Name="FilePreviewStatusTitleText"
+                                       Classes="panel-title"
+                                       HorizontalAlignment="Center"
+                                       Text="{Binding FilePreview.StatusTitle}" />
+                            <TextBlock Name="FilePreviewStatusMessageText"
+                                       Classes="panel-body"
+                                       TextAlignment="Center"
+                                       Text="{Binding FilePreview.StatusMessage}" />
+                        </StackPanel>
+                    </Border>
+
+                    <AvaloniaEdit:TextEditor Name="FilePreviewEditor"
+                                             Background="{DynamicResource TokenMapSurfaceBrush}"
+                                             Foreground="{DynamicResource TokenMapTextBrush}"
+                                             FontFamily="Cascadia Mono, Consolas, monospace"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             IsReadOnly="True"
+                                             ShowLineNumbers="True"
+                                             VerticalScrollBarVisibility="Auto"
+                                             IsVisible="{Binding FilePreview.ShowEditor}" />
+                </Grid>
             </Grid>
 
             <Grid Grid.Row="2"

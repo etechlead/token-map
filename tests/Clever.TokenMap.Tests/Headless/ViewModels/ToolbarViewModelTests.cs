@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,9 +25,9 @@ public sealed class ToolbarViewModelTests
                 MetricIds.Tokens,
                 MetricIds.NonEmptyLines,
                 MetricIds.FileSizeBytes,
-                MetricIds.ComplexityPointsV0,
-                MetricIds.CallableHotspotPointsV0,
-                MetricIds.RefactorPriorityPointsV0,
+                MetricIds.ComplexityPoints,
+                MetricIds.CallableHotspotPoints,
+                MetricIds.RefactorPriorityPoints,
             ],
             viewModel.VisibleTreemapMetricOptions.Select(option => option.Definition.Id).ToArray());
         Assert.Equal(
@@ -114,9 +114,9 @@ public sealed class ToolbarViewModelTests
         var state = new SettingsState();
         state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
         state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
-        state.SetMetricVisibility(MetricIds.ComplexityPointsV0, isVisible: false);
-        state.SetMetricVisibility(MetricIds.CallableHotspotPointsV0, isVisible: false);
-        state.SetMetricVisibility(MetricIds.RefactorPriorityPointsV0, isVisible: false);
+        state.SetMetricVisibility(MetricIds.ComplexityPoints, isVisible: false);
+        state.SetMetricVisibility(MetricIds.CallableHotspotPoints, isVisible: false);
+        state.SetMetricVisibility(MetricIds.RefactorPriorityPoints, isVisible: false);
         var viewModel = CreateViewModel(state);
 
         var tokensOption = Assert.Single(
@@ -134,13 +134,13 @@ public sealed class ToolbarViewModelTests
 
         var complexityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.ComplexityPointsV0);
+            option => option.Definition.Id == MetricIds.ComplexityPoints);
         var hotspotsOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.CallableHotspotPointsV0);
+            option => option.Definition.Id == MetricIds.CallableHotspotPoints);
         var priorityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.RefactorPriorityPointsV0);
+            option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
 
         Assert.Equal("Complexity", complexityOption.Label);
         Assert.Equal("Hotspots", hotspotsOption.Label);
@@ -303,3 +303,4 @@ public sealed class ToolbarViewModelTests
         }
     }
 }
+

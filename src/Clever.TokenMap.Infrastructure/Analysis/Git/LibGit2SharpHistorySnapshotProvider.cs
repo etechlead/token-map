@@ -156,7 +156,6 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                 PathComparison.Comparer);
 
             return ValueTask.FromResult<GitHistorySnapshot?>(new GitHistorySnapshot(
-                normalizedRepositoryRootPath,
                 headCommit.Sha,
                 fileHistoryByAnalysisRelativePath,
                 nowUtc));

@@ -1,12 +1,12 @@
-using Clever.TokenMap.Core.Metrics;
+﻿using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators.Derived;
 
 namespace Clever.TokenMap.Tests.Metrics;
 
-public sealed class ComplexityPointsV0DerivedMetricsCalculatorTests
+public sealed class ComplexityPointsDerivedMetricsCalculatorTests
 {
-    private readonly ComplexityPointsV0DerivedMetricsCalculator _calculator = new();
+    private readonly ComplexityPointsDerivedMetricsCalculator _calculator = new();
 
     [Fact]
     public async Task ComputeAsync_ComputesCompositeComplexityPoints()
@@ -27,7 +27,7 @@ public sealed class ComplexityPointsV0DerivedMetricsCalculatorTests
 
         var result = builder.Build();
 
-        Assert.Equal(47.190668980142661, result.TryGetNumber(MetricIds.ComplexityPointsV0)!.Value, precision: 12);
+        Assert.Equal(47.190668980142661, result.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -46,7 +46,7 @@ public sealed class ComplexityPointsV0DerivedMetricsCalculatorTests
 
         var result = builder.Build();
 
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.ComplexityPointsV0).Status);
+        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.ComplexityPoints).Status);
     }
 
     private sealed class StubFileMetricContext : IFileMetricContext
@@ -58,3 +58,4 @@ public sealed class ComplexityPointsV0DerivedMetricsCalculatorTests
             ValueTask.FromResult<TArtifact?>(null);
     }
 }
+

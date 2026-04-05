@@ -1,3 +1,4 @@
+using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Preview;
@@ -78,6 +79,47 @@ public sealed class FilePreviewViewModelTests
         await viewModel.PreviewNodeAsync(directory);
 
         Assert.False(viewModel.IsFilePreviewOpen);
+    }
+
+    [Fact]
+    public async Task PreviewNodeAsync_BuildsExplainabilitySectionsFromComputedMetrics()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(snapshot),
+            filePreviewContentReader: new PreviewReaderByPath([
+                new KeyValuePair<string, FilePreviewContentResult>(file.FullPath, new FilePreviewContentResult(FilePreviewReadStatus.Success, "preview"))
+            ]));
+
+        await viewModel.PreviewNodeAsync(file);
+
+        var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
+        Assert.Equal(
+            ["Complexity", "Hotspots", "Refactor Priority"],
+            explainability.Sections.Select(section => section.Title).ToArray());
+        Assert.Contains(
+            explainability.Sections[0].Contributors,
+            contributor => contributor.Label == "Cyclomatic complexity sum");
+        Assert.True(explainability.Sections[2].HasContributors);
+        Assert.False(explainability.Sections[2].HasNote);
+    }
+
+    [Fact]
+    public async Task PreviewNodeAsync_NotesWhenRefactorPriorityLacksGitContext()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: false);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(snapshot),
+            filePreviewContentReader: new PreviewReaderByPath([
+                new KeyValuePair<string, FilePreviewContentResult>(file.FullPath, new FilePreviewContentResult(FilePreviewReadStatus.Success, "preview"))
+            ]));
+
+        await viewModel.PreviewNodeAsync(file);
+
+        var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
+        Assert.True(explainability.Sections[2].HasNote);
     }
 
     private static ProjectSnapshot CreateTwoFileSnapshot()

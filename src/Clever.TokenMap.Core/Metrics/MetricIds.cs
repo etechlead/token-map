@@ -14,7 +14,15 @@ public static class MetricIds
     public static readonly MetricId HighCyclomaticComplexityCallableCount = new("high_cc_callable_count");
     public static readonly MetricId DeepNestingCallableCount = new("deep_nesting_callable_count");
     public static readonly MetricId LongParameterListCount = new("long_parameter_list_count");
-    public static readonly MetricId CallableHotspotPointsV0 = new("callable_hotspot_points_v0");
-    public static readonly MetricId ComplexityPointsV0 = new("complexity_points_v0");
-    public static readonly MetricId RefactorPriorityPointsV0 = new("refactor_priority_points_v0");
+    public static readonly MetricId CallableHotspotPoints = new("callable_hotspot_points");
+    public static readonly MetricId ComplexityPoints = new("complexity_points");
+    public static readonly MetricId RefactorPriorityPoints = new("refactor_priority_points");
+
+    // Internal operands for explainability and git-aware product metrics.
+    public static readonly MetricId ChurnLines90d = new("churn_lines_90d");
+    public static readonly MetricId TouchCount90d = new("touch_count_90d");
+    public static readonly MetricId AuthorCount90d = new("author_count_90d");
+    public static readonly MetricId UniqueCochangedFileCount90d = new("unique_cochanged_file_count_90d");
+    public static readonly MetricId StrongCochangedFileCount90d = new("strong_cochanged_file_count_90d");
+    public static readonly MetricId AverageCochangeSetSize90d = new("avg_cochange_set_size_90d");
 }

@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
@@ -190,7 +190,7 @@ public sealed class MainWindowTreemapIntegrationTests
         var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshotWithExtendedMetrics());
         var complexityOption = Assert.Single(
             viewModel.Toolbar.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.ComplexityPointsV0);
+            option => option.Definition.Id == MetricIds.ComplexityPoints);
         complexityOption.IsVisible = false;
         window.UpdateLayout();
 
@@ -207,7 +207,7 @@ public sealed class MainWindowTreemapIntegrationTests
         complexityOption.IsVisible = true;
         window.UpdateLayout();
 
-        Assert.Contains(MetricIds.ComplexityPointsV0, control.VisibleMetricIds);
+        Assert.Contains(MetricIds.ComplexityPoints, control.VisibleMetricIds);
 
         var updatedLines = GetTooltipLines(control);
         Assert.True(Array.IndexOf(updatedLines, "Complexity: 18") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
@@ -305,9 +305,9 @@ public sealed class MainWindowTreemapIntegrationTests
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.ComplexityPointsV0, MetricValue.From(complexity)),
-            (MetricIds.CallableHotspotPointsV0, MetricValue.From(hotspots)),
-            (MetricIds.RefactorPriorityPointsV0, MetricValue.From(22)));
+            (MetricIds.ComplexityPoints, MetricValue.From(complexity)),
+            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspots)),
+            (MetricIds.RefactorPriorityPoints, MetricValue.From(22)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)
@@ -317,3 +317,4 @@ public sealed class MainWindowTreemapIntegrationTests
         return tooltipText.Split(Environment.NewLine, StringSplitOptions.None);
     }
 }
+

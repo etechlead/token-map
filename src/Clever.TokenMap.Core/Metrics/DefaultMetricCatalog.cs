@@ -32,7 +32,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             SupportsTreemapWeight: true,
             "File size in bytes and summed directory size."),
         new(
-            MetricIds.ComplexityPointsV0,
+            MetricIds.ComplexityPoints,
             "Complexity",
             "Complexity",
             MetricUnit.Score,
@@ -41,7 +41,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             SupportsTreemapWeight: true,
             "Composite additive complexity points for files and summed directory rollups."),
         new(
-            MetricIds.CallableHotspotPointsV0,
+            MetricIds.CallableHotspotPoints,
             "Hotspots",
             "Hotspots",
             MetricUnit.Score,
@@ -50,7 +50,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             SupportsTreemapWeight: true,
             "Additive callable hotspot points for files and summed directory rollups."),
         new(
-            MetricIds.RefactorPriorityPointsV0,
+            MetricIds.RefactorPriorityPoints,
             "Refactor Priority",
             "Priority",
             MetricUnit.Score,
@@ -73,7 +73,8 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             return MetricIds.Tokens;
         }
 
-        var normalizedMetricId = new MetricId(rawValue.Trim().ToLowerInvariant());
+        var normalizedRawValue = rawValue.Trim().ToLowerInvariant();
+        var normalizedMetricId = new MetricId(normalizedRawValue);
         return Instance.TryGet(normalizedMetricId, out _)
             ? normalizedMetricId
             : MetricIds.Tokens;

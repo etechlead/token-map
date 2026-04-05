@@ -9,6 +9,7 @@ using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Metrics.Formulas;
 using Clever.TokenMap.Core.Preview;
 using Clever.TokenMap.Tests.Support;
 
@@ -128,6 +129,102 @@ internal static class HeadlessTestSupport
         }
 
         return root;
+    }
+
+    internal static ProjectSnapshot CreateExplainabilitySnapshot(bool includeGitContext)
+    {
+        var baseMetrics = MetricSet.From(
+            (MetricIds.Tokens, MetricValue.From(42)),
+            (MetricIds.NonEmptyLines, MetricValue.From(11)),
+            (MetricIds.FileSizeBytes, MetricValue.From(128)),
+            (MetricIds.CodeLines, MetricValue.From(100)),
+            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
+            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
+            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
+            (MetricIds.MaxParameterCount, MetricValue.From(6)),
+            (MetricIds.LongCallableCount, MetricValue.From(1)),
+            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.From(1)),
+            (MetricIds.DeepNestingCallableCount, MetricValue.From(1)),
+            (MetricIds.LongParameterListCount, MetricValue.From(1)));
+
+        if (!ProductMetricFormulas.TryComputeComplexity(baseMetrics, out var complexityBreakdown))
+        {
+            throw new InvalidOperationException("Expected complexity breakdown for explainability test data.");
+        }
+
+        if (!ProductMetricFormulas.TryComputeHotspots(baseMetrics, out var hotspotBreakdown))
+        {
+            throw new InvalidOperationException("Expected hotspot breakdown for explainability test data.");
+        }
+
+        var metrics = new List<(MetricId Id, MetricValue Value)>
+        {
+            (MetricIds.Tokens, MetricValue.From(42)),
+            (MetricIds.NonEmptyLines, MetricValue.From(11)),
+            (MetricIds.FileSizeBytes, MetricValue.From(128)),
+            (MetricIds.CodeLines, MetricValue.From(100)),
+            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
+            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
+            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
+            (MetricIds.MaxParameterCount, MetricValue.From(6)),
+            (MetricIds.LongCallableCount, MetricValue.From(1)),
+            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.From(1)),
+            (MetricIds.DeepNestingCallableCount, MetricValue.From(1)),
+            (MetricIds.LongParameterListCount, MetricValue.From(1)),
+            (MetricIds.ComplexityPoints, MetricValue.From(complexityBreakdown.TotalPoints)),
+            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspotBreakdown.TotalPoints)),
+        };
+
+        if (includeGitContext)
+        {
+            metrics.AddRange(
+            [
+                (MetricIds.ChurnLines90d, MetricValue.From(210)),
+                (MetricIds.TouchCount90d, MetricValue.From(7)),
+                (MetricIds.AuthorCount90d, MetricValue.From(3)),
+                (MetricIds.UniqueCochangedFileCount90d, MetricValue.From(10)),
+                (MetricIds.StrongCochangedFileCount90d, MetricValue.From(4)),
+                (MetricIds.AverageCochangeSetSize90d, MetricValue.From(3.5d)),
+            ]);
+        }
+
+        var formulaInput = MetricSet.From([.. metrics]);
+        if (!ProductMetricFormulas.TryComputeRefactorPriority(formulaInput, out var priorityBreakdown))
+        {
+            throw new InvalidOperationException("Expected refactor priority breakdown for explainability test data.");
+        }
+
+        metrics.Add((MetricIds.RefactorPriorityPoints, MetricValue.From(priorityBreakdown.TotalPoints)));
+
+        return new ProjectSnapshot
+        {
+            RootPath = TestPaths.Folder("Explainability"),
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = new ProjectNode
+            {
+                Id = "/",
+                Name = "Explainability",
+                FullPath = TestPaths.Folder("Explainability"),
+                RelativePath = string.Empty,
+                Kind = ProjectNodeKind.Root,
+                Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
+                ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128),
+                Children =
+                {
+                    new ProjectNode
+                    {
+                        Id = "Program.cs",
+                        Name = "Program.cs",
+                        FullPath = TestPaths.CombineUnder(TestPaths.Folder("Explainability"), "Program.cs"),
+                        RelativePath = "Program.cs",
+                        Kind = ProjectNodeKind.File,
+                        Summary = MetricTestData.CreateFileSummary(),
+                        ComputedMetrics = MetricSet.From([.. metrics]),
+                    },
+                },
+            },
+        };
     }
 
     internal static MainWindowViewModel CreateMainWindowViewModel(

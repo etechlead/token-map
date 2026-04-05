@@ -1,4 +1,4 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Headless.XUnit;
@@ -165,9 +165,9 @@ public sealed class MainWindowLayoutTests
         var tokensButton = FindTreemapMetricButton(window, MetricIds.Tokens);
         var linesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
         var sizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
-        var complexityButton = FindTreemapMetricButton(window, MetricIds.ComplexityPointsV0);
-        var hotspotsButton = FindTreemapMetricButton(window, MetricIds.CallableHotspotPointsV0);
-        var priorityButton = FindTreemapMetricButton(window, MetricIds.RefactorPriorityPointsV0);
+        var complexityButton = FindTreemapMetricButton(window, MetricIds.ComplexityPoints);
+        var hotspotsButton = FindTreemapMetricButton(window, MetricIds.CallableHotspotPoints);
+        var priorityButton = FindTreemapMetricButton(window, MetricIds.RefactorPriorityPoints);
         var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
 
         Assert.NotNull(tokensButton);
@@ -783,3 +783,4 @@ public sealed class MainWindowLayoutTests
                 string.Equals(button.Content?.ToString(), expectedLabel, StringComparison.Ordinal));
     }
 }
+

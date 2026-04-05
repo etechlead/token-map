@@ -1,4 +1,4 @@
-using Clever.TokenMap.Core.Models;
+﻿using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Tests.Support;
@@ -25,9 +25,9 @@ internal static class MetricTestData
             (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.NotApplicable()),
             (MetricIds.DeepNestingCallableCount, MetricValue.NotApplicable()),
             (MetricIds.LongParameterListCount, MetricValue.NotApplicable()),
-            (MetricIds.CallableHotspotPointsV0, MetricValue.NotApplicable()),
-            (MetricIds.ComplexityPointsV0, MetricValue.NotApplicable()),
-            (MetricIds.RefactorPriorityPointsV0, MetricValue.NotApplicable()));
+            (MetricIds.CallableHotspotPoints, MetricValue.NotApplicable()),
+            (MetricIds.ComplexityPoints, MetricValue.NotApplicable()),
+            (MetricIds.RefactorPriorityPoints, MetricValue.NotApplicable()));
 
     internal static NodeSummary CreateFileSummary() =>
         new(
@@ -39,3 +39,4 @@ internal static class MetricTestData
             DescendantFileCount: descendantFileCount,
             DescendantDirectoryCount: descendantDirectoryCount);
 }
+

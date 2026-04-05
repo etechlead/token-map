@@ -1,23 +1,23 @@
-using Clever.TokenMap.Core.Analysis.Git;
+﻿using Clever.TokenMap.Core.Analysis.Git;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Calculators.Derived;
 
 namespace Clever.TokenMap.Tests.Metrics;
 
-public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
+public sealed class RefactorPriorityPointsDerivedMetricsCalculatorTests
 {
-    private readonly RefactorPriorityPointsV0DerivedMetricsCalculator _calculator = new();
+    private readonly RefactorPriorityPointsDerivedMetricsCalculator _calculator = new();
 
     [Fact]
     public async Task ComputeAsync_UsesBasePriorityWhenGitHistoryIsUnavailable()
     {
         var result = await ComputeAsync(
             MetricSet.From(
-                (MetricIds.ComplexityPointsV0, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPointsV0, MetricValue.From(5))));
+                (MetricIds.ComplexityPoints, MetricValue.From(60)),
+                (MetricIds.CallableHotspotPoints, MetricValue.From(5))));
 
-        Assert.Equal(58d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(58d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -25,8 +25,8 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     {
         var result = await ComputeAsync(
             MetricSet.From(
-                (MetricIds.ComplexityPointsV0, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPointsV0, MetricValue.From(5))),
+                (MetricIds.ComplexityPoints, MetricValue.From(60)),
+                (MetricIds.CallableHotspotPoints, MetricValue.From(5))),
             CreateArtifact(
                 churnLines90d: 210,
                 touchCount90d: 7,
@@ -35,7 +35,7 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 4,
                 averageCochangeSetSize90d: 3.5d));
 
-        Assert.Equal(55.95151515151515, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(55.95151515151515, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -43,11 +43,11 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     {
         var result = await ComputeAsync(
             MetricSet.From(
-                (MetricIds.ComplexityPointsV0, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPointsV0, MetricValue.From(5))),
+                (MetricIds.ComplexityPoints, MetricValue.From(60)),
+                (MetricIds.CallableHotspotPoints, MetricValue.From(5))),
             GitFileHistoryArtifact.Zero);
 
-        Assert.Equal(34.8d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(34.8d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -55,8 +55,8 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     {
         var result = await ComputeAsync(
             MetricSet.From(
-                (MetricIds.ComplexityPointsV0, MetricValue.From(35)),
-                (MetricIds.CallableHotspotPointsV0, MetricValue.From(2))),
+                (MetricIds.ComplexityPoints, MetricValue.From(35)),
+                (MetricIds.CallableHotspotPoints, MetricValue.From(2))),
             CreateArtifact(
                 churnLines90d: 20,
                 touchCount90d: 1,
@@ -65,7 +65,7 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 8,
                 averageCochangeSetSize90d: 6d));
 
-        Assert.Equal(39.2d, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(39.2d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -73,8 +73,8 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
     {
         var result = await ComputeAsync(
             MetricSet.From(
-                (MetricIds.ComplexityPointsV0, MetricValue.From(90)),
-                (MetricIds.CallableHotspotPointsV0, MetricValue.From(1))),
+                (MetricIds.ComplexityPoints, MetricValue.From(90)),
+                (MetricIds.CallableHotspotPoints, MetricValue.From(1))),
             CreateArtifact(
                 churnLines90d: 20,
                 touchCount90d: 1,
@@ -83,14 +83,14 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 0,
                 averageCochangeSetSize90d: 1d));
 
-        Assert.Equal(45.36666666666667, result.TryGetNumber(MetricIds.RefactorPriorityPointsV0)!.Value, precision: 12);
+        Assert.Equal(45.36666666666667, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
     public async Task ComputeAsync_SetsNotApplicableWhenComplexityInputsAreMissing()
     {
         var result = await ComputeAsync(
-            MetricSet.From((MetricIds.CallableHotspotPointsV0, MetricValue.From(4))),
+            MetricSet.From((MetricIds.CallableHotspotPoints, MetricValue.From(4))),
             CreateArtifact(
                 churnLines90d: 300,
                 touchCount90d: 8,
@@ -99,7 +99,7 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 2,
                 averageCochangeSetSize90d: 2.5d));
 
-        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.RefactorPriorityPointsV0).Status);
+        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.RefactorPriorityPoints).Status);
     }
 
     private static GitFileHistoryArtifact CreateArtifact(
@@ -142,3 +142,4 @@ public sealed class RefactorPriorityPointsV0DerivedMetricsCalculatorTests
         }
     }
 }
+

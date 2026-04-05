@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using Clever.TokenMap.Core.Metrics;
 
 namespace Clever.TokenMap.Tests.Core;
@@ -35,7 +35,7 @@ public sealed class MetricValueFormatterTests
     [InlineData(1200.25, "1,200")]
     public void Format_ScoreMetric_RoundsToWholeNumber(double value, string expected)
     {
-        var result = MetricValueFormatter.Format(MetricIds.ComplexityPointsV0, MetricValue.From(value), CultureInfo.InvariantCulture);
+        var result = MetricValueFormatter.Format(MetricIds.ComplexityPoints, MetricValue.From(value), CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, result);
     }
@@ -46,8 +46,9 @@ public sealed class MetricValueFormatterTests
     [InlineData(1_250, "1.2K")]
     public void FormatCompact_ScoreMetric_RoundsToWholeNumber(double value, string expected)
     {
-        var result = MetricValueFormatter.FormatCompact(MetricIds.ComplexityPointsV0, MetricValue.From(value), CultureInfo.InvariantCulture);
+        var result = MetricValueFormatter.FormatCompact(MetricIds.ComplexityPoints, MetricValue.From(value), CultureInfo.InvariantCulture);
 
         Assert.Equal(expected, result);
     }
 }
+

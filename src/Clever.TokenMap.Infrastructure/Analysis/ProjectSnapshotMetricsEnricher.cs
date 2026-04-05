@@ -157,13 +157,14 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         new FileSizeMetricCalculator(),
         new TextMetricsCalculator(),
         new SyntaxMetricsCalculator(),
+        new GitHistoryMetricsCalculator(),
     ];
 
     private static IFileDerivedMetricCalculator[] CreateDefaultFileDerivedMetricCalculators() =>
     [
         new CallableHotspotMetricsCalculator(),
-        new ComplexityPointsV0DerivedMetricsCalculator(),
-        new RefactorPriorityPointsV0DerivedMetricsCalculator(),
+        new ComplexityPointsDerivedMetricsCalculator(),
+        new RefactorPriorityPointsDerivedMetricsCalculator(),
     ];
 
     private static List<FileWorkItem> CollectFileWorkItems(ProjectNode root)
@@ -477,9 +478,9 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.HighCyclomaticComplexityCallableCount);
         builder.SetNotApplicable(MetricIds.DeepNestingCallableCount);
         builder.SetNotApplicable(MetricIds.LongParameterListCount);
-        builder.SetNotApplicable(MetricIds.CallableHotspotPointsV0);
-        builder.SetNotApplicable(MetricIds.ComplexityPointsV0);
-        builder.SetNotApplicable(MetricIds.RefactorPriorityPointsV0);
+        builder.SetNotApplicable(MetricIds.CallableHotspotPoints);
+        builder.SetNotApplicable(MetricIds.ComplexityPoints);
+        builder.SetNotApplicable(MetricIds.RefactorPriorityPoints);
         return builder.Build();
     }
 

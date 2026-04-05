@@ -1,5 +1,6 @@
 using Clever.TokenMap.Core.Analysis.Syntax;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Metrics.Formulas;
 using Clever.TokenMap.Metrics.Derived;
 
 namespace Clever.TokenMap.Metrics.Calculators.Derived;
@@ -42,7 +43,7 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
             sink.SetValue(MetricIds.HighCyclomaticComplexityCallableCount, 0);
             sink.SetValue(MetricIds.DeepNestingCallableCount, 0);
             sink.SetValue(MetricIds.LongParameterListCount, 0);
-            sink.SetValue(MetricIds.CallableHotspotPointsV0, 0);
+            sink.SetValue(MetricIds.CallableHotspotPoints, 0);
             return;
         }
 
@@ -56,17 +57,20 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
             callable => callable.MaxNestingDepth >= _thresholds.DeepNestingDepth);
         var longParameterListCount = callables.Count(
             callable => callable.ParameterCount >= _thresholds.LongParameterList);
-        var hotspotPoints =
-            (2 * longCallableCount) +
-            (3 * highCyclomaticComplexityCallableCount) +
-            (2 * deepNestingCallableCount) +
-            longParameterListCount;
+        var hotspotInputMetrics = MetricSet.From(
+            (MetricIds.LongCallableCount, MetricValue.From(longCallableCount)),
+            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.From(highCyclomaticComplexityCallableCount)),
+            (MetricIds.DeepNestingCallableCount, MetricValue.From(deepNestingCallableCount)),
+            (MetricIds.LongParameterListCount, MetricValue.From(longParameterListCount)));
+        var hotspotBreakdown = ProductMetricFormulas.TryComputeHotspots(hotspotInputMetrics, out var breakdown)
+            ? breakdown
+            : throw new InvalidOperationException("Hotspot breakdown should be available when hotspot counts are present.");
 
         sink.SetValue(MetricIds.LongCallableCount, longCallableCount);
         sink.SetValue(MetricIds.HighCyclomaticComplexityCallableCount, highCyclomaticComplexityCallableCount);
         sink.SetValue(MetricIds.DeepNestingCallableCount, deepNestingCallableCount);
         sink.SetValue(MetricIds.LongParameterListCount, longParameterListCount);
-        sink.SetValue(MetricIds.CallableHotspotPointsV0, hotspotPoints);
+        sink.SetValue(MetricIds.CallableHotspotPoints, hotspotBreakdown.TotalPoints);
     }
 
     private static void SetAllNotApplicable(IMetricSink sink)
@@ -75,6 +79,6 @@ public sealed class CallableHotspotMetricsCalculator : IFileDerivedMetricCalcula
         sink.SetNotApplicable(MetricIds.HighCyclomaticComplexityCallableCount);
         sink.SetNotApplicable(MetricIds.DeepNestingCallableCount);
         sink.SetNotApplicable(MetricIds.LongParameterListCount);
-        sink.SetNotApplicable(MetricIds.CallableHotspotPointsV0);
+        sink.SetNotApplicable(MetricIds.CallableHotspotPoints);
     }
 }
