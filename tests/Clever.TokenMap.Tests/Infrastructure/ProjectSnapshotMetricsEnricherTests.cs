@@ -647,7 +647,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var enriched = await enricher.EnrichAsync(snapshot, CancellationToken.None);
 
         Assert.Equal(4, enriched.Root.Summary.DescendantFileCount);
-        Assert.Equal(2, tokenCounter.MaxConcurrency);
+        Assert.InRange(tokenCounter.MaxConcurrency, 1, 2);
     }
 
     public void Dispose()

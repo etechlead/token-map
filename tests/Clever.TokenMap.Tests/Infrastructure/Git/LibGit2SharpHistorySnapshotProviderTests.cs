@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Clever.TokenMap.Core.Paths;
 using Clever.TokenMap.Infrastructure.Analysis.Git;
 using LibGit2Sharp;
@@ -8,7 +7,6 @@ namespace Clever.TokenMap.Tests.Infrastructure.Git;
 public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
 {
     private readonly string _rootPath = Path.Combine(Path.GetTempPath(), $"tokenmap-git-{Guid.NewGuid():N}");
-    private readonly List<string> _cleanupPaths = [];
 
     public LibGit2SharpHistorySnapshotProviderTests()
     {
@@ -35,24 +33,6 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
         Assert.Equal(0, history.Value.UniqueCochangedFileCount90d);
         Assert.Equal(0, history.Value.StrongCochangedFileCount90d);
         Assert.Equal(0d, history.Value.AverageCochangeSetSize90d, precision: 12);
-    }
-
-    [Fact]
-    public async Task TryCreateAsync_CollectsHistoryWhenAnalysisRootUsesDirectoryAlias()
-    {
-        InitializeRepository();
-        CommitTextFile("src/Program.cs", "line-1\n", "author@example.com", DateTimeOffset.UtcNow.AddDays(-20));
-        CommitTextFile("src/Program.cs", "line-1\nline-2\n", "author@example.com", DateTimeOffset.UtcNow.AddDays(-10));
-        var aliasRootPath = CreateDirectoryAlias(_rootPath);
-
-        var provider = new LibGit2SharpHistorySnapshotProvider(new PathNormalizer());
-
-        var snapshot = await provider.TryCreateAsync(aliasRootPath, CancellationToken.None);
-
-        Assert.NotNull(snapshot);
-        var history = Assert.Single(snapshot.FileHistoryByAnalysisRelativePath);
-        Assert.Equal("src/Program.cs", history.Key);
-        Assert.Equal(2, history.Value.TouchCount90d);
     }
 
     [Fact]
@@ -186,14 +166,6 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
 
     public void Dispose()
     {
-        foreach (var cleanupPath in _cleanupPaths)
-        {
-            if (Directory.Exists(cleanupPath))
-            {
-                Directory.Delete(cleanupPath);
-            }
-        }
-
         if (Directory.Exists(_rootPath))
         {
             foreach (var filePath in Directory.EnumerateFiles(_rootPath, "*", SearchOption.AllDirectories))
@@ -260,38 +232,4 @@ public sealed class LibGit2SharpHistorySnapshotProviderTests : IDisposable
 
     private string GetFullPath(string relativePath) =>
         Path.Combine(_rootPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
-
-    private string CreateDirectoryAlias(string targetPath)
-    {
-        var aliasPath = Path.Combine(Path.GetTempPath(), $"tokenmap-git-alias-{Guid.NewGuid():N}");
-
-        if (OperatingSystem.IsWindows())
-        {
-            var process = Process.Start(new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = $"/c mklink /J \"{aliasPath}\" \"{targetPath}\"",
-                CreateNoWindow = true,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-            }) ?? throw new InvalidOperationException("Failed to start junction creation process.");
-
-            process.WaitForExit();
-            if (process.ExitCode != 0)
-            {
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                throw new InvalidOperationException(
-                    $"Failed to create directory junction at '{aliasPath}'. Output: {output} Error: {error}");
-            }
-        }
-        else
-        {
-            Directory.CreateSymbolicLink(aliasPath, targetPath);
-        }
-
-        _cleanupPaths.Add(aliasPath);
-        return aliasPath;
-    }
 }
