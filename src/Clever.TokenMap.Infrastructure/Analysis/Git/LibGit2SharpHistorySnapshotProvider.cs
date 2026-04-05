@@ -54,7 +54,12 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                 return ValueTask.FromResult<GitHistorySnapshot?>(null);
             }
 
-            var normalizedRepositoryRootPath = _pathNormalizer.NormalizeRootPath(repository.Info.WorkingDirectory);
+            // Repository.Discover preserves the caller's path spelling, which keeps
+            // relative-path mapping stable when the analysis root is reached through
+            // a symlinked alias such as /var -> /private/var on macOS.
+            var discoveredRepositoryRootPath = Path.GetFullPath(
+                Path.Combine(discoveredRepositoryPath, ".."));
+            var normalizedRepositoryRootPath = _pathNormalizer.NormalizeRootPath(discoveredRepositoryRootPath);
             var normalizedAnalysisRootRelativePath = PathNormalizer.NormalizeRelativePath(
                 Path.GetRelativePath(normalizedRepositoryRootPath, normalizedAnalysisRootPath));
             var nowUtc = DateTimeOffset.UtcNow;
