@@ -82,14 +82,14 @@ public sealed class LibGit2SharpHistorySnapshotProvider : IGitHistorySnapshotPro
                 }
 
                 var oldTree = commit.Parents.FirstOrDefault()?.Tree;
-                var patch = repository.Diff.Compare<Patch>(oldTree, commit.Tree);
-                if (!patch.Any())
+                var patchEntries = repository.Diff.Compare<Patch>(oldTree, commit.Tree).ToArray();
+                if (patchEntries.Length == 0)
                 {
                     continue;
                 }
 
                 var churnByPath = new Dictionary<string, int>(PathComparison.Comparer);
-                foreach (var entry in patch)
+                foreach (var entry in patchEntries)
                 {
                     if (string.IsNullOrWhiteSpace(entry.Path))
                     {
