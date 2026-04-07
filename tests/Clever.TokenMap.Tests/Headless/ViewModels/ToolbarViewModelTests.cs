@@ -151,6 +151,18 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
+    public void VisibleTreemapMetricOptions_ExposeSharedMetricDescriptions()
+    {
+        var viewModel = CreateViewModel(new SettingsState());
+        var refactorOption = Assert.Single(
+            viewModel.VisibleTreemapMetricOptions,
+            option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
+
+        Assert.Equal(refactorOption.Definition.Description, refactorOption.Description);
+        Assert.Equal("Additive refactor priority points for files and summed directory rollups.", refactorOption.Description);
+    }
+
+    [Fact]
     public void SelectingWeightedPalette_StoresPaletteSelection()
     {
         var state = new SettingsState();

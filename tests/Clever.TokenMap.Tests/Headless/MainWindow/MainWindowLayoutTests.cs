@@ -225,6 +225,25 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_TreemapHeaderMetricButtons_UseMetricDescriptionsForTooltips()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var window = new AppMainWindow
+        {
+            DataContext = viewModel,
+        };
+
+        window.Show();
+
+        var refactorButton = FindTreemapMetricButton(window, MetricIds.RefactorPriorityPoints);
+        var tooltipText = ToolTip.GetTip(refactorButton!);
+        var definition = DefaultMetricCatalog.Instance.GetRequired(MetricIds.RefactorPriorityPoints);
+
+        Assert.NotNull(refactorButton);
+        Assert.Equal(definition.Description, tooltipText);
+    }
+
+    [AvaloniaFact]
     public void MainWindow_ShowsRecentFoldersEmptyState_WhenNoRecentFoldersAreLoaded()
     {
         var viewModel = CreateMainWindowViewModel();

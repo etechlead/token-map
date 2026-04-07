@@ -41,6 +41,7 @@
                                                   Classes.end="{Binding IsLast}"
                                                   IsChecked="{Binding IsSelected, Mode=TwoWay}"
                                                   IsEnabled="{Binding #TreemapPaneRoot.DataContext.Toolbar.CanChangeMetric}"
+                                                  ToolTip.Tip="{Binding Description}"
                                                   Content="{Binding Label}" />
                                 </Grid>
                             </DataTemplate>
@@ -54,10 +55,12 @@
                           IsVisible="{Binding Toolbar.ShowTreemapMetricSelector}"
                           IsEnabled="{Binding Toolbar.CanChangeMetric}"
                           ItemsSource="{Binding Toolbar.VisibleTreemapMetricOptions}"
+                          ToolTip.Tip="{Binding Toolbar.SelectedTreemapMetricOption.Description}"
                           SelectedItem="{Binding Toolbar.SelectedTreemapMetricOption, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:MetricSelectionOptionViewModel">
-                            <TextBlock Text="{Binding Label}" />
+                            <TextBlock Text="{Binding Label}"
+                                       ToolTip.Tip="{Binding Description}" />
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>

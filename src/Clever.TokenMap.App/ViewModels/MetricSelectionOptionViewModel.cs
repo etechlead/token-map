@@ -20,6 +20,8 @@ public sealed class MetricSelectionOptionViewModel : ObservableObject
 
     public string Label => Definition.ShortName;
 
+    public string Description => Definition.Description;
+
     public bool IsFirst { get; private set; }
 
     public bool IsMiddle { get; private set; }
