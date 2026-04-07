@@ -18,6 +18,7 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Action<bool>? _setSuppressedState;
     private MenuItem? _excludeItem;
     private MenuItem? _previewItem;
+    private MenuItem? _refactorPromptItem;
     private MenuItem? _revealItem;
     private MenuItem? _setAsTreemapRootItem;
     private ProjectNode? _currentNode;
@@ -61,6 +62,8 @@ internal sealed class ProjectNodeContextMenuController
         menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.OpenHeader, ProjectNodeActionPresentation.OpenIconResourceKey, OpenItem_OnClick));
         _previewItem = CreateMenuItem(ProjectNodeActionPresentation.PreviewHeader, ProjectNodeActionPresentation.PreviewIconResourceKey, PreviewItem_OnClick);
         menu.Items.Add(_previewItem);
+        _refactorPromptItem = CreateMenuItem(ProjectNodeActionPresentation.RefactorPromptHeader, ProjectNodeActionPresentation.RefactorPromptIconResourceKey, RefactorPromptItem_OnClick);
+        menu.Items.Add(_refactorPromptItem);
         _revealItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.RevealIconResourceKey, RevealItem_OnClick);
         menu.Items.Add(_revealItem);
         _setAsTreemapRootItem = CreateMenuItem(ProjectNodeActionPresentation.SetAsTreemapRootHeader, ProjectNodeActionPresentation.SetAsTreemapRootIconResourceKey, SetAsTreemapRootItem_OnClick);
@@ -92,12 +95,19 @@ internal sealed class ProjectNodeContextMenuController
     {
         var viewModel = _viewModelAccessor();
         var canPreview = _currentNode?.Kind == ProjectNodeKind.File;
+        var canOpenRefactorPrompt = viewModel?.CanOpenRefactorPrompt(_currentNode) == true;
         var canSetTreemapRoot = viewModel?.CanSetTreemapRoot(_currentNode) == true;
         var canExclude = viewModel?.CanExcludeNodeFromFolder(_currentNode) == true;
         if (_previewItem is not null)
         {
             _previewItem.IsVisible = canPreview;
             _previewItem.IsEnabled = canPreview;
+        }
+
+        if (_refactorPromptItem is not null)
+        {
+            _refactorPromptItem.IsVisible = canOpenRefactorPrompt;
+            _refactorPromptItem.IsEnabled = canOpenRefactorPrompt;
         }
 
         if (_revealItem is not null)
@@ -144,6 +154,11 @@ internal sealed class ProjectNodeContextMenuController
         }
 
         await viewModel.RevealNodeAsync(_currentNode);
+    }
+
+    private void RefactorPromptItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        _viewModelAccessor()?.OpenRefactorPrompt(_currentNode);
     }
 
     private void SetAsTreemapRootItem_OnClick(object? sender, RoutedEventArgs e)

@@ -304,6 +304,20 @@
                                     IsVisible="{Binding IsFilePreviewOpen}"
                                     ZIndex="{x:Static views:MainWindowZLayers.FilePreviewModal}" />
 
+        <Border Name="RefactorPromptBackdrop"
+                Grid.RowSpan="3"
+                Background="#660B1016"
+                IsVisible="{Binding IsRefactorPromptOpen}"
+                PointerPressed="RefactorPromptBackdrop_OnPointerPressed"
+                ZIndex="{x:Static views:MainWindowZLayers.RefactorPromptBackdrop}" />
+
+        <views:RefactorPromptModalView Name="RefactorPromptModal"
+                                       Grid.RowSpan="3"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       IsVisible="{Binding IsRefactorPromptOpen}"
+                                       ZIndex="{x:Static views:MainWindowZLayers.RefactorPromptModal}" />
+
         <Border Name="StatusStrip"
                 Grid.Row="2"
                 IsVisible="{Binding Summary.IsProgressVisible}">

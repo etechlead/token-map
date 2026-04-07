@@ -773,6 +773,29 @@
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
+    <Style Selector="Border.refactor-prompt-modal">
+        <Setter Property="MaxWidth" Value="1040" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-editor">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+        <Setter Property="MinHeight" Value="360" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-editor:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-editor:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+    </Style>
     <Style Selector="TextBlock.file-preview-explainability-note">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
     </Style>

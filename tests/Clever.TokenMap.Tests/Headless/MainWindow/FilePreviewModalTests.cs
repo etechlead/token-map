@@ -102,17 +102,76 @@ public sealed class FilePreviewModalTests
 
         var openButton = FindNamedDescendant<Button>(window, "FilePreviewOpenDefaultAppButton");
         var revealButton = FindNamedDescendant<Button>(window, "FilePreviewRevealButton");
+        var refactorPromptButton = FindNamedDescendant<Button>(window, "FilePreviewOpenRefactorPromptButton");
         var copyFullPathButton = FindNamedDescendant<Button>(window, "FilePreviewCopyFullPathButton");
         var copyRelativePathButton = FindNamedDescendant<Button>(window, "FilePreviewCopyRelativePathButton");
 
         Assert.NotNull(openButton);
         Assert.NotNull(revealButton);
+        Assert.NotNull(refactorPromptButton);
         Assert.NotNull(copyFullPathButton);
         Assert.NotNull(copyRelativePathButton);
         Assert.Equal("Open", GetButtonText(openButton));
         Assert.Equal(viewModel.RevealMenuHeader, GetButtonText(revealButton));
+        Assert.Equal("Refactor Prompt", GetButtonText(refactorPromptButton));
         Assert.Equal("Copy Full Path", GetButtonText(copyFullPathButton));
         Assert.Equal("Copy Relative Path", GetButtonText(copyRelativePathButton));
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_RefactorPromptModal_ShowsEditablePromptForSelectedFile()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+        window.DataContext = viewModel;
+
+        window.Show();
+        viewModel.OpenRefactorPrompt(file);
+        window.UpdateLayout();
+
+        var modal = FindNamedDescendant<Control>(window, "RefactorPromptModal");
+        var editor = FindNamedDescendant<TextBox>(window, "RefactorPromptEditor");
+        var copyButton = FindNamedDescendant<Button>(window, "CopyRefactorPromptButton");
+        var pathText = FindNamedDescendant<TextBlock>(window, "RefactorPromptPathText");
+
+        Assert.NotNull(modal);
+        Assert.NotNull(editor);
+        Assert.NotNull(copyButton);
+        Assert.NotNull(pathText);
+        Assert.True(modal.IsVisible);
+        Assert.True(editor.IsVisible);
+        Assert.True(editor.AcceptsReturn);
+        Assert.Equal("Program.cs", pathText.Text);
+        Assert.Contains("Relative path: Program.cs", editor.Text);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_Escape_ClosesRefactorPromptModal()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+        window.DataContext = viewModel;
+
+        window.Show();
+        viewModel.OpenRefactorPrompt(file);
+        window.UpdateLayout();
+
+        var keyArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = window,
+            Key = Key.Escape,
+        };
+
+        window.RaiseEvent(keyArgs);
+        window.UpdateLayout();
+
+        Assert.True(keyArgs.Handled);
+        Assert.False(viewModel.IsRefactorPromptOpen);
     }
 
     [AvaloniaFact]
@@ -223,9 +282,36 @@ public sealed class FilePreviewModalTests
         Assert.False(previewItem.IsEnabled);
     }
 
+    [AvaloniaFact]
+    public void ProjectNodeContextMenuController_RefactorPromptItem_IsVisibleOnlyForFiles()
+    {
+        var fileSnapshot = CreateSnapshot();
+        var fileNode = Assert.Single(fileSnapshot.Root.Children);
+        var directorySnapshot = CreateNestedSnapshot();
+        var directoryNode = Assert.Single(directorySnapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel();
+        var controller = new ProjectNodeContextMenuController(new Border(), () => viewModel);
+
+        var refactorPromptItem = GetRefactorPromptItem(controller);
+
+        SetCurrentNodeAndRefresh(controller, fileNode);
+        Assert.True(refactorPromptItem.IsVisible);
+        Assert.True(refactorPromptItem.IsEnabled);
+
+        SetCurrentNodeAndRefresh(controller, directoryNode);
+        Assert.False(refactorPromptItem.IsVisible);
+        Assert.False(refactorPromptItem.IsEnabled);
+    }
+
     private static MenuItem GetPreviewItem(ProjectNodeContextMenuController controller)
     {
         var field = typeof(ProjectNodeContextMenuController).GetField("_previewItem", BindingFlags.Instance | BindingFlags.NonPublic);
+        return Assert.IsType<MenuItem>(field?.GetValue(controller));
+    }
+
+    private static MenuItem GetRefactorPromptItem(ProjectNodeContextMenuController controller)
+    {
+        var field = typeof(ProjectNodeContextMenuController).GetField("_refactorPromptItem", BindingFlags.Instance | BindingFlags.NonPublic);
         return Assert.IsType<MenuItem>(field?.GetValue(controller));
     }
 

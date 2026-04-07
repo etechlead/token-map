@@ -10,6 +10,7 @@ internal static class FluentIconGeometry
 {
     public const string ArrowSortDown16Regular = "FluentArrowSortDown16RegularGeometry";
     public const string ArrowSortUp16Regular = "FluentArrowSortUp16RegularGeometry";
+    public const string ChatSparkle16Regular = "FluentChatSparkle16RegularGeometry";
     public const string DesktopMac16Regular = "FluentDesktopMac16RegularGeometry";
     public const string DocumentCopy16Regular = "FluentDocumentCopy16RegularGeometry";
     public const string Eye16Regular = "FluentEye16RegularGeometry";

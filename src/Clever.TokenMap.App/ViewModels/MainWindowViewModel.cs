@@ -16,10 +16,12 @@ namespace Clever.TokenMap.App.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
     private readonly IPathShellService _pathShellService;
+    private readonly IRefactorPromptComposer _refactorPromptComposer;
     private readonly IFilePreviewController _filePreviewController;
     private readonly IAppIssueReporter _issueReporter;
     private readonly MainWindowWorkspacePresenter _workspacePresenter;
     private readonly RelayCommand _closeFilePreviewCommand;
+    private readonly RelayCommand _closeRefactorPromptCommand;
     private readonly RelayCommand _closeSettingsCommand;
     private readonly RelayCommand _closeShareSnapshotCommand;
     private readonly RelayCommand<ProjectNode?> _navigateToTreemapBreadcrumbCommand;
@@ -37,6 +39,10 @@ public partial class MainWindowViewModel : ViewModelBase
     [ObservableProperty]
     private FilePreviewExplainabilityViewModel? filePreviewExplainability;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRefactorPromptOpen))]
+    private RefactorPromptViewModel? refactorPrompt;
+
     public MainWindowViewModel(
         MainWindowWorkspacePresenter workspacePresenter,
         AboutViewModel about,
@@ -48,11 +54,13 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectTreeViewModel tree,
         SummaryViewModel summary,
         IPathShellService pathShellService,
+        IRefactorPromptComposer refactorPromptComposer,
         IFilePreviewController filePreviewController,
         IAppIssueReporter issueReporter)
     {
         _workspacePresenter = workspacePresenter;
         _pathShellService = pathShellService;
+        _refactorPromptComposer = refactorPromptComposer;
         _filePreviewController = filePreviewController;
         _issueReporter = issueReporter;
 
@@ -67,6 +75,7 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
         _closeFilePreviewCommand = new RelayCommand(CloseFilePreview, () => IsFilePreviewOpen);
+        _closeRefactorPromptCommand = new RelayCommand(CloseRefactorPrompt, () => IsRefactorPromptOpen);
         _closeSettingsCommand = new RelayCommand(CloseSettings);
         _closeShareSnapshotCommand = new RelayCommand(CloseShareSnapshot);
         _openShareSnapshotCommand = new RelayCommand(OpenShareSnapshot, () => HasSnapshot);
@@ -136,11 +145,15 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool IsFilePreviewOpen => FilePreview.IsOpen;
 
+    public bool IsRefactorPromptOpen => RefactorPrompt is not null;
+
     public IRelayCommand ToggleSettingsCommand => _toggleSettingsCommand;
 
     public IRelayCommand CloseSettingsCommand => _closeSettingsCommand;
 
     public IRelayCommand CloseFilePreviewCommand => _closeFilePreviewCommand;
+
+    public IRelayCommand CloseRefactorPromptCommand => _closeRefactorPromptCommand;
 
     public IRelayCommand OpenShareSnapshotCommand => _openShareSnapshotCommand;
 
@@ -196,9 +209,30 @@ public partial class MainWindowViewModel : ViewModelBase
     public Task PreviewNodeAsync(ProjectNode? node, CancellationToken cancellationToken = default) =>
         _filePreviewController.OpenAsync(node, cancellationToken);
 
+    public bool CanOpenRefactorPrompt(ProjectNode? node) =>
+        node?.Kind is ProjectNodeKind.File &&
+        _refactorPromptComposer is not null;
+
+    public void OpenRefactorPrompt(ProjectNode? node)
+    {
+        if (!CanOpenRefactorPrompt(node))
+        {
+            return;
+        }
+
+        RefactorPrompt = new RefactorPromptViewModel(
+            node!.RelativePath,
+            _refactorPromptComposer.Compose(node));
+    }
+
     public void CloseFilePreview()
     {
         _filePreviewController.Close();
+    }
+
+    public void CloseRefactorPrompt()
+    {
+        RefactorPrompt = null;
     }
 
     private async Task OpenPathActionAsync(
@@ -298,6 +332,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
         OnPropertyChanged(nameof(IsFilePreviewOpen));
         _closeFilePreviewCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnRefactorPromptChanged(RefactorPromptViewModel? value)
+    {
+        OnPropertyChanged(nameof(IsRefactorPromptOpen));
+        _closeRefactorPromptCommand.NotifyCanExecuteChanged();
     }
 
     private FilePreviewExplainabilityViewModel? CreateFilePreviewExplainability() =>

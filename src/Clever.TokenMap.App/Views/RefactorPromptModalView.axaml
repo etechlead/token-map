@@ -1,0 +1,89 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.RefactorPromptModalView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Classes="panel refactor-prompt-modal"
+            Width="960"
+            MaxWidth="1040"
+            MinHeight="520">
+        <Grid RowDefinitions="Auto,*,Auto"
+              RowSpacing="14">
+            <Grid RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8"
+                  RowSpacing="4">
+                <TextBlock Name="RefactorPromptTitleText"
+                           Classes="panel-title"
+                           VerticalAlignment="Center"
+                           Text="Refactor prompt" />
+                <Button Name="CloseRefactorPromptModalButton"
+                        Grid.Column="1"
+                        Classes="close-button"
+                        Command="{Binding CloseRefactorPromptCommand}"
+                        ToolTip.Tip="Close refactor prompt">
+                    <Path Classes="close-button-icon"
+                          Data="{StaticResource FluentDismiss20Geometry}" />
+                </Button>
+                <TextBlock Name="RefactorPromptPathText"
+                           Grid.Row="1"
+                           Grid.ColumnSpan="2"
+                           Classes="panel-body"
+                           Text="{Binding RefactorPrompt.RelativePath}" />
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  RowDefinitions="Auto,*"
+                  RowSpacing="10">
+                <TextBlock Name="RefactorPromptIntroText"
+                           Classes="panel-body"
+                           Text="Edit the conversation starter if needed, then copy it into your coding agent." />
+                <TextBox Name="RefactorPromptEditor"
+                         Grid.Row="1"
+                         Classes="refactor-prompt-editor"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Stretch"
+                         Text="{Binding RefactorPrompt.PromptText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="16">
+                <TextBlock Name="RefactorPromptHintText"
+                           Classes="panel-body"
+                           VerticalAlignment="Center"
+                           Text="This prompt frames the file as a possible refactoring candidate without prescribing a specific implementation." />
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="CopyRefactorPromptButton"
+                            Classes="action-button primary"
+                            Background="{Binding RefactorPrompt.CopyButtonBackground}"
+                            BorderBrush="{Binding RefactorPrompt.CopyButtonBorderBrush}"
+                            Foreground="{Binding RefactorPrompt.CopyButtonForeground}"
+                            Click="CopyRefactorPromptButton_OnClick">
+                        <StackPanel Classes="action-button-content">
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource FluentDocumentCopy16RegularGeometry}"
+                                  IsVisible="{Binding RefactorPrompt.IsCopyFeedbackIdle}" />
+                            <Path Classes="action-button-icon"
+                                  Data="{StaticResource TokenMapCheckmark16Geometry}"
+                                  IsVisible="{Binding RefactorPrompt.IsCopyFeedbackSuccess}" />
+                            <TextBlock VerticalAlignment="Center"
+                                       Text="{Binding RefactorPrompt.CopyButtonText}" />
+                        </StackPanel>
+                    </Button>
+
+                    <Button Name="CloseRefactorPromptButton"
+                            Classes="action-button"
+                            Command="{Binding CloseRefactorPromptCommand}"
+                            Content="Close" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

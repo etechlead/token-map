@@ -122,6 +122,50 @@ public sealed class FilePreviewViewModelTests
         Assert.True(explainability.Sections[2].HasNote);
     }
 
+    [Fact]
+    public void OpenRefactorPrompt_CreatesEditablePromptForFileNode()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+
+        viewModel.OpenRefactorPrompt(file);
+
+        var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
+        Assert.True(viewModel.IsRefactorPromptOpen);
+        Assert.Equal("Program.cs", refactorPrompt.RelativePath);
+        Assert.Contains("Relative path: Program.cs", refactorPrompt.PromptText);
+        Assert.Contains("Observed metrics:", refactorPrompt.PromptText);
+        Assert.Contains("Cyclomatic complexity sum", refactorPrompt.PromptText);
+        Assert.Contains("Task:", refactorPrompt.PromptText);
+    }
+
+    [Fact]
+    public void OpenRefactorPrompt_NotesWhenGitContextIsUnavailable()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: false);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+
+        viewModel.OpenRefactorPrompt(file);
+
+        var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
+        Assert.Contains("git-derived change-pressure inputs are unavailable", refactorPrompt.PromptText);
+    }
+
+    [Fact]
+    public void OpenRefactorPrompt_IgnoresDirectories()
+    {
+        var snapshot = CreateNestedSnapshot();
+        var directory = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+
+        viewModel.OpenRefactorPrompt(directory);
+
+        Assert.False(viewModel.IsRefactorPromptOpen);
+        Assert.Null(viewModel.RefactorPrompt);
+    }
+
     private static ProjectSnapshot CreateTwoFileSnapshot()
     {
         var root = CreateRootWithChildren(

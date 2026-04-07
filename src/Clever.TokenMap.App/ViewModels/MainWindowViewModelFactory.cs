@@ -12,6 +12,7 @@ public sealed record MainWindowViewModelFactoryDependencies(
     ISettingsCoordinator SettingsCoordinator,
     IFolderPathService FolderPathService,
     IPathShellService PathShellService,
+    IRefactorPromptComposer RefactorPromptComposer,
     IUiDispatcher UiDispatcher,
     IFilePreviewContentReader FilePreviewContentReader,
     IAppIssueReporter AppIssueReporter,
@@ -101,6 +102,7 @@ public static class MainWindowViewModelFactory
             tree,
             summary,
             dependencies.PathShellService,
+            dependencies.RefactorPromptComposer,
             filePreviewController,
             dependencies.AppIssueReporter);
 

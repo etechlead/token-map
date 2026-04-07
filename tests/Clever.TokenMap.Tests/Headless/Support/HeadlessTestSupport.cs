@@ -260,6 +260,7 @@ internal static class HeadlessTestSupport
                     settingsCoordinator,
                     folderPathService,
                     pathShellService ?? new StubPathShellService(),
+                    new RefactorPromptComposer(),
                     new InlineUiDispatcher(),
                     filePreviewContentReader ?? new StubFilePreviewContentReader(),
                     new TestAppIssueReporter(appIssueState),

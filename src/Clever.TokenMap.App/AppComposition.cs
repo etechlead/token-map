@@ -70,6 +70,7 @@ public static class AppComposition
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
         services.AddSingleton<IFolderPathService, FileSystemFolderPathService>();
         services.AddSingleton<IPathShellService>(_ => PathShellService.CreateForCurrentPlatform());
+        services.AddSingleton<IRefactorPromptComposer, RefactorPromptComposer>();
         services.AddSingleton<IAppLoggerFactory>(sp =>
             new AppLoggerFactory(
                 sp.GetRequiredService<AppSettings>().Logging,
@@ -124,6 +125,7 @@ public static class AppComposition
                     sp.GetRequiredService<ISettingsCoordinator>(),
                     sp.GetRequiredService<IFolderPathService>(),
                     sp.GetRequiredService<IPathShellService>(),
+                    sp.GetRequiredService<IRefactorPromptComposer>(),
                     sp.GetRequiredService<IUiDispatcher>(),
                     sp.GetRequiredService<IFilePreviewContentReader>(),
                     sp.GetRequiredService<IAppIssueReporter>(),

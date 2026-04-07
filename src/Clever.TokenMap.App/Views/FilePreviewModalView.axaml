@@ -149,6 +149,11 @@
                             Classes="action-button"
                             Click="RevealButton_OnClick"
                             IsEnabled="{Binding FilePreview.IsPathActionsEnabled}" />
+                    <Button Name="FilePreviewOpenRefactorPromptButton"
+                            Classes="action-button"
+                            Click="OpenRefactorPromptButton_OnClick"
+                            IsVisible="False"
+                            IsEnabled="False" />
                     <Button Name="FilePreviewSetTreemapRootButton"
                             Classes="action-button"
                             Click="SetAsTreemapRootButton_OnClick"

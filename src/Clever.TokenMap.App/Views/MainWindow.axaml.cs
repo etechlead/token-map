@@ -60,10 +60,31 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RefactorPromptBackdrop_OnPointerPressed(object? sender, PointerPressedEventArgs? e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.CloseRefactorPromptCommand.Execute(null);
+        if (e is not null)
+        {
+            e.Handled = true;
+        }
+    }
+
     private void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key is not Key.Escape || DataContext is not MainWindowViewModel viewModel)
         {
+            return;
+        }
+
+        if (viewModel.IsRefactorPromptOpen)
+        {
+            viewModel.CloseRefactorPromptCommand.Execute(null);
+            e.Handled = true;
             return;
         }
 

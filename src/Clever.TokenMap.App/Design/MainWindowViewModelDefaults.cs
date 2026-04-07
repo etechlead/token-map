@@ -33,6 +33,7 @@ internal static class MainWindowViewModelDefaults
                 settingsCoordinator,
                 folderPathService,
                 pathShellService,
+                new RefactorPromptComposer(),
                 new InlineUiDispatcher(),
                 new NullFilePreviewContentReader(),
                 NullAppIssueReporter.Instance,

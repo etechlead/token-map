@@ -58,6 +58,7 @@ internal static class HarnessComposition
                     settingsCoordinator,
                     folderPathService,
                     pathShellService,
+                    new RefactorPromptComposer(),
                     new InlineUiDispatcher(),
                     new HarnessFilePreviewContentReader(),
                     NullAppIssueReporter.Instance,

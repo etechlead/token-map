@@ -47,6 +47,16 @@ public partial class FilePreviewModalView : UserControl
         await _viewModel.RevealNodeAsync(_viewModel.FilePreview.Node);
     }
 
+    private void OpenRefactorPromptButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_viewModel is null)
+        {
+            return;
+        }
+
+        _viewModel.OpenRefactorPrompt(_viewModel.FilePreview.Node);
+    }
+
     private async void CopyFullPathButton_OnClick(object? sender, RoutedEventArgs e)
     {
         if (_viewModel is null)
@@ -170,6 +180,12 @@ public partial class FilePreviewModalView : UserControl
             ProjectNodeActionPresentation.RevealIconResourceKey,
             isVisible: true,
             isEnabled: _viewModel?.FilePreview.IsPathActionsEnabled == true);
+        ConfigureActionButton(
+            "FilePreviewOpenRefactorPromptButton",
+            ProjectNodeActionPresentation.RefactorPromptHeader,
+            ProjectNodeActionPresentation.RefactorPromptIconResourceKey,
+            isVisible: _viewModel?.CanOpenRefactorPrompt(_viewModel.FilePreview.Node) == true,
+            isEnabled: _viewModel?.CanOpenRefactorPrompt(_viewModel.FilePreview.Node) == true);
         ConfigureActionButton(
             "FilePreviewSetTreemapRootButton",
             ProjectNodeActionPresentation.SetAsTreemapRootHeader,

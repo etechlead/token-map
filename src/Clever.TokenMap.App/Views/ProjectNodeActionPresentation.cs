@@ -8,6 +8,7 @@ internal static class ProjectNodeActionPresentation
 {
     public const string OpenHeader = "Open";
     public const string PreviewHeader = "Preview";
+    public const string RefactorPromptHeader = "Refactor Prompt";
     public const string SetAsTreemapRootHeader = "Set as Treemap Root";
     public const string ExcludeFromScanHeader = "Exclude from Scan";
     public const string CopyFullPathHeader = "Copy Full Path";
@@ -15,6 +16,7 @@ internal static class ProjectNodeActionPresentation
 
     public const string OpenIconResourceKey = FluentIconGeometry.FolderOpen16Regular;
     public const string PreviewIconResourceKey = FluentIconGeometry.Eye16Regular;
+    public const string RefactorPromptIconResourceKey = FluentIconGeometry.ChatSparkle16Regular;
     public const string RevealIconResourceKey = FluentIconGeometry.DesktopMac16Regular;
     public const string SetAsTreemapRootIconResourceKey = FluentIconGeometry.TargetArrow16Regular;
     public const string ExcludeFromScanIconResourceKey = FluentIconGeometry.SubtractCircle16Regular;
