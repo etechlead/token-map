@@ -52,7 +52,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
         new(
             MetricIds.RefactorPriorityPoints,
             "Refactor Priority",
-            "Priority",
+            "Refactor",
             MetricUnit.Score,
             MetricRollupKind.Sum,
             VisibleByDefault: true,

@@ -144,7 +144,7 @@ public sealed class ToolbarViewModelTests
 
         Assert.Equal("Complexity", complexityOption.Label);
         Assert.Equal("Hotspots", hotspotsOption.Label);
-        Assert.Equal("Priority", priorityOption.Label);
+        Assert.Equal("Refactor", priorityOption.Label);
         Assert.Equal(6, viewModel.MetricVisibilityOptions.Count);
         Assert.Empty(viewModel.TreeOnlyMetricVisibilityOptions);
         Assert.False(viewModel.HasTreeOnlyMetricVisibilityOptions);
