@@ -452,6 +452,23 @@ public sealed class TreemapControlHeadlessTests
     }
 
     [AvaloniaFact]
+    public void TreemapControl_MinimumVisibleWeight_FiltersLeafVisuals()
+    {
+        var snapshot = CreateMetricSensitiveSnapshot();
+        var control = CreateControl(snapshot, MetricIds.Tokens);
+        var window = CreateHostWindow(control);
+
+        window.Show();
+
+        Assert.Equal(3, control.NodeVisuals.Count);
+
+        control.MinimumVisibleWeight = 21;
+
+        var remainingVisual = Assert.Single(control.NodeVisuals);
+        Assert.Equal("a.cs", remainingVisual.Node.RelativePath);
+    }
+
+    [AvaloniaFact]
     public void TreemapControl_LoadsStyledThemeBrushes()
     {
         var control = CreateControl(CreateNestedSnapshot());
@@ -476,13 +493,15 @@ public sealed class TreemapControlHeadlessTests
         ProjectSnapshot? snapshot = null,
         MetricId metric = default,
         bool showMetricValues = false,
-        IReadOnlyList<MetricId>? visibleMetricIds = null) =>
+        IReadOnlyList<MetricId>? visibleMetricIds = null,
+        double minimumVisibleWeight = double.NegativeInfinity) =>
         new()
         {
             Width = 320,
             Height = 180,
             RootNode = (snapshot ?? CreateSnapshot()).Root,
             Metric = metric == default ? MetricIds.Tokens : metric,
+            MinimumVisibleWeight = minimumVisibleWeight,
             ShowMetricValues = showMetricValues,
             VisibleMetricIds = visibleMetricIds ?? DefaultMetricCatalog.GetDefaultVisibleMetricIds(),
         };

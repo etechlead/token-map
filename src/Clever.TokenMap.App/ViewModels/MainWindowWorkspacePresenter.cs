@@ -33,6 +33,7 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
 
         _tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
         _tree.SetVisibleMetrics(_settingsCoordinator.State.VisibleMetricIds);
+        _treemapNavigationState.SetSelectedMetric(_settingsCoordinator.State.SelectedMetric);
         _tree.SelectedNodeChanged += TreeOnSelectedNodeChanged;
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
         _settingsCoordinator.State.PropertyChanged += SettingsStateOnPropertyChanged;
@@ -72,6 +73,22 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
     public IReadOnlyList<TreemapBreadcrumbItem> TreemapBreadcrumbs => _treemapNavigationState.TreemapBreadcrumbs;
 
     public bool CanResetTreemapRoot => _treemapNavigationState.CanResetTreemapRoot;
+
+    public double TreemapThresholdSliderMinimum => _treemapNavigationState.ThresholdSliderMinimum;
+
+    public double TreemapThresholdSliderMaximum => _treemapNavigationState.ThresholdSliderMaximum;
+
+    public double TreemapThresholdSliderValue
+    {
+        get => _treemapNavigationState.ThresholdSliderValue;
+        set => _treemapNavigationState.ThresholdSliderValue = value;
+    }
+
+    public double TreemapThresholdValue => _treemapNavigationState.ThresholdValue;
+
+    public string TreemapThresholdValueText => _treemapNavigationState.ThresholdValueText;
+
+    public bool CanAdjustTreemapThreshold => _treemapNavigationState.CanAdjustThreshold;
 
     public void DrillIntoTreemap(ProjectNode? node)
     {
@@ -160,6 +177,7 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         if (e.PropertyName == nameof(IReadOnlySettingsState.SelectedMetric))
         {
             _tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
+            _treemapNavigationState.SetSelectedMetric(_settingsCoordinator.State.SelectedMetric);
         }
 
         if (e.PropertyName == nameof(IReadOnlySettingsState.VisibleMetricIds))
@@ -182,6 +200,23 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
                 break;
             case nameof(TreemapNavigationState.TreemapBreadcrumbs):
                 OnPropertyChanged(nameof(TreemapBreadcrumbs));
+                break;
+            case nameof(TreemapNavigationState.ThresholdSliderMinimum):
+                OnPropertyChanged(nameof(TreemapThresholdSliderMinimum));
+                OnPropertyChanged(nameof(CanAdjustTreemapThreshold));
+                break;
+            case nameof(TreemapNavigationState.ThresholdSliderMaximum):
+                OnPropertyChanged(nameof(TreemapThresholdSliderMaximum));
+                OnPropertyChanged(nameof(CanAdjustTreemapThreshold));
+                break;
+            case nameof(TreemapNavigationState.ThresholdSliderValue):
+                OnPropertyChanged(nameof(TreemapThresholdSliderValue));
+                OnPropertyChanged(nameof(TreemapThresholdValue));
+                OnPropertyChanged(nameof(TreemapThresholdValueText));
+                break;
+            case nameof(TreemapNavigationState.ThresholdValue):
+                OnPropertyChanged(nameof(TreemapThresholdValue));
+                OnPropertyChanged(nameof(TreemapThresholdValueText));
                 break;
         }
     }

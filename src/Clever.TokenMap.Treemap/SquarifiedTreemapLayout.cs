@@ -12,7 +12,8 @@ public sealed class SquarifiedTreemapLayout
         Rect bounds,
         MetricId metric,
         bool includeDirectoryHeaders = true,
-        double minLeafAreaRatio = 0)
+        double minLeafAreaRatio = 0,
+        double minimumLeafWeightThreshold = double.NegativeInfinity)
     {
         ArgumentNullException.ThrowIfNull(rootNode);
 
@@ -22,6 +23,9 @@ public sealed class SquarifiedTreemapLayout
         }
 
         var normalizedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
+        var normalizedMinimumLeafWeightThreshold = double.IsNaN(minimumLeafWeightThreshold)
+            ? double.NegativeInfinity
+            : minimumLeafWeightThreshold;
         var minimumLeafWeight = Math.Max(0, minLeafAreaRatio) <= 0
             ? 0
             : GetWeight(rootNode, normalizedMetric) * Math.Max(0, minLeafAreaRatio);
@@ -35,6 +39,7 @@ public sealed class SquarifiedTreemapLayout
             depth: 0,
             includeDirectoryHeaders,
             minimumLeafWeight,
+            normalizedMinimumLeafWeightThreshold,
             effectiveWeightCache);
         return visuals;
     }
@@ -47,12 +52,13 @@ public sealed class SquarifiedTreemapLayout
         int depth,
         bool includeDirectoryHeaders,
         double minimumLeafWeight,
+        double minimumLeafWeightThreshold,
         Dictionary<ProjectNode, double> effectiveWeightCache)
     {
         var items = node.Children
             .Select(child => new WeightedNode(
                 child,
-                GetEffectiveWeight(child, metric, minimumLeafWeight, effectiveWeightCache)))
+                GetEffectiveWeight(child, metric, minimumLeafWeight, minimumLeafWeightThreshold, effectiveWeightCache)))
             .Where(item => item.Weight > 0)
             .OrderByDescending(item => item.Weight)
             .ToList();
@@ -94,6 +100,7 @@ public sealed class SquarifiedTreemapLayout
                 depth,
                 includeDirectoryHeaders,
                 minimumLeafWeight,
+                minimumLeafWeightThreshold,
                 effectiveWeightCache);
             row.Clear();
         }
@@ -108,6 +115,7 @@ public sealed class SquarifiedTreemapLayout
                 depth,
                 includeDirectoryHeaders,
                 minimumLeafWeight,
+                minimumLeafWeightThreshold,
                 effectiveWeightCache);
         }
     }
@@ -120,6 +128,7 @@ public sealed class SquarifiedTreemapLayout
         int depth,
         bool includeDirectoryHeaders,
         double minimumLeafWeight,
+        double minimumLeafWeightThreshold,
         Dictionary<ProjectNode, double> effectiveWeightCache)
     {
         var rowArea = row.Sum(item => item.Area);
@@ -153,6 +162,7 @@ public sealed class SquarifiedTreemapLayout
                         depth + 1,
                         includeDirectoryHeaders,
                         minimumLeafWeight,
+                        minimumLeafWeightThreshold,
                         effectiveWeightCache);
                 }
 
@@ -183,6 +193,7 @@ public sealed class SquarifiedTreemapLayout
                     depth + 1,
                     includeDirectoryHeaders,
                     minimumLeafWeight,
+                    minimumLeafWeightThreshold,
                     effectiveWeightCache);
             }
 
@@ -233,6 +244,7 @@ public sealed class SquarifiedTreemapLayout
         ProjectNode node,
         MetricId metric,
         double minimumLeafWeight,
+        double minimumLeafWeightThreshold,
         Dictionary<ProjectNode, double> effectiveWeightCache)
     {
         if (effectiveWeightCache.TryGetValue(node, out var cachedWeight))
@@ -244,7 +256,8 @@ public sealed class SquarifiedTreemapLayout
         if (node.Kind == ProjectNodeKind.File || node.Children.Count == 0)
         {
             var rawWeight = GetWeight(node, metric);
-            effectiveWeight = rawWeight >= minimumLeafWeight
+            effectiveWeight = rawWeight >= minimumLeafWeight &&
+                              rawWeight >= minimumLeafWeightThreshold
                 ? rawWeight
                 : 0;
         }
@@ -254,6 +267,7 @@ public sealed class SquarifiedTreemapLayout
                 child,
                 metric,
                 minimumLeafWeight,
+                minimumLeafWeightThreshold,
                 effectiveWeightCache));
         }
 

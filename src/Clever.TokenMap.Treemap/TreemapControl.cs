@@ -50,6 +50,9 @@ public sealed class TreemapControl : Control
     public static readonly StyledProperty<double> MinLeafAreaRatioProperty =
         AvaloniaProperty.Register<TreemapControl, double>(nameof(MinLeafAreaRatio));
 
+    public static readonly StyledProperty<double> MinimumVisibleWeightProperty =
+        AvaloniaProperty.Register<TreemapControl, double>(nameof(MinimumVisibleWeight), double.NegativeInfinity);
+
     public static readonly StyledProperty<bool> ShowLeafBordersProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowLeafBorders), true);
 
@@ -125,6 +128,7 @@ public sealed class TreemapControl : Control
             LeafCornerRadiusProperty,
             LeafGapProperty,
             MinLeafAreaRatioProperty,
+            MinimumVisibleWeightProperty,
             ShowLeafBordersProperty,
             CanvasInsetProperty,
             BoundsProperty,
@@ -209,6 +213,12 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(MinLeafAreaRatioProperty);
         set => SetValue(MinLeafAreaRatioProperty, value);
+    }
+
+    public double MinimumVisibleWeight
+    {
+        get => GetValue(MinimumVisibleWeightProperty);
+        set => SetValue(MinimumVisibleWeightProperty, value);
     }
 
     public bool ShowLeafBorders
@@ -343,9 +353,11 @@ public sealed class TreemapControl : Control
             change.Property == ShowDirectoryNodesProperty ||
             change.Property == LeafGapProperty ||
             change.Property == MinLeafAreaRatioProperty ||
+            change.Property == MinimumVisibleWeightProperty ||
             change.Property == CanvasInsetProperty)
         {
             UpdateVisuals(Bounds.Size);
+            SynchronizeHoverWithVisuals();
             InvalidateVisual();
         }
 
@@ -626,7 +638,8 @@ public sealed class TreemapControl : Control
             drawingBounds,
             Metric,
             includeDirectoryHeaders: ShowDirectoryNodes,
-            minLeafAreaRatio: MinLeafAreaRatio);
+            minLeafAreaRatio: MinLeafAreaRatio,
+            minimumLeafWeightThreshold: MinimumVisibleWeight);
         var halfGap = Math.Max(0, LeafGap) / 2d;
         var styledVisuals = new List<TreemapNodeVisual>(visuals.Count);
 
@@ -646,6 +659,21 @@ public sealed class TreemapControl : Control
         }
 
         _nodeVisuals = styledVisuals;
+    }
+
+    private void SynchronizeHoverWithVisuals()
+    {
+        if (HoveredNode is null)
+        {
+            return;
+        }
+
+        if (_nodeVisuals.Any(visual => visual.Node.Id == HoveredNode.Id))
+        {
+            return;
+        }
+
+        ClearHover();
     }
 
     public ProjectNode? HitTestNode(Point point)

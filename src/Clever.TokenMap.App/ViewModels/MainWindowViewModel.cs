@@ -116,6 +116,22 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public bool CanResetTreemapRoot => _workspacePresenter.CanResetTreemapRoot;
 
+    public double TreemapThresholdSliderMinimum => _workspacePresenter.TreemapThresholdSliderMinimum;
+
+    public double TreemapThresholdSliderMaximum => _workspacePresenter.TreemapThresholdSliderMaximum;
+
+    public double TreemapThresholdSliderValue
+    {
+        get => _workspacePresenter.TreemapThresholdSliderValue;
+        set => _workspacePresenter.TreemapThresholdSliderValue = value;
+    }
+
+    public double TreemapThresholdValue => _workspacePresenter.TreemapThresholdValue;
+
+    public string TreemapThresholdValueText => _workspacePresenter.TreemapThresholdValueText;
+
+    public bool CanAdjustTreemapThreshold => _workspacePresenter.CanAdjustTreemapThreshold;
+
     public bool IsShareSnapshotOpen => ShareSnapshot is not null;
 
     public bool IsFilePreviewOpen => FilePreview.IsOpen;

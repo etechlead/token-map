@@ -214,6 +214,44 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.Equal(1, updatedLines.Count(line => line == "---"));
     }
 
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapThresholdSlider_FiltersVisualsAndResetsForMetricChanges()
+    {
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateThresholdSnapshot());
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        var slider = FindNamedDescendant<Slider>(window, "TreemapThresholdSlider");
+        var valueText = FindNamedDescendant<TextBlock>(window, "TreemapThresholdValueText");
+
+        Assert.NotNull(control);
+        Assert.NotNull(slider);
+        Assert.NotNull(valueText);
+        Assert.Equal(0, viewModel.TreemapThresholdSliderMinimum);
+        Assert.Equal(2, viewModel.TreemapThresholdSliderMaximum);
+        Assert.Equal(0, slider.Value);
+        Assert.Equal(5, viewModel.TreemapThresholdValue);
+        Assert.Equal("5", valueText.Text);
+        Assert.Equal(3, control.NodeVisuals.Count);
+
+        viewModel.TreemapThresholdSliderValue = 2;
+        window.UpdateLayout();
+
+        var remainingVisual = Assert.Single(control.NodeVisuals);
+        Assert.Equal("a.cs", remainingVisual.Node.RelativePath);
+        Assert.Equal(80, viewModel.TreemapThresholdValue);
+        Assert.Equal("80", valueText.Text);
+
+        viewModel.Toolbar.SelectedMetric = MetricIds.NonEmptyLines;
+        window.UpdateLayout();
+
+        Assert.Equal(0, viewModel.TreemapThresholdSliderMinimum);
+        Assert.Equal(1, viewModel.TreemapThresholdSliderMaximum);
+        Assert.Equal(0, slider.Value);
+        Assert.Equal(10, viewModel.TreemapThresholdValue);
+        Assert.Equal("10", valueText.Text);
+        Assert.Equal(["a.cs", "b.cs"], control.NodeVisuals.Select(item => item.Node.RelativePath).OrderBy(path => path).ToArray());
+    }
+
     private static async Task<(AppMainWindow Window, MainWindowViewModel ViewModel)> CreateOpenWindowAsync(ProjectSnapshot snapshot)
     {
         var window = new AppMainWindow();
@@ -291,6 +329,20 @@ public sealed class MainWindowTreemapIntegrationTests
                     },
                 },
             },
+        };
+    }
+
+    private static ProjectSnapshot CreateThresholdSnapshot()
+    {
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = CreateRootWithChildren(
+                ("a.cs", FileSizeBytes: 50, Tokens: 80, NonEmptyLines: 10),
+                ("b.cs", FileSizeBytes: 75, Tokens: 20, NonEmptyLines: 90),
+                ("c.cs", FileSizeBytes: 225, Tokens: 5, NonEmptyLines: 0)),
         };
     }
 

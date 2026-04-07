@@ -66,6 +66,7 @@ public sealed class MainWindowLayoutTests
         Assert.IsType<Button>(layoutToggleControl);
         Assert.NotNull(FindNamedDescendant<GridSplitter>(window, "WorkspaceSplitter"));
         Assert.NotNull(FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl"));
+        Assert.NotNull(FindNamedDescendant<Slider>(window, "TreemapThresholdSlider"));
         Assert.NotNull(FindNamedDescendant<ProgressBar>(window, "StatusProgressBar"));
         Assert.NotNull(FindNamedDescendant<Border>(window, "ProgressStatusPill"));
         Assert.NotNull(FindNamedDescendant<TextBlock>(window, "ProgressStatusPillText"));
@@ -73,6 +74,27 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(FindNamedDescendant<Button>(window, "ShareButton"));
         Assert.NotNull(FindNamedDescendant<Button>(window, "SettingsButton"));
         Assert.NotNull(FindNamedDescendant<SplitButton>(window, "OpenFolderSplitButton"));
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapThresholdSlider_ThumbFitsWithinSliderBounds()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(CreateSnapshot()));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+        window.UpdateLayout();
+
+        var slider = FindNamedDescendant<Slider>(window, "TreemapThresholdSlider");
+        var thumb = slider?.GetVisualDescendants().OfType<Thumb>().FirstOrDefault();
+
+        Assert.NotNull(slider);
+        Assert.NotNull(thumb);
+        Assert.True(
+            thumb.Bounds.Top >= 0 && thumb.Bounds.Bottom <= slider.Bounds.Height,
+            $"Thumb bounds {thumb.Bounds} exceed slider bounds {slider.Bounds}.");
     }
 
     [AvaloniaFact]
