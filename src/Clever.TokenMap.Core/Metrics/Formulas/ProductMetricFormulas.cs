@@ -23,11 +23,11 @@ public static class ProductMetricFormulas
         }
 
         breakdown = CreateBreakdown(
-            CreateNormalizedContribution("code_lines", "Code lines", "Structure", codeLines.Value, good: 20d, bad: 300d, weight: 0.20d),
-            CreateNormalizedContribution("cc_sum", "Cyclomatic complexity sum", "Structure", cyclomaticComplexitySum.Value, good: 2d, bad: 40d, weight: 0.35d),
-            CreateNormalizedContribution("cc_max", "Cyclomatic complexity max", "Structure", cyclomaticComplexityMax.Value, good: 2d, bad: 15d, weight: 0.20d),
-            CreateNormalizedContribution("max_nesting_depth", "Max nesting depth", "Structure", maxNestingDepth.Value, good: 1d, bad: 6d, weight: 0.15d),
-            CreateNormalizedContribution("max_parameter_count", "Max parameter count", "Structure", maxParameterCount.Value, good: 2d, bad: 8d, weight: 0.10d));
+            CreateOpenEndedContribution("code_lines", "Code lines", "Structure", codeLines.Value, good: 20d, bad: 300d, weight: 0.20d),
+            CreateOpenEndedContribution("cc_sum", "Cyclomatic complexity sum", "Structure", cyclomaticComplexitySum.Value, good: 2d, bad: 40d, weight: 0.35d),
+            CreateOpenEndedContribution("cc_max", "Cyclomatic complexity max", "Structure", cyclomaticComplexityMax.Value, good: 2d, bad: 15d, weight: 0.20d),
+            CreateOpenEndedContribution("max_nesting_depth", "Max nesting depth", "Structure", maxNestingDepth.Value, good: 1d, bad: 6d, weight: 0.15d),
+            CreateOpenEndedContribution("max_parameter_count", "Max parameter count", "Structure", maxParameterCount.Value, good: 2d, bad: 8d, weight: 0.10d));
         return true;
     }
 
@@ -73,19 +73,19 @@ public static class ProductMetricFormulas
         {
             breakdown = CreateBreakdown(
                 CreateWeightedScoreContribution("complexity_points", "Complexity", "Intrinsic", complexityPoints.Value, weight: 0.80d),
-                CreateNormalizedContribution("callable_hotspot_points", "Hotspots", "Intrinsic", callableHotspotPoints.Value, good: 0d, bad: 10d, weight: 0.20d));
+                CreateOpenEndedContribution("callable_hotspot_points", "Hotspots", "Intrinsic", callableHotspotPoints.Value, good: 0d, bad: 10d, weight: 0.20d));
             return true;
         }
 
         breakdown = CreateBreakdown(
             CreateWeightedScoreContribution("complexity_points", "Complexity", "Intrinsic", complexityPoints.Value, weight: 0.48d),
-            CreateNormalizedContribution("callable_hotspot_points", "Hotspots", "Intrinsic", callableHotspotPoints.Value, good: 0d, bad: 10d, weight: 0.12d),
-            CreateNormalizedContribution("churn_lines_90d", "Churn lines (90d)", "Change pressure", churnLines90d, good: 20d, bad: 400d, weight: 0.10d),
-            CreateNormalizedContribution("touch_count_90d", "Touch count (90d)", "Change pressure", touchCount90d, good: 1d, bad: 12d, weight: 0.07d),
-            CreateNormalizedContribution("author_count_90d", "Author count (90d)", "Change pressure", authorCount90d, good: 1d, bad: 4d, weight: 0.03d),
-            CreateNormalizedContribution("strong_cochanged_file_count_90d", "Strong co-change files (90d)", "Co-change pressure", strongCochangedFileCount90d, good: 0d, bad: 8d, weight: 0.10d),
-            CreateNormalizedContribution("unique_cochanged_file_count_90d", "Unique co-change files (90d)", "Co-change pressure", uniqueCochangedFileCount90d, good: 0d, bad: 20d, weight: 0.06d),
-            CreateNormalizedContribution("avg_cochange_set_size_90d", "Avg co-change set size (90d)", "Co-change pressure", averageCochangeSetSize90d, good: 0d, bad: 6d, weight: 0.04d));
+            CreateOpenEndedContribution("callable_hotspot_points", "Hotspots", "Intrinsic", callableHotspotPoints.Value, good: 0d, bad: 10d, weight: 0.12d),
+            CreateOpenEndedContribution("churn_lines_90d", "Churn lines (90d)", "Change pressure", churnLines90d, good: 20d, bad: 400d, weight: 0.10d),
+            CreateOpenEndedContribution("touch_count_90d", "Touch count (90d)", "Change pressure", touchCount90d, good: 1d, bad: 12d, weight: 0.07d),
+            CreateOpenEndedContribution("author_count_90d", "Author count (90d)", "Change pressure", authorCount90d, good: 1d, bad: 4d, weight: 0.03d),
+            CreateOpenEndedContribution("strong_cochanged_file_count_90d", "Strong co-change files (90d)", "Co-change pressure", strongCochangedFileCount90d, good: 0d, bad: 8d, weight: 0.10d),
+            CreateOpenEndedContribution("unique_cochanged_file_count_90d", "Unique co-change files (90d)", "Co-change pressure", uniqueCochangedFileCount90d, good: 0d, bad: 20d, weight: 0.06d),
+            CreateOpenEndedContribution("avg_cochange_set_size_90d", "Avg co-change set size (90d)", "Co-change pressure", averageCochangeSetSize90d, good: 0d, bad: 6d, weight: 0.04d));
         return true;
     }
 
@@ -93,6 +93,26 @@ public static class ProductMetricFormulas
 
     private static MetricFormulaBreakdown CreateBreakdown(params MetricComponentContribution[] components) =>
         new(components.Sum(component => component.ContributionPoints), components);
+
+    private static MetricComponentContribution CreateOpenEndedContribution(
+        string key,
+        string label,
+        string category,
+        double rawValue,
+        double good,
+        double bad,
+        double weight)
+    {
+        var normalizedValue = NormalizeOpenEnded(rawValue, good, bad);
+        return new MetricComponentContribution(
+            key,
+            label,
+            category,
+            rawValue,
+            normalizedValue,
+            weight,
+            100d * weight * normalizedValue);
+    }
 
     private static MetricComponentContribution CreateNormalizedContribution(
         string key,
@@ -152,6 +172,16 @@ public static class ProductMetricFormulas
         }
 
         return Math.Clamp((value - good) / (bad - good), 0d, 1d);
+    }
+
+    private static double NormalizeOpenEnded(double value, double good, double bad)
+    {
+        if (bad <= good)
+        {
+            throw new ArgumentOutOfRangeException(nameof(bad), "Normalization requires bad > good.");
+        }
+
+        return Math.Max(0d, (value - good) / (bad - good));
     }
 
     private static bool TryGetGitOperands(

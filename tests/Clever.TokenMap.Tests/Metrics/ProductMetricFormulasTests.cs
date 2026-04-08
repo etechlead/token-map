@@ -26,6 +26,29 @@ public sealed class ProductMetricFormulasTests
     }
 
     [Fact]
+    public void TryComputeComplexity_ContinuesGrowingPastBadThresholds()
+    {
+        var metrics = MetricSet.From(
+            (MetricIds.CodeLines, MetricValue.From(600)),
+            (MetricIds.CyclomaticComplexitySum, MetricValue.From(80)),
+            (MetricIds.CyclomaticComplexityMax, MetricValue.From(30)),
+            (MetricIds.MaxNestingDepth, MetricValue.From(10)),
+            (MetricIds.MaxParameterCount, MetricValue.From(12)));
+
+        var success = ProductMetricFormulas.TryComputeComplexity(metrics, out var breakdown);
+
+        Assert.True(success);
+        Assert.True(breakdown.TotalPoints > 100d);
+        Assert.All(
+            breakdown.Components,
+            component =>
+            {
+                Assert.NotNull(component.NormalizedValue);
+                Assert.True(component.NormalizedValue.Value > 1d);
+            });
+    }
+
+    [Fact]
     public void TryComputeHotspots_ReturnsAdditiveBreakdown()
     {
         var metrics = MetricSet.From(
@@ -102,8 +125,34 @@ public sealed class ProductMetricFormulasTests
                 component.RawValue == 210d);
         Assert.Contains(
             breakdown.Components,
-            component => component.Key == "strong_cochanged_file_count_90d" &&
+                component => component.Key == "strong_cochanged_file_count_90d" &&
                 component.Category == "Co-change pressure" &&
                 component.RawValue == 4d);
+    }
+
+    [Fact]
+    public void TryComputeRefactorPriority_ContinuesGrowingPastHotspotAndGitThresholds()
+    {
+        var metrics = MetricSet.From(
+            (MetricIds.ComplexityPoints, MetricValue.From(140)),
+            (MetricIds.CallableHotspotPoints, MetricValue.From(25)),
+            (MetricIds.ChurnLines90d, MetricValue.From(800)),
+            (MetricIds.TouchCount90d, MetricValue.From(24)),
+            (MetricIds.AuthorCount90d, MetricValue.From(6)),
+            (MetricIds.UniqueCochangedFileCount90d, MetricValue.From(40)),
+            (MetricIds.StrongCochangedFileCount90d, MetricValue.From(16)),
+            (MetricIds.AverageCochangeSetSize90d, MetricValue.From(12d)));
+
+        var success = ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var breakdown);
+
+        Assert.True(success);
+        Assert.True(breakdown.TotalPoints > 100d);
+
+        var normalizedComponents = breakdown.Components
+            .Where(component => component.NormalizedValue.HasValue)
+            .ToArray();
+
+        Assert.NotEmpty(normalizedComponents);
+        Assert.All(normalizedComponents, component => Assert.True(component.NormalizedValue!.Value > 1d));
     }
 }

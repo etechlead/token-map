@@ -39,7 +39,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "Composite additive complexity points for files and summed directory rollups."),
+            "Open-ended composite complexity points for files and summed directory rollups."),
         new(
             MetricIds.CallableHotspotPoints,
             "Hotspots",
@@ -57,7 +57,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "Additive refactor priority points for files and summed directory rollups.")
+            "Open-ended additive refactor priority points for files and summed directory rollups.")
     ];
 
     private readonly Dictionary<MetricId, MetricDefinition> _definitionsById =

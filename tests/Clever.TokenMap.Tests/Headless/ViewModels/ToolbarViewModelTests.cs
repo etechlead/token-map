@@ -159,7 +159,7 @@ public sealed class ToolbarViewModelTests
             option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
 
         Assert.Equal(refactorOption.Definition.Description, refactorOption.Description);
-        Assert.Equal("Additive refactor priority points for files and summed directory rollups.", refactorOption.Description);
+        Assert.Equal("Open-ended additive refactor priority points for files and summed directory rollups.", refactorOption.Description);
     }
 
     [Fact]
