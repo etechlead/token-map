@@ -13,11 +13,9 @@ public static class RefactorPromptTemplateDefaults
         - Tokens: {{tokens}}
         - Non-empty lines: {{non_empty_lines}}
         - File size: {{file_size}}
-        - Structural Risk: {{structural_risk}}
         - Refactor Priority: {{refactor_priority}}
 
-        Primary signals that push this file toward refactoring:
-        {{structural_risk_breakdown}}
+        How Refactor Priority was formed:
         {{refactor_priority_breakdown}}
 
         Task:

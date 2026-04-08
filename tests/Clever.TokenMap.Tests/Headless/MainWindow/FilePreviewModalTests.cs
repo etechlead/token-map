@@ -5,6 +5,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.LogicalTree;
+using Avalonia.Controls.Primitives;
 using AvaloniaEdit;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Interfaces;
@@ -79,10 +80,47 @@ public sealed class FilePreviewModalTests
         Assert.True(editor.IsVisible);
         Assert.Contains(
             sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
-            text => text == "Structural Risk");
+            text => text == "Refactor Priority");
         Assert.Contains(
             sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
-            text => text == "Refactor Priority");
+            text => text == "Structural base");
+        Assert.Contains(
+            sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => text == "Git uplift");
+        Assert.DoesNotContain(
+            sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => text == "Structural Risk");
+    }
+
+    [AvaloniaFact]
+    public async Task MainWindow_FilePreviewModal_MetricDescriptions_AppearInTooltipsInsteadOfInlineText()
+    {
+        const string previewContent = "class Program { }";
+        const string expectedDescription = "Sum of per-callable burden after soft thresholds for method length, cyclomatic complexity, nesting depth, and parameter count.";
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(snapshot),
+            filePreviewContentReader: new FixedPreviewReader(new FilePreviewContentResult(FilePreviewReadStatus.Success, previewContent)));
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.PreviewNodeAsync(file);
+        window.UpdateLayout();
+
+        var sections = FindNamedDescendant<ItemsControl>(window, "FilePreviewExplainabilitySectionsItemsControl");
+        Assert.NotNull(sections);
+
+        var totalCallableBurdenLabel = sections.GetLogicalDescendants()
+            .OfType<TextBlock>()
+            .FirstOrDefault(textBlock => textBlock.Text == "Total callable burden");
+
+        Assert.NotNull(totalCallableBurdenLabel);
+        Assert.Equal(expectedDescription, ToolTip.GetTip(totalCallableBurdenLabel)?.ToString());
+        Assert.DoesNotContain(
+            sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => string.Equals(text, expectedDescription, StringComparison.Ordinal));
     }
 
     [AvaloniaFact]

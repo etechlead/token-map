@@ -148,7 +148,7 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetDefaultVisibleMetricIds());
 
     public void ShowAllMetricIds() =>
-        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetAllMetricIds());
+        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetAllUserVisibleMetricIds());
 
     internal void ReplaceRecentFolderPaths(IEnumerable<string> folderPaths)
     {

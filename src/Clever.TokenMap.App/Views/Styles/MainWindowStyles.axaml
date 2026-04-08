@@ -773,6 +773,12 @@
         <Setter Property="CornerRadius" Value="6" />
         <Setter Property="Margin" Value="0,0,0,12" />
     </Style>
+    <Style Selector="Border.file-preview-explainability-group">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+    </Style>
     <Style Selector="Border.refactor-prompt-modal">
         <Setter Property="MaxWidth" Value="1040" />
         <Setter Property="Padding" Value="16" />

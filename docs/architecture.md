@@ -39,7 +39,7 @@ This document covers project purpose, canonical ownership, runtime flow, and non
 - `Clever.TokenMap.Metrics` stays below app/infrastructure orchestration and above core models; UI consumes metric abstractions through core contracts.
 - File metrics flow as raw file metrics, then chained derived file metrics, then directory rollup; raw parser objects stay inside the metrics layer.
 - Infrastructure may enrich a snapshot with one optional repo-wide git history pass before per-file metrics so product metrics can consume cached per-file git artifacts without per-file repository walks.
-- `Structural Risk` is the product-facing intrinsic quality score; it summarizes file scale, callable burden, and how concentrated that burden is inside the file.
-- `Refactor Priority` is the product-facing composite score for refactoring urgency; it layers recent change and co-change pressure on top of Structural Risk instead of exposing git signals as separate public metrics.
+- `Structural Risk` is the internal intrinsic quality score; it summarizes file scale, callable burden, and how concentrated that burden is inside the file, and it serves as the base for explainability.
+- `Refactor Priority` is the single product-facing quality score for refactoring urgency; it layers recent change and co-change pressure on top of Structural Risk instead of exposing a second public quality metric.
 - Token counting stays behind `ITokenCounter`.
 - The treemap stays one custom-rendered control.

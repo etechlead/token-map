@@ -972,7 +972,7 @@ public sealed class TreemapControl : Control
         var visibleMetricIds = GetNormalizedVisibleMetricIds().ToHashSet();
         var rows = new List<TreemapTooltipValueRow>();
 
-        foreach (var definition in DefaultMetricCatalog.Instance.GetAll())
+        foreach (var definition in DefaultMetricCatalog.GetUserVisibleDefinitions())
         {
             if (visibleMetricIds.Contains(definition.Id) ||
                 !node.ComputedMetrics.Values.TryGetValue(definition.Id, out var value) ||

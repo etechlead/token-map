@@ -50,7 +50,7 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         _toggleWorkspaceLayoutCommand = new RelayCommand(ToggleWorkspaceLayout);
         _resetVisibleMetricIdsCommand = new RelayCommand(_settingsCoordinator.ResetVisibleMetricIdsToDefault);
         _showAllMetricIdsCommand = new RelayCommand(_settingsCoordinator.ShowAllMetricIds);
-        _allMetricDefinitions = DefaultMetricCatalog.Instance.GetAll();
+        _allMetricDefinitions = DefaultMetricCatalog.GetUserVisibleDefinitions();
 
         VisibleTreemapMetricOptions = new ReadOnlyObservableCollection<MetricSelectionOptionViewModel>(_visibleTreemapMetricOptions);
         MetricVisibilityOptions = new ReadOnlyObservableCollection<MetricVisibilityOptionViewModel>(_metricVisibilityOptions);

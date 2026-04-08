@@ -52,7 +52,8 @@
                                     <DataTemplate x:DataType="vm:MetricExplainabilitySectionViewModel">
                                         <Border Classes="toolbar-group file-preview-explainability-card"
                                                 Padding="12">
-                                            <StackPanel Spacing="8">
+                                            <StackPanel Spacing="8"
+                                                        Grid.IsSharedSizeScope="True">
                                                 <Grid ColumnDefinitions="*,Auto"
                                                       ColumnSpacing="12">
                                                     <TextBlock Classes="panel-title"
@@ -61,31 +62,71 @@
                                                                HorizontalAlignment="Right"
                                                                Text="{Binding ScoreText}" />
                                                 </Grid>
-                                                <TextBlock Classes="panel-body"
-                                                           Text="{Binding Summary}"
-                                                           TextWrapping="Wrap" />
                                                 <TextBlock Classes="panel-body file-preview-explainability-note"
                                                            IsVisible="{Binding HasNote}"
                                                            Text="{Binding Note}"
                                                            TextWrapping="Wrap" />
-                                                <ItemsControl ItemsSource="{Binding Contributors}"
-                                                              IsVisible="{Binding HasContributors}">
+                                                <ItemsControl ItemsSource="{Binding Groups}"
+                                                              IsVisible="{Binding HasGroups}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Spacing="10" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
                                                     <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="vm:MetricExplainabilityContributorViewModel">
-                                                            <Grid ColumnDefinitions="*,Auto,Auto"
-                                                                  ColumnSpacing="8">
-                                                                <TextBlock Classes="panel-body"
-                                                                           Text="{Binding Label}"
-                                                                           TextWrapping="Wrap" />
-                                                                <TextBlock Grid.Column="1"
-                                                                           Classes="panel-body file-preview-explainability-value"
-                                                                           HorizontalAlignment="Right"
-                                                                           Text="{Binding ValueText}" />
-                                                                <TextBlock Grid.Column="2"
-                                                                           Classes="panel-body file-preview-explainability-contribution"
-                                                                           HorizontalAlignment="Right"
-                                                                           Text="{Binding ContributionText}" />
-                                                            </Grid>
+                                                        <DataTemplate x:DataType="vm:MetricExplainabilityGroupViewModel">
+                                                            <Border Classes="file-preview-explainability-group"
+                                                                    Padding="10">
+                                                                <StackPanel Spacing="8">
+                                                                    <Grid ColumnDefinitions="*,Auto"
+                                                                          ColumnSpacing="12">
+                                                                        <TextBlock Classes="toolbar-group-title"
+                                                                                   Text="{Binding Title}" />
+                                                                        <TextBlock Grid.Column="1"
+                                                                                   Classes="toolbar-group-title file-preview-explainability-contribution"
+                                                                                   HorizontalAlignment="Right"
+                                                                                   Text="{Binding ScoreText}" />
+                                                                    </Grid>
+                                                                    <TextBlock Classes="panel-body file-preview-explainability-note"
+                                                                               IsVisible="{Binding HasNote}"
+                                                                               Text="{Binding Note}"
+                                                                               TextWrapping="Wrap" />
+                                                                    <ItemsControl ItemsSource="{Binding Contributors}"
+                                                                                  IsVisible="{Binding HasContributors}">
+                                                                        <ItemsControl.ItemTemplate>
+                                                                            <DataTemplate x:DataType="vm:MetricExplainabilityContributorViewModel">
+                                                                                <Grid ColumnSpacing="8"
+                                                                                      ToolTip.Tip="{Binding Description}">
+                                                                                    <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="*" />
+                                                                                        <ColumnDefinition Width="Auto"
+                                                                                                          SharedSizeGroup="ExplainabilityValueColumn" />
+                                                                                        <ColumnDefinition Width="Auto"
+                                                                                                          SharedSizeGroup="ExplainabilityContributionColumn" />
+                                                                                    </Grid.ColumnDefinitions>
+                                                                                    <TextBlock Classes="panel-body"
+                                                                                               Text="{Binding Label}"
+                                                                                               TextWrapping="Wrap"
+                                                                                               VerticalAlignment="Top"
+                                                                                               ToolTip.Tip="{Binding Description}" />
+                                                                                    <TextBlock Grid.Column="1"
+                                                                                               Classes="panel-body file-preview-explainability-value"
+                                                                                               HorizontalAlignment="Right"
+                                                                                               Text="{Binding ValueText}"
+                                                                                               VerticalAlignment="Top"
+                                                                                               ToolTip.Tip="{Binding Description}" />
+                                                                                    <TextBlock Grid.Column="2"
+                                                                                               Classes="panel-body file-preview-explainability-contribution"
+                                                                                               HorizontalAlignment="Right"
+                                                                                               Text="{Binding ContributionText}"
+                                                                                               VerticalAlignment="Top"
+                                                                                               ToolTip.Tip="{Binding Description}" />
+                                                                                </Grid>
+                                                                            </DataTemplate>
+                                                                        </ItemsControl.ItemTemplate>
+                                                                    </ItemsControl>
+                                                                </StackPanel>
+                                                            </Border>
                                                         </DataTemplate>
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>

@@ -71,8 +71,8 @@ public static class AppSettingsCanonicalizer
             .Select(metricId => DefaultMetricCatalog.NormalizeMetricId(metricId))
             .ToHashSet()
             ?? [];
-        var visibleMetricIds = DefaultMetricCatalog.Instance
-            .GetAll()
+        var visibleMetricIds = DefaultMetricCatalog
+            .GetUserVisibleDefinitions()
             .Where(definition => requestedIds.Contains(definition.Id))
             .Select(definition => definition.Id)
             .ToList();
@@ -88,7 +88,7 @@ public static class AppSettingsCanonicalizer
             return visibleMetricIds;
         }
 
-        return [.. DefaultMetricCatalog.GetAllMetricIds().Take(1)];
+        return [.. DefaultMetricCatalog.GetAllUserVisibleMetricIds().Take(1)];
     }
 
     public static string NormalizeRefactorPromptTemplate(string? template) =>

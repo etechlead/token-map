@@ -210,10 +210,10 @@ public sealed class MainWindowTreemapIntegrationTests
     {
         var expectedShareText = (1d).ToString("P1", CultureInfo.CurrentCulture);
         var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshotWithExtendedMetrics());
-        var complexityOption = Assert.Single(
+        var priorityOption = Assert.Single(
             viewModel.Toolbar.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.ComplexityPoints);
-        complexityOption.IsVisible = false;
+            option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
+        priorityOption.IsVisible = false;
         window.UpdateLayout();
 
         var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
@@ -224,15 +224,15 @@ public sealed class MainWindowTreemapIntegrationTests
 
         var initialLines = GetTooltipLines(control);
         Assert.True(Array.IndexOf(initialLines, $"Share: {expectedShareText}") < Array.IndexOf(initialLines, "---"));
-        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Structural Risk: 18"));
+        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Refactor Priority: 22"));
 
-        complexityOption.IsVisible = true;
+        priorityOption.IsVisible = true;
         window.UpdateLayout();
 
-        Assert.Contains(MetricIds.ComplexityPoints, control.VisibleMetricIds);
+        Assert.Contains(MetricIds.RefactorPriorityPoints, control.VisibleMetricIds);
 
         var updatedLines = GetTooltipLines(control);
-        Assert.True(Array.IndexOf(updatedLines, "Structural Risk: 18") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
+        Assert.True(Array.IndexOf(updatedLines, "Refactor Priority: 22") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
         Assert.Equal(1, updatedLines.Count(line => line == "---"));
     }
 

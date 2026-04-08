@@ -96,15 +96,17 @@ public sealed class FilePreviewViewModelTests
         await viewModel.PreviewNodeAsync(file);
 
         var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
-        Assert.Equal(
-            ["Structural Risk", "Refactor Priority"],
-            explainability.Sections.Select(section => section.Title).ToArray());
+        Assert.Equal(["Refactor Priority"], explainability.Sections.Select(section => section.Title).ToArray());
+        Assert.Equal(["Structural base", "Git uplift"], explainability.Sections[0].Groups.Select(group => group.Title).ToArray());
         Assert.Contains(
-            explainability.Sections[0].Contributors,
+            explainability.Sections[0].Groups[0].Contributors,
             contributor => contributor.Label == "Total callable burden");
-        Assert.True(explainability.Sections[1].HasContributors);
-        Assert.False(explainability.Sections[1].HasNote);
-        Assert.Contains("amplified by recent change pressure", explainability.Sections[1].Summary);
+        Assert.Contains(
+            explainability.Sections[0].Groups[1].Contributors,
+            contributor => contributor.Label == "Churn lines (90d)");
+        Assert.True(explainability.Sections[0].HasGroups);
+        Assert.False(explainability.Sections[0].HasNote);
+        Assert.Contains("Structural base:", explainability.Sections[0].Summary);
     }
 
     [Fact]
@@ -121,7 +123,9 @@ public sealed class FilePreviewViewModelTests
         await viewModel.PreviewNodeAsync(file);
 
         var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
-        Assert.True(explainability.Sections[1].HasNote);
+        Assert.True(explainability.Sections[0].HasNote);
+        Assert.Equal("Git uplift", explainability.Sections[0].Groups[1].Title);
+        Assert.True(explainability.Sections[0].Groups[1].HasNote);
     }
 
     [Fact]
@@ -138,7 +142,8 @@ public sealed class FilePreviewViewModelTests
         Assert.Equal("Program.cs", refactorPrompt.RelativePath);
         Assert.Contains("Relative path: Program.cs", refactorPrompt.PromptText);
         Assert.Contains("Observed metrics:", refactorPrompt.PromptText);
-        Assert.Contains("Total callable burden", refactorPrompt.PromptText);
+        Assert.Contains("Structural base drivers:", refactorPrompt.PromptText);
+        Assert.DoesNotContain("Structural Risk:", refactorPrompt.PromptText);
         Assert.Contains("Task:", refactorPrompt.PromptText);
     }
 
@@ -152,7 +157,7 @@ public sealed class FilePreviewViewModelTests
         viewModel.OpenRefactorPrompt(file);
 
         var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
-        Assert.Contains("git-derived change and co-change inputs are unavailable", refactorPrompt.PromptText);
+        Assert.Contains("Git uplift: unavailable because git-derived change and co-change inputs were not produced for this file.", refactorPrompt.PromptText);
     }
 
     [Fact]
@@ -162,8 +167,8 @@ public sealed class FilePreviewViewModelTests
             """
             Candidate:
             {{relative_path}}
-            Structural Risk => {{structural_risk}}
-            {{structural_risk_breakdown}}
+            Refactor Priority => {{refactor_priority}}
+            {{refactor_priority_breakdown}}
             """;
         var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
         var file = Assert.Single(snapshot.Root.Children);
@@ -176,7 +181,7 @@ public sealed class FilePreviewViewModelTests
         var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
         Assert.Contains("Candidate:", refactorPrompt.PromptText);
         Assert.Contains("Program.cs", refactorPrompt.PromptText);
-        Assert.Contains("Structural Risk =>", refactorPrompt.PromptText);
+        Assert.Contains("Refactor Priority =>", refactorPrompt.PromptText);
         Assert.DoesNotContain("Observed metrics:", refactorPrompt.PromptText);
     }
 

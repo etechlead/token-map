@@ -194,13 +194,12 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(tokensButton);
         Assert.NotNull(linesButton);
         Assert.NotNull(sizeButton);
-        Assert.NotNull(complexityButton);
         Assert.NotNull(priorityButton);
+        Assert.Null(complexityButton);
         Assert.NotNull(showValuesCheckBox);
         Assert.True(tokensButton.IsChecked);
         Assert.False(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
-        Assert.False(complexityButton.IsChecked);
         Assert.False(priorityButton.IsChecked);
         Assert.True(showValuesCheckBox.IsChecked);
 

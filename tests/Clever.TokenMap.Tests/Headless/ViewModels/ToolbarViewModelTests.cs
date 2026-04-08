@@ -25,7 +25,6 @@ public sealed class ToolbarViewModelTests
                 MetricIds.Tokens,
                 MetricIds.NonEmptyLines,
                 MetricIds.FileSizeBytes,
-                MetricIds.ComplexityPoints,
                 MetricIds.RefactorPriorityPoints,
             ],
             viewModel.VisibleTreemapMetricOptions.Select(option => option.Definition.Id).ToArray());
@@ -113,7 +112,6 @@ public sealed class ToolbarViewModelTests
         var state = new SettingsState();
         state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
         state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
-        state.SetMetricVisibility(MetricIds.ComplexityPoints, isVisible: false);
         state.SetMetricVisibility(MetricIds.RefactorPriorityPoints, isVisible: false);
         var viewModel = CreateViewModel(state);
 
@@ -130,18 +128,39 @@ public sealed class ToolbarViewModelTests
     {
         var viewModel = CreateViewModel(new SettingsState());
 
-        var complexityOption = Assert.Single(
-            viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.ComplexityPoints);
         var priorityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
 
-        Assert.Equal("Risk", complexityOption.Label);
         Assert.Equal("Refactor", priorityOption.Label);
-        Assert.Equal(5, viewModel.MetricVisibilityOptions.Count);
+        Assert.DoesNotContain(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.ComplexityPoints);
+        Assert.Equal(4, viewModel.MetricVisibilityOptions.Count);
         Assert.Empty(viewModel.TreeOnlyMetricVisibilityOptions);
         Assert.False(viewModel.HasTreeOnlyMetricVisibilityOptions);
+    }
+
+    [Fact]
+    public void ShowAllMetrics_DoesNotRestoreHiddenStructuralRisk()
+    {
+        var state = new SettingsState();
+        state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
+        state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
+        state.SetMetricVisibility(MetricIds.RefactorPriorityPoints, isVisible: false);
+        var viewModel = CreateViewModel(state);
+
+        viewModel.ShowAllMetricIdsCommand.Execute(null);
+
+        Assert.Equal(
+            [
+                MetricIds.Tokens,
+                MetricIds.NonEmptyLines,
+                MetricIds.FileSizeBytes,
+                MetricIds.RefactorPriorityPoints,
+            ],
+            state.VisibleMetricIds);
+        Assert.DoesNotContain(state.VisibleMetricIds, metricId => metricId == MetricIds.ComplexityPoints);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ TokenMap is a desktop app for quickly finding the parts of a local codebase that
 ## Metrics
 
 - Basic: Tokens, non-empty lines, file size.
-- Derived: Structural Risk, Refactor Priority.
+- Derived: internal Structural Risk, product-facing Refactor Priority.
 - Syntax-aware metrics currently cover C#, TypeScript, JavaScript, Python, Go, Java, PHP, and Rust.
 
 ## How It Works

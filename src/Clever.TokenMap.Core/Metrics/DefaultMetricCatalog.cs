@@ -2,6 +2,11 @@ namespace Clever.TokenMap.Core.Metrics;
 
 public sealed class DefaultMetricCatalog : IMetricCatalog
 {
+    private static readonly HashSet<MetricId> UserHiddenMetricIds =
+    [
+        MetricIds.ComplexityPoints,
+    ];
+
     private static readonly IReadOnlyList<MetricDefinition> Definitions =
     [
         new(
@@ -37,7 +42,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             "Risk",
             MetricUnit.Score,
             MetricRollupKind.Sum,
-            VisibleByDefault: true,
+            VisibleByDefault: false,
             SupportsTreemapWeight: true,
             "Continuous intrinsic structural-risk score based on file scale, callable burden, and risk distribution."),
         new(
@@ -76,11 +81,22 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
     public bool TryGet(MetricId id, out MetricDefinition definition) =>
         _definitionsById.TryGetValue(id, out definition!);
 
+    public static IReadOnlyList<MetricDefinition> GetUserVisibleDefinitions() =>
+        [.. Definitions.Where(definition => IsUserVisible(definition.Id))];
+
     public static IReadOnlyList<MetricId> GetDefaultVisibleMetricIds() =>
         [.. Definitions
-            .Where(definition => definition.VisibleByDefault)
+            .Where(definition => definition.VisibleByDefault && IsUserVisible(definition.Id))
             .Select(definition => definition.Id)];
 
     public static IReadOnlyList<MetricId> GetAllMetricIds() =>
         [.. Definitions.Select(definition => definition.Id)];
+
+    public static IReadOnlyList<MetricId> GetAllUserVisibleMetricIds() =>
+        [.. Definitions
+            .Where(definition => IsUserVisible(definition.Id))
+            .Select(definition => definition.Id)];
+
+    public static bool IsUserVisible(MetricId metricId) =>
+        !UserHiddenMetricIds.Contains(metricId);
 }

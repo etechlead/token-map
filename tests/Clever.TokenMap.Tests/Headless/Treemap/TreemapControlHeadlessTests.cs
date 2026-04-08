@@ -86,8 +86,7 @@ public sealed class TreemapControlHeadlessTests
         Assert.True(Array.IndexOf(lines, "Tokens: 42") < Array.IndexOf(lines, "Non-empty lines: 11"));
         Assert.True(Array.IndexOf(lines, "Non-empty lines: 11") < Array.IndexOf(lines, $"Share: {expectedShareText}"));
         Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
-        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Structural Risk: 18"));
-        Assert.True(Array.IndexOf(lines, "Structural Risk: 18") < Array.IndexOf(lines, "Refactor Priority: 22"));
+        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Refactor Priority: 22"));
         Assert.True(Array.LastIndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
         Assert.True(Array.IndexOf(lines, "Type: File") < Array.IndexOf(lines, "Ext: .cs"));
         Assert.DoesNotContain("Files in subtree: 1", lines);

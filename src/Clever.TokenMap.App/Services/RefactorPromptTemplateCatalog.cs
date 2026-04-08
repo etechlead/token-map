@@ -10,10 +10,8 @@ public static class RefactorPromptTemplateCatalog
         new("{{tokens}}", "Token count for the file."),
         new("{{non_empty_lines}}", "Non-empty line count."),
         new("{{file_size}}", "File size, formatted for display."),
-        new("{{structural_risk}}", "Structural-risk score for the file."),
         new("{{refactor_priority}}", "Composite refactor-priority score."),
-        new("{{structural_risk_breakdown}}", "Multi-line explanation for structural-risk drivers."),
-        new("{{refactor_priority_breakdown}}", "Multi-line explanation for refactor-priority drivers."),
+        new("{{refactor_priority_breakdown}}", "Multi-line explanation for the structural base and any git-derived uplift behind refactor priority."),
     ];
 }
 
