@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
@@ -12,6 +13,7 @@ namespace Clever.TokenMap.App.Views.Sections;
 
 public partial class TreemapPaneView : UserControl
 {
+    private const int WheelThresholdStepMultiplier = 5;
     private readonly ProjectNodeContextMenuController _projectNodeContextMenuController;
 
     public TreemapPaneView()
@@ -28,6 +30,7 @@ public partial class TreemapPaneView : UserControl
             treemap.DrillDownRequested += ProjectTreemapControl_OnDrillDownRequested;
             treemap.ContextRequested += ProjectTreemapControl_OnContextRequested;
             treemap.DoubleTapped += ProjectTreemapControl_OnDoubleTapped;
+            treemap.PointerWheelChanged += ProjectTreemapControl_OnPointerWheelChanged;
         }
     }
 
@@ -84,6 +87,17 @@ public partial class TreemapPaneView : UserControl
         await HandleTreemapNodeDoubleTapAsync(treemap, e.GetPosition(treemap));
     }
 
+    private void ProjectTreemapControl_OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
+    {
+        if (sender is not TreemapControl treemap)
+        {
+            return;
+        }
+
+        e.Handled = HandleTreemapPointerWheel(
+            e.Delta);
+    }
+
     internal async Task HandleTreemapNodeDoubleTapAsync(TreemapControl treemap, Point point, CancellationToken cancellationToken = default)
     {
         if (DataContext is not MainWindowViewModel viewModel)
@@ -99,5 +113,21 @@ public partial class TreemapPaneView : UserControl
 
         treemap.SelectNodeAt(point);
         await viewModel.PreviewNodeAsync(targetNode, cancellationToken);
+    }
+
+    internal bool HandleTreemapPointerWheel(Vector delta)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return false;
+        }
+
+        var direction = Math.Sign(delta.Y);
+        if (direction == 0)
+        {
+            return false;
+        }
+
+        return viewModel.AdjustTreemapThreshold(direction * WheelThresholdStepMultiplier);
     }
 }

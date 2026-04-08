@@ -185,6 +185,9 @@ public partial class MainWindowViewModel : ViewModelBase
         _workspacePresenter.DrillIntoTreemap(node);
     }
 
+    public bool AdjustTreemapThreshold(int stepOffset) =>
+        _workspacePresenter.AdjustTreemapThreshold(stepOffset);
+
     public bool CanSetTreemapRoot(ProjectNode? node) => _workspacePresenter.CanSetTreemapRoot(node);
 
     public void SetTreemapRoot(ProjectNode? node) => _workspacePresenter.SetTreemapRoot(node);

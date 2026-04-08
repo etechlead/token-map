@@ -95,6 +95,9 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         _treemapNavigationState.DrillInto(node);
     }
 
+    public bool AdjustTreemapThreshold(int stepOffset) =>
+        _treemapNavigationState.AdjustThresholdStep(stepOffset);
+
     public bool CanSetTreemapRoot(ProjectNode? node) => _treemapNavigationState.CanSetTreemapRoot(node);
 
     public void SetTreemapRoot(ProjectNode? node) => _treemapNavigationState.SetTreemapRoot(node);

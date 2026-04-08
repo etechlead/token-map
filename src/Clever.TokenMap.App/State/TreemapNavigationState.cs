@@ -157,6 +157,24 @@ public sealed partial class TreemapNavigationState : ObservableObject
         return true;
     }
 
+    public bool AdjustThresholdStep(int stepOffset)
+    {
+        if (!CanAdjustThreshold || stepOffset == 0)
+        {
+            return false;
+        }
+
+        var currentIndex = GetThresholdStepIndex(ThresholdSliderValue);
+        var targetIndex = Math.Clamp(currentIndex + stepOffset, 0, _thresholdSteps.Count - 1);
+        if (targetIndex == currentIndex)
+        {
+            return false;
+        }
+
+        ThresholdSliderValue = targetIndex;
+        return true;
+    }
+
     public void ResetTreemapRoot()
     {
         if (_currentSnapshot is null)

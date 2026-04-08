@@ -152,6 +152,29 @@ public sealed class TreemapNavigationStateTests
         Assert.Equal(1000, state.ThresholdValue);
     }
 
+    [Fact]
+    public void AdjustThresholdStep_MovesOneDiscreteStepAndClampsAtEdges()
+    {
+        var snapshot = CreateThresholdSnapshot();
+        var state = new TreemapNavigationState();
+        state.LoadSnapshot(snapshot);
+
+        var increased = state.AdjustThresholdStep(1);
+        var clampedHigh = state.AdjustThresholdStep(10);
+        var clampedLow = state.AdjustThresholdStep(-10);
+
+        Assert.True(increased);
+        Assert.True(clampedHigh);
+        Assert.True(clampedLow);
+        Assert.Equal(0, state.ThresholdSliderValue);
+        Assert.Equal(5, state.ThresholdValue);
+
+        state.AdjustThresholdStep(2);
+
+        Assert.False(state.AdjustThresholdStep(1));
+        Assert.Equal(80, state.ThresholdValue);
+    }
+
     private static ProjectSnapshot CreateThresholdSnapshot() =>
         new()
         {

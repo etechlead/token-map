@@ -252,6 +252,35 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.Equal(["a.cs", "b.cs"], control.NodeVisuals.Select(item => item.Node.RelativePath).OrderBy(path => path).ToArray());
     }
 
+    [AvaloniaFact]
+    public async Task MainWindow_TreemapWheel_AdjustsThresholdWithoutChangingScope()
+    {
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateThresholdDirectorySnapshot());
+
+        var pane = window.GetVisualDescendants().OfType<TreemapPaneView>().Single();
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+
+        Assert.NotNull(control);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
+        Assert.Equal("/", viewModel.TreemapRootNode?.Id);
+        Assert.Equal(5, viewModel.TreemapThresholdValue);
+
+        Assert.True(pane.HandleTreemapPointerWheel(new Vector(0, 1)));
+        window.UpdateLayout();
+
+        Assert.Equal(80, viewModel.TreemapThresholdValue);
+        Assert.Equal("/", viewModel.TreemapRootNode?.Id);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
+        Assert.Equal(["src", "src/a.cs"], control.NodeVisuals.Select(item => item.Node.RelativePath).OrderBy(path => path).ToArray());
+
+        Assert.True(pane.HandleTreemapPointerWheel(new Vector(0, -1)));
+        window.UpdateLayout();
+
+        Assert.Equal("/", viewModel.TreemapRootNode?.Id);
+        Assert.Single(viewModel.TreemapBreadcrumbs);
+        Assert.Equal(5, viewModel.TreemapThresholdValue);
+    }
+
     private static async Task<(AppMainWindow Window, MainWindowViewModel ViewModel)> CreateOpenWindowAsync(ProjectSnapshot snapshot)
     {
         var window = new AppMainWindow();
@@ -343,6 +372,84 @@ public sealed class MainWindowTreemapIntegrationTests
                 ("a.cs", FileSizeBytes: 50, Tokens: 80, NonEmptyLines: 10),
                 ("b.cs", FileSizeBytes: 75, Tokens: 20, NonEmptyLines: 90),
                 ("c.cs", FileSizeBytes: 225, Tokens: 5, NonEmptyLines: 0)),
+        };
+    }
+
+    private static ProjectSnapshot CreateThresholdDirectorySnapshot()
+    {
+        var root = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\Demo",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 4, descendantDirectoryCount: 1),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 145, nonEmptyLines: 112, fileSizeBytes: 430),
+        };
+
+        var src = new ProjectNode
+        {
+            Id = "src",
+            Name = "src",
+            FullPath = "C:\\Demo\\src",
+            RelativePath = "src",
+            Kind = ProjectNodeKind.Directory,
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 3, descendantDirectoryCount: 0),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 105, nonEmptyLines: 100, fileSizeBytes: 350),
+            Children =
+            {
+                new ProjectNode
+                {
+                    Id = "src/a.cs",
+                    Name = "a.cs",
+                    FullPath = "C:\\Demo\\src\\a.cs",
+                    RelativePath = "src/a.cs",
+                    Kind = ProjectNodeKind.File,
+                    Summary = MetricTestData.CreateFileSummary(),
+                    ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 80, nonEmptyLines: 10, fileSizeBytes: 50),
+                },
+                new ProjectNode
+                {
+                    Id = "src/b.cs",
+                    Name = "b.cs",
+                    FullPath = "C:\\Demo\\src\\b.cs",
+                    RelativePath = "src/b.cs",
+                    Kind = ProjectNodeKind.File,
+                    Summary = MetricTestData.CreateFileSummary(),
+                    ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 20, nonEmptyLines: 90, fileSizeBytes: 75),
+                },
+                new ProjectNode
+                {
+                    Id = "src/c.cs",
+                    Name = "c.cs",
+                    FullPath = "C:\\Demo\\src\\c.cs",
+                    RelativePath = "src/c.cs",
+                    Kind = ProjectNodeKind.File,
+                    Summary = MetricTestData.CreateFileSummary(),
+                    ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 5, nonEmptyLines: 0, fileSizeBytes: 225),
+                },
+            },
+        };
+
+        root.Children.Add(src);
+        root.Children.Add(new ProjectNode
+        {
+            Id = "top.cs",
+            Name = "top.cs",
+            FullPath = "C:\\Demo\\top.cs",
+            RelativePath = "top.cs",
+            Kind = ProjectNodeKind.File,
+            Summary = MetricTestData.CreateFileSummary(),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 40, nonEmptyLines: 12, fileSizeBytes: 80),
+        });
+
+        return new ProjectSnapshot
+        {
+            RootPath = "C:\\Demo",
+            CapturedAtUtc = DateTimeOffset.UtcNow,
+            Options = ScanOptions.Default,
+            Root = root,
         };
     }
 
