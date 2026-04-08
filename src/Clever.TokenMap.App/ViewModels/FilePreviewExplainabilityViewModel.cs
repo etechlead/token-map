@@ -51,37 +51,8 @@ public sealed class FilePreviewExplainabilityViewModel
         return MetricExplainabilitySectionViewModel.Available(
             definition.DisplayName,
             MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
-            BuildRefactorPrioritySummary(structuralBreakdown, breakdown, structuralBasePoints, hasGitContext, gitUpliftPoints),
             note: BuildRefactorPriorityNote(hasGitContext, gitUpliftPoints),
             groups: CreateRefactorPriorityGroups(structuralBreakdown, breakdown, hasStructuralBreakdown, hasGitContext, structuralBasePoints, gitUpliftPoints));
-    }
-
-    private static string BuildRefactorPrioritySummary(
-        MetricFormulaBreakdown structuralBreakdown,
-        MetricFormulaBreakdown refactorBreakdown,
-        double structuralBasePoints,
-        bool hasGitContext,
-        double gitUpliftPoints)
-    {
-        var structuralSummary = structuralBreakdown.Components.Count > 0
-            ? $"Structural base: {FormatPoints(structuralBasePoints)}, driven mainly by {JoinLabels(GetTopContributors(structuralBreakdown.Components, 2))}."
-            : $"Structural base: {FormatPoints(structuralBasePoints)}.";
-
-        if (!hasGitContext)
-        {
-            return $"{structuralSummary} Refactor Priority currently matches that structural base because git context is unavailable.";
-        }
-
-        if (gitUpliftPoints <= 0d)
-        {
-            return $"{structuralSummary} Git context is available, but current change pressure does not add extra urgency.";
-        }
-
-        var gitLabels = GetPositiveGitContributors(refactorBreakdown);
-        var gitSummary = gitLabels.Count > 0
-            ? $"Git uplift: {FormatContribution(gitUpliftPoints)}, driven mainly by {JoinLabels(GetTopContributors(gitLabels, 2))}."
-            : $"Git uplift: {FormatContribution(gitUpliftPoints)}.";
-        return $"{structuralSummary} {gitSummary}";
     }
 
     private static string? BuildRefactorPriorityNote(bool hasGitContext, double gitUpliftPoints)
@@ -201,40 +172,6 @@ public sealed class FilePreviewExplainabilityViewModel
             _ => "Git-derived pressure that can amplify urgency without dominating the structural base.",
         };
 
-    private static IReadOnlyList<MetricComponentContribution> GetPositiveGitContributors(
-        MetricFormulaBreakdown breakdown)
-    {
-        return
-        [
-            .. breakdown.Components
-                .Where(component => !string.Equals(component.Category, "Structural", StringComparison.Ordinal))
-                .Where(component => component.ContributionPoints > 0d)
-                .OrderByDescending(component => component.ContributionPoints)
-        ];
-    }
-
-    private static IReadOnlyList<MetricComponentContribution> GetTopContributors(
-        IEnumerable<MetricComponentContribution> components,
-        int count) =>
-        [.. components
-            .Where(component => component.ContributionPoints > 0d)
-            .OrderByDescending(component => component.ContributionPoints)
-            .Take(count)];
-
-    private static string JoinLabels(IReadOnlyList<MetricComponentContribution> components)
-    {
-        if (components.Count == 0)
-        {
-            return "the current inputs";
-        }
-
-        return components.Count switch
-        {
-            1 => components[0].Label.ToLowerInvariant(),
-            _ => $"{components[0].Label.ToLowerInvariant()} and {components[1].Label.ToLowerInvariant()}",
-        };
-    }
-
     private static string FormatRawValue(double value) =>
         IsWholeNumber(value)
             ? value.ToString("N0", CultureInfo.CurrentCulture)
@@ -267,13 +204,11 @@ public sealed class MetricExplainabilitySectionViewModel
     private MetricExplainabilitySectionViewModel(
         string title,
         string scoreText,
-        string summary,
         string? note,
         IReadOnlyList<MetricExplainabilityGroupViewModel> groups)
     {
         Title = title;
         ScoreText = scoreText;
-        Summary = summary;
         Note = note ?? string.Empty;
         Groups = groups;
     }
@@ -281,8 +216,6 @@ public sealed class MetricExplainabilitySectionViewModel
     public string Title { get; }
 
     public string ScoreText { get; }
-
-    public string Summary { get; }
 
     public string Note { get; }
 
@@ -295,16 +228,15 @@ public sealed class MetricExplainabilitySectionViewModel
     public static MetricExplainabilitySectionViewModel Available(
         string title,
         string scoreText,
-        string summary,
         string? note,
         IReadOnlyList<MetricExplainabilityGroupViewModel> groups) =>
-        new(title, scoreText, summary, note, groups);
+        new(title, scoreText, note, groups);
 
     public static MetricExplainabilitySectionViewModel Unavailable(
         string title,
         string scoreText,
         string note) =>
-        new(title, scoreText, summary: "No explainability data is available.", note, groups: []);
+        new(title, scoreText, note, groups: []);
 }
 
 public sealed class MetricExplainabilityGroupViewModel

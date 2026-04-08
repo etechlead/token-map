@@ -89,9 +89,6 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             .Where(definition => definition.VisibleByDefault && IsUserVisible(definition.Id))
             .Select(definition => definition.Id)];
 
-    public static IReadOnlyList<MetricId> GetAllMetricIds() =>
-        [.. Definitions.Select(definition => definition.Id)];
-
     public static IReadOnlyList<MetricId> GetAllUserVisibleMetricIds() =>
         [.. Definitions
             .Where(definition => IsUserVisible(definition.Id))

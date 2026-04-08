@@ -469,7 +469,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             new HeuristicTextFileDetector(),
             new RecordingTokenCounter(),
             gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
-                _rootPath,
                 "head-a",
                 new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer)
                 {
@@ -524,7 +523,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             tokenCounter,
             cacheStore: cacheStore,
             gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
-                _rootPath,
                 "head-a",
                 historyWindowEndUtc: new DateTimeOffset(2026, 04, 04, 0, 0, 0, TimeSpan.Zero))));
         var secondEnricher = new ProjectSnapshotMetricsEnricher(
@@ -532,7 +530,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             tokenCounter,
             cacheStore: cacheStore,
             gitHistorySnapshotProvider: new StubGitHistorySnapshotProvider(CreateGitHistorySnapshot(
-                _rootPath,
                 "head-a",
                 historyWindowEndUtc: new DateTimeOffset(2026, 04, 05, 0, 0, 0, TimeSpan.Zero))));
 
@@ -547,7 +544,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     public void EnrichAsync_UsesV1GitFingerprintForCacheContext()
     {
         var gitHistorySnapshot = CreateGitHistorySnapshot(
-            _rootPath,
             "head-a",
             historyWindowEndUtc: new DateTimeOffset(2026, 04, 04, 0, 0, 0, TimeSpan.Zero));
 
@@ -789,7 +785,6 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     }
 
     private static GitHistorySnapshot CreateGitHistorySnapshot(
-        string rootPath,
         string headCommitSha,
         IReadOnlyDictionary<string, GitFileHistoryArtifact>? fileHistoryByAnalysisRelativePath = null,
         DateTimeOffset? historyWindowEndUtc = null) =>
@@ -799,4 +794,3 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
             new Dictionary<string, GitFileHistoryArtifact>(PathComparison.Comparer),
             historyWindowEndUtc);
 }
-

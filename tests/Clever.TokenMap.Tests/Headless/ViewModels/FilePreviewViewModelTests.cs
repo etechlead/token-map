@@ -106,7 +106,7 @@ public sealed class FilePreviewViewModelTests
             contributor => contributor.Label == "Churn lines (90d)");
         Assert.True(explainability.Sections[0].HasGroups);
         Assert.False(explainability.Sections[0].HasNote);
-        Assert.Contains("Structural base:", explainability.Sections[0].Summary);
+        Assert.Equal("Structural base", explainability.Sections[0].Groups[0].Title);
     }
 
     [Fact]
