@@ -79,7 +79,7 @@ public sealed class FilePreviewModalTests
         Assert.True(editor.IsVisible);
         Assert.Contains(
             sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
-            text => text == "Complexity");
+            text => text == "Structural Risk");
         Assert.Contains(
             sections.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
             text => text == "Refactor Priority");

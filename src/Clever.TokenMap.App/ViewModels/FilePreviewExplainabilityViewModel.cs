@@ -27,17 +27,16 @@ public sealed class FilePreviewExplainabilityViewModel
         var metrics = node.ComputedMetrics;
         return new FilePreviewExplainabilityViewModel(
         [
-            CreateComplexitySection(metrics),
-            CreateHotspotsSection(metrics),
+            CreateStructuralRiskSection(metrics),
             CreateRefactorPrioritySection(metrics),
         ]);
     }
 
-    private static MetricExplainabilitySectionViewModel CreateComplexitySection(MetricSet metrics)
+    private static MetricExplainabilitySectionViewModel CreateStructuralRiskSection(MetricSet metrics)
     {
         var definition = DefaultMetricCatalog.Instance.GetRequired(MetricIds.ComplexityPoints);
         var metricValue = metrics.GetOrDefault(MetricIds.ComplexityPoints);
-        if (!ProductMetricFormulas.TryComputeComplexity(metrics, out var breakdown))
+        if (!ProductMetricFormulas.TryComputeStructuralRisk(metrics, out var breakdown))
         {
             return MetricExplainabilitySectionViewModel.Unavailable(
                 definition.DisplayName,
@@ -49,29 +48,7 @@ public sealed class FilePreviewExplainabilityViewModel
             definition.DisplayName,
             MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
             breakdown.TotalPoints <= 0d
-                ? "Low structural complexity."
-                : $"Driven mainly by {JoinLabels(GetTopContributors(breakdown, 2))}.",
-            note: null,
-            contributors: CreateContributorViewModels(breakdown));
-    }
-
-    private static MetricExplainabilitySectionViewModel CreateHotspotsSection(MetricSet metrics)
-    {
-        var definition = DefaultMetricCatalog.Instance.GetRequired(MetricIds.CallableHotspotPoints);
-        var metricValue = metrics.GetOrDefault(MetricIds.CallableHotspotPoints);
-        if (!ProductMetricFormulas.TryComputeHotspots(metrics, out var breakdown))
-        {
-            return MetricExplainabilitySectionViewModel.Unavailable(
-                definition.DisplayName,
-                MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
-                "This metric is unavailable for this file.");
-        }
-
-        return MetricExplainabilitySectionViewModel.Available(
-            definition.DisplayName,
-            MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
-            breakdown.TotalPoints <= 0d
-                ? "No hotspot thresholds are currently triggered."
+                ? "Low structural risk."
                 : $"Driven mainly by {JoinLabels(GetTopContributors(breakdown, 2))}.",
             note: null,
             contributors: CreateContributorViewModels(breakdown));
@@ -95,29 +72,26 @@ public sealed class FilePreviewExplainabilityViewModel
             MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
             hasGitContext
                 ? BuildRefactorPrioritySummary(breakdown)
-                : "Based on intrinsic pressure only.",
+                : "Matches structural risk because git change context is unavailable.",
             note: hasGitContext ? null : "Git context unavailable.",
             contributors: CreateContributorViewModels(breakdown));
     }
 
     private static string BuildRefactorPrioritySummary(MetricFormulaBreakdown breakdown)
     {
-        var dominantCategory = breakdown.Components
-            .GroupBy(component => component.Category, StringComparer.Ordinal)
-            .Select(group => new
-            {
-                Category = group.Key,
-                ContributionPoints = group.Sum(component => component.ContributionPoints),
-            })
-            .OrderByDescending(group => group.ContributionPoints)
-            .FirstOrDefault()
-            ?.Category;
+        var changeContribution = breakdown.Components
+            .Where(component => string.Equals(component.Category, "Change pressure", StringComparison.Ordinal))
+            .Sum(component => component.ContributionPoints);
+        var cochangeContribution = breakdown.Components
+            .Where(component => string.Equals(component.Category, "Co-change pressure", StringComparison.Ordinal))
+            .Sum(component => component.ContributionPoints);
 
-        return dominantCategory switch
+        return (changeContribution > 0d, cochangeContribution > 0d) switch
         {
-            "Change pressure" => "Driven mainly by recent change pressure.",
-            "Co-change pressure" => "Driven mainly by co-change pressure.",
-            _ => "Driven mainly by intrinsic pressure.",
+            (true, true) => "Driven mainly by structural risk, amplified by recent change and co-change pressure.",
+            (true, false) => "Driven mainly by structural risk, amplified by recent change pressure.",
+            (false, true) => "Driven mainly by structural risk, amplified by co-change pressure.",
+            _ => "Driven mainly by structural risk.",
         };
     }
 

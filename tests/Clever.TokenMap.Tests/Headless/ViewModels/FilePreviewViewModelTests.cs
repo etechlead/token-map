@@ -97,13 +97,14 @@ public sealed class FilePreviewViewModelTests
 
         var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
         Assert.Equal(
-            ["Complexity", "Hotspots", "Refactor Priority"],
+            ["Structural Risk", "Refactor Priority"],
             explainability.Sections.Select(section => section.Title).ToArray());
         Assert.Contains(
             explainability.Sections[0].Contributors,
-            contributor => contributor.Label == "Cyclomatic complexity sum");
-        Assert.True(explainability.Sections[2].HasContributors);
-        Assert.False(explainability.Sections[2].HasNote);
+            contributor => contributor.Label == "Total callable burden");
+        Assert.True(explainability.Sections[1].HasContributors);
+        Assert.False(explainability.Sections[1].HasNote);
+        Assert.Contains("amplified by recent change pressure", explainability.Sections[1].Summary);
     }
 
     [Fact]
@@ -120,7 +121,7 @@ public sealed class FilePreviewViewModelTests
         await viewModel.PreviewNodeAsync(file);
 
         var explainability = Assert.IsType<FilePreviewExplainabilityViewModel>(viewModel.FilePreviewExplainability);
-        Assert.True(explainability.Sections[2].HasNote);
+        Assert.True(explainability.Sections[1].HasNote);
     }
 
     [Fact]
@@ -137,7 +138,7 @@ public sealed class FilePreviewViewModelTests
         Assert.Equal("Program.cs", refactorPrompt.RelativePath);
         Assert.Contains("Relative path: Program.cs", refactorPrompt.PromptText);
         Assert.Contains("Observed metrics:", refactorPrompt.PromptText);
-        Assert.Contains("Cyclomatic complexity sum", refactorPrompt.PromptText);
+        Assert.Contains("Total callable burden", refactorPrompt.PromptText);
         Assert.Contains("Task:", refactorPrompt.PromptText);
     }
 
@@ -151,7 +152,7 @@ public sealed class FilePreviewViewModelTests
         viewModel.OpenRefactorPrompt(file);
 
         var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
-        Assert.Contains("git-derived change-pressure inputs are unavailable", refactorPrompt.PromptText);
+        Assert.Contains("git-derived change and co-change inputs are unavailable", refactorPrompt.PromptText);
     }
 
     [Fact]
@@ -161,8 +162,8 @@ public sealed class FilePreviewViewModelTests
             """
             Candidate:
             {{relative_path}}
-            Complexity => {{complexity}}
-            {{complexity_breakdown}}
+            Structural Risk => {{structural_risk}}
+            {{structural_risk_breakdown}}
             """;
         var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
         var file = Assert.Single(snapshot.Root.Children);
@@ -175,7 +176,7 @@ public sealed class FilePreviewViewModelTests
         var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
         Assert.Contains("Candidate:", refactorPrompt.PromptText);
         Assert.Contains("Program.cs", refactorPrompt.PromptText);
-        Assert.Contains("Complexity =>", refactorPrompt.PromptText);
+        Assert.Contains("Structural Risk =>", refactorPrompt.PromptText);
         Assert.DoesNotContain("Observed metrics:", refactorPrompt.PromptText);
     }
 

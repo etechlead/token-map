@@ -10,6 +10,7 @@ using Clever.TokenMap.Infrastructure.Analysis.Git;
 using Clever.TokenMap.Infrastructure.Caching;
 using Clever.TokenMap.Infrastructure.Scanning;
 using Clever.TokenMap.Infrastructure.Text;
+using Clever.TokenMap.Core.Metrics.Formulas;
 using Clever.TokenMap.Metrics;
 using Clever.TokenMap.Metrics.Syntax;
 
@@ -116,11 +117,13 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         Assert.Equal(0, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(1, programNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
-        Assert.Equal(15.682186234817814, programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
-        Assert.Equal(14.545748987854251, programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
-        Assert.Equal(1, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
-        Assert.Equal(15.682186234817814, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
-        Assert.Equal(14.545748987854251, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.True(ProductMetricFormulas.TryComputeStructuralRisk(programNode.ComputedMetrics, out var structuralRiskBreakdown));
+        Assert.True(ProductMetricFormulas.TryComputeRefactorPriority(programNode.ComputedMetrics, out var refactorPriorityBreakdown));
+        Assert.Equal(structuralRiskBreakdown.TotalPoints, programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
+        Assert.Equal(refactorPriorityBreakdown.TotalPoints, programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
+        Assert.Equal(programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints)!.Value, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
+        Assert.Equal(programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -318,7 +321,7 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
     }
 
     [Fact]
-    public async Task EnrichAsync_RollsUpCallableHotspotMetricsAcrossDirectories()
+    public async Task EnrichAsync_KeepsCallableHotspotMetricsFileScoped()
     {
         Directory.CreateDirectory(Path.Combine(_rootPath, "src"));
         await File.WriteAllTextAsync(Path.Combine(_rootPath, "src", "A.cs"), "class A { }");
@@ -381,10 +384,8 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
 
         Assert.Equal(SkippedReason.Binary, binaryNode.SkippedReason);
         Assert.Equal(MetricStatus.NotApplicable, binaryNode.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
-
-        Assert.Equal(16, srcNode.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
-
-        Assert.Equal(16, enriched.Root.ComputedMetrics.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(MetricStatus.NotApplicable, srcNode.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
+        Assert.Equal(MetricStatus.NotApplicable, enriched.Root.ComputedMetrics.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
     }
 
     [Fact]
@@ -497,20 +498,14 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var secondPriority = secondFile.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints);
         var rootPriority = enriched.Root.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints);
         var secondComplexity = secondFile.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints);
-        var secondHotspotPoints = secondFile.ComputedMetrics.TryGetNumber(MetricIds.CallableHotspotPoints);
 
         Assert.NotNull(firstPriority);
         Assert.NotNull(secondPriority);
         Assert.NotNull(rootPriority);
         Assert.NotNull(secondComplexity);
-        Assert.NotNull(secondHotspotPoints);
-
-        var secondBasePriority =
-            (0.80d * secondComplexity.Value) +
-            (0.20d * (100d * secondHotspotPoints.Value / 10d));
 
         Assert.True(firstPriority.Value > secondPriority.Value);
-        Assert.Equal(0.60d * secondBasePriority, secondPriority.Value, precision: 12);
+        Assert.Equal(secondComplexity.Value, secondPriority.Value, precision: 12);
         Assert.Equal(firstPriority.Value + secondPriority.Value, rootPriority.Value, precision: 12);
     }
 
@@ -590,17 +585,11 @@ public sealed class ProjectSnapshotMetricsEnricherTests : IDisposable
         var programNode = Assert.Single(enriched.Root.Children);
         var priority = programNode.ComputedMetrics.TryGetNumber(MetricIds.RefactorPriorityPoints);
         var complexity = programNode.ComputedMetrics.TryGetNumber(MetricIds.ComplexityPoints);
-        var hotspotPoints = programNode.ComputedMetrics.TryGetNumber(MetricIds.CallableHotspotPoints);
 
         Assert.NotNull(priority);
         Assert.NotNull(complexity);
-        Assert.NotNull(hotspotPoints);
 
-        var basePriority =
-            (0.80d * complexity.Value) +
-            (0.20d * (100d * hotspotPoints.Value / 10d));
-
-        Assert.Equal(basePriority, priority.Value, precision: 12);
+        Assert.Equal(complexity.Value, priority.Value, precision: 12);
     }
 
     [Fact]

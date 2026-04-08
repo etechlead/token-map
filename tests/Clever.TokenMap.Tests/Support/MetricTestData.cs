@@ -26,6 +26,12 @@ internal static class MetricTestData
             (MetricIds.DeepNestingCallableCount, MetricValue.NotApplicable()),
             (MetricIds.LongParameterListCount, MetricValue.NotApplicable()),
             (MetricIds.CallableHotspotPoints, MetricValue.NotApplicable()),
+            (MetricIds.CallableCount, MetricValue.NotApplicable()),
+            (MetricIds.AffectedCallableCount, MetricValue.NotApplicable()),
+            (MetricIds.AffectedCallableRatio, MetricValue.NotApplicable()),
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.NotApplicable()),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.NotApplicable()),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.NotApplicable()),
             (MetricIds.ComplexityPoints, MetricValue.NotApplicable()),
             (MetricIds.RefactorPriorityPoints, MetricValue.NotApplicable()));
 

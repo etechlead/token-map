@@ -46,19 +46,13 @@ public sealed class RefactorPromptComposer : IRefactorPromptComposer
             ["{{tokens}}"] = FormatMetricValue(MetricIds.Tokens, metrics),
             ["{{non_empty_lines}}"] = FormatMetricValue(MetricIds.NonEmptyLines, metrics),
             ["{{file_size}}"] = FormatMetricValue(MetricIds.FileSizeBytes, metrics),
-            ["{{complexity}}"] = FormatMetricValue(MetricIds.ComplexityPoints, metrics),
-            ["{{hotspots}}"] = FormatMetricValue(MetricIds.CallableHotspotPoints, metrics),
+            ["{{structural_risk}}"] = FormatMetricValue(MetricIds.ComplexityPoints, metrics),
             ["{{refactor_priority}}"] = FormatMetricValue(MetricIds.RefactorPriorityPoints, metrics),
-            ["{{complexity_breakdown}}"] = BuildFormulaSection(
-                title: "Complexity",
-                ProductMetricFormulas.TryComputeComplexity(metrics, out var complexityBreakdown),
-                complexityBreakdown,
-                unavailableReason: "Complexity is unavailable because the required syntax-derived inputs were not produced for this file."),
-            ["{{hotspots_breakdown}}"] = BuildFormulaSection(
-                title: "Hotspots",
-                ProductMetricFormulas.TryComputeHotspots(metrics, out var hotspotsBreakdown),
-                hotspotsBreakdown,
-                unavailableReason: "Hotspots are unavailable because the required callable-risk inputs were not produced for this file."),
+            ["{{structural_risk_breakdown}}"] = BuildFormulaSection(
+                title: "Structural Risk",
+                ProductMetricFormulas.TryComputeStructuralRisk(metrics, out var structuralRiskBreakdown),
+                structuralRiskBreakdown,
+                unavailableReason: "Structural Risk is unavailable because the required syntax-derived inputs were not produced for this file."),
             ["{{refactor_priority_breakdown}}"] = BuildRefactorPrioritySection(metrics),
         };
 
@@ -103,7 +97,7 @@ public sealed class RefactorPromptComposer : IRefactorPromptComposer
         if (!HasGitContext(metrics))
         {
             builder.AppendLine();
-            builder.Append("- Refactor Priority currently reflects intrinsic pressure only because git-derived change-pressure inputs are unavailable.");
+            builder.Append("- Refactor Priority currently matches Structural Risk because git-derived change and co-change inputs are unavailable.");
         }
 
         return builder.ToString();

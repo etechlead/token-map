@@ -224,7 +224,7 @@ public sealed class MainWindowTreemapIntegrationTests
 
         var initialLines = GetTooltipLines(control);
         Assert.True(Array.IndexOf(initialLines, $"Share: {expectedShareText}") < Array.IndexOf(initialLines, "---"));
-        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Complexity: 18"));
+        Assert.True(Array.IndexOf(initialLines, "---") < Array.IndexOf(initialLines, "Structural Risk: 18"));
 
         complexityOption.IsVisible = true;
         window.UpdateLayout();
@@ -232,7 +232,7 @@ public sealed class MainWindowTreemapIntegrationTests
         Assert.Contains(MetricIds.ComplexityPoints, control.VisibleMetricIds);
 
         var updatedLines = GetTooltipLines(control);
-        Assert.True(Array.IndexOf(updatedLines, "Complexity: 18") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
+        Assert.True(Array.IndexOf(updatedLines, "Structural Risk: 18") < Array.IndexOf(updatedLines, $"Share: {expectedShareText}"));
         Assert.Equal(1, updatedLines.Count(line => line == "---"));
     }
 
@@ -365,7 +365,7 @@ public sealed class MainWindowTreemapIntegrationTests
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
-                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, structuralRisk: 17.5),
                 Children =
                 {
                     new ProjectNode
@@ -376,7 +376,7 @@ public sealed class MainWindowTreemapIntegrationTests
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
                         Summary = MetricTestData.CreateFileSummary(),
-                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, structuralRisk: 17.5),
                     },
                 },
             },
@@ -479,15 +479,13 @@ public sealed class MainWindowTreemapIntegrationTests
         long tokens,
         int nonEmptyLines,
         long fileSizeBytes,
-        double complexity,
-        int hotspots)
+        double structuralRisk)
     {
         return MetricSet.From(
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.ComplexityPoints, MetricValue.From(complexity)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspots)),
+            (MetricIds.ComplexityPoints, MetricValue.From(structuralRisk)),
             (MetricIds.RefactorPriorityPoints, MetricValue.From(22)));
     }
 

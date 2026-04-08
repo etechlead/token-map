@@ -1,19 +1,19 @@
 # TokenMap
 
-TokenMap is a desktop app for quickly finding the parts of a local codebase that are large, complex, hotspot-heavy, or likely to be worth refactoring first.
+TokenMap is a desktop app for quickly finding the parts of a local codebase that carry the most structural risk or are most worth refactoring first.
 
 <img src="docs/readme/screenshot.png" alt="TokenMap main window" width="838">
 
 ## Why TokenMap?
 
 - See which folders and files actually dominate a repository.
-- Find complexity and hotspot signals before refactors, cleanup, or architecture work.
+- Find refactor candidates before cleanup, decomposition, or architecture work.
 - Estimate which parts of a codebase will cost the most tokens in LLM workflows.
 
 ## Metrics
 
 - Basic: Tokens, non-empty lines, file size.
-- Derived: Complexity, Hotspots, Refactor Priority.
+- Derived: Structural Risk, Refactor Priority.
 - Syntax-aware metrics currently cover C#, TypeScript, JavaScript, Python, Go, Java, PHP, and Rust.
 
 ## How It Works
@@ -21,7 +21,7 @@ TokenMap is a desktop app for quickly finding the parts of a local codebase that
 - TokenMap scans a local folder into one snapshot.
 - `.gitignore`, global excludes, and folder excludes decide what gets in.
 - Only included files are measured and shown.
-- Metrics are computed locally, and local git history can add extra signals to Refactor Priority.
+- Metrics are computed locally, and local git history can add extra change-pressure signals to Refactor Priority.
 - Fully offline: no code is uploaded or sent to external services.
 
 > [!NOTE]

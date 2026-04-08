@@ -86,8 +86,8 @@ public sealed class TreemapControlHeadlessTests
         Assert.True(Array.IndexOf(lines, "Tokens: 42") < Array.IndexOf(lines, "Non-empty lines: 11"));
         Assert.True(Array.IndexOf(lines, "Non-empty lines: 11") < Array.IndexOf(lines, $"Share: {expectedShareText}"));
         Assert.True(Array.IndexOf(lines, $"Share: {expectedShareText}") < Array.IndexOf(lines, "---"));
-        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Complexity: 18"));
-        Assert.True(Array.IndexOf(lines, "Complexity: 18") < Array.IndexOf(lines, "Hotspots: 4"));
+        Assert.True(Array.IndexOf(lines, "---") < Array.IndexOf(lines, "Structural Risk: 18"));
+        Assert.True(Array.IndexOf(lines, "Structural Risk: 18") < Array.IndexOf(lines, "Refactor Priority: 22"));
         Assert.True(Array.LastIndexOf(lines, "---") < Array.IndexOf(lines, "Type: File"));
         Assert.True(Array.IndexOf(lines, "Type: File") < Array.IndexOf(lines, "Ext: .cs"));
         Assert.DoesNotContain("Files in subtree: 1", lines);
@@ -674,7 +674,7 @@ public sealed class TreemapControlHeadlessTests
                 RelativePath = string.Empty,
                 Kind = ProjectNodeKind.Root,
                 Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 1, descendantDirectoryCount: 0),
-                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
+                ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, structuralRisk: 17.5),
                 Children =
                 {
                     new ProjectNode
@@ -685,7 +685,7 @@ public sealed class TreemapControlHeadlessTests
                         RelativePath = "Program.cs",
                         Kind = ProjectNodeKind.File,
                         Summary = MetricTestData.CreateFileSummary(),
-                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, complexity: 17.5, hotspots: 4),
+                        ComputedMetrics = CreateExtendedMetricSet(tokens: 42, nonEmptyLines: 11, fileSizeBytes: 128, structuralRisk: 17.5),
                     },
                 },
             },
@@ -696,15 +696,14 @@ public sealed class TreemapControlHeadlessTests
         long tokens,
         int nonEmptyLines,
         long fileSizeBytes,
-        double complexity,
-        int hotspots)
+        double structuralRisk)
     {
         return MetricSet.From(
             (MetricIds.Tokens, MetricValue.From(tokens)),
             (MetricIds.NonEmptyLines, MetricValue.From(nonEmptyLines)),
             (MetricIds.FileSizeBytes, MetricValue.From(fileSizeBytes)),
-            (MetricIds.ComplexityPoints, MetricValue.From(complexity)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspots)));
+            (MetricIds.ComplexityPoints, MetricValue.From(structuralRisk)),
+            (MetricIds.RefactorPriorityPoints, MetricValue.From(22)));
     }
 
     private static string[] GetTooltipLines(TreemapControl control)

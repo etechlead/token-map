@@ -26,7 +26,6 @@ public sealed class ToolbarViewModelTests
                 MetricIds.NonEmptyLines,
                 MetricIds.FileSizeBytes,
                 MetricIds.ComplexityPoints,
-                MetricIds.CallableHotspotPoints,
                 MetricIds.RefactorPriorityPoints,
             ],
             viewModel.VisibleTreemapMetricOptions.Select(option => option.Definition.Id).ToArray());
@@ -115,7 +114,6 @@ public sealed class ToolbarViewModelTests
         state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
         state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
         state.SetMetricVisibility(MetricIds.ComplexityPoints, isVisible: false);
-        state.SetMetricVisibility(MetricIds.CallableHotspotPoints, isVisible: false);
         state.SetMetricVisibility(MetricIds.RefactorPriorityPoints, isVisible: false);
         var viewModel = CreateViewModel(state);
 
@@ -135,17 +133,13 @@ public sealed class ToolbarViewModelTests
         var complexityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.ComplexityPoints);
-        var hotspotsOption = Assert.Single(
-            viewModel.MetricVisibilityOptions,
-            option => option.Definition.Id == MetricIds.CallableHotspotPoints);
         var priorityOption = Assert.Single(
             viewModel.MetricVisibilityOptions,
             option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
 
-        Assert.Equal("Complexity", complexityOption.Label);
-        Assert.Equal("Hotspots", hotspotsOption.Label);
+        Assert.Equal("Risk", complexityOption.Label);
         Assert.Equal("Refactor", priorityOption.Label);
-        Assert.Equal(6, viewModel.MetricVisibilityOptions.Count);
+        Assert.Equal(5, viewModel.MetricVisibilityOptions.Count);
         Assert.Empty(viewModel.TreeOnlyMetricVisibilityOptions);
         Assert.False(viewModel.HasTreeOnlyMetricVisibilityOptions);
     }
@@ -159,7 +153,7 @@ public sealed class ToolbarViewModelTests
             option => option.Definition.Id == MetricIds.RefactorPriorityPoints);
 
         Assert.Equal(refactorOption.Definition.Description, refactorOption.Description);
-        Assert.Equal("Open-ended additive refactor priority points for files and summed directory rollups.", refactorOption.Description);
+        Assert.Equal("Refactoring priority score that combines structural risk with recent change and co-change pressure.", refactorOption.Description);
     }
 
     [Fact]

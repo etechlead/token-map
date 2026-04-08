@@ -188,7 +188,6 @@ public sealed class MainWindowLayoutTests
         var linesButton = FindTreemapMetricButton(window, MetricIds.NonEmptyLines);
         var sizeButton = FindTreemapMetricButton(window, MetricIds.FileSizeBytes);
         var complexityButton = FindTreemapMetricButton(window, MetricIds.ComplexityPoints);
-        var hotspotsButton = FindTreemapMetricButton(window, MetricIds.CallableHotspotPoints);
         var priorityButton = FindTreemapMetricButton(window, MetricIds.RefactorPriorityPoints);
         var showValuesCheckBox = FindNamedDescendant<CheckBox>(window, "TreemapShowValuesCheckBox");
 
@@ -196,14 +195,12 @@ public sealed class MainWindowLayoutTests
         Assert.NotNull(linesButton);
         Assert.NotNull(sizeButton);
         Assert.NotNull(complexityButton);
-        Assert.NotNull(hotspotsButton);
         Assert.NotNull(priorityButton);
         Assert.NotNull(showValuesCheckBox);
         Assert.True(tokensButton.IsChecked);
         Assert.False(linesButton.IsChecked);
         Assert.False(sizeButton.IsChecked);
         Assert.False(complexityButton.IsChecked);
-        Assert.False(hotspotsButton.IsChecked);
         Assert.False(priorityButton.IsChecked);
         Assert.True(showValuesCheckBox.IsChecked);
 

@@ -9,14 +9,14 @@ public sealed class ComplexityPointsDerivedMetricsCalculatorTests
     private readonly ComplexityPointsDerivedMetricsCalculator _calculator = new();
 
     [Fact]
-    public async Task ComputeAsync_ComputesCompositeComplexityPoints()
+    public async Task ComputeAsync_ComputesStructuralRiskPoints()
     {
         var inputMetrics = MetricSet.From(
             (MetricIds.CodeLines, MetricValue.From(100)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
-            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
-            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
-            (MetricIds.MaxParameterCount, MetricValue.From(6)));
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(80)),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.From(35)),
+            (MetricIds.AffectedCallableRatio, MetricValue.From(0.75d)),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.From(0.90d)));
         var builder = new MetricSetBuilder();
 
         await _calculator.ComputeAsync(
@@ -27,7 +27,7 @@ public sealed class ComplexityPointsDerivedMetricsCalculatorTests
 
         var result = builder.Build();
 
-        Assert.Equal(47.190668980142661, result.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
+        Assert.Equal(69.60317460317461, result.TryGetNumber(MetricIds.ComplexityPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -35,7 +35,7 @@ public sealed class ComplexityPointsDerivedMetricsCalculatorTests
     {
         var inputMetrics = MetricSet.From(
             (MetricIds.CodeLines, MetricValue.From(100)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)));
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(20)));
         var builder = new MetricSetBuilder();
 
         await _calculator.ComputeAsync(

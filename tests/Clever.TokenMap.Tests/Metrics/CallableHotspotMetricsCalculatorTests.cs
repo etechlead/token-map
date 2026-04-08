@@ -29,6 +29,9 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableCount));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.AffectedCallableCount));
+        Assert.Equal(0d, result.TryGetNumber(MetricIds.TotalCallableBurdenPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -51,6 +54,9 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.CallableCount));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.AffectedCallableCount));
+        Assert.Equal(0d, result.TryGetNumber(MetricIds.TotalCallableBurdenPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -73,6 +79,35 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(8, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.CallableCount));
+        Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.AffectedCallableCount));
+        Assert.Equal(53.5d, result.TryGetNumber(MetricIds.TotalCallableBurdenPoints)!.Value, precision: 12);
+        Assert.Equal(53.5d, result.TryGetNumber(MetricIds.TopCallableBurdenPoints)!.Value, precision: 12);
+        Assert.Equal(1d, result.TryGetNumber(MetricIds.TopThreeCallableBurdenShare)!.Value, precision: 12);
+    }
+
+    [Fact]
+    public async Task ComputeAsync_DownweightsLongLinearCallableBurden()
+    {
+        var result = await ComputeAsync(new SyntaxSummaryArtifact(
+            LanguageId: "csharp",
+            ParseQuality: SyntaxParseQuality.Full,
+            CodeLineCount: 90,
+            CyclomaticComplexitySum: 3,
+            CyclomaticComplexityMax: 3,
+            MaxNestingDepth: 1,
+            Callables:
+            [
+                new CallableSyntaxFact("AnalyzeAsync", CallableKind.Method, new LineRange(10, 90), 4, 3, 1),
+            ]));
+
+        Assert.Equal(1, result.TryGetRoundedInt32(MetricIds.LongCallableCount));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.HighCyclomaticComplexityCallableCount));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
+        Assert.Equal(0, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
+        Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(21.35d, result.TryGetNumber(MetricIds.TotalCallableBurdenPoints)!.Value, precision: 12);
+        Assert.Equal(21.35d, result.TryGetNumber(MetricIds.TopCallableBurdenPoints)!.Value, precision: 12);
     }
 
     [Fact]
@@ -98,6 +133,11 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.DeepNestingCallableCount));
         Assert.Equal(2, result.TryGetRoundedInt32(MetricIds.LongParameterListCount));
         Assert.Equal(16, result.TryGetRoundedInt32(MetricIds.CallableHotspotPoints));
+        Assert.Equal(4, result.TryGetRoundedInt32(MetricIds.CallableCount));
+        Assert.Equal(3, result.TryGetRoundedInt32(MetricIds.AffectedCallableCount));
+        Assert.Equal(113.5d, result.TryGetNumber(MetricIds.TotalCallableBurdenPoints)!.Value, precision: 12);
+        Assert.Equal(61.5d, result.TryGetNumber(MetricIds.TopCallableBurdenPoints)!.Value, precision: 12);
+        Assert.Equal(1d, result.TryGetNumber(MetricIds.TopThreeCallableBurdenShare)!.Value, precision: 12);
     }
 
     [Fact]
@@ -110,6 +150,8 @@ public sealed class CallableHotspotMetricsCalculatorTests
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.DeepNestingCallableCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.LongParameterListCount).Status);
         Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.CallableHotspotPoints).Status);
+        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.CallableCount).Status);
+        Assert.Equal(MetricStatus.NotApplicable, result.GetOrDefault(MetricIds.TotalCallableBurdenPoints).Status);
     }
 
     [Theory]

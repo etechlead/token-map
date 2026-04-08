@@ -13,13 +13,11 @@ public static class RefactorPromptTemplateDefaults
         - Tokens: {{tokens}}
         - Non-empty lines: {{non_empty_lines}}
         - File size: {{file_size}}
-        - Complexity: {{complexity}}
-        - Hotspots: {{hotspots}}
+        - Structural Risk: {{structural_risk}}
         - Refactor Priority: {{refactor_priority}}
 
-        Possible reasons these signals look this way:
-        {{complexity_breakdown}}
-        {{hotspots_breakdown}}
+        Primary signals that push this file toward refactoring:
+        {{structural_risk_breakdown}}
         {{refactor_priority_breakdown}}
 
         Task:
@@ -27,7 +25,7 @@ public static class RefactorPromptTemplateDefaults
         - Do not jump straight to code changes.
         - First decide whether refactoring is justified at all.
         - If refactoring seems warranted, propose several options that would fit the existing architecture and boundaries of this application.
-        - Focus on reducing code smells, lowering complexity, and improving maintainability and agent-readability.
+        - Focus on reducing structural risk, simplifying the code, and improving maintainability and agent-readability.
         - Include a minimal option and call out if the current design should stay as-is.
         """;
 }

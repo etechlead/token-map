@@ -12,21 +12,16 @@ public sealed class RefactorPriorityPointsDerivedMetricsCalculatorTests
     [Fact]
     public async Task ComputeAsync_UsesBasePriorityWhenGitHistoryIsUnavailable()
     {
-        var result = await ComputeAsync(
-            MetricSet.From(
-                (MetricIds.ComplexityPoints, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPoints, MetricValue.From(5))));
+        var result = await ComputeAsync(MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(60))));
 
-        Assert.Equal(58d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(60d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
     public async Task ComputeAsync_BlendsGitChangeAndBlastRadiusPressureWhenHistoryIsAvailable()
     {
         var result = await ComputeAsync(
-            MetricSet.From(
-                (MetricIds.ComplexityPoints, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPoints, MetricValue.From(5))),
+            MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(60))),
             CreateArtifact(
                 churnLines90d: 210,
                 touchCount90d: 7,
@@ -35,28 +30,24 @@ public sealed class RefactorPriorityPointsDerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 4,
                 averageCochangeSetSize90d: 3.5d));
 
-        Assert.Equal(55.95151515151515, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(63.32193732193732, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
     public async Task ComputeAsync_UsesZeroHistoryArtifactInsteadOfFallbackWhenGitSnapshotExists()
     {
         var result = await ComputeAsync(
-            MetricSet.From(
-                (MetricIds.ComplexityPoints, MetricValue.From(60)),
-                (MetricIds.CallableHotspotPoints, MetricValue.From(5))),
+            MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(60))),
             GitFileHistoryArtifact.Zero);
 
-        Assert.Equal(34.8d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(60d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
-    public async Task ComputeAsync_RaisesPriorityForHighBlastRadiusAtModerateComplexity()
+    public async Task ComputeAsync_IgnoresCochangeBlastRadiusWithoutRepeatedTouches()
     {
         var result = await ComputeAsync(
-            MetricSet.From(
-                (MetricIds.ComplexityPoints, MetricValue.From(35)),
-                (MetricIds.CallableHotspotPoints, MetricValue.From(2))),
+            MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(35))),
             CreateArtifact(
                 churnLines90d: 20,
                 touchCount90d: 1,
@@ -65,16 +56,14 @@ public sealed class RefactorPriorityPointsDerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 8,
                 averageCochangeSetSize90d: 6d));
 
-        Assert.Equal(39.2d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(35d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
     public async Task ComputeAsync_KeepsHighIntrinsicComplexityAheadOfLowBlastRadiusPressure()
     {
         var result = await ComputeAsync(
-            MetricSet.From(
-                (MetricIds.ComplexityPoints, MetricValue.From(90)),
-                (MetricIds.CallableHotspotPoints, MetricValue.From(1))),
+            MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(90))),
             CreateArtifact(
                 churnLines90d: 20,
                 touchCount90d: 1,
@@ -83,14 +72,14 @@ public sealed class RefactorPriorityPointsDerivedMetricsCalculatorTests
                 strongCochangedFileCount90d: 0,
                 averageCochangeSetSize90d: 1d));
 
-        Assert.Equal(45.36666666666667, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
+        Assert.Equal(90d, result.TryGetNumber(MetricIds.RefactorPriorityPoints)!.Value, precision: 12);
     }
 
     [Fact]
     public async Task ComputeAsync_SetsNotApplicableWhenComplexityInputsAreMissing()
     {
         var result = await ComputeAsync(
-            MetricSet.From((MetricIds.CallableHotspotPoints, MetricValue.From(4))),
+            MetricSet.Empty,
             CreateArtifact(
                 churnLines90d: 300,
                 touchCount90d: 8,

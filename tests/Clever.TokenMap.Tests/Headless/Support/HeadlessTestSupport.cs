@@ -138,23 +138,16 @@ internal static class HeadlessTestSupport
             (MetricIds.NonEmptyLines, MetricValue.From(11)),
             (MetricIds.FileSizeBytes, MetricValue.From(128)),
             (MetricIds.CodeLines, MetricValue.From(100)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
-            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
-            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
-            (MetricIds.MaxParameterCount, MetricValue.From(6)),
-            (MetricIds.LongCallableCount, MetricValue.From(1)),
-            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.From(1)),
-            (MetricIds.DeepNestingCallableCount, MetricValue.From(1)),
-            (MetricIds.LongParameterListCount, MetricValue.From(1)));
+            (MetricIds.CallableCount, MetricValue.From(4)),
+            (MetricIds.AffectedCallableCount, MetricValue.From(3)),
+            (MetricIds.AffectedCallableRatio, MetricValue.From(0.75d)),
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(80d)),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.From(35d)),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.From(0.90d)));
 
-        if (!ProductMetricFormulas.TryComputeComplexity(baseMetrics, out var complexityBreakdown))
+        if (!ProductMetricFormulas.TryComputeStructuralRisk(baseMetrics, out var complexityBreakdown))
         {
-            throw new InvalidOperationException("Expected complexity breakdown for explainability test data.");
-        }
-
-        if (!ProductMetricFormulas.TryComputeHotspots(baseMetrics, out var hotspotBreakdown))
-        {
-            throw new InvalidOperationException("Expected hotspot breakdown for explainability test data.");
+            throw new InvalidOperationException("Expected structural risk breakdown for explainability test data.");
         }
 
         var metrics = new List<(MetricId Id, MetricValue Value)>
@@ -163,16 +156,13 @@ internal static class HeadlessTestSupport
             (MetricIds.NonEmptyLines, MetricValue.From(11)),
             (MetricIds.FileSizeBytes, MetricValue.From(128)),
             (MetricIds.CodeLines, MetricValue.From(100)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
-            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
-            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
-            (MetricIds.MaxParameterCount, MetricValue.From(6)),
-            (MetricIds.LongCallableCount, MetricValue.From(1)),
-            (MetricIds.HighCyclomaticComplexityCallableCount, MetricValue.From(1)),
-            (MetricIds.DeepNestingCallableCount, MetricValue.From(1)),
-            (MetricIds.LongParameterListCount, MetricValue.From(1)),
+            (MetricIds.CallableCount, MetricValue.From(4)),
+            (MetricIds.AffectedCallableCount, MetricValue.From(3)),
+            (MetricIds.AffectedCallableRatio, MetricValue.From(0.75d)),
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(80d)),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.From(35d)),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.From(0.90d)),
             (MetricIds.ComplexityPoints, MetricValue.From(complexityBreakdown.TotalPoints)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(hotspotBreakdown.TotalPoints)),
         };
 
         if (includeGitContext)

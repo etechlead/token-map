@@ -6,46 +6,44 @@ namespace Clever.TokenMap.Tests.Metrics;
 public sealed class ProductMetricFormulasTests
 {
     [Fact]
-    public void TryComputeComplexity_ReturnsWeightedBreakdown()
+    public void TryComputeStructuralRisk_ReturnsWeightedBreakdown()
     {
         var metrics = MetricSet.From(
             (MetricIds.CodeLines, MetricValue.From(100)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(20)),
-            (MetricIds.CyclomaticComplexityMax, MetricValue.From(8)),
-            (MetricIds.MaxNestingDepth, MetricValue.From(4)),
-            (MetricIds.MaxParameterCount, MetricValue.From(6)));
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(80)),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.From(35)),
+            (MetricIds.AffectedCallableRatio, MetricValue.From(0.75d)),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.From(0.90d)));
 
-        var success = ProductMetricFormulas.TryComputeComplexity(metrics, out var breakdown);
+        var success = ProductMetricFormulas.TryComputeStructuralRisk(metrics, out var breakdown);
 
         Assert.True(success);
-        Assert.Equal(47.190668980142661, breakdown.TotalPoints, precision: 12);
+        Assert.Equal(69.60317460317461, breakdown.TotalPoints, precision: 12);
         Assert.Equal(5, breakdown.Components.Count);
-        Assert.Equal("Cyclomatic complexity sum", breakdown.Components[1].Label);
-        Assert.Equal(20d, breakdown.Components[1].RawValue);
+        Assert.Equal("Total callable burden", breakdown.Components[1].Label);
+        Assert.Equal(80d, breakdown.Components[1].RawValue);
         Assert.Equal(0.35d, breakdown.Components[1].Weight, precision: 12);
     }
 
     [Fact]
-    public void TryComputeComplexity_ContinuesGrowingPastBadThresholds()
+    public void TryComputeStructuralRisk_ContinuesGrowingPastBadThresholds()
     {
         var metrics = MetricSet.From(
             (MetricIds.CodeLines, MetricValue.From(600)),
-            (MetricIds.CyclomaticComplexitySum, MetricValue.From(80)),
-            (MetricIds.CyclomaticComplexityMax, MetricValue.From(30)),
-            (MetricIds.MaxNestingDepth, MetricValue.From(10)),
-            (MetricIds.MaxParameterCount, MetricValue.From(12)));
+            (MetricIds.TotalCallableBurdenPoints, MetricValue.From(260)),
+            (MetricIds.TopCallableBurdenPoints, MetricValue.From(120)),
+            (MetricIds.AffectedCallableRatio, MetricValue.From(1d)),
+            (MetricIds.TopThreeCallableBurdenShare, MetricValue.From(1d)));
 
-        var success = ProductMetricFormulas.TryComputeComplexity(metrics, out var breakdown);
+        var success = ProductMetricFormulas.TryComputeStructuralRisk(metrics, out var breakdown);
 
         Assert.True(success);
         Assert.True(breakdown.TotalPoints > 100d);
-        Assert.All(
-            breakdown.Components,
-            component =>
-            {
-                Assert.NotNull(component.NormalizedValue);
-                Assert.True(component.NormalizedValue.Value > 1d);
-            });
+        Assert.True(breakdown.Components[0].NormalizedValue > 1d);
+        Assert.True(breakdown.Components[1].NormalizedValue > 1d);
+        Assert.True(breakdown.Components[2].NormalizedValue > 1d);
+        Assert.Equal(1d, breakdown.Components[3].NormalizedValue);
+        Assert.Equal(1d, breakdown.Components[4].NormalizedValue);
     }
 
     [Fact]
@@ -88,16 +86,14 @@ public sealed class ProductMetricFormulasTests
     [Fact]
     public void TryComputeRefactorPriority_FallsBackToIntrinsicInputsWithoutGitContext()
     {
-        var metrics = MetricSet.From(
-            (MetricIds.ComplexityPoints, MetricValue.From(60)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(5)));
+        var metrics = MetricSet.From((MetricIds.ComplexityPoints, MetricValue.From(60)));
 
         var success = ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var breakdown);
 
         Assert.True(success);
-        Assert.Equal(58d, breakdown.TotalPoints, precision: 12);
-        Assert.Equal(2, breakdown.Components.Count);
-        Assert.All(breakdown.Components, component => Assert.Equal("Intrinsic", component.Category));
+        Assert.Equal(60d, breakdown.TotalPoints, precision: 12);
+        Assert.Single(breakdown.Components);
+        Assert.All(breakdown.Components, component => Assert.Equal("Structural", component.Category));
     }
 
     [Fact]
@@ -105,7 +101,6 @@ public sealed class ProductMetricFormulasTests
     {
         var metrics = MetricSet.From(
             (MetricIds.ComplexityPoints, MetricValue.From(60)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(5)),
             (MetricIds.ChurnLines90d, MetricValue.From(210)),
             (MetricIds.TouchCount90d, MetricValue.From(7)),
             (MetricIds.AuthorCount90d, MetricValue.From(3)),
@@ -116,8 +111,8 @@ public sealed class ProductMetricFormulasTests
         var success = ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var breakdown);
 
         Assert.True(success);
-        Assert.Equal(55.95151515151515, breakdown.TotalPoints, precision: 12);
-        Assert.Equal(8, breakdown.Components.Count);
+        Assert.Equal(63.32193732193732, breakdown.TotalPoints, precision: 12);
+        Assert.Equal(7, breakdown.Components.Count);
         Assert.Contains(
             breakdown.Components,
             component => component.Key == "churn_lines_90d" &&
@@ -131,11 +126,10 @@ public sealed class ProductMetricFormulasTests
     }
 
     [Fact]
-    public void TryComputeRefactorPriority_ContinuesGrowingPastHotspotAndGitThresholds()
+    public void TryComputeRefactorPriority_CapsGitAmplificationAtThresholds()
     {
         var metrics = MetricSet.From(
             (MetricIds.ComplexityPoints, MetricValue.From(140)),
-            (MetricIds.CallableHotspotPoints, MetricValue.From(25)),
             (MetricIds.ChurnLines90d, MetricValue.From(800)),
             (MetricIds.TouchCount90d, MetricValue.From(24)),
             (MetricIds.AuthorCount90d, MetricValue.From(6)),
@@ -146,13 +140,18 @@ public sealed class ProductMetricFormulasTests
         var success = ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var breakdown);
 
         Assert.True(success);
-        Assert.True(breakdown.TotalPoints > 100d);
+        Assert.Equal(159.50544662309369, breakdown.TotalPoints, precision: 12);
 
         var normalizedComponents = breakdown.Components
             .Where(component => component.NormalizedValue.HasValue)
             .ToArray();
 
         Assert.NotEmpty(normalizedComponents);
-        Assert.All(normalizedComponents, component => Assert.True(component.NormalizedValue!.Value > 1d));
+        Assert.Contains(normalizedComponents, component => component.Key == "churn_lines_90d" && component.NormalizedValue == 1d);
+        Assert.Contains(normalizedComponents, component => component.Key == "touch_count_90d" && component.NormalizedValue == 1d);
+        Assert.Contains(normalizedComponents, component => component.Key == "author_count_90d" && component.NormalizedValue == 1d);
+        Assert.Contains(normalizedComponents, component => component.Key == "strong_cochanged_file_count_90d" && component.NormalizedValue < 1d);
+        Assert.Contains(normalizedComponents, component => component.Key == "unique_cochanged_file_count_90d" && component.NormalizedValue < 1d);
+        Assert.Contains(normalizedComponents, component => component.Key == "avg_cochange_set_size_90d" && component.NormalizedValue < 1d);
     }
 }

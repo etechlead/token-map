@@ -19,7 +19,7 @@ public sealed class ComplexityPointsDerivedMetricsCalculator : IFileDerivedMetri
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (!ProductMetricFormulas.TryComputeComplexity(inputMetrics, out var breakdown))
+        if (!ProductMetricFormulas.TryComputeStructuralRisk(inputMetrics, out var breakdown))
         {
             sink.SetNotApplicable(MetricIds.ComplexityPoints);
             return ValueTask.CompletedTask;

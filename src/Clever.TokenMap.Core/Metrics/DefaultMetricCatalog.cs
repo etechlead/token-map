@@ -33,22 +33,13 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             "File size in bytes and summed directory size."),
         new(
             MetricIds.ComplexityPoints,
-            "Complexity",
-            "Complexity",
+            "Structural Risk",
+            "Risk",
             MetricUnit.Score,
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "Open-ended composite complexity points for files and summed directory rollups."),
-        new(
-            MetricIds.CallableHotspotPoints,
-            "Hotspots",
-            "Hotspots",
-            MetricUnit.Score,
-            MetricRollupKind.Sum,
-            VisibleByDefault: true,
-            SupportsTreemapWeight: true,
-            "Additive callable hotspot points for files and summed directory rollups."),
+            "Continuous intrinsic structural-risk score based on file scale, callable burden, and risk distribution."),
         new(
             MetricIds.RefactorPriorityPoints,
             "Refactor Priority",
@@ -57,7 +48,7 @@ public sealed class DefaultMetricCatalog : IMetricCatalog
             MetricRollupKind.Sum,
             VisibleByDefault: true,
             SupportsTreemapWeight: true,
-            "Open-ended additive refactor priority points for files and summed directory rollups.")
+            "Refactoring priority score that combines structural risk with recent change and co-change pressure.")
     ];
 
     private readonly Dictionary<MetricId, MetricDefinition> _definitionsById =

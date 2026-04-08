@@ -479,6 +479,12 @@ public sealed class ProjectSnapshotMetricsEnricher : IProjectSnapshotMetricEngin
         builder.SetNotApplicable(MetricIds.DeepNestingCallableCount);
         builder.SetNotApplicable(MetricIds.LongParameterListCount);
         builder.SetNotApplicable(MetricIds.CallableHotspotPoints);
+        builder.SetNotApplicable(MetricIds.CallableCount);
+        builder.SetNotApplicable(MetricIds.AffectedCallableCount);
+        builder.SetNotApplicable(MetricIds.AffectedCallableRatio);
+        builder.SetNotApplicable(MetricIds.TotalCallableBurdenPoints);
+        builder.SetNotApplicable(MetricIds.TopCallableBurdenPoints);
+        builder.SetNotApplicable(MetricIds.TopThreeCallableBurdenShare);
         builder.SetNotApplicable(MetricIds.ComplexityPoints);
         builder.SetNotApplicable(MetricIds.RefactorPriorityPoints);
         return builder.Build();

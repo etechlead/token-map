@@ -18,7 +18,13 @@ public static class MetricIds
     public static readonly MetricId ComplexityPoints = new("complexity_points");
     public static readonly MetricId RefactorPriorityPoints = new("refactor_priority_points");
 
-    // Internal operands for explainability and git-aware product metrics.
+    // Internal operands for explainability and product metrics.
+    public static readonly MetricId CallableCount = new("callable_count");
+    public static readonly MetricId AffectedCallableCount = new("affected_callable_count");
+    public static readonly MetricId AffectedCallableRatio = new("affected_callable_ratio");
+    public static readonly MetricId TotalCallableBurdenPoints = new("total_callable_burden_points");
+    public static readonly MetricId TopCallableBurdenPoints = new("top_callable_burden_points");
+    public static readonly MetricId TopThreeCallableBurdenShare = new("top_three_callable_burden_share");
     public static readonly MetricId ChurnLines90d = new("churn_lines_90d");
     public static readonly MetricId TouchCount90d = new("touch_count_90d");
     public static readonly MetricId AuthorCount90d = new("author_count_90d");
