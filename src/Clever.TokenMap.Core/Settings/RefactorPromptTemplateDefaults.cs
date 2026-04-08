@@ -2,28 +2,29 @@ namespace Clever.TokenMap.Core.Settings;
 
 public static class RefactorPromptTemplateDefaults
 {
-    public const string DefaultRefactorPromptTemplate =
-        """
-        Please assess whether this file is a good refactoring candidate.
-
-        Target file:
-        - Relative path: {{relative_path}}
-
-        Observed metrics:
-        - Tokens: {{tokens}}
-        - Non-empty lines: {{non_empty_lines}}
-        - File size: {{file_size}}
-        - Refactor Priority: {{refactor_priority}}
-
-        How Refactor Priority was formed:
-        {{refactor_priority_breakdown}}
-
-        Task:
-        - Review this file in the context of the surrounding module and the repository architecture.
-        - Do not jump straight to code changes.
-        - First decide whether refactoring is justified at all.
-        - If refactoring seems warranted, propose several options that would fit the existing architecture and boundaries of this application.
-        - Focus on reducing structural risk, simplifying the code, and improving maintainability and agent-readability.
-        - Include a minimal option and call out if the current design should stay as-is.
-        """;
+    public static readonly string DefaultRefactorPromptTemplate = string.Join(
+        "\n",
+        [
+            "Please assess whether this file is a good refactoring candidate.",
+            string.Empty,
+            "Target file:",
+            "- Relative path: {{relative_path}}",
+            string.Empty,
+            "Observed metrics:",
+            "- Tokens: {{tokens}}",
+            "- Non-empty lines: {{non_empty_lines}}",
+            "- File size: {{file_size}}",
+            "- Refactor Priority: {{refactor_priority}}",
+            string.Empty,
+            "How Refactor Priority was formed:",
+            "{{refactor_priority_breakdown}}",
+            string.Empty,
+            "Task:",
+            "- Review this file in the context of the surrounding module and the repository architecture.",
+            "- Do not jump straight to code changes.",
+            "- First decide whether refactoring is justified at all.",
+            "- If refactoring seems warranted, propose several options that would fit the existing architecture and boundaries of this application.",
+            "- Focus on reducing structural risk, simplifying the code, and improving maintainability and agent-readability.",
+            "- Include a minimal option and call out if the current design should stay as-is.",
+        ]);
 }
