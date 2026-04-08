@@ -38,6 +38,8 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     void SetShowTreemapMetricValues(bool value);
 
+    void SetRefactorPromptTemplate(string templateText);
+
     void RecordRecentFolder(string folderPath);
 
     void RemoveRecentFolder(string folderPath);

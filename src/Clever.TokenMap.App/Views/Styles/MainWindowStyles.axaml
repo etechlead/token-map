@@ -796,6 +796,76 @@
     <Style Selector="TextBox.refactor-prompt-editor:focus">
         <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
     </Style>
+    <Style Selector="Border.refactor-prompt-template-modal">
+        <Setter Property="MaxWidth" Value="1180" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="Border.refactor-prompt-placeholder-pane">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceSubtleBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="12" />
+    </Style>
+    <Style Selector="Button.refactor-prompt-placeholder-button">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <ContentPresenter Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      RecognizesAccessKey="True"
+                                      TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="10" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="Button.refactor-prompt-placeholder-button:pointerover">
+        <Setter Property="Background" Value="{DynamicResource TokenMapControlHoverBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
+    </Style>
+    <Style Selector="Button.refactor-prompt-placeholder-button:pressed">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceMutedBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentPressedBrush}" />
+    </Style>
+    <Style Selector="TextBlock.refactor-prompt-placeholder-token">
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapAccentBrush}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-template-editor">
+        <Setter Property="Background" Value="{DynamicResource TokenMapSurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Foreground" Value="{DynamicResource TokenMapTextBrush}" />
+        <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace" />
+        <Setter Property="MinHeight" Value="420" />
+        <Setter Property="Padding" Value="12" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-template-editor:pointerover">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapControlHoverBorderBrush}" />
+    </Style>
+    <Style Selector="TextBox.refactor-prompt-template-editor:focus">
+        <Setter Property="BorderBrush" Value="{DynamicResource TokenMapAccentBrush}" />
+    </Style>
     <Style Selector="TextBlock.file-preview-explainability-note">
         <Setter Property="Foreground" Value="{DynamicResource TokenMapMutedTextBrush}" />
     </Style>

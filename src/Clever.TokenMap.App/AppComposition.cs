@@ -70,7 +70,8 @@ public static class AppComposition
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
         services.AddSingleton<IFolderPathService, FileSystemFolderPathService>();
         services.AddSingleton<IPathShellService>(_ => PathShellService.CreateForCurrentPlatform());
-        services.AddSingleton<IRefactorPromptComposer, RefactorPromptComposer>();
+        services.AddSingleton<IRefactorPromptComposer>(sp =>
+            new RefactorPromptComposer(sp.GetRequiredService<ISettingsCoordinator>()));
         services.AddSingleton<IAppLoggerFactory>(sp =>
             new AppLoggerFactory(
                 sp.GetRequiredService<AppSettings>().Logging,

@@ -105,6 +105,9 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public void SetShowTreemapMetricValues(bool value) =>
         MutableState.ShowTreemapMetricValues = value;
 
+    public void SetRefactorPromptTemplate(string templateText) =>
+        MutableState.RefactorPromptTemplate = AppSettingsCanonicalizer.NormalizeRefactorPromptTemplate(templateText);
+
     public void RecordRecentFolder(string folderPath) =>
         MutableState.RecordRecentFolder(folderPath);
 

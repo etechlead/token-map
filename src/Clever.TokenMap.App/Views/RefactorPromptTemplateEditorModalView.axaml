@@ -1,0 +1,124 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Clever.TokenMap.App.ViewModels"
+             x:Class="Clever.TokenMap.App.Views.RefactorPromptTemplateEditorModalView"
+             x:DataType="vm:MainWindowViewModel">
+    <Border Classes="panel refactor-prompt-template-modal"
+            Width="1120"
+            MaxWidth="1180"
+            MinHeight="620">
+        <Grid RowDefinitions="Auto,*,Auto"
+              RowSpacing="14">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8">
+                <StackPanel Spacing="4">
+                    <TextBlock Name="RefactorPromptTemplateEditorTitleText"
+                               Classes="panel-title"
+                               Text="Refactor prompt template" />
+                    <TextBlock Name="RefactorPromptTemplateEditorScopeText"
+                               Classes="panel-body"
+                               Text="Global setting for all repositories on this machine." />
+                </StackPanel>
+
+                <Button Name="CloseRefactorPromptTemplateEditorModalButton"
+                        Grid.Column="1"
+                        Classes="close-button"
+                        Command="{Binding RefactorPromptTemplateSettings.CloseEditorCommand}"
+                        ToolTip.Tip="Close refactor prompt template editor">
+                    <Path Classes="close-button-icon"
+                          Data="{StaticResource FluentDismiss20Geometry}" />
+                </Button>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="260,12,*">
+                <Border Classes="refactor-prompt-placeholder-pane">
+                    <Grid RowDefinitions="Auto,*"
+                          RowSpacing="10">
+                        <StackPanel Spacing="4">
+                            <TextBlock Name="RefactorPromptTemplatePlaceholdersTitleText"
+                                       Classes="toolbar-group-title"
+                                       Text="Placeholders" />
+                            <TextBlock Name="RefactorPromptTemplatePlaceholdersHintText"
+                                       Classes="panel-body"
+                                       Text="Insert these tokens anywhere in the template." />
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="1"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto">
+                            <ItemsControl Name="RefactorPromptTemplatePlaceholdersItemsControl"
+                                          ItemsSource="{Binding RefactorPromptTemplateSettings.Editor.Placeholders}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="8" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:RefactorPromptTemplatePlaceholderViewModel">
+                                        <Button Classes="refactor-prompt-placeholder-button"
+                                                HorizontalContentAlignment="Stretch"
+                                                Tag="{Binding Token}"
+                                                Click="PlaceholderButton_OnClick">
+                                            <StackPanel Spacing="4">
+                                                <TextBlock Classes="refactor-prompt-placeholder-token"
+                                                           Text="{Binding Token}" />
+                                                <TextBlock Classes="panel-body"
+                                                           Text="{Binding Description}" />
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Column="1"
+                        Width="1"
+                        Background="{DynamicResource TokenMapDividerBrush}" />
+
+                <Grid Grid.Column="2"
+                      RowDefinitions="Auto,*"
+                      RowSpacing="10">
+                    <TextBlock Name="RefactorPromptTemplateEditorHintText"
+                               Classes="panel-body"
+                               Text="Edit the default conversation-starter template used for new refactor prompts." />
+                    <TextBox Name="RefactorPromptTemplateEditorTextBox"
+                             Grid.Row="1"
+                             Classes="refactor-prompt-template-editor"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             VerticalContentAlignment="Stretch"
+                             Text="{Binding RefactorPromptTemplateSettings.Editor.TemplateText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+            </Grid>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8"
+                  VerticalAlignment="Center">
+                <Button Name="ResetRefactorPromptTemplateButton"
+                        Classes="action-button"
+                        HorizontalAlignment="Left"
+                        Command="{Binding RefactorPromptTemplateSettings.ResetEditorCommand}"
+                        Content="Reset to default" />
+
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Spacing="8">
+                    <Button Name="CancelRefactorPromptTemplateButton"
+                            Classes="action-button"
+                            Command="{Binding RefactorPromptTemplateSettings.CloseEditorCommand}"
+                            Content="Cancel" />
+                    <Button Name="SaveRefactorPromptTemplateButton"
+                            Classes="action-button primary"
+                            Command="{Binding RefactorPromptTemplateSettings.SaveEditorCommand}"
+                            Content="Save" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

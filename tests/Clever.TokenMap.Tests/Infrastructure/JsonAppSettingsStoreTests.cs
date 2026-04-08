@@ -29,6 +29,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Equal(WorkspaceLayoutMode.SideBySide, settings.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Weighted, settings.Appearance.TreemapPalette);
         Assert.True(settings.Appearance.ShowTreemapMetricValues);
+        Assert.Equal(RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate, settings.Prompting.RefactorPromptTemplate);
         Assert.Empty(settings.RecentFolderPaths);
     }
 
@@ -58,6 +59,9 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
                 "treemapPalette": "Studio",
                 "showTreemapMetricValues": false
               },
+              "prompting": {
+                "refactorPromptTemplate": "Path={{relative_path}}"
+              },
               "logging": {
                 "minLevel": "Error"
               },
@@ -86,6 +90,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Equal(WorkspaceLayoutMode.Stacked, settings.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Studio, settings.Appearance.TreemapPalette);
         Assert.False(settings.Appearance.ShowTreemapMetricValues);
+        Assert.Equal("Path={{relative_path}}", settings.Prompting.RefactorPromptTemplate);
         Assert.Equal(AppLogLevel.Error, settings.Logging.MinLevel);
         Assert.Collection(
             settings.RecentFolderPaths,
@@ -248,6 +253,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         settings.Appearance.WorkspaceLayoutMode = WorkspaceLayoutMode.Stacked;
         settings.Appearance.TreemapPalette = TreemapPalette.Weighted;
         settings.Appearance.ShowTreemapMetricValues = false;
+        settings.Prompting.RefactorPromptTemplate = "Priority={{refactor_priority}}";
         settings.Logging.MinLevel = AppLogLevel.Warning;
         settings.RecentFolderPaths = ["C:\\RepoA", "C:\\RepoB"];
 
@@ -262,6 +268,8 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Contains(@"""workspaceLayoutMode"": ""Stacked""", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""treemapPalette"": ""Weighted""", persistedJson, StringComparison.Ordinal);
         Assert.Contains(@"""showTreemapMetricValues"": false", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""prompting"": {", persistedJson, StringComparison.Ordinal);
+        Assert.Contains(@"""refactorPromptTemplate"": ""Priority={{refactor_priority}}""", persistedJson, StringComparison.Ordinal);
 
         var reloaded = store.Load();
 
@@ -277,6 +285,7 @@ public sealed class JsonAppSettingsStoreTests : IDisposable
         Assert.Equal(WorkspaceLayoutMode.Stacked, reloaded.Appearance.WorkspaceLayoutMode);
         Assert.Equal(TreemapPalette.Weighted, reloaded.Appearance.TreemapPalette);
         Assert.False(reloaded.Appearance.ShowTreemapMetricValues);
+        Assert.Equal("Priority={{refactor_priority}}", reloaded.Prompting.RefactorPromptTemplate);
         Assert.Equal(AppLogLevel.Warning, reloaded.Logging.MinLevel);
         Assert.Collection(
             reloaded.RecentFolderPaths,

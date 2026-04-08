@@ -103,6 +103,7 @@ internal sealed class AppSettingsSession
             _currentSettings.Appearance.WorkspaceLayoutMode = State.WorkspaceLayoutMode;
             _currentSettings.Appearance.TreemapPalette = State.SelectedTreemapPalette;
             _currentSettings.Appearance.ShowTreemapMetricValues = State.ShowTreemapMetricValues;
+            _currentSettings.Prompting.RefactorPromptTemplate = State.RefactorPromptTemplate;
             _settingsVersion++;
         }
 
@@ -205,6 +206,7 @@ internal sealed class AppSettingsSession
             State.WorkspaceLayoutMode = _currentSettings.Appearance.WorkspaceLayoutMode;
             State.SelectedTreemapPalette = _currentSettings.Appearance.TreemapPalette;
             State.ShowTreemapMetricValues = _currentSettings.Appearance.ShowTreemapMetricValues;
+            State.RefactorPromptTemplate = _currentSettings.Prompting.RefactorPromptTemplate;
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
             _themeService.ApplyThemePreference(State.SelectedThemePreference);
         }
@@ -223,6 +225,7 @@ internal sealed class AppSettingsSession
         nameof(SettingsState.SelectedThemePreference) or
         nameof(SettingsState.WorkspaceLayoutMode) or
         nameof(SettingsState.SelectedTreemapPalette) or
-        nameof(SettingsState.ShowTreemapMetricValues);
+        nameof(SettingsState.ShowTreemapMetricValues) or
+        nameof(SettingsState.RefactorPromptTemplate);
 
 }

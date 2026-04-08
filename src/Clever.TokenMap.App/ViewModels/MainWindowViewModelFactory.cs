@@ -34,6 +34,7 @@ public sealed record MainWindowViewModelComposition(
     AppIssueViewModel Issue,
     ProjectTreeViewModel Tree,
     SummaryViewModel Summary,
+    RefactorPromptTemplateSettingsViewModel RefactorPromptTemplateSettings,
     TreemapNavigationState TreemapNavigationState,
     IPathShellService PathShellService);
 
@@ -78,6 +79,7 @@ public static class MainWindowViewModelFactory
             settingsCoordinator,
             dependencies.FolderPathService,
             settingsCoordinator.BuildCurrentScanOptions);
+        var refactorPromptTemplateSettings = new RefactorPromptTemplateSettingsViewModel(settingsCoordinator);
         var issue = new AppIssueViewModel(
             dependencies.AppIssueState,
             dependencies.PathShellService,
@@ -101,6 +103,7 @@ public static class MainWindowViewModelFactory
             issue,
             tree,
             summary,
+            refactorPromptTemplateSettings,
             dependencies.PathShellService,
             dependencies.RefactorPromptComposer,
             filePreviewController,
@@ -118,6 +121,7 @@ public static class MainWindowViewModelFactory
             issue,
             tree,
             summary,
+            refactorPromptTemplateSettings,
             treemapNavigationState,
             dependencies.PathShellService);
     }

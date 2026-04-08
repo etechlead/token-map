@@ -58,7 +58,7 @@ internal static class HarnessComposition
                     settingsCoordinator,
                     folderPathService,
                     pathShellService,
-                    new RefactorPromptComposer(),
+                    new RefactorPromptComposer(settingsCoordinator),
                     new InlineUiDispatcher(),
                     new HarnessFilePreviewContentReader(),
                     NullAppIssueReporter.Instance,
@@ -146,6 +146,8 @@ internal sealed class InlineSettingsCoordinator(SettingsState state) : ISettings
     public void SetTreemapPalette(TreemapPalette palette) => MutableState.SelectedTreemapPalette = palette;
 
     public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
+
+    public void SetRefactorPromptTemplate(string templateText) => MutableState.RefactorPromptTemplate = templateText;
 
     public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 

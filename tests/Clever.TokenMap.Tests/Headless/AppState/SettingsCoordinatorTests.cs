@@ -132,6 +132,26 @@ public sealed class SettingsCoordinatorTests
     }
 
     [Fact]
+    public async Task RefactorPromptTemplate_ChangesArePersisted()
+    {
+        const string template = "Path={{relative_path}}";
+        var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
+        var coordinator = new SettingsCoordinator(
+            store,
+            new RecordingFolderSettingsStore(),
+            new RecordingThemeService(),
+            debounceDelay: TimeSpan.FromMilliseconds(40));
+
+        coordinator.SetRefactorPromptTemplate(template);
+
+        await store.WaitForSaveAsync();
+
+        Assert.Equal(1, store.SaveCallCount);
+        Assert.NotNull(store.LastSavedSettings);
+        Assert.Equal(template, store.LastSavedSettings!.Prompting.RefactorPromptTemplate);
+    }
+
+    [Fact]
     public async Task FlushAsync_DoesNotRunAppStoreSaveOnCallerSynchronizationContext()
     {
         await RunOnSingleThreadSynchronizationContextAsync(async () =>

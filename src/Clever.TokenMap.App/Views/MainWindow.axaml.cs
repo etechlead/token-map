@@ -74,10 +74,31 @@ public partial class MainWindow : Window
         }
     }
 
+    private void RefactorPromptTemplateEditorBackdrop_OnPointerPressed(object? sender, PointerPressedEventArgs? e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        viewModel.RefactorPromptTemplateSettings.CloseEditorCommand.Execute(null);
+        if (e is not null)
+        {
+            e.Handled = true;
+        }
+    }
+
     private void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (e.Key is not Key.Escape || DataContext is not MainWindowViewModel viewModel)
         {
+            return;
+        }
+
+        if (viewModel.RefactorPromptTemplateSettings.IsEditorOpen)
+        {
+            viewModel.RefactorPromptTemplateSettings.CloseEditorCommand.Execute(null);
+            e.Handled = true;
             return;
         }
 

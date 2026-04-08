@@ -53,6 +53,7 @@ public partial class MainWindowViewModel : ViewModelBase
         AppIssueViewModel issue,
         ProjectTreeViewModel tree,
         SummaryViewModel summary,
+        RefactorPromptTemplateSettingsViewModel refactorPromptTemplateSettings,
         IPathShellService pathShellService,
         IRefactorPromptComposer refactorPromptComposer,
         IFilePreviewController filePreviewController,
@@ -72,6 +73,7 @@ public partial class MainWindowViewModel : ViewModelBase
         Issue = issue;
         Tree = tree;
         Summary = summary;
+        RefactorPromptTemplateSettings = refactorPromptTemplateSettings;
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
         _closeFilePreviewCommand = new RelayCommand(CloseFilePreview, () => IsFilePreviewOpen);
@@ -106,6 +108,8 @@ public partial class MainWindowViewModel : ViewModelBase
     public ProjectTreeViewModel Tree { get; }
 
     public SummaryViewModel Summary { get; }
+
+    public RefactorPromptTemplateSettingsViewModel RefactorPromptTemplateSettings { get; }
 
     public string RevealMenuHeader => _pathShellService.RevealMenuHeader;
 

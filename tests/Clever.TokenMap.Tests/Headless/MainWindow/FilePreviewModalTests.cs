@@ -175,6 +175,107 @@ public sealed class FilePreviewModalTests
     }
 
     [AvaloniaFact]
+    public void MainWindow_SettingsDrawer_ShowsEditRefactorPromptTemplateButton()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel();
+        window.DataContext = viewModel;
+        viewModel.ToggleSettingsCommand.Execute(null);
+
+        window.Show();
+        window.UpdateLayout();
+
+        var button = FindNamedDescendant<Button>(window, "EditRefactorPromptTemplateButton");
+
+        Assert.NotNull(button);
+        Assert.True(button.IsVisible);
+        Assert.Equal("Edit refactor prompt template", GetButtonText(button));
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_RefactorPromptTemplateEditorModal_ShowsSplitPaneWithPlaceholders()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel();
+        window.DataContext = viewModel;
+
+        window.Show();
+        viewModel.RefactorPromptTemplateSettings.OpenEditor();
+        window.UpdateLayout();
+
+        var modal = FindNamedDescendant<Control>(window, "RefactorPromptTemplateEditorModal");
+        var placeholders = FindNamedDescendant<ItemsControl>(window, "RefactorPromptTemplatePlaceholdersItemsControl");
+        var editor = FindNamedDescendant<TextBox>(window, "RefactorPromptTemplateEditorTextBox");
+
+        Assert.NotNull(modal);
+        Assert.NotNull(placeholders);
+        Assert.NotNull(editor);
+        Assert.True(modal.IsVisible);
+        Assert.True(editor.AcceptsReturn);
+        Assert.Contains(
+            placeholders.GetLogicalDescendants().OfType<TextBlock>().Select(textBlock => textBlock.Text),
+            text => text == "{{relative_path}}");
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_RefactorPromptTemplatePlaceholderClick_InsertsTokenAtCaret()
+    {
+        const string token = "{{tokens}}";
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel();
+        window.DataContext = viewModel;
+
+        window.Show();
+        viewModel.RefactorPromptTemplateSettings.OpenEditor();
+        window.UpdateLayout();
+
+        var editor = FindNamedDescendant<TextBox>(window, "RefactorPromptTemplateEditorTextBox");
+        Assert.NotNull(editor);
+        editor.Text = "Alpha Omega";
+        editor.CaretIndex = "Alpha ".Length;
+
+        var placeholderButton = window.GetLogicalDescendants()
+            .OfType<Button>()
+            .FirstOrDefault(button => GetButtonText(button) == token);
+        Assert.NotNull(placeholderButton);
+
+        placeholderButton.RaiseEvent(new RoutedEventArgs
+        {
+            RoutedEvent = Button.ClickEvent,
+            Source = placeholderButton,
+        });
+        window.UpdateLayout();
+
+        Assert.Equal("Alpha {{tokens}}Omega", editor.Text);
+        Assert.Equal("Alpha ".Length + token.Length, editor.CaretIndex);
+    }
+
+    [AvaloniaFact]
+    public void MainWindow_Escape_ClosesRefactorPromptTemplateEditorModal()
+    {
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel();
+        window.DataContext = viewModel;
+
+        window.Show();
+        viewModel.RefactorPromptTemplateSettings.OpenEditor();
+        window.UpdateLayout();
+
+        var keyArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = window,
+            Key = Key.Escape,
+        };
+
+        window.RaiseEvent(keyArgs);
+        window.UpdateLayout();
+
+        Assert.True(keyArgs.Handled);
+        Assert.False(viewModel.RefactorPromptTemplateSettings.IsEditorOpen);
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_FilePreviewModal_ExcludeAction_ClosesPreviewAndOpensExcludesEditor()
     {
         var snapshot = CreateSnapshot();

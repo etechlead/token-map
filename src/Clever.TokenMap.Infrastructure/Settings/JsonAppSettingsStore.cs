@@ -121,6 +121,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.Appearance.ShowTreemapMetricValues = showTreemapMetricValues;
         }
 
+        if (persistedSettings?.Prompting?.RefactorPromptTemplate is { } refactorPromptTemplate)
+        {
+            settings.Prompting.RefactorPromptTemplate = refactorPromptTemplate;
+        }
+
         if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
         {
             settings.Logging.MinLevel = minimumLevel;
@@ -152,6 +157,10 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 TreemapPalette = settings.Appearance.TreemapPalette,
                 ShowTreemapMetricValues = settings.Appearance.ShowTreemapMetricValues,
             },
+            Prompting = new PersistedPromptingSettings
+            {
+                RefactorPromptTemplate = settings.Prompting.RefactorPromptTemplate,
+            },
             Logging = new PersistedLoggingSettings
             {
                 MinLevel = settings.Logging.MinLevel,
@@ -167,6 +176,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         public PersistedAnalysisSettings? Analysis { get; set; }
 
         public PersistedAppearanceSettings? Appearance { get; set; }
+
+        public PersistedPromptingSettings? Prompting { get; set; }
 
         public PersistedLoggingSettings? Logging { get; set; }
 
@@ -208,6 +219,11 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
     {
         [JsonConverter(typeof(NullableStringEnumConverter<AppLogLevel>))]
         public AppLogLevel? MinLevel { get; set; }
+    }
+
+    private sealed class PersistedPromptingSettings
+    {
+        public string? RefactorPromptTemplate { get; set; }
     }
 
     private sealed class NullableBooleanConverter : JsonConverter<bool?>

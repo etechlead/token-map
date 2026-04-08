@@ -1,16 +1,35 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Metrics.Formulas;
+using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.App.Services;
 
 public sealed class RefactorPromptComposer : IRefactorPromptComposer
 {
+    private readonly IReadOnlySettingsState? _settingsState;
+
+    public RefactorPromptComposer()
+    {
+    }
+
+    public RefactorPromptComposer(ISettingsCoordinator settingsCoordinator)
+        : this(settingsCoordinator?.State)
+    {
+    }
+
+    internal RefactorPromptComposer(IReadOnlySettingsState? settingsState)
+    {
+        _settingsState = settingsState;
+    }
+
     public string Compose(ProjectNode node)
     {
         ArgumentNullException.ThrowIfNull(node);
@@ -21,72 +40,44 @@ public sealed class RefactorPromptComposer : IRefactorPromptComposer
         }
 
         var metrics = node.ComputedMetrics;
-        var builder = new StringBuilder();
-
-        builder.AppendLine("Please assess whether this file is a good refactoring candidate.");
-        builder.AppendLine();
-        builder.AppendLine("Target file:");
-        builder.Append("- Relative path: ");
-        builder.AppendLine(FormatRelativePath(node.RelativePath));
-        builder.AppendLine();
-        builder.AppendLine("Observed metrics:");
-        AppendMetricLine(builder, MetricIds.Tokens, metrics);
-        AppendMetricLine(builder, MetricIds.NonEmptyLines, metrics);
-        AppendMetricLine(builder, MetricIds.FileSizeBytes, metrics);
-        AppendMetricLine(builder, MetricIds.ComplexityPoints, metrics);
-        AppendMetricLine(builder, MetricIds.CallableHotspotPoints, metrics);
-        AppendMetricLine(builder, MetricIds.RefactorPriorityPoints, metrics);
-        builder.AppendLine();
-        builder.AppendLine("Possible reasons these signals look this way:");
-        AppendFormulaSection(
-            builder,
-            title: "Complexity",
-            ProductMetricFormulas.TryComputeComplexity(metrics, out var complexityBreakdown),
-            complexityBreakdown,
-            unavailableReason: "Complexity is unavailable because the required syntax-derived inputs were not produced for this file.");
-        AppendFormulaSection(
-            builder,
-            title: "Hotspots",
-            ProductMetricFormulas.TryComputeHotspots(metrics, out var hotspotsBreakdown),
-            hotspotsBreakdown,
-            unavailableReason: "Hotspots are unavailable because the required callable-risk inputs were not produced for this file.");
-
-        if (ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var refactorBreakdown))
+        var replacements = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            AppendBreakdownContributors(builder, "Refactor Priority", refactorBreakdown);
-            if (!HasGitContext(metrics))
-            {
-                builder.AppendLine("- Refactor Priority currently reflects intrinsic pressure only because git-derived change-pressure inputs are unavailable.");
-            }
-        }
-        else
+            ["{{relative_path}}"] = FormatRelativePath(node.RelativePath),
+            ["{{tokens}}"] = FormatMetricValue(MetricIds.Tokens, metrics),
+            ["{{non_empty_lines}}"] = FormatMetricValue(MetricIds.NonEmptyLines, metrics),
+            ["{{file_size}}"] = FormatMetricValue(MetricIds.FileSizeBytes, metrics),
+            ["{{complexity}}"] = FormatMetricValue(MetricIds.ComplexityPoints, metrics),
+            ["{{hotspots}}"] = FormatMetricValue(MetricIds.CallableHotspotPoints, metrics),
+            ["{{refactor_priority}}"] = FormatMetricValue(MetricIds.RefactorPriorityPoints, metrics),
+            ["{{complexity_breakdown}}"] = BuildFormulaSection(
+                title: "Complexity",
+                ProductMetricFormulas.TryComputeComplexity(metrics, out var complexityBreakdown),
+                complexityBreakdown,
+                unavailableReason: "Complexity is unavailable because the required syntax-derived inputs were not produced for this file."),
+            ["{{hotspots_breakdown}}"] = BuildFormulaSection(
+                title: "Hotspots",
+                ProductMetricFormulas.TryComputeHotspots(metrics, out var hotspotsBreakdown),
+                hotspotsBreakdown,
+                unavailableReason: "Hotspots are unavailable because the required callable-risk inputs were not produced for this file."),
+            ["{{refactor_priority_breakdown}}"] = BuildRefactorPrioritySection(metrics),
+        };
+
+        var template = ResolveTemplate();
+        foreach (var replacement in replacements)
         {
-            builder.AppendLine("- Refactor Priority is unavailable because one or more prerequisite product metrics are unavailable.");
+            template = template.Replace(replacement.Key, replacement.Value, StringComparison.Ordinal);
         }
 
-        builder.AppendLine();
-        builder.AppendLine("Task:");
-        builder.AppendLine("- Review this file in the context of the surrounding module and the repository architecture.");
-        builder.AppendLine("- Do not jump straight to code changes.");
-        builder.AppendLine("- First decide whether refactoring is justified at all.");
-        builder.AppendLine("- If refactoring seems warranted, propose several options that would fit the existing architecture and boundaries of this application.");
-        builder.AppendLine("- Focus on reducing code smells, lowering complexity, and improving maintainability and agent-readability.");
-        builder.AppendLine("- Include a minimal option and call out if the current design should stay as-is.");
-
-        return builder.ToString().TrimEnd();
+        return template.Trim();
     }
 
-    private static void AppendMetricLine(StringBuilder builder, MetricId metricId, MetricSet metrics)
-    {
-        var definition = DefaultMetricCatalog.Instance.GetRequired(metricId);
-        builder.Append("- ");
-        builder.Append(definition.DisplayName);
-        builder.Append(": ");
-        builder.AppendLine(MetricValueFormatter.Format(metricId, metrics.GetOrDefault(metricId), CultureInfo.CurrentCulture));
-    }
+    private string ResolveTemplate() =>
+        AppSettingsCanonicalizer.NormalizeRefactorPromptTemplate(_settingsState?.RefactorPromptTemplate);
 
-    private static void AppendFormulaSection(
-        StringBuilder builder,
+    private static string FormatMetricValue(MetricId metricId, MetricSet metrics) =>
+        MetricValueFormatter.Format(metricId, metrics.GetOrDefault(metricId), CultureInfo.CurrentCulture);
+
+    private static string BuildFormulaSection(
         string title,
         bool isAvailable,
         MetricFormulaBreakdown breakdown,
@@ -94,19 +85,35 @@ public sealed class RefactorPromptComposer : IRefactorPromptComposer
     {
         if (!isAvailable)
         {
-            builder.Append("- ");
-            builder.AppendLine(unavailableReason);
-            return;
+            return "- " + unavailableReason;
         }
 
-        AppendBreakdownContributors(builder, title, breakdown);
+        return BuildBreakdownContributors(title, breakdown);
     }
 
-    private static void AppendBreakdownContributors(
-        StringBuilder builder,
+    private static string BuildRefactorPrioritySection(MetricSet metrics)
+    {
+        if (!ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var refactorBreakdown))
+        {
+            return "- Refactor Priority is unavailable because one or more prerequisite product metrics are unavailable.";
+        }
+
+        var builder = new StringBuilder();
+        builder.Append(BuildBreakdownContributors("Refactor Priority", refactorBreakdown));
+        if (!HasGitContext(metrics))
+        {
+            builder.AppendLine();
+            builder.Append("- Refactor Priority currently reflects intrinsic pressure only because git-derived change-pressure inputs are unavailable.");
+        }
+
+        return builder.ToString();
+    }
+
+    private static string BuildBreakdownContributors(
         string title,
         MetricFormulaBreakdown breakdown)
     {
+        var builder = new StringBuilder();
         var contributors = breakdown.Components.Any(component => component.ContributionPoints > 0d)
             ? breakdown.Components
                 .Where(component => component.ContributionPoints > 0d)
@@ -127,6 +134,8 @@ public sealed class RefactorPromptComposer : IRefactorPromptComposer
             builder.Append(FormatContribution(contributor.ContributionPoints));
             builder.AppendLine(")");
         }
+
+        return builder.ToString().TrimEnd();
     }
 
     private static string FormatRelativePath(string relativePath) =>

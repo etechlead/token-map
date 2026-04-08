@@ -10,6 +10,8 @@ public sealed class AppSettings
 
     public AppearanceSettings Appearance { get; set; } = new();
 
+    public PromptingSettings Prompting { get; set; } = new();
+
     public LoggingSettings Logging { get; set; } = new();
 
     public List<string> RecentFolderPaths { get; set; } = [];
@@ -21,6 +23,7 @@ public sealed class AppSettings
         {
             Analysis = Analysis.Clone(),
             Appearance = Appearance.Clone(),
+            Prompting = Prompting.Clone(),
             Logging = Logging.Clone(),
             RecentFolderPaths = [.. RecentFolderPaths],
         };
@@ -87,4 +90,15 @@ public sealed class LoggingSettings
         return AppLogLevel.Warning;
 #endif
     }
+}
+
+public sealed class PromptingSettings
+{
+    public string RefactorPromptTemplate { get; set; } = RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate;
+
+    public PromptingSettings Clone() =>
+        new()
+        {
+            RefactorPromptTemplate = RefactorPromptTemplate,
+        };
 }

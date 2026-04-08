@@ -231,26 +231,29 @@ internal static class HeadlessTestSupport
         string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,
         IPathShellService? pathShellService = null,
-        IFilePreviewContentReader? filePreviewContentReader = null) =>
+        IFilePreviewContentReader? filePreviewContentReader = null,
+        string? refactorPromptTemplate = null) =>
         CreateMainWindowViewModel(
             new StubProjectAnalyzer(CreateSnapshot()),
             selectedFolderPath ?? TestPaths.Folder("Demo"),
             recentFolderPaths,
             pathShellService,
-            filePreviewContentReader);
+            filePreviewContentReader,
+            refactorPromptTemplate);
 
     internal static MainWindowViewModel CreateMainWindowViewModel(
         IProjectAnalyzer projectAnalyzer,
         string? selectedFolderPath = null,
         IEnumerable<string>? recentFolderPaths = null,
         IPathShellService? pathShellService = null,
-        IFilePreviewContentReader? filePreviewContentReader = null)
+        IFilePreviewContentReader? filePreviewContentReader = null,
+        string? refactorPromptTemplate = null)
     {
         var analysisSessionController = new AnalysisSessionController(
             projectAnalyzer,
             new StubFolderPickerService(selectedFolderPath ?? TestPaths.Folder("Demo")),
             new StubFolderPathService());
-        var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths);
+        var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths, refactorPromptTemplate);
         var folderPathService = new StubFolderPathService();
         var appIssueState = new AppIssueState();
 
@@ -260,7 +263,7 @@ internal static class HeadlessTestSupport
                     settingsCoordinator,
                     folderPathService,
                     pathShellService ?? new StubPathShellService(),
-                    new RefactorPromptComposer(),
+                    new RefactorPromptComposer(settingsCoordinator),
                     new InlineUiDispatcher(),
                     filePreviewContentReader ?? new StubFilePreviewContentReader(),
                     new TestAppIssueReporter(appIssueState),
@@ -292,9 +295,11 @@ internal static class HeadlessTestSupport
         public bool Exists(string folderPath) => true;
     }
 
-    private sealed class StubSettingsCoordinator(IEnumerable<string>? recentFolderPaths = null) : ISettingsCoordinator
+    private sealed class StubSettingsCoordinator(
+        IEnumerable<string>? recentFolderPaths = null,
+        string? refactorPromptTemplate = null) : ISettingsCoordinator
     {
-        private SettingsState MutableState { get; } = CreateState(recentFolderPaths);
+        private SettingsState MutableState { get; } = CreateState(recentFolderPaths, refactorPromptTemplate);
 
         private CurrentFolderSettingsState MutableCurrentFolderState { get; } = new();
 
@@ -338,6 +343,8 @@ internal static class HeadlessTestSupport
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 
+        public void SetRefactorPromptTemplate(string templateText) => MutableState.RefactorPromptTemplate = templateText;
+
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
         public void RemoveRecentFolder(string folderPath) => MutableState.RemoveRecentFolder(folderPath);
@@ -359,9 +366,14 @@ internal static class HeadlessTestSupport
             MutableCurrentFolderState.Load(rootPath, useFolderExcludes: false, folderExcludes: []);
         }
 
-        private static SettingsState CreateState(IEnumerable<string>? recentFolderPaths)
+        private static SettingsState CreateState(IEnumerable<string>? recentFolderPaths, string? refactorPromptTemplate)
         {
             var state = new SettingsState();
+            if (!string.IsNullOrWhiteSpace(refactorPromptTemplate))
+            {
+                state.RefactorPromptTemplate = refactorPromptTemplate;
+            }
+
             if (recentFolderPaths is null)
             {
                 return state;

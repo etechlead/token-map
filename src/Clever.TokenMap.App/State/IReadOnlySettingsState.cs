@@ -25,6 +25,8 @@ public interface IReadOnlySettingsState : INotifyPropertyChanged
 
     bool ShowTreemapMetricValues { get; }
 
+    string RefactorPromptTemplate { get; }
+
     ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     IReadOnlyList<string> GlobalExcludes { get; }

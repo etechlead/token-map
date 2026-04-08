@@ -17,4 +17,6 @@ public static class MainWindowZLayers
     public const int FilePreviewModal = 130;
     public const int RefactorPromptBackdrop = 140;
     public const int RefactorPromptModal = 150;
+    public const int RefactorPromptTemplateEditorBackdrop = 160;
+    public const int RefactorPromptTemplateEditorModal = 170;
 }

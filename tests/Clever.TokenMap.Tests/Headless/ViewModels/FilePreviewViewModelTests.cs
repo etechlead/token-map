@@ -2,6 +2,7 @@ using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Preview;
+using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Tests.Headless.Support;
 using static Clever.TokenMap.Tests.Headless.Support.HeadlessTestSupport;
 
@@ -151,6 +152,90 @@ public sealed class FilePreviewViewModelTests
 
         var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
         Assert.Contains("git-derived change-pressure inputs are unavailable", refactorPrompt.PromptText);
+    }
+
+    [Fact]
+    public void OpenRefactorPrompt_UsesCustomTemplateFromSettings()
+    {
+        const string customTemplate =
+            """
+            Candidate:
+            {{relative_path}}
+            Complexity => {{complexity}}
+            {{complexity_breakdown}}
+            """;
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(
+            new StubProjectAnalyzer(snapshot),
+            refactorPromptTemplate: customTemplate);
+
+        viewModel.OpenRefactorPrompt(file);
+
+        var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
+        Assert.Contains("Candidate:", refactorPrompt.PromptText);
+        Assert.Contains("Program.cs", refactorPrompt.PromptText);
+        Assert.Contains("Complexity =>", refactorPrompt.PromptText);
+        Assert.DoesNotContain("Observed metrics:", refactorPrompt.PromptText);
+    }
+
+    [Fact]
+    public void SaveRefactorPromptTemplateEditor_AppliesTemplateToFuturePrompts()
+    {
+        const string customTemplate = "Path={{relative_path}}\nPriority={{refactor_priority}}";
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+        var templateSettings = viewModel.RefactorPromptTemplateSettings;
+
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = customTemplate;
+
+        templateSettings.SaveEditor();
+        viewModel.OpenRefactorPrompt(file);
+
+        var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
+        Assert.StartsWith("Path=Program.cs\nPriority=", refactorPrompt.PromptText);
+        Assert.DoesNotContain("Observed metrics:", refactorPrompt.PromptText);
+        Assert.False(templateSettings.IsEditorOpen);
+    }
+
+    [Fact]
+    public void CloseRefactorPromptTemplateEditor_DiscardsUnsavedTemplateChanges()
+    {
+        var snapshot = CreateExplainabilitySnapshot(includeGitContext: true);
+        var file = Assert.Single(snapshot.Root.Children);
+        var viewModel = CreateMainWindowViewModel(new StubProjectAnalyzer(snapshot));
+        var templateSettings = viewModel.RefactorPromptTemplateSettings;
+
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = "Discard {{relative_path}}";
+        templateSettings.CloseEditor();
+
+        viewModel.OpenRefactorPrompt(file);
+
+        var refactorPrompt = Assert.IsType<RefactorPromptViewModel>(viewModel.RefactorPrompt);
+        Assert.Contains("Observed metrics:", refactorPrompt.PromptText);
+        Assert.DoesNotContain("Discard Program.cs", refactorPrompt.PromptText);
+    }
+
+    [Fact]
+    public void ResetRefactorPromptTemplateEditorToDefault_RestoresDefaultTemplateText()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var templateSettings = viewModel.RefactorPromptTemplateSettings;
+
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = "Custom";
+
+        templateSettings.ResetEditorCommand.Execute(null);
+
+        Assert.Equal(
+            RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate,
+            templateSettings.Editor.TemplateText);
     }
 
     [Fact]

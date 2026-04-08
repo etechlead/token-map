@@ -48,6 +48,9 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     [ObservableProperty]
     private bool showTreemapMetricValues = true;
 
+    [ObservableProperty]
+    private string refactorPromptTemplate = RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate;
+
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     public IReadOnlyList<MetricId> VisibleMetricIds => _visibleMetricIds;

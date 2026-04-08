@@ -209,6 +209,20 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <Border Classes="toolbar-group">
+                        <StackPanel Spacing="10">
+                            <TextBlock Classes="toolbar-group-title"
+                                       Text="Prompts" />
+                            <Button Name="EditRefactorPromptTemplateButton"
+                                    Classes="action-button"
+                                    HorizontalAlignment="Left"
+                                    Padding="10,4"
+                                    MinHeight="28"
+                                    Command="{Binding RefactorPromptTemplateSettings.OpenEditorCommand}"
+                                    Content="Edit refactor prompt template" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
 

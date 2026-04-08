@@ -20,6 +20,7 @@ public static class AppSettingsCanonicalizer
         settings.Appearance.WorkspaceLayoutMode = NormalizeWorkspaceLayoutMode(settings.Appearance.WorkspaceLayoutMode);
         settings.Appearance.TreemapPalette = NormalizeTreemapPalette(settings.Appearance.TreemapPalette);
         settings.Analysis.GlobalExcludes = [.. GlobalExcludeList.Normalize(settings.Analysis.GlobalExcludes)];
+        settings.Prompting.RefactorPromptTemplate = NormalizeRefactorPromptTemplate(settings.Prompting.RefactorPromptTemplate);
         settings.RecentFolderPaths = NormalizeRecentFolderPaths(settings.RecentFolderPaths);
         return settings;
     }
@@ -89,6 +90,11 @@ public static class AppSettingsCanonicalizer
 
         return [.. DefaultMetricCatalog.GetAllMetricIds().Take(1)];
     }
+
+    public static string NormalizeRefactorPromptTemplate(string? template) =>
+        string.IsNullOrWhiteSpace(template)
+            ? RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate
+            : template.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
 
     private static MetricId NormalizeSelectedMetric(MetricId selectedMetric, List<MetricId> visibleMetricIds)
     {
