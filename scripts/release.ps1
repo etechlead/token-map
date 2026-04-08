@@ -182,14 +182,18 @@ function Get-ReleaseWorkflowState {
         [string]$ReleaseCommitSha
     )
 
-    $runs = @(Get-JsonCommandOutput -FilePath "gh" -ArgumentList @(
+    $runs = @(
+        # ConvertFrom-Json can surface a top-level array as a single array object when it crosses a function boundary.
+        # Re-enumerate here so the workflow matcher sees individual runs instead of array-valued properties.
+        Get-JsonCommandOutput -FilePath "gh" -ArgumentList @(
         "run", "list",
         "--repo", $Repo,
         "--workflow", $WorkflowFile,
         "--event", "release",
         "--limit", "20",
         "--json", "databaseId,workflowName,status,conclusion,url,headSha,createdAt,displayTitle"
-    ))
+    ) | ForEach-Object { $_ }
+    )
 
     $matchingRun = $runs |
         Where-Object { $_.headSha -eq $ReleaseCommitSha } |
