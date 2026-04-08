@@ -157,6 +157,46 @@ public sealed class TreemapColorRulesTests
         Assert.Equal(1_000, context.MaxLeafWeight);
     }
 
+    [Fact]
+    public void CreatePaletteContext_FromRootNode_UsesAllLeavesInScope()
+    {
+        var nestedRoot = new ProjectNode
+        {
+            Id = "/",
+            Name = "Demo",
+            FullPath = "C:\\root",
+            RelativePath = string.Empty,
+            Kind = ProjectNodeKind.Root,
+            Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 3, descendantDirectoryCount: 1),
+            ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 1_110, nonEmptyLines: 0, fileSizeBytes: 0),
+            Children =
+            {
+                CreateFile("a.cs", tokens: 10),
+                new ProjectNode
+                {
+                    Id = "src",
+                    Name = "src",
+                    FullPath = "C:\\root\\src",
+                    RelativePath = "src",
+                    Kind = ProjectNodeKind.Directory,
+                    Summary = MetricTestData.CreateDirectorySummary(descendantFileCount: 2, descendantDirectoryCount: 0),
+                    ComputedMetrics = MetricTestData.CreateComputedMetrics(tokens: 1_100, nonEmptyLines: 0, fileSizeBytes: 0),
+                    Children =
+                    {
+                        CreateFile("src/b.cs", tokens: 100),
+                        CreateFile("src/c.cs", tokens: 1_000),
+                    },
+                },
+            },
+        };
+
+        var context = TreemapColorRules.CreatePaletteContext(nestedRoot, MetricIds.Tokens);
+
+        Assert.Equal(MetricIds.Tokens, context.Metric);
+        Assert.Equal(10, context.MinLeafWeight);
+        Assert.Equal(1_000, context.MaxLeafWeight);
+    }
+
     private static double GetBrightness(Color color) =>
         (color.R * 299d) + (color.G * 587d) + (color.B * 114d);
 

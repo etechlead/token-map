@@ -69,6 +69,16 @@ internal static class TreemapColorRules
             maxLeafWeight);
     }
 
+    public static TreemapPaletteContext CreatePaletteContext(ProjectNode? rootNode, MetricId metric)
+    {
+        if (rootNode is null)
+        {
+            return new TreemapPaletteContext(DefaultMetricCatalog.NormalizeMetricId(metric), 0, 0);
+        }
+
+        return CreatePaletteContext(EnumerateLeafNodes(rootNode), metric);
+    }
+
     public static Color GetLeafColor(ProjectNode node, TreemapPalette palette, TreemapPaletteContext context)
     {
         return palette switch
@@ -154,6 +164,23 @@ internal static class TreemapColorRules
 
     private static string NormalizePath(string relativePath) =>
         relativePath.Replace('\\', '/').Trim('/');
+
+    private static IEnumerable<ProjectNode> EnumerateLeafNodes(ProjectNode node)
+    {
+        if (node.Kind == ProjectNodeKind.File || node.Children.Count == 0)
+        {
+            yield return node;
+            yield break;
+        }
+
+        foreach (var child in node.Children)
+        {
+            foreach (var leafNode in EnumerateLeafNodes(child))
+            {
+                yield return leafNode;
+            }
+        }
+    }
 
     private static double GetNormalizedWeight(ProjectNode node, TreemapPaletteContext context)
     {

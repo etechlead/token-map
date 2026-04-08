@@ -407,11 +407,7 @@ public sealed class TreemapControl : Control
             return;
         }
 
-        var paletteContext = TreemapColorRules.CreatePaletteContext(
-            _nodeVisuals
-                .Select(static visual => visual.Node)
-                .Where(IsLeafNode),
-            Metric);
+        var paletteContext = TreemapColorRules.CreatePaletteContext(RootNode, Metric);
 
         foreach (var visual in _nodeVisuals)
         {
