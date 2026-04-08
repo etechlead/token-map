@@ -158,6 +158,28 @@ public sealed class MainWindowTreemapIntegrationTests
     }
 
     [AvaloniaFact]
+    public async Task MainWindow_TreemapDirectoryDoubleTap_DoesNotOpenPreviewForRescopedFileUnderCursor()
+    {
+        var (window, viewModel) = await CreateOpenWindowAsync(CreateNestedSnapshot());
+
+        var control = FindNamedDescendant<TreemapControl>(window, "ProjectTreemapControl");
+        Assert.NotNull(control);
+
+        var pane = window.GetVisualDescendants().OfType<TreemapPaneView>().Single();
+        var directoryVisual = Assert.Single(control.NodeVisuals, item => item.Node.RelativePath == "src");
+        var point = GetInteriorPoint(directoryVisual);
+
+        Assert.True(control.RequestDrillDownAt(point));
+
+        await pane.HandleTreemapNodeDoubleTapAsync(control, point);
+        window.UpdateLayout();
+
+        Assert.Equal("src", viewModel.TreemapRootNode?.RelativePath);
+        Assert.Equal("src", viewModel.SelectedNode?.RelativePath);
+        Assert.False(viewModel.IsFilePreviewOpen);
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_TreemapShowValuesToggle_UpdatesTreemapControlImmediately()
     {
         var (window, viewModel) = await CreateOpenWindowAsync(CreateSnapshot());

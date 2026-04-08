@@ -105,7 +105,7 @@ public partial class TreemapPaneView : UserControl
             return;
         }
 
-        var targetNode = treemap.HitTestNode(point);
+        var targetNode = treemap.LastPressedNode ?? treemap.HitTestNode(point);
         if (targetNode?.Kind != ProjectNodeKind.File)
         {
             return;

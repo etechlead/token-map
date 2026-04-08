@@ -327,6 +327,8 @@ public sealed class TreemapControl : Control
 
     internal ProjectNode? PressedNode { get; private set; }
 
+    public ProjectNode? LastPressedNode => PressedNode;
+
     internal string? TooltipText { get; private set; }
 
     internal Point? TooltipAnchorPoint => _tooltipAnchorPoint;
