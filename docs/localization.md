@@ -1,45 +1,35 @@
 # Localization
 
-## Purpose
-This document is the current-state source of truth for UI localization and prompt-language behavior in TokenMap.
-
 ## Scope
-- Application UI language is resource-driven.
-- Prompt language uses the same supported culture list as application language.
-- This document covers how to add languages without introducing duplicate registries or hardcoded language lists.
+
+- UI strings
+- application language selection
+- prompt language selection
+- prompt-language fallback behavior
 
 ## Sources Of Truth
-- UI strings live in `src/Clever.TokenMap.App/Resources/AppStrings*.resx`.
-- Supported cultures are discovered by `ApplicationLanguageService` from the app resource assemblies.
-- `LocalizationState` builds application-language options and prompt-language options from that same supported-culture list.
-- Settings persist language selections as string tags, not enums.
 
-## Adding A New UI Language
+- `AppStrings*.resx` is the canonical source for UI text.
+- `ApplicationLanguageService` discovers supported cultures from the app resource assemblies.
+- `LocalizationState` builds both application-language and prompt-language options from that same supported-culture list.
+- Language settings persist as culture tags, not enums.
+
+## Adding A Language
+
 1. Add `AppStrings.<culture>.resx` under `src/Clever.TokenMap.App/Resources/`.
 2. Build the solution so the satellite resource assembly is produced.
-3. Verify the new language appears in both the application-language selector and the prompt-language selector.
+3. Verify the language appears in both selectors.
 
-No enum, registry, or viewmodel language list should need to change for a new UI language.
+## Invariants
 
-## Prompt Language Rules
-- Prompt language options reuse the same supported cultures as UI language options.
-- Prompt language does not have a separate list of supported languages.
-- The prompt selector should not introduce a `System` option; it lists concrete supported cultures only.
-- The selected prompt language is persisted as a culture tag.
+- Do not add hardcoded language lists in XAML, viewmodels, or settings code.
+- Do not add a separate prompt-language registry or enum.
+- Prompt language reuses the same supported cultures as application language.
+- The application-language selector may expose `System`; the prompt-language selector should expose concrete cultures only.
+- If a supported UI language has no prompt-specific built-in copy yet, prompt generation falls back to English.
 
-## Prompt Content Fallback
-- Built-in prompt templates and prompt-breakdown copy are currently localized for English and Russian.
-- If a newly added UI language has no prompt-specific built-in copy yet, prompt generation falls back to English prompt text.
-- This fallback is intentional and is preferable to adding another language registry.
+## Key Files
 
-## Contributor Rules
-- Do not add a separate prompt-language enum.
-- Do not hardcode language lists in XAML, viewmodels, or settings code.
-- Do not add parallel sources of truth for language tags.
-- Put UI text in `AppStrings*.resx`.
-- If prompt-specific text needs localization beyond English fallback, extend the centralized prompt services instead of scattering new language switches through unrelated viewmodels.
-
-## Files To Check
 - `src/Clever.TokenMap.App/Resources/AppStrings*.resx`
 - `src/Clever.TokenMap.App/Services/ApplicationLanguageService.cs`
 - `src/Clever.TokenMap.App/State/LocalizationState.cs`

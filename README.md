@@ -96,8 +96,7 @@ For repo conventions and architecture details, see `docs/architecture.md` and `d
 
 ## Localization
 
-Localization rules and contributor guidance live in [docs/localization.md](docs/localization.md).
-That document covers how UI languages are discovered from `AppStrings*.resx` and how prompt-language options reuse the same supported culture list.
+See [docs/localization.md](docs/localization.md)
 
 ## Tech Stack
 
