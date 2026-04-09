@@ -16,6 +16,7 @@ public sealed class AppIssueViewModel : ViewModelBase
     private readonly IAppStoragePaths _appStoragePaths;
     private readonly IApplicationControlService _applicationControlService;
     private readonly IAppIssueReporter _issueReporter;
+    private readonly LocalizationState _localization;
     private readonly RelayCommand _dismissCommand;
     private readonly AsyncRelayCommand _openLogsCommand;
     private readonly RelayCommand _closeAppCommand;
@@ -25,13 +26,15 @@ public sealed class AppIssueViewModel : ViewModelBase
         IPathShellService pathShellService,
         IAppStoragePaths appStoragePaths,
         IApplicationControlService applicationControlService,
-        IAppIssueReporter issueReporter)
+        IAppIssueReporter issueReporter,
+        LocalizationState localization)
     {
         _state = state ?? throw new ArgumentNullException(nameof(state));
         _pathShellService = pathShellService ?? throw new ArgumentNullException(nameof(pathShellService));
         _appStoragePaths = appStoragePaths ?? throw new ArgumentNullException(nameof(appStoragePaths));
         _applicationControlService = applicationControlService ?? throw new ArgumentNullException(nameof(applicationControlService));
         _issueReporter = issueReporter ?? throw new ArgumentNullException(nameof(issueReporter));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
 
         _dismissCommand = new RelayCommand(_state.Dismiss, () => ActiveIssue is not null && !IsFatal);
         _openLogsCommand = new AsyncRelayCommand(OpenLogsAsync, () => ActiveIssue is not null);
@@ -49,14 +52,14 @@ public sealed class AppIssueViewModel : ViewModelBase
     public bool IsFatal => ActiveIssue?.Issue.IsFatal == true;
 
     public string Title => IsFatal
-        ? "Unrecoverable application error"
-        : "Application issue";
+        ? _localization.FatalIssueTitle
+        : _localization.NonFatalIssueTitle;
 
     public string Message => ActiveIssue?.Issue.UserMessage ?? string.Empty;
 
     public string ReferenceIdText => ActiveIssue is null
         ? string.Empty
-        : $"Reference ID: {ActiveIssue.ReferenceId}";
+        : _localization.FormatReferenceId(ActiveIssue.ReferenceId);
 
     public IRelayCommand DismissCommand => _dismissCommand;
 
@@ -79,7 +82,7 @@ public sealed class AppIssueViewModel : ViewModelBase
         _issueReporter.Report(new AppIssue
         {
             Code = "app.open_logs_failed",
-            UserMessage = "TokenMap could not open the diagnostics log folder.",
+            UserMessage = _localization.OpenLogsFailed,
             TechnicalMessage = "Opening the diagnostics log folder through the shell failed.",
             Context = AppIssueContext.Create(("LogsDirectoryPath", logsDirectoryPath)),
         });

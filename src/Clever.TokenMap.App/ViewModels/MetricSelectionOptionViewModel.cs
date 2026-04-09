@@ -1,4 +1,5 @@
 using System;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -7,20 +8,26 @@ namespace Clever.TokenMap.App.ViewModels;
 public sealed class MetricSelectionOptionViewModel : ObservableObject
 {
     private readonly Action<MetricId> _selectMetric;
+    private readonly MetricPresentationCatalog _metricPresentationCatalog;
     private bool _isSelected;
     private bool _isSyncing;
 
-    public MetricSelectionOptionViewModel(MetricDefinition definition, Action<MetricId> selectMetric)
+    public MetricSelectionOptionViewModel(
+        MetricDefinition definition,
+        Action<MetricId> selectMetric,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         _selectMetric = selectMetric ?? throw new ArgumentNullException(nameof(selectMetric));
+        _metricPresentationCatalog = metricPresentationCatalog ?? throw new ArgumentNullException(nameof(metricPresentationCatalog));
+        _metricPresentationCatalog.PresentationChanged += MetricPresentationCatalogOnPresentationChanged;
     }
 
     public MetricDefinition Definition { get; }
 
-    public string Label => Definition.ShortName;
+    public string Label => _metricPresentationCatalog.GetShortName(Definition.Id);
 
-    public string Description => Definition.Description;
+    public string Description => _metricPresentationCatalog.GetDescription(Definition.Id);
 
     public bool IsFirst { get; private set; }
 
@@ -83,5 +90,11 @@ public sealed class MetricSelectionOptionViewModel : ObservableObject
             IsLast = isLast;
             OnPropertyChanged(nameof(IsLast));
         }
+    }
+
+    private void MetricPresentationCatalogOnPresentationChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(Label));
+        OnPropertyChanged(nameof(Description));
     }
 }

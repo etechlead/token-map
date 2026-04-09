@@ -22,6 +22,7 @@ public sealed class MainWindowDesignViewModel : MainWindowViewModel
             composition.Tree,
             composition.Summary,
             composition.RefactorPromptTemplateSettings,
+            composition.Localization,
             composition.PathShellService,
             new Services.RefactorPromptComposer(),
             composition.FilePreviewController,

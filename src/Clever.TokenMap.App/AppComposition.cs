@@ -68,6 +68,9 @@ public static class AppComposition
         services.AddSingleton(sp => sp.GetRequiredService<IAppSettingsStore>().Load());
         services.AddSingleton<ApplicationThemeService>(_ => new ApplicationThemeService(application));
         services.AddSingleton<IThemeService>(sp => sp.GetRequiredService<ApplicationThemeService>());
+        services.AddSingleton<IApplicationLanguageService, ApplicationLanguageService>();
+        services.AddSingleton<LocalizationState>();
+        services.AddSingleton<MetricPresentationCatalog>();
         services.AddSingleton<IFolderPathService, FileSystemFolderPathService>();
         services.AddSingleton<IPathShellService>(_ => PathShellService.CreateForCurrentPlatform());
         services.AddSingleton<IRefactorPromptComposer>(sp =>
@@ -108,6 +111,7 @@ public static class AppComposition
                 sp.GetRequiredService<IAppSettingsStore>(),
                 sp.GetRequiredService<IFolderSettingsStore>(),
                 sp.GetRequiredService<IThemeService>(),
+                sp.GetRequiredService<IApplicationLanguageService>(),
                 sp.GetRequiredService<AppSettings>(),
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<SettingsCoordinator>(),
                 pathNormalizer: sp.GetRequiredService<PathNormalizer>()));
@@ -118,7 +122,8 @@ public static class AppComposition
                 sp.GetRequiredService<IFolderPathService>(),
                 sp.GetRequiredService<IAppLoggerFactory>().CreateLogger<AnalysisSessionController>(),
                 sp.GetRequiredService<ISettingsCoordinator>(),
-                sp.GetRequiredService<IAppIssueReporter>()));
+                sp.GetRequiredService<IAppIssueReporter>(),
+                sp.GetRequiredService<LocalizationState>()));
         services.AddSingleton(sp =>
             MainWindowViewModelFactory.Create(
                 new MainWindowViewModelFactoryDependencies(
@@ -132,7 +137,9 @@ public static class AppComposition
                     sp.GetRequiredService<IAppIssueReporter>(),
                     sp.GetRequiredService<AppIssueState>(),
                     sp.GetRequiredService<IAppStoragePaths>(),
-                    sp.GetRequiredService<IApplicationControlService>()))
+                    sp.GetRequiredService<IApplicationControlService>(),
+                    sp.GetRequiredService<LocalizationState>(),
+                    sp.GetRequiredService<MetricPresentationCatalog>()))
                 .MainWindowViewModel);
         services.AddSingleton(sp => new MainWindow(sp.GetRequiredService<MainWindowViewModel>()));
     }

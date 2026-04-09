@@ -18,6 +18,7 @@ public partial class FilePreviewModalView : UserControl
 {
     private readonly RegistryOptions _darkRegistryOptions = new(ThemeName.DarkPlus);
     private readonly RegistryOptions _lightRegistryOptions = new(ThemeName.LightPlus);
+    private LocalizationState? _localization;
     private dynamic? _textMateInstallation;
     private MainWindowViewModel? _viewModel;
 
@@ -110,15 +111,31 @@ public partial class FilePreviewModalView : UserControl
             _viewModel.Toolbar.PropertyChanged -= ToolbarOnPropertyChanged;
         }
 
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= LocalizationOnLanguageChanged;
+        }
+
         _viewModel = DataContext as MainWindowViewModel;
+        _localization = _viewModel?.Localization;
         if (_viewModel is not null)
         {
             _viewModel.FilePreview.PropertyChanged += FilePreviewOnPropertyChanged;
             _viewModel.Toolbar.PropertyChanged += ToolbarOnPropertyChanged;
         }
 
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += LocalizationOnLanguageChanged;
+        }
+
         RefreshActionButtons();
         RefreshEditor();
+    }
+
+    private void LocalizationOnLanguageChanged(object? sender, EventArgs e)
+    {
+        RefreshActionButtons();
     }
 
     private void FilePreviewOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -168,45 +185,46 @@ public partial class FilePreviewModalView : UserControl
 
     private void RefreshActionButtons()
     {
+        var localization = _viewModel?.Localization;
         ConfigureActionButton(
             "FilePreviewOpenDefaultAppButton",
-            ProjectNodeActionPresentation.OpenHeader,
+            ProjectNodeActionPresentation.GetOpenHeader(localization),
             ProjectNodeActionPresentation.OpenIconResourceKey,
             isVisible: true,
             isEnabled: _viewModel?.FilePreview.IsPathActionsEnabled == true);
         ConfigureActionButton(
             "FilePreviewRevealButton",
-            _viewModel?.RevealMenuHeader ?? "Reveal",
+            _viewModel?.LocalizedRevealMenuHeader ?? _viewModel?.RevealMenuHeader ?? "Reveal",
             ProjectNodeActionPresentation.RevealIconResourceKey,
             isVisible: true,
             isEnabled: _viewModel?.FilePreview.IsPathActionsEnabled == true);
         ConfigureActionButton(
             "FilePreviewOpenRefactorPromptButton",
-            ProjectNodeActionPresentation.RefactorPromptHeader,
+            ProjectNodeActionPresentation.GetRefactorPromptHeader(localization),
             ProjectNodeActionPresentation.RefactorPromptIconResourceKey,
             isVisible: _viewModel?.CanOpenRefactorPrompt(_viewModel.FilePreview.Node) == true,
             isEnabled: _viewModel?.CanOpenRefactorPrompt(_viewModel.FilePreview.Node) == true);
         ConfigureActionButton(
             "FilePreviewSetTreemapRootButton",
-            ProjectNodeActionPresentation.SetAsTreemapRootHeader,
+            ProjectNodeActionPresentation.GetSetAsTreemapRootHeader(localization),
             ProjectNodeActionPresentation.SetAsTreemapRootIconResourceKey,
             isVisible: _viewModel?.CanSetTreemapRoot(_viewModel.FilePreview.Node) == true,
             isEnabled: _viewModel?.CanSetTreemapRoot(_viewModel.FilePreview.Node) == true);
         ConfigureActionButton(
             "FilePreviewExcludeButton",
-            ProjectNodeActionPresentation.ExcludeFromScanHeader,
+            ProjectNodeActionPresentation.GetExcludeFromScanHeader(localization),
             ProjectNodeActionPresentation.ExcludeFromScanIconResourceKey,
             isVisible: _viewModel?.CanExcludeNodeFromFolder(_viewModel.FilePreview.Node) == true,
             isEnabled: _viewModel?.CanExcludeNodeFromFolder(_viewModel.FilePreview.Node) == true);
         ConfigureActionButton(
             "FilePreviewCopyFullPathButton",
-            ProjectNodeActionPresentation.CopyFullPathHeader,
+            ProjectNodeActionPresentation.GetCopyFullPathHeader(localization),
             ProjectNodeActionPresentation.CopyFullPathIconResourceKey,
             isVisible: true,
             isEnabled: _viewModel?.FilePreview.IsPathActionsEnabled == true);
         ConfigureActionButton(
             "FilePreviewCopyRelativePathButton",
-            ProjectNodeActionPresentation.CopyRelativePathHeader,
+            ProjectNodeActionPresentation.GetCopyRelativePathHeader(localization),
             iconResourceKey: null,
             isVisible: true,
             isEnabled: _viewModel?.FilePreview.IsPathActionsEnabled == true);

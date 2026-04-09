@@ -11,6 +11,7 @@ using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Metrics.Formulas;
 using Clever.TokenMap.Core.Preview;
+using Clever.TokenMap.Core.Settings;
 using Clever.TokenMap.Tests.Support;
 
 namespace Clever.TokenMap.Tests.Headless.Support;
@@ -246,6 +247,8 @@ internal static class HeadlessTestSupport
         var settingsCoordinator = new StubSettingsCoordinator(recentFolderPaths, refactorPromptTemplate);
         var folderPathService = new StubFolderPathService();
         var appIssueState = new AppIssueState();
+        var localization = new LocalizationState(new ApplicationLanguageService());
+        var metricPresentationCatalog = new MetricPresentationCatalog(localization);
 
         return MainWindowViewModelFactory.Create(
                 new MainWindowViewModelFactoryDependencies(
@@ -259,7 +262,9 @@ internal static class HeadlessTestSupport
                     new TestAppIssueReporter(appIssueState),
                     appIssueState,
                     new StubAppStoragePaths(),
-                    new StubApplicationControlService()))
+                    new StubApplicationControlService(),
+                    localization,
+                    metricPresentationCatalog))
             .MainWindowViewModel;
     }
 
@@ -333,7 +338,15 @@ internal static class HeadlessTestSupport
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 
-        public void SetRefactorPromptTemplate(string templateText) => MutableState.RefactorPromptTemplate = templateText;
+        public void SetApplicationLanguageTag(string languageTag) =>
+            MutableState.ApplicationLanguageTag = ApplicationLanguageTags.Normalize(languageTag);
+
+        public void SetSelectedPromptLanguageTag(string languageTag) =>
+            MutableState.SelectedPromptLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag)
+                ?? ApplicationLanguageTags.Default;
+
+        public void SetRefactorPromptTemplate(string languageTag, string templateText) =>
+            MutableState.SetRefactorPromptTemplate(languageTag, templateText);
 
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
@@ -361,7 +374,7 @@ internal static class HeadlessTestSupport
             var state = new SettingsState();
             if (!string.IsNullOrWhiteSpace(refactorPromptTemplate))
             {
-                state.RefactorPromptTemplate = refactorPromptTemplate;
+                state.SetRefactorPromptTemplate(ApplicationLanguageTags.Default, refactorPromptTemplate);
             }
 
             if (recentFolderPaths is null)

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, ...</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve"><value>TokenMap</value></data>
+  <data name="PreviousFoldersTitle" xml:space="preserve"><value>Недавние папки</value></data>
+  <data name="Clear" xml:space="preserve"><value>Очистить</value></data>
+  <data name="NoPreviousFoldersYet" xml:space="preserve"><value>Недавних папок пока нет</value></data>
+  <data name="OpenFolder" xml:space="preserve"><value>Открыть папку</value></data>
+  <data name="Missing" xml:space="preserve"><value>Недоступно</value></data>
+  <data name="RemoveFromRecentFoldersTooltip" xml:space="preserve"><value>Удалить из списка недавних папок</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>Открыть логи</value></data>
+  <data name="Dismiss" xml:space="preserve"><value>Скрыть</value></data>
+  <data name="CloseApp" xml:space="preserve"><value>Закрыть приложение</value></data>
+  <data name="Settings" xml:space="preserve"><value>Настройки</value></data>
+  <data name="CloseSettingsTooltip" xml:space="preserve"><value>Закрыть настройки</value></data>
+  <data name="View" xml:space="preserve"><value>Вид</value></data>
+  <data name="TreemapPalette" xml:space="preserve"><value>Палитра treemap</value></data>
+  <data name="TreemapPaletteWeighted" xml:space="preserve"><value>Взвешенная</value></data>
+  <data name="TreemapPaletteStudio" xml:space="preserve"><value>Studio</value></data>
+  <data name="TreemapPalettePlain" xml:space="preserve"><value>Простая</value></data>
+  <data name="Metrics" xml:space="preserve"><value>Метрики</value></data>
+  <data name="TreeOnly" xml:space="preserve"><value>Только дерево</value></data>
+  <data name="ResetDefaults" xml:space="preserve"><value>Сбросить по умолчанию</value></data>
+  <data name="ShowAll" xml:space="preserve"><value>Показать все</value></data>
+  <data name="Scan" xml:space="preserve"><value>Сканирование</value></data>
+  <data name="RespectGitIgnore" xml:space="preserve"><value>Учитывать .gitignore</value></data>
+  <data name="UseGlobalExcludes" xml:space="preserve"><value>Использовать глобальные исключения</value></data>
+  <data name="Edit" xml:space="preserve"><value>Изменить</value></data>
+  <data name="UseFolderExcludes" xml:space="preserve"><value>Использовать исключения папки</value></data>
+  <data name="ScanSettingsUpdatedRescanToApply" xml:space="preserve"><value>Настройки сканирования обновлены. Перезапустите анализ, чтобы применить их.</value></data>
+  <data name="RescanNow" xml:space="preserve"><value>Пересканировать</value></data>
+  <data name="Prompts" xml:space="preserve"><value>Промпты</value></data>
+  <data name="EditRefactorPromptTemplate" xml:space="preserve"><value>Изменить шаблон промпта рефакторинга</value></data>
+  <data name="Theme" xml:space="preserve"><value>Тема</value></data>
+  <data name="UseLightTheme" xml:space="preserve"><value>Светлая тема</value></data>
+  <data name="UseSystemTheme" xml:space="preserve"><value>Следовать системной теме</value></data>
+  <data name="UseDarkTheme" xml:space="preserve"><value>Тёмная тема</value></data>
+  <data name="ProjectTree" xml:space="preserve"><value>Дерево проекта</value></data>
+  <data name="Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="PercentParent" xml:space="preserve"><value>% от родителя</value></data>
+  <data name="Treemap" xml:space="preserve"><value>Treemap</value></data>
+  <data name="ShowValues" xml:space="preserve"><value>Показывать значения</value></data>
+  <data name="Threshold" xml:space="preserve"><value>Порог</value></data>
+  <data name="OpenAction" xml:space="preserve"><value>Открыть</value></data>
+  <data name="PreviewAction" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="RefactorPromptAction" xml:space="preserve"><value>Промпт рефакторинга</value></data>
+  <data name="SetAsTreemapRootAction" xml:space="preserve"><value>Сделать корнем treemap</value></data>
+  <data name="ExcludeFromScanAction" xml:space="preserve"><value>Исключить из сканирования</value></data>
+  <data name="CopyFullPathAction" xml:space="preserve"><value>Копировать полный путь</value></data>
+  <data name="CopyRelativePathAction" xml:space="preserve"><value>Копировать относительный путь</value></data>
+  <data name="OpenFolderForAnalysisTooltip" xml:space="preserve"><value>Открыть папку для анализа</value></data>
+  <data name="RunScanAgainTooltip" xml:space="preserve"><value>Запустить анализ выбранной папки ещё раз</value></data>
+  <data name="StopCurrentScanTooltip" xml:space="preserve"><value>Остановить текущий анализ</value></data>
+  <data name="Rescan" xml:space="preserve"><value>Пересканировать</value></data>
+  <data name="Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="Tokens" xml:space="preserve"><value>Токены</value></data>
+  <data name="Lines" xml:space="preserve"><value>Строки</value></data>
+  <data name="Files" xml:space="preserve"><value>Файлы</value></data>
+  <data name="Share" xml:space="preserve"><value>Поделиться</value></data>
+  <data name="PreviewAndCopyShareImageTooltip" xml:space="preserve"><value>Предпросмотреть и скопировать изображение карточки</value></data>
+  <data name="OpenSettingsTooltip" xml:space="preserve"><value>Открыть настройки</value></data>
+  <data name="ShareImage" xml:space="preserve"><value>Изображение карточки</value></data>
+  <data name="CloseShareImagePreviewTooltip" xml:space="preserve"><value>Закрыть предпросмотр карточки</value></data>
+  <data name="ShareImagePreviewHint" xml:space="preserve"><value>Просмотрите карточку, при необходимости добавьте название проекта и затем скопируйте изображение в буфер обмена.</value></data>
+  <data name="IncludeProjectName" xml:space="preserve"><value>Показывать название проекта</value></data>
+  <data name="ProjectNameWatermark" xml:space="preserve"><value>Название проекта</value></data>
+  <data name="CloseFilePreviewTooltip" xml:space="preserve"><value>Закрыть предпросмотр файла</value></data>
+  <data name="Explainability" xml:space="preserve"><value>Объяснение</value></data>
+  <data name="Close" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="CancelEditingExcludesTooltip" xml:space="preserve"><value>Отменить редактирование исключений</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="SaveAndRescan" xml:space="preserve"><value>Сохранить и пересканировать</value></data>
+  <data name="RefactorPrompt" xml:space="preserve"><value>Промпт рефакторинга</value></data>
+  <data name="CloseRefactorPromptTooltip" xml:space="preserve"><value>Закрыть промпт рефакторинга</value></data>
+  <data name="RefactorPromptIntro" xml:space="preserve"><value>При необходимости отредактируйте стартовый текст и затем скопируйте его в своего coding agent.</value></data>
+  <data name="RefactorPromptHint" xml:space="preserve"><value>Этот промпт описывает файл как кандидата на рефакторинг, не навязывая конкретную реализацию.</value></data>
+  <data name="RefactorPromptTemplate" xml:space="preserve"><value>Шаблон промпта рефакторинга</value></data>
+  <data name="RefactorPromptTemplateScope" xml:space="preserve"><value>Глобальная настройка для всех репозиториев на этой машине.</value></data>
+  <data name="CloseRefactorPromptTemplateEditorTooltip" xml:space="preserve"><value>Закрыть редактор шаблона промпта рефакторинга</value></data>
+  <data name="Placeholders" xml:space="preserve"><value>Плейсхолдеры</value></data>
+  <data name="PlaceholdersHint" xml:space="preserve"><value>Эти токены можно вставлять в любое место шаблона.</value></data>
+  <data name="RefactorPromptTemplateEditorHint" xml:space="preserve"><value>Измените шаблон стартового текста, который используется для новых промптов рефакторинга.</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>Сбросить</value></data>
+  <data name="PromptLanguage" xml:space="preserve"><value>Язык промпта</value></data>
+  <data name="ApplicationLanguage" xml:space="preserve"><value>Язык приложения</value></data>
+  <data name="SystemLanguage" xml:space="preserve"><value>Система</value></data>
+  <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
+  <data name="RussianLanguage" xml:space="preserve"><value>Русский</value></data>
+  <data name="Copy" xml:space="preserve"><value>Копировать</value></data>
+  <data name="Copied" xml:space="preserve"><value>Скопировано</value></data>
+  <data name="RevealAction" xml:space="preserve"><value>Показать</value></data>
+  <data name="RevealInExplorerAction" xml:space="preserve"><value>Показать в Проводнике</value></data>
+  <data name="RevealInFinderAction" xml:space="preserve"><value>Показать в Finder</value></data>
+  <data name="RevealInFileManagerAction" xml:space="preserve"><value>Показать в файловом менеджере</value></data>
+  <data name="ShareCardTokens" xml:space="preserve"><value>токенов</value></data>
+  <data name="ShareCardLines" xml:space="preserve"><value>строк</value></data>
+  <data name="ShareCardFiles" xml:space="preserve"><value>файлов</value></data>
+  <data name="ShareCardMadeWith" xml:space="preserve"><value>сделано с помощью</value></data>
+  <data name="FormatCurrentFolderSettingsTitle" xml:space="preserve"><value>Текущая папка: {0}</value></data>
+  <data name="CurrentFolderSettingsTitleFallback" xml:space="preserve"><value>Текущая папка</value></data>
+  <data name="WorkspaceLayoutToggleToolTipSideBySide" xml:space="preserve"><value>Переключить на режим рядом</value></data>
+  <data name="WorkspaceLayoutToggleToolTipStacked" xml:space="preserve"><value>Переключить на вертикальный режим</value></data>
+  <data name="FatalIssueTitle" xml:space="preserve"><value>Критическая ошибка приложения</value></data>
+  <data name="NonFatalIssueTitle" xml:space="preserve"><value>Проблема приложения</value></data>
+  <data name="FormatReferenceId" xml:space="preserve"><value>ID инцидента: {0}</value></data>
+  <data name="AboutFallbackDescription" xml:space="preserve"><value>Локальный анализ дерева исходников</value></data>
+  <data name="AboutLicenseName" xml:space="preserve"><value>Лицензия MIT</value></data>
+  <data name="FormatVersion" xml:space="preserve"><value>v{0}</value></data>
+  <data name="AboutOpenRepositoryFailed" xml:space="preserve"><value>TokenMap не смог открыть ссылку на репозиторий проекта.</value></data>
+  <data name="OpenLogsFailed" xml:space="preserve"><value>TokenMap не смог открыть папку с диагностическими логами.</value></data>
+  <data name="ShareCopyImageFailed" xml:space="preserve"><value>TokenMap не смог скопировать изображение карточки в буфер обмена.</value></data>
+  <data name="RefactorPromptCopyFailed" xml:space="preserve"><value>TokenMap не смог скопировать refactor prompt в буфер обмена.</value></data>
+  <data name="OpenNodeFailed" xml:space="preserve"><value>TokenMap не смог открыть '{0}'.</value></data>
+  <data name="RevealNodeFailed" xml:space="preserve"><value>TokenMap не смог показать '{0}' в файловом менеджере.</value></data>
+  <data name="FormatAnalysisRootMissing" xml:space="preserve"><value>TokenMap не смог найти '{0}'.</value></data>
+  <data name="FormatAnalysisRunFailed" xml:space="preserve"><value>TokenMap не смог завершить анализ '{0}'.</value></data>
+  <data name="RecentFoldersEmptyFlyoutSecondaryText" xml:space="preserve"><value>Один раз проанализируйте папку, и она появится здесь.</value></data>
+  <data name="StartupFailedToStart" xml:space="preserve"><value>TokenMap не удалось запустить.</value></data>
+  <data name="StartupDiagnosticDetailsWrittenTo" xml:space="preserve"><value>Диагностические данные записаны в:</value></data>
+  <data name="DispatcherUnhandledUserMessage" xml:space="preserve"><value>TokenMap столкнулся с неожиданной ошибкой. Проверьте лог перед продолжением работы.</value></data>
+  <data name="UnobservedTaskUserMessage" xml:space="preserve"><value>Фоновая задача завершилась ошибкой. TokenMap записал подробности в лог.</value></data>
+  <data name="DomainUnhandledUserMessage" xml:space="preserve"><value>TokenMap столкнулся с критической ошибкой. Проверьте лог и перезапустите приложение.</value></data>
+  <data name="SummaryIdle" xml:space="preserve"><value>Выберите папку, чтобы построить treemap проекта и снимок метрик.</value></data>
+  <data name="SummaryScanning" xml:space="preserve"><value>Анализируются структура проекта, количество токенов и непустых строк.</value></data>
+  <data name="SummaryCancelled" xml:space="preserve"><value>Анализ отменён. Предыдущий снимок остаётся доступен.</value></data>
+  <data name="SummaryFailed" xml:space="preserve"><value>Анализ завершился ошибкой. Проверьте сообщение и диагностический лог.</value></data>
+  <data name="FormatSummaryCompleted" xml:space="preserve"><value>Анализ для {0} завершён.</value></data>
+  <data name="FormatSummaryCompletedWithDiagnostics" xml:space="preserve"><value>Анализ для {0} завершён с {1:N0} диагностическими сообщениями.</value></data>
+  <data name="FormatTotalsText" xml:space="preserve"><value>{0:N0} токенов - {1:N0} непустых строк - {2:N0} файлов - {3:N0} диагностик</value></data>
+  <data name="ProgressScanningTree" xml:space="preserve"><value>Сканирование дерева</value></data>
+  <data name="ProgressAnalyzingFiles" xml:space="preserve"><value>Анализ файлов</value></data>
+  <data name="FormatProgressAnalyzingFiles" xml:space="preserve"><value>Анализ файлов - {0:N0} / {1:N0}</value></data>
+  <data name="FormatProgressScanningTreeFilesFound" xml:space="preserve"><value>Сканирование дерева - найдено {0:N0} файлов</value></data>
+  <data name="GlobalExcludesTitle" xml:space="preserve"><value>Глобальные исключения</value></data>
+  <data name="GlobalExcludesHelperText" xml:space="preserve"><value>Используйте правила в стиле gitignore, по одному на строку. / для правил от корня проекта, ! для повторного включения, # для комментариев.</value></data>
+  <data name="FolderExcludesHelperText" xml:space="preserve"><value>Используйте правила в стиле gitignore, по одному на строку. Эти правила действуют только для текущей папки и переопределяют .gitignore. / для правил от корня папки, ! для повторного включения, # для комментариев.</value></data>
+  <data name="FormatFolderExcludesTitle" xml:space="preserve"><value>Исключения для {0}</value></data>
+  <data name="LoadingPreviewTitle" xml:space="preserve"><value>Загрузка предпросмотра</value></data>
+  <data name="LoadingPreviewMessage" xml:space="preserve"><value>Читается содержимое файла.</value></data>
+  <data name="PreviewUnavailableTitle" xml:space="preserve"><value>Предпросмотр недоступен</value></data>
+  <data name="PreviewUnavailableMessage" xml:space="preserve"><value>TokenMap показывает встроенный предпросмотр только для текстовых файлов.</value></data>
+  <data name="FileTooLargeTitle" xml:space="preserve"><value>Файл слишком большой</value></data>
+  <data name="FileTooLargeMessage" xml:space="preserve"><value>Размер файла превышает 2 МиБ. Откройте его во внешнем приложении, чтобы посмотреть содержимое целиком.</value></data>
+  <data name="FileMissingTitle" xml:space="preserve"><value>Файл недоступен</value></data>
+  <data name="FileMissingMessage" xml:space="preserve"><value>Файл больше не доступен по исходному пути.</value></data>
+  <data name="PreviewFailedTitle" xml:space="preserve"><value>Не удалось открыть предпросмотр</value></data>
+  <data name="PreviewFailedMessage" xml:space="preserve"><value>TokenMap не смог прочитать этот файл.</value></data>
+  <data name="ExplainabilityMetricUnavailable" xml:space="preserve"><value>Эта метрика недоступна для данного файла.</value></data>
+  <data name="ExplainabilityGitUnavailableNote" xml:space="preserve"><value>Git-контекст недоступен. Сейчас Refactor Priority равен структурной базе.</value></data>
+  <data name="ExplainabilityGitBelowThresholdsNote" xml:space="preserve"><value>Git-контекст доступен, но все git-сигналы остались ниже порогов надбавки.</value></data>
+  <data name="ExplainabilityStructuralBaseTitle" xml:space="preserve"><value>Структурная база</value></data>
+  <data name="ExplainabilityStructuralBaseNote" xml:space="preserve"><value>Внутренняя оценка на основе размера файла, нагрузки по callable и распределения риска.</value></data>
+  <data name="ExplainabilityStructuralUnavailableNote" xml:space="preserve"><value>Структурная раскладка недоступна для этого файла.</value></data>
+  <data name="ExplainabilityGitUpliftTitle" xml:space="preserve"><value>Git-надбавка</value></data>
+  <data name="ExplainabilityGitUpliftPositiveNote" xml:space="preserve"><value>Ограниченная прибавка к срочности из-за недавних изменений и co-change давления.</value></data>
+  <data name="ExplainabilityGitUnavailableForFileNote" xml:space="preserve"><value>Git-контекст недоступен для этого файла.</value></data>
+  <data name="ExplainabilityNotAvailable" xml:space="preserve"><value>н/д</value></data>
+  <data name="RefactorPromptStructuralBaseDrivers" xml:space="preserve"><value>Драйверы структурной базы</value></data>
+  <data name="RefactorPromptGitDrivers" xml:space="preserve"><value>Git-драйверы</value></data>
+  <data name="RefactorPromptGitUnavailableLine" xml:space="preserve"><value>Git-надбавка: недоступна, потому что для этого файла не были рассчитаны git-метрики изменений и co-change.</value></data>
+  <data name="RefactorPromptGitZeroLine" xml:space="preserve"><value>Git-надбавка: +0 баллов, потому что все git-сигналы остались ниже порогов надбавки.</value></data>
+  <data name="PromptTemplatePlaceholderRelativePath" xml:space="preserve"><value>Относительный путь выбранного файла.</value></data>
+  <data name="PromptTemplatePlaceholderTokens" xml:space="preserve"><value>Количество токенов файла.</value></data>
+  <data name="PromptTemplatePlaceholderNonEmptyLines" xml:space="preserve"><value>Количество непустых строк.</value></data>
+  <data name="PromptTemplatePlaceholderFileSize" xml:space="preserve"><value>Размер файла в отображаемом формате.</value></data>
+  <data name="PromptTemplatePlaceholderRefactorPriority" xml:space="preserve"><value>Составная оценка приоритета рефакторинга.</value></data>
+  <data name="PromptTemplatePlaceholderRefactorPriorityBreakdown" xml:space="preserve"><value>Многострочное объяснение структурной базы и git-надбавки для refactor priority.</value></data>
+  <data name="GetTreemapPlaceholderNoSnapshot" xml:space="preserve"><value>Запустите анализ, чтобы заполнить treemap.</value></data>
+  <data name="GetTreemapPlaceholderNoWeightedNodes" xml:space="preserve"><value>Для выбранной метрики нет взвешенных узлов.</value></data>
+  <data name="TreemapRootPath" xml:space="preserve"><value>(корень)</value></data>
+  <data name="TreemapNotAvailable" xml:space="preserve"><value>н/д</value></data>
+  <data name="TreemapShare" xml:space="preserve"><value>Доля</value></data>
+  <data name="TreemapType" xml:space="preserve"><value>Тип</value></data>
+  <data name="TreemapExtension" xml:space="preserve"><value>Расш.</value></data>
+  <data name="TreemapNoExtension" xml:space="preserve"><value>(нет)</value></data>
+  <data name="TreemapFilesInSubtree" xml:space="preserve"><value>Файлов в поддереве</value></data>
+  <data name="TreemapKindRoot" xml:space="preserve"><value>Корень</value></data>
+  <data name="TreemapKindDirectory" xml:space="preserve"><value>Папка</value></data>
+  <data name="TreemapKindFile" xml:space="preserve"><value>Файл</value></data>
+  <data name="DefaultStructuralDescription" xml:space="preserve"><value>Структурный вход, который формирует базовую внутреннюю оценку риска рефакторинга.</value></data>
+  <data name="Structural_code_lines" xml:space="preserve"><value>Объём кода в файле. Более крупные файлы обычно накапливают больше подвижных частей ещё до оценки риска на уровне методов.</value></data>
+  <data name="Structural_total_callable_burden_points" xml:space="preserve"><value>Суммарная нагрузка по всем callable после мягких порогов для длины метода, цикломатической сложности, глубины вложенности и числа параметров.</value></data>
+  <data name="Structural_top_callable_burden_points" xml:space="preserve"><value>Нагрузка самого тяжёлого callable. Это выявляет один доминирующий метод, даже если остальная часть файла выглядит умеренно.</value></data>
+  <data name="Structural_affected_callable_ratio" xml:space="preserve"><value>Доля callable, которые превышают мягкие пороги. Чем выше доля, тем сильнее проблема распределена по файлу, а не изолирована локально.</value></data>
+  <data name="Structural_top_three_callable_burden_share" xml:space="preserve"><value>Доля нагрузки callable, сосредоточенная в трёх самых тяжёлых callable. Высокая концентрация означает, что риск определяется небольшим числом методов.</value></data>
+  <data name="DefaultGitDescription" xml:space="preserve"><value>Производное от git давление, которое может усиливать срочность, не доминируя над структурной базой.</value></data>
+  <data name="Git_churn_lines_90d" xml:space="preserve"><value>Объём недавно переписанных строк. Частые переписывания повышают срочность, но только как ограниченная надбавка поверх структурной базы.</value></data>
+  <data name="Git_touch_count_90d" xml:space="preserve"><value>Количество недавних коммитов, затрагивавших этот файл. Повторяющиеся касания указывают на постоянное трение вокруг кода.</value></data>
+  <data name="Git_author_count_90d" xml:space="preserve"><value>Количество недавних авторов, менявших этот файл. Большее число участников обычно повышает координационную нагрузку вокруг рискованного кода.</value></data>
+  <data name="Git_strong_cochanged_file_count_90d" xml:space="preserve"><value>Файлы, которые регулярно меняются вместе с этим. Это указывает на более плотный blast radius при изменении файла.</value></data>
+  <data name="Git_unique_cochanged_file_count_90d" xml:space="preserve"><value>Ширина множества разных файлов, которые менялись вместе с этим файлом в недавнем окне истории.</value></data>
+  <data name="Git_avg_cochange_set_size_90d" xml:space="preserve"><value>Типичная ширина change set, включающих этот файл. Более широкие наборы указывают, что изменения склонны распространяться.</value></data>
+  <data name="tokensDisplayName" xml:space="preserve"><value>Токены</value></data>
+  <data name="tokensShortName" xml:space="preserve"><value>Токены</value></data>
+  <data name="tokensDescription" xml:space="preserve"><value>Количество токенов для текстовых файлов и суммарных значений по папкам.</value></data>
+  <data name="non_empty_linesDisplayName" xml:space="preserve"><value>Непустые строки</value></data>
+  <data name="non_empty_linesShortName" xml:space="preserve"><value>Строки</value></data>
+  <data name="non_empty_linesDescription" xml:space="preserve"><value>Количество непустых строк для текстовых файлов и суммарных значений по папкам.</value></data>
+  <data name="file_size_bytesDisplayName" xml:space="preserve"><value>Размер файла</value></data>
+  <data name="file_size_bytesShortName" xml:space="preserve"><value>Размер</value></data>
+  <data name="file_size_bytesDescription" xml:space="preserve"><value>Размер файла в байтах и суммарный размер папок.</value></data>
+  <data name="complexity_pointsDisplayName" xml:space="preserve"><value>Структурный риск</value></data>
+  <data name="complexity_pointsShortName" xml:space="preserve"><value>Риск</value></data>
+  <data name="complexity_pointsDescription" xml:space="preserve"><value>Непрерывная внутренняя оценка структурного риска на основе размера файла, нагрузки по callable и распределения риска.</value></data>
+  <data name="refactor_priority_pointsDisplayName" xml:space="preserve"><value>Приоритет рефакторинга</value></data>
+  <data name="refactor_priority_pointsShortName" xml:space="preserve"><value>Рефактор</value></data>
+  <data name="refactor_priority_pointsDescription" xml:space="preserve"><value>Оценка приоритета рефакторинга, которая объединяет структурный риск с недавними изменениями и co-change давлением.</value></data>
+  <data name="code_linesDisplayName" xml:space="preserve"><value>Строки кода</value></data>
+  <data name="code_linesShortName" xml:space="preserve"><value>Код</value></data>
+  <data name="code_linesDescription" xml:space="preserve"><value>Строки, содержащие токены кода.</value></data>
+  <data name="total_callable_burden_pointsDisplayName" xml:space="preserve"><value>Суммарная нагрузка callable</value></data>
+  <data name="total_callable_burden_pointsShortName" xml:space="preserve"><value>Общая нагрузка</value></data>
+  <data name="total_callable_burden_pointsDescription" xml:space="preserve"><value>Совокупная нагрузка по всем callable после мягких порогов.</value></data>
+  <data name="top_callable_burden_pointsDisplayName" xml:space="preserve"><value>Максимальная нагрузка callable</value></data>
+  <data name="top_callable_burden_pointsShortName" xml:space="preserve"><value>Пик нагрузки</value></data>
+  <data name="top_callable_burden_pointsDescription" xml:space="preserve"><value>Нагрузка самого тяжёлого callable.</value></data>
+  <data name="affected_callable_ratioDisplayName" xml:space="preserve"><value>Доля затронутых callable</value></data>
+  <data name="affected_callable_ratioShortName" xml:space="preserve"><value>Затронуто %</value></data>
+  <data name="affected_callable_ratioDescription" xml:space="preserve"><value>Доля callable, превышающих мягкие пороги.</value></data>
+  <data name="top_three_callable_burden_shareDisplayName" xml:space="preserve"><value>Доля топ-3 по нагрузке</value></data>
+  <data name="top_three_callable_burden_shareShortName" xml:space="preserve"><value>Топ-3 доля</value></data>
+  <data name="top_three_callable_burden_shareDescription" xml:space="preserve"><value>Доля нагрузки callable, сосредоточенная в трёх самых тяжёлых callable.</value></data>
+  <data name="churn_lines_90dDisplayName" xml:space="preserve"><value>Churn строк (90д)</value></data>
+  <data name="churn_lines_90dShortName" xml:space="preserve"><value>Churn</value></data>
+  <data name="churn_lines_90dDescription" xml:space="preserve"><value>Объём недавно переписанных строк за последние 90 дней.</value></data>
+  <data name="touch_count_90dDisplayName" xml:space="preserve"><value>Количество касаний (90д)</value></data>
+  <data name="touch_count_90dShortName" xml:space="preserve"><value>Касания</value></data>
+  <data name="touch_count_90dDescription" xml:space="preserve"><value>Количество недавних коммитов, затронувших файл за последние 90 дней.</value></data>
+  <data name="author_count_90dDisplayName" xml:space="preserve"><value>Количество авторов (90д)</value></data>
+  <data name="author_count_90dShortName" xml:space="preserve"><value>Авторы</value></data>
+  <data name="author_count_90dDescription" xml:space="preserve"><value>Количество недавних участников, менявших файл за последние 90 дней.</value></data>
+  <data name="unique_cochanged_file_count_90dDisplayName" xml:space="preserve"><value>Уникальные co-change файлы (90д)</value></data>
+  <data name="unique_cochanged_file_count_90dShortName" xml:space="preserve"><value>Ширина co-change</value></data>
+  <data name="unique_cochanged_file_count_90dDescription" xml:space="preserve"><value>Количество разных файлов, которые менялись вместе с этим файлом за последние 90 дней.</value></data>
+  <data name="strong_cochanged_file_count_90dDisplayName" xml:space="preserve"><value>Сильные co-change связи (90д)</value></data>
+  <data name="strong_cochanged_file_count_90dShortName" xml:space="preserve"><value>Сильные связи</value></data>
+  <data name="strong_cochanged_file_count_90dDescription" xml:space="preserve"><value>Файлы, которые многократно менялись вместе с этим файлом за последние 90 дней.</value></data>
+  <data name="avg_cochange_set_size_90dDisplayName" xml:space="preserve"><value>Средний размер co-change набора (90д)</value></data>
+  <data name="avg_cochange_set_size_90dShortName" xml:space="preserve"><value>Средний co-change</value></data>
+  <data name="avg_cochange_set_size_90dDescription" xml:space="preserve"><value>Типичная ширина наборов изменений, включающих этот файл, за последние 90 дней.</value></data>
+</root>

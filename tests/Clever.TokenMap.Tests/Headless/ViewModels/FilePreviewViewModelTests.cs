@@ -1,3 +1,4 @@
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
@@ -240,8 +241,61 @@ public sealed class FilePreviewViewModelTests
         templateSettings.ResetEditorCommand.Execute(null);
 
         Assert.Equal(
-            RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate,
+            RefactorPromptTemplateCatalog.GetDefaultTemplate(ApplicationLanguageTags.Default),
             templateSettings.Editor.TemplateText);
+    }
+
+    [Fact]
+    public void SwitchingPromptLanguageInsideEditor_SwapsEditorTemplateAndPreservesDraftsUntilSave()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var templateSettings = viewModel.RefactorPromptTemplateSettings;
+
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = "English custom";
+
+        templateSettings.SelectedPromptLanguageTag = "ru";
+
+        Assert.NotNull(templateSettings.Editor);
+        Assert.Equal("ru", templateSettings.Editor!.PromptLanguageTag);
+        Assert.NotEqual("English custom", templateSettings.Editor.TemplateText);
+
+        templateSettings.Editor.TemplateText = "Russian custom";
+        templateSettings.SelectedPromptLanguageTag = ApplicationLanguageTags.Default;
+
+        Assert.NotNull(templateSettings.Editor);
+        Assert.Equal(ApplicationLanguageTags.Default, templateSettings.Editor!.PromptLanguageTag);
+        Assert.Equal("English custom", templateSettings.Editor.TemplateText);
+    }
+
+    [Fact]
+    public void SaveRefactorPromptTemplateEditor_PersistsDraftsForAllVisitedLanguages()
+    {
+        var viewModel = CreateMainWindowViewModel();
+        var templateSettings = viewModel.RefactorPromptTemplateSettings;
+
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = "English custom";
+        templateSettings.SelectedPromptLanguageTag = "ru";
+        Assert.NotNull(templateSettings.Editor);
+        templateSettings.Editor!.TemplateText = "Russian custom";
+
+        templateSettings.SaveEditor();
+
+        Assert.Equal("ru", templateSettings.SelectedPromptLanguageTag);
+
+        templateSettings.SelectedPromptLanguageTag = ApplicationLanguageTags.Default;
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        Assert.Equal("English custom", templateSettings.Editor!.TemplateText);
+        templateSettings.CloseEditor();
+
+        templateSettings.SelectedPromptLanguageTag = "ru";
+        templateSettings.OpenEditor();
+        Assert.NotNull(templateSettings.Editor);
+        Assert.Equal("Russian custom", templateSettings.Editor!.TemplateText);
     }
 
     [Fact]

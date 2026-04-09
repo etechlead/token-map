@@ -23,6 +23,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         IAppSettingsStore appSettingsStore,
         IFolderSettingsStore folderSettingsStore,
         IThemeService themeService,
+        IApplicationLanguageService applicationLanguageService,
         AppSettings? initialSettings = null,
         IAppLogger? logger = null,
         TimeSpan? debounceDelay = null,
@@ -35,6 +36,7 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
         _appSettingsSession = new AppSettingsSession(
             appSettingsStore,
             themeService,
+            applicationLanguageService,
             initialSettings,
             effectiveLogger,
             effectiveDebounceDelay);
@@ -105,8 +107,16 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public void SetShowTreemapMetricValues(bool value) =>
         MutableState.ShowTreemapMetricValues = value;
 
-    public void SetRefactorPromptTemplate(string templateText) =>
-        MutableState.RefactorPromptTemplate = AppSettingsCanonicalizer.NormalizeRefactorPromptTemplate(templateText);
+    public void SetApplicationLanguageTag(string languageTag) =>
+        MutableState.ApplicationLanguageTag = _appSettingsSession.NormalizeApplicationLanguageTag(languageTag);
+
+    public void SetSelectedPromptLanguageTag(string languageTag) =>
+        MutableState.SelectedPromptLanguageTag = _appSettingsSession.NormalizePromptLanguageTag(
+            languageTag,
+            MutableState.ApplicationLanguageTag);
+
+    public void SetRefactorPromptTemplate(string languageTag, string templateText) =>
+        MutableState.SetRefactorPromptTemplate(languageTag, templateText);
 
     public void RecordRecentFolder(string folderPath) =>
         MutableState.RecordRecentFolder(folderPath);

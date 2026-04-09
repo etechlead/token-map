@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Metrics.Formulas;
@@ -17,7 +19,10 @@ public sealed class FilePreviewExplainabilityViewModel
 
     public IReadOnlyList<MetricExplainabilitySectionViewModel> Sections { get; }
 
-    public static FilePreviewExplainabilityViewModel? Create(ProjectNode? node)
+    public static FilePreviewExplainabilityViewModel? Create(
+        ProjectNode? node,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         if (node is null || node.Kind is not Core.Enums.ProjectNodeKind.File)
         {
@@ -27,20 +32,22 @@ public sealed class FilePreviewExplainabilityViewModel
         var metrics = node.ComputedMetrics;
         return new FilePreviewExplainabilityViewModel(
         [
-            CreateRefactorPrioritySection(metrics),
+            CreateRefactorPrioritySection(metrics, localization, metricPresentationCatalog),
         ]);
     }
 
-    private static MetricExplainabilitySectionViewModel CreateRefactorPrioritySection(MetricSet metrics)
+    private static MetricExplainabilitySectionViewModel CreateRefactorPrioritySection(
+        MetricSet metrics,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
-        var definition = DefaultMetricCatalog.Instance.GetRequired(MetricIds.RefactorPriorityPoints);
         var metricValue = metrics.GetOrDefault(MetricIds.RefactorPriorityPoints);
         if (!ProductMetricFormulas.TryComputeRefactorPriority(metrics, out var breakdown))
         {
             return MetricExplainabilitySectionViewModel.Unavailable(
-                definition.DisplayName,
-                MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
-                "This metric is unavailable for this file.");
+                metricPresentationCatalog.GetDisplayName(MetricIds.RefactorPriorityPoints),
+                MetricValueFormatter.Format(MetricIds.RefactorPriorityPoints, metricValue, CultureInfo.CurrentCulture),
+                localization.ExplainabilityMetricUnavailable);
         }
 
         var hasStructuralBreakdown = ProductMetricFormulas.TryComputeStructuralRisk(metrics, out var structuralBreakdown);
@@ -49,21 +56,29 @@ public sealed class FilePreviewExplainabilityViewModel
         var gitUpliftPoints = Math.Max(0d, breakdown.TotalPoints - structuralBasePoints);
 
         return MetricExplainabilitySectionViewModel.Available(
-            definition.DisplayName,
-            MetricValueFormatter.Format(definition.Id, metricValue, CultureInfo.CurrentCulture),
-            note: BuildRefactorPriorityNote(hasGitContext, gitUpliftPoints),
-            groups: CreateRefactorPriorityGroups(structuralBreakdown, breakdown, hasStructuralBreakdown, hasGitContext, structuralBasePoints, gitUpliftPoints));
+            metricPresentationCatalog.GetDisplayName(MetricIds.RefactorPriorityPoints),
+            MetricValueFormatter.Format(MetricIds.RefactorPriorityPoints, metricValue, CultureInfo.CurrentCulture),
+            note: BuildRefactorPriorityNote(localization, hasGitContext, gitUpliftPoints),
+            groups: CreateRefactorPriorityGroups(
+                structuralBreakdown,
+                breakdown,
+                hasStructuralBreakdown,
+                hasGitContext,
+                structuralBasePoints,
+                gitUpliftPoints,
+                localization,
+                metricPresentationCatalog));
     }
 
-    private static string? BuildRefactorPriorityNote(bool hasGitContext, double gitUpliftPoints)
+    private static string? BuildRefactorPriorityNote(LocalizationState localization, bool hasGitContext, double gitUpliftPoints)
     {
         if (!hasGitContext)
         {
-            return "Git context unavailable. Refactor Priority currently equals the structural base.";
+            return localization.ExplainabilityGitUnavailableNote;
         }
 
         return gitUpliftPoints <= 0d
-            ? "Git context is available, but all git signals stayed below the uplift thresholds."
+            ? localization.ExplainabilityGitBelowThresholdsNote
             : null;
     }
 
@@ -73,44 +88,60 @@ public sealed class FilePreviewExplainabilityViewModel
         bool hasStructuralBreakdown,
         bool hasGitContext,
         double structuralBasePoints,
-        double gitUpliftPoints)
+        double gitUpliftPoints,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         return
         [
-            CreateStructuralGroup(structuralBreakdown, hasStructuralBreakdown, structuralBasePoints),
-            CreateGitGroup(refactorBreakdown, hasGitContext, gitUpliftPoints),
+            CreateStructuralGroup(
+                structuralBreakdown,
+                hasStructuralBreakdown,
+                structuralBasePoints,
+                localization,
+                metricPresentationCatalog),
+            CreateGitGroup(
+                refactorBreakdown,
+                hasGitContext,
+                gitUpliftPoints,
+                localization,
+                metricPresentationCatalog),
         ];
     }
 
     private static MetricExplainabilityGroupViewModel CreateStructuralGroup(
         MetricFormulaBreakdown structuralBreakdown,
         bool hasStructuralBreakdown,
-        double structuralBasePoints)
+        double structuralBasePoints,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         var contributors = hasStructuralBreakdown
             ? structuralBreakdown.Components
                 .Select(component =>
                     CreateContributorViewModel(
-                        component.Label,
+                        GetContributorLabel(component, metricPresentationCatalog),
                         component.RawValue,
                         component.ContributionPoints,
-                        GetStructuralDescription(component.Key)))
+                        localization.GetStructuralDescription(component.Key)))
                 .ToArray()
             : [];
 
         return MetricExplainabilityGroupViewModel.Create(
-            "Structural base",
+            localization.ExplainabilityStructuralBaseTitle,
             FormatPoints(structuralBasePoints),
             note: hasStructuralBreakdown
-                ? "Intrinsic score from file scale, callable burden, and risk distribution."
-                : "Structural breakdown unavailable for this file.",
+                ? localization.ExplainabilityStructuralBaseNote
+                : localization.ExplainabilityStructuralUnavailableNote,
             contributors);
     }
 
     private static MetricExplainabilityGroupViewModel CreateGitGroup(
         MetricFormulaBreakdown refactorBreakdown,
         bool hasGitContext,
-        double gitUpliftPoints)
+        double gitUpliftPoints,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         var contributors = hasGitContext && gitUpliftPoints > 0d
             ? refactorBreakdown.Components
@@ -118,22 +149,22 @@ public sealed class FilePreviewExplainabilityViewModel
                 .Where(component => component.ContributionPoints > 0d)
                 .Select(component =>
                     CreateContributorViewModel(
-                        component.Label,
+                        GetContributorLabel(component, metricPresentationCatalog),
                         component.RawValue,
                         component.ContributionPoints,
-                        GetGitDescription(component.Key)))
+                        localization.GetGitDescription(component.Key)))
                 .ToArray()
             : [];
 
         var note = hasGitContext
             ? gitUpliftPoints > 0d
-                ? "Bounded urgency boost from recent change and co-change pressure."
-                : "Git context is available, but all git signals stayed below the uplift thresholds."
-            : "Git context unavailable for this file.";
+                ? localization.ExplainabilityGitUpliftPositiveNote
+                : localization.ExplainabilityGitBelowThresholdsNote
+            : localization.ExplainabilityGitUnavailableForFileNote;
 
         return MetricExplainabilityGroupViewModel.Create(
-            "Git uplift",
-            hasGitContext ? FormatContribution(gitUpliftPoints) : "n/a",
+            localization.ExplainabilityGitUpliftTitle,
+            hasGitContext ? FormatContribution(gitUpliftPoints) : localization.ExplainabilityNotAvailable,
             note,
             contributors);
     }
@@ -149,28 +180,15 @@ public sealed class FilePreviewExplainabilityViewModel
             FormatContribution(contributionPoints),
             description);
 
-    private static string GetStructuralDescription(string key) =>
-        key switch
-        {
-            "code_lines" => "Code volume in the file. Larger files tend to accumulate more moving parts before method-level risk is considered.",
-            "total_callable_burden_points" => "Sum of per-callable burden after soft thresholds for method length, cyclomatic complexity, nesting depth, and parameter count.",
-            "top_callable_burden_points" => "Burden of the single heaviest callable. This catches one dominant method even when the rest of the file looks moderate.",
-            "affected_callable_ratio" => "Share of callables that exceed the soft thresholds. Higher ratios mean the problem is spread across the file rather than isolated.",
-            "top_three_callable_burden_share" => "Share of callable burden concentrated in the top three callables. High concentration means a small number of methods dominate the risk.",
-            _ => "Structural input that feeds the intrinsic refactor-risk base score.",
-        };
-
-    private static string GetGitDescription(string key) =>
-        key switch
-        {
-            "churn_lines_90d" => "Recently rewritten line volume. Frequent rewrites raise urgency, but only as a bounded uplift on top of the structural base.",
-            "touch_count_90d" => "Number of recent commits that touched this file. Repeated touches suggest ongoing friction around the code.",
-            "author_count_90d" => "Number of recent contributors touching the file. More contributors usually increase coordination pressure around risky code.",
-            "strong_cochanged_file_count_90d" => "Files that repeatedly change together with this one. This indicates a tighter blast radius when the file moves.",
-            "unique_cochanged_file_count_90d" => "Breadth of different files that changed alongside this one across the recent history window.",
-            "avg_cochange_set_size_90d" => "Typical width of change sets that include this file. Wider sets suggest changes tend to propagate.",
-            _ => "Git-derived pressure that can amplify urgency without dominating the structural base.",
-        };
+    private static string GetContributorLabel(
+        MetricComponentContribution component,
+        MetricPresentationCatalog metricPresentationCatalog)
+    {
+        var metricId = new MetricId(component.Key);
+        return DefaultMetricCatalog.Instance.TryGet(metricId, out _)
+            ? metricPresentationCatalog.GetDisplayName(metricId)
+            : component.Label;
+    }
 
     private static string FormatRawValue(double value) =>
         IsWholeNumber(value)

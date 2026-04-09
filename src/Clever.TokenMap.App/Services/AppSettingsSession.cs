@@ -16,6 +16,7 @@ internal sealed class AppSettingsSession
 {
     private readonly IAppSettingsStore _appSettingsStore;
     private readonly IThemeService _themeService;
+    private readonly IApplicationLanguageService _applicationLanguageService;
     private readonly IAppLogger _logger;
     private readonly TimeSpan _debounceDelay;
     private readonly Lock _syncLock = new();
@@ -31,12 +32,14 @@ internal sealed class AppSettingsSession
     public AppSettingsSession(
         IAppSettingsStore appSettingsStore,
         IThemeService themeService,
+        IApplicationLanguageService applicationLanguageService,
         AppSettings? initialSettings,
         IAppLogger logger,
         TimeSpan debounceDelay)
     {
         _appSettingsStore = appSettingsStore;
         _themeService = themeService;
+        _applicationLanguageService = applicationLanguageService;
         _logger = logger;
         _debounceDelay = debounceDelay;
         State = new SettingsState();
@@ -52,6 +55,12 @@ internal sealed class AppSettingsSession
     }
 
     public SettingsState State { get; }
+
+    public string NormalizeApplicationLanguageTag(string? languageTag) =>
+        _applicationLanguageService.NormalizePreferenceTag(languageTag);
+
+    public string NormalizePromptLanguageTag(string? languageTag, string? fallbackLanguageTag = null) =>
+        _applicationLanguageService.NormalizeSupportedCultureTag(languageTag, fallbackLanguageTag);
 
     public async Task FlushAsync(CancellationToken cancellationToken = default)
     {
@@ -103,11 +112,17 @@ internal sealed class AppSettingsSession
             _currentSettings.Appearance.WorkspaceLayoutMode = State.WorkspaceLayoutMode;
             _currentSettings.Appearance.TreemapPalette = State.SelectedTreemapPalette;
             _currentSettings.Appearance.ShowTreemapMetricValues = State.ShowTreemapMetricValues;
-            _currentSettings.Prompting.RefactorPromptTemplate = State.RefactorPromptTemplate;
+            _currentSettings.Localization.ApplicationLanguageTag = State.ApplicationLanguageTag;
+            _currentSettings.Prompting.SelectedPromptLanguageTag = State.SelectedPromptLanguageTag;
+            _currentSettings.Prompting.RefactorPromptTemplatesByLanguage = State.RefactorPromptTemplatesByLanguage.ToDictionary(
+                static pair => pair.Key,
+                static pair => pair.Value,
+                StringComparer.OrdinalIgnoreCase);
             _settingsVersion++;
         }
 
         _themeService.ApplyThemePreference(State.SelectedThemePreference);
+        _applicationLanguageService.ApplyPreference(State.ApplicationLanguageTag);
         ScheduleSave();
     }
 
@@ -206,9 +221,14 @@ internal sealed class AppSettingsSession
             State.WorkspaceLayoutMode = _currentSettings.Appearance.WorkspaceLayoutMode;
             State.SelectedTreemapPalette = _currentSettings.Appearance.TreemapPalette;
             State.ShowTreemapMetricValues = _currentSettings.Appearance.ShowTreemapMetricValues;
-            State.RefactorPromptTemplate = _currentSettings.Prompting.RefactorPromptTemplate;
+            State.ApplicationLanguageTag = _applicationLanguageService.NormalizePreferenceTag(_currentSettings.Localization.ApplicationLanguageTag);
+            State.SelectedPromptLanguageTag = NormalizePromptLanguageTag(
+                _currentSettings.Prompting.SelectedPromptLanguageTag,
+                State.ApplicationLanguageTag);
+            State.ReplaceRefactorPromptTemplatesByLanguage(_currentSettings.Prompting.RefactorPromptTemplatesByLanguage);
             State.ReplaceRecentFolderPaths(_currentSettings.RecentFolderPaths);
             _themeService.ApplyThemePreference(State.SelectedThemePreference);
+            _applicationLanguageService.ApplyPreference(State.ApplicationLanguageTag);
         }
         finally
         {
@@ -226,6 +246,8 @@ internal sealed class AppSettingsSession
         nameof(SettingsState.WorkspaceLayoutMode) or
         nameof(SettingsState.SelectedTreemapPalette) or
         nameof(SettingsState.ShowTreemapMetricValues) or
-        nameof(SettingsState.RefactorPromptTemplate);
+        nameof(SettingsState.ApplicationLanguageTag) or
+        nameof(SettingsState.SelectedPromptLanguageTag) or
+        nameof(SettingsState.RefactorPromptTemplatesByLanguage);
 
 }

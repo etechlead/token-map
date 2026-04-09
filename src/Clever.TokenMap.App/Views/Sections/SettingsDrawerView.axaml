@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:svg="clr-namespace:Avalonia.Svg.Skia;assembly=Svg.Controls.Skia.Avalonia"
+             xmlns:state="using:Clever.TokenMap.App.State"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.Sections.SettingsDrawerView"
@@ -16,12 +17,12 @@
                   ColumnSpacing="8">
                 <TextBlock Classes="panel-title"
                            VerticalAlignment="Center"
-                           Text="Settings" />
+                           Text="{Binding Localization.Settings}" />
                 <Button Grid.Column="1"
                         Classes="close-button"
                         VerticalAlignment="Center"
                         Command="{Binding CloseSettingsCommand}"
-                        ToolTip.Tip="Close settings">
+                        ToolTip.Tip="{Binding Localization.CloseSettingsTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
@@ -34,23 +35,23 @@
                     <Border Classes="toolbar-group">
                         <StackPanel Spacing="8">
                             <TextBlock Classes="toolbar-group-title"
-                                       Text="View" />
+                                       Text="{Binding Localization.View}" />
                             <StackPanel Spacing="4">
                                 <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
                                            FontSize="11"
-                                           Text="Treemap palette" />
+                                           Text="{Binding Localization.TreemapPalette}" />
                                 <StackPanel Spacing="4">
                                     <RadioButton Name="TreemapPaletteWeightedRadioButton"
                                                  GroupName="TreemapPalette"
-                                                 Content="Weighted"
+                                                 Content="{Binding Localization.TreemapPaletteWeighted}"
                                                  IsChecked="{Binding Toolbar.IsWeightedTreemapPaletteSelected, Mode=TwoWay}" />
                                     <RadioButton Name="TreemapPaletteStudioRadioButton"
                                                  GroupName="TreemapPalette"
-                                                 Content="Studio"
+                                                 Content="{Binding Localization.TreemapPaletteStudio}"
                                                  IsChecked="{Binding Toolbar.IsStudioTreemapPaletteSelected, Mode=TwoWay}" />
                                     <RadioButton Name="TreemapPalettePlainRadioButton"
                                                  GroupName="TreemapPalette"
-                                                 Content="Plain"
+                                                 Content="{Binding Localization.TreemapPalettePlain}"
                                                  IsChecked="{Binding Toolbar.IsPlainTreemapPaletteSelected, Mode=TwoWay}" />
                                 </StackPanel>
                             </StackPanel>
@@ -60,7 +61,7 @@
                     <Border Classes="toolbar-group">
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
-                                       Text="Metrics" />
+                                       Text="{Binding Localization.Metrics}" />
                             <ItemsControl Name="TreemapMetricsItemsControl"
                                           ItemsSource="{Binding Toolbar.MetricVisibilityOptions}">
                                 <ItemsControl.ItemsPanel>
@@ -89,7 +90,7 @@
                                            Grid.Column="1"
                                            Classes="toolbar-group-title"
                                            VerticalAlignment="Center"
-                                           Text="Tree only" />
+                                           Text="{Binding Localization.TreeOnly}" />
                                 <Border Name="TreeOnlyMetricsLegendRight"
                                         Grid.Column="2"
                                         Height="1"
@@ -120,14 +121,14 @@
                                         Padding="10,4"
                                         MinHeight="28"
                                         Command="{Binding Toolbar.ResetVisibleMetricIdsCommand}"
-                                        Content="Reset defaults" />
+                                        Content="{Binding Localization.ResetDefaults}" />
                                 <Button Name="MetricsShowAllButton"
                                         Grid.Column="1"
                                         Classes="action-button"
                                         Padding="10,4"
                                         MinHeight="28"
                                         Command="{Binding Toolbar.ShowAllMetricIdsCommand}"
-                                        Content="Show all" />
+                                        Content="{Binding Localization.ShowAll}" />
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -135,16 +136,16 @@
                     <Border Classes="toolbar-group">
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
-                                       Text="Scan" />
+                                       Text="{Binding Localization.Scan}" />
                             <CheckBox Name="RespectGitIgnoreCheckBox"
-                                      Content="Respect .gitignore"
+                                      Content="{Binding Localization.RespectGitIgnore}"
                                       IsChecked="{Binding Toolbar.RespectGitIgnore}"
                                       IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                             <StackPanel Spacing="6">
                                 <Grid ColumnDefinitions="*,Auto"
                                       ColumnSpacing="8">
                                     <CheckBox Name="UseGlobalExcludesCheckBox"
-                                              Content="Use global excludes"
+                                              Content="{Binding Localization.UseGlobalExcludes}"
                                               VerticalAlignment="Center"
                                               IsChecked="{Binding Toolbar.UseGlobalExcludes}"
                                               IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
@@ -156,7 +157,7 @@
                                             Padding="10,4"
                                             MinHeight="28"
                                             Command="{Binding ExcludesEditor.OpenGlobalCommand}"
-                                            Content="Edit"
+                                            Content="{Binding Localization.Edit}"
                                             IsEnabled="{Binding Toolbar.CanConfigureScanOptions}" />
                                 </Grid>
                                 <Border Name="CurrentFolderSettingsDivider"
@@ -173,7 +174,7 @@
                                     <Grid ColumnDefinitions="*,Auto"
                                           ColumnSpacing="8">
                                         <CheckBox Name="UseFolderExcludesCheckBox"
-                                                  Content="Use folder excludes"
+                                                  Content="{Binding Localization.UseFolderExcludes}"
                                                   VerticalAlignment="Center"
                                                   IsChecked="{Binding Toolbar.UseFolderExcludes}"
                                                   IsEnabled="{Binding Toolbar.CanConfigureFolderExcludes}" />
@@ -185,7 +186,7 @@
                                                 Padding="10,4"
                                                 MinHeight="28"
                                                 Command="{Binding ExcludesEditor.OpenFolderCommand}"
-                                                Content="Edit"
+                                                Content="{Binding Localization.Edit}"
                                                 IsEnabled="{Binding Toolbar.CanConfigureFolderExcludes}" />
                                     </Grid>
                                 </StackPanel>
@@ -197,13 +198,13 @@
                                         <TextBlock Name="ScanSettingsRescanNoticeText"
                                                    Classes="settings-notice-text"
                                                    VerticalAlignment="Center"
-                                                   Text="Scan settings updated. Rescan to apply." />
+                                                   Text="{Binding Localization.ScanSettingsUpdatedRescanToApply}" />
                                         <Button Name="ScanSettingsRescanButton"
                                                 Grid.Column="1"
                                                 Classes="settings-link"
                                                 VerticalAlignment="Center"
                                                 Command="{Binding Toolbar.RescanCommand}"
-                                                Content="Rescan now" />
+                                                Content="{Binding Localization.RescanNow}" />
                                     </Grid>
                                 </Border>
                             </StackPanel>
@@ -213,14 +214,14 @@
                     <Border Classes="toolbar-group">
                         <StackPanel Spacing="10">
                             <TextBlock Classes="toolbar-group-title"
-                                       Text="Prompts" />
+                                       Text="{Binding Localization.Prompts}" />
                             <Button Name="EditRefactorPromptTemplateButton"
                                     Classes="action-button"
                                     HorizontalAlignment="Left"
                                     Padding="10,4"
                                     MinHeight="28"
                                     Command="{Binding RefactorPromptTemplateSettings.OpenEditorCommand}"
-                                    Content="Edit refactor prompt template" />
+                                    Content="{Binding Localization.EditRefactorPromptTemplate}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -293,7 +294,24 @@
                     <Grid RowDefinitions="Auto,Auto"
                           RowSpacing="8">
                         <TextBlock Classes="toolbar-group-title"
-                                   Text="Theme" />
+                                   Text="{Binding Localization.ApplicationLanguage}" />
+                        <ComboBox Name="ApplicationLanguageComboBox"
+                                  Grid.Row="1"
+                                  Width="180"
+                                  ItemsSource="{Binding Toolbar.ApplicationLanguageOptions}"
+                                  SelectedItem="{Binding Toolbar.SelectedApplicationLanguageOption, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="state:ApplicationLanguageOption">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+
+                    <Grid RowDefinitions="Auto,Auto"
+                          RowSpacing="8">
+                        <TextBlock Classes="toolbar-group-title"
+                                   Text="{Binding Localization.Theme}" />
                         <Border Grid.Row="1"
                                 Grid.ColumnSpan="2"
                                 Classes="segmented-toggle-panel">
@@ -302,7 +320,7 @@
                                               Classes="theme-mode-button segmented-toggle-button start"
                                               IsChecked="{Binding Toolbar.IsLightThemeSelected, Mode=OneWay}"
                                               Command="{Binding Toolbar.SelectLightThemePreferenceCommand}"
-                                              ToolTip.Tip="Use the light theme">
+                                              ToolTip.Tip="{Binding Localization.UseLightTheme}">
                                     <Viewbox Classes="theme-mode-icon-host">
                                         <Grid Width="20"
                                               Height="20">
@@ -320,7 +338,7 @@
                                               Classes="theme-mode-button segmented-toggle-button middle"
                                               IsChecked="{Binding Toolbar.IsSystemThemeSelected, Mode=OneWay}"
                                               Command="{Binding Toolbar.SelectSystemThemePreferenceCommand}"
-                                              ToolTip.Tip="Follow the system theme">
+                                              ToolTip.Tip="{Binding Localization.UseSystemTheme}">
                                     <Viewbox Classes="theme-mode-icon-host">
                                         <Grid Width="20"
                                               Height="20">
@@ -338,7 +356,7 @@
                                               Classes="theme-mode-button segmented-toggle-button end"
                                               IsChecked="{Binding Toolbar.IsDarkThemeSelected, Mode=OneWay}"
                                               Command="{Binding Toolbar.SelectDarkThemePreferenceCommand}"
-                                              ToolTip.Tip="Use the dark theme">
+                                              ToolTip.Tip="{Binding Localization.UseDarkTheme}">
                                     <Viewbox Classes="theme-mode-icon-host">
                                         <Grid Width="20"
                                               Height="20">

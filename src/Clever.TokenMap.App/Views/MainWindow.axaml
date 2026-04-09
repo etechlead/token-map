@@ -58,14 +58,14 @@
                           ColumnSpacing="12">
                         <TextBlock Classes="panel-title"
                                    VerticalAlignment="Center"
-                                   Text="Previous folders" />
+                                   Text="{Binding Localization.PreviousFoldersTitle}" />
                         <Button Name="ClearRecentFoldersButton"
                                 Grid.Column="1"
                                 Classes="recent-clear-button"
                                 VerticalAlignment="Center"
                                 IsVisible="{Binding RecentFolders.HasRecentFolders}"
                                 Command="{Binding RecentFolders.ClearRecentFoldersCommand}"
-                                Content="Clear" />
+                                Content="{Binding Localization.Clear}" />
                     </Grid>
 
                     <StackPanel Name="RecentFoldersEmptyState"
@@ -77,7 +77,7 @@
                                 IsVisible="{Binding RecentFolders.ShowEmptyState}">
                         <TextBlock Classes="panel-title"
                                    HorizontalAlignment="Center"
-                                   Text="No previous folders yet" />
+                                   Text="{Binding Localization.NoPreviousFoldersYet}" />
                         <Button Name="RecentFoldersEmptyStateOpenButton"
                                 Classes="action-button primary"
                                 HorizontalAlignment="Center"
@@ -86,7 +86,7 @@
                                 <Path Classes="action-button-icon"
                                       Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                 <TextBlock VerticalAlignment="Center"
-                                           Text="Open Folder" />
+                                           Text="{Binding Localization.OpenFolder}" />
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -131,7 +131,7 @@
                                                     <Border Classes="recent-folder-status-badge"
                                                             IsVisible="{Binding IsMissing}">
                                                         <TextBlock Classes="recent-folder-status-text"
-                                                                   Text="Missing" />
+                                                                   Text="{Binding DataContext.Localization.Missing, ElementName=RootWindow}" />
                                                     </Border>
                                                 </StackPanel>
 
@@ -146,7 +146,7 @@
                                                 VerticalAlignment="Top"
                                                 Command="{Binding DataContext.RecentFolders.RemoveRecentFolderCommand, ElementName=RootWindow}"
                                                 CommandParameter="{Binding}"
-                                                ToolTip.Tip="Remove from recent folders">
+                                                ToolTip.Tip="{Binding DataContext.Localization.RemoveFromRecentFoldersTooltip, ElementName=RootWindow}">
                                             <Path Classes="close-button-icon"
                                                   Data="{StaticResource FluentDismiss20Geometry}" />
                                         </Button>
@@ -215,11 +215,11 @@
                     <Button Name="AppIssueBannerOpenLogsButton"
                             Classes="action-button"
                             Command="{Binding Issue.OpenLogsCommand}"
-                            Content="Open Logs" />
+                            Content="{Binding Localization.OpenLogs}" />
                     <Button Name="AppIssueBannerDismissButton"
                             Classes="action-button"
                             Command="{Binding Issue.DismissCommand}"
-                            Content="Dismiss" />
+                            Content="{Binding Localization.Dismiss}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -255,11 +255,11 @@
                     <Button Name="AppIssueModalOpenLogsButton"
                             Classes="action-button"
                             Command="{Binding Issue.OpenLogsCommand}"
-                            Content="Open Logs" />
+                            Content="{Binding Localization.OpenLogs}" />
                     <Button Name="AppIssueModalCloseAppButton"
                             Classes="action-button primary"
                             Command="{Binding Issue.CloseAppCommand}"
-                            Content="Close App" />
+                            Content="{Binding Localization.CloseApp}" />
                 </StackPanel>
             </StackPanel>
         </Border>

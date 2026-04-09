@@ -1,21 +1,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using Clever.TokenMap.App.Services;
-using Clever.TokenMap.Core.Settings;
+using Clever.TokenMap.App.State;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
 
 public partial class RefactorPromptTemplateEditorViewModel : ViewModelBase
 {
-    public RefactorPromptTemplateEditorViewModel(string templateText)
+    public RefactorPromptTemplateEditorViewModel(
+        string promptLanguageTag,
+        string templateText,
+        LocalizationState localization)
     {
-        TemplateText = string.IsNullOrWhiteSpace(templateText)
-            ? RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate
-            : templateText;
-        Placeholders = [.. RefactorPromptTemplateCatalog.Placeholders.Select(
+        PromptLanguageTag = promptLanguageTag;
+        TemplateText = RefactorPromptTemplateCatalog.ResolveTemplate(promptLanguageTag, templateText);
+        Placeholders = [.. RefactorPromptTemplateCatalog.GetPlaceholders(localization).Select(
             placeholder => new RefactorPromptTemplatePlaceholderViewModel(placeholder.Token, placeholder.Description))];
     }
+
+    public string PromptLanguageTag { get; }
 
     [ObservableProperty]
     private string templateText;

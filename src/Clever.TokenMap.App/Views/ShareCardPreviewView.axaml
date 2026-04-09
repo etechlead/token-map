@@ -65,7 +65,7 @@
                                                FontSize="18"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
-                                               Text="tokens" />
+                                               Text="{Binding TokensLabel}" />
                                 </StackPanel>
                             </Grid>
 
@@ -92,7 +92,7 @@
                                            FontSize="18"
                                            FontWeight="SemiBold"
                                            Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
-                                           Text="tokens" />
+                                           Text="{Binding TokensLabel}" />
                             </StackPanel>
 
                             <Border Width="232"
@@ -123,7 +123,7 @@
                                     <TextBlock FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
-                                               Text="lines" />
+                                               Text="{Binding LinesLabel}" />
                                 </StackPanel>
 
                                 <Border Grid.Column="1"
@@ -150,7 +150,7 @@
                                     <TextBlock FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TokenMapShareCardSecondaryTextBrush}"
-                                               Text="files" />
+                                               Text="{Binding FilesLabel}" />
                                 </StackPanel>
                             </Grid>
                         </StackPanel>
@@ -167,7 +167,7 @@
                                        FontSize="12"
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TokenMapShareCardFooterLeadBrush}"
-                                       Text="made with" />
+                                       Text="{Binding MadeWithLabel}" />
                             <Path Name="ShareFooterGithubIcon"
                                   Grid.Column="2"
                                   Width="12"

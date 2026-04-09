@@ -1,4 +1,6 @@
 using System;
+using System.Globalization;
+using System.Resources;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Clever.TokenMap.Core.Diagnostics;
@@ -11,6 +13,9 @@ namespace Clever.TokenMap.App;
 
 public static class Program
 {
+    private static readonly ResourceManager ResourceManager =
+        new("Clever.TokenMap.App.Resources.AppStrings", typeof(Program).Assembly);
+
     [STAThread]
     public static void Main(string[] args)
     {
@@ -70,7 +75,7 @@ public static class Program
         var message = BuildStartupFailureMessage(logsDirectoryPath);
         if (OperatingSystem.IsWindows())
         {
-            _ = MessageBoxW(IntPtr.Zero, message, "TokenMap", 0x00000010);
+            _ = MessageBoxW(IntPtr.Zero, message, GetResourceString("AppTitle", "TokenMap"), 0x00000010);
             return;
         }
 
@@ -78,8 +83,21 @@ public static class Program
     }
 
     internal static string BuildStartupFailureMessage(string logsDirectoryPath) =>
-        $"TokenMap failed to start.{Environment.NewLine}{Environment.NewLine}" +
-        $"Diagnostic details were written to:{Environment.NewLine}{logsDirectoryPath}";
+        $"{GetResourceString("StartupFailedToStart", "TokenMap failed to start.")}{Environment.NewLine}{Environment.NewLine}" +
+        $"{GetResourceString("StartupDiagnosticDetailsWrittenTo", "Diagnostic details were written to:")}{Environment.NewLine}{logsDirectoryPath}";
+
+    private static string GetResourceString(string key, string fallback)
+    {
+        try
+        {
+            var value = ResourceManager.GetString(key, CultureInfo.CurrentUICulture);
+            return string.IsNullOrWhiteSpace(value) ? fallback : value;
+        }
+        catch (MissingManifestResourceException)
+        {
+            return fallback;
+        }
+    }
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern int MessageBoxW(IntPtr hWnd, string text, string caption, uint type);

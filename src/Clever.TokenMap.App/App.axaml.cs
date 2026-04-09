@@ -7,6 +7,7 @@ using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Logging;
@@ -20,6 +21,7 @@ public partial class App : Application
     private IServiceProvider? _serviceProvider;
     private IAppIssueReporter? _issueReporter;
     private IAppLogger? _logger;
+    private LocalizationState? _localization;
 
     public override void Initialize()
     {
@@ -39,6 +41,7 @@ public partial class App : Application
             var settingsCoordinator = serviceProvider.GetRequiredService<ISettingsCoordinator>();
             var loggerFactory = serviceProvider.GetRequiredService<IAppLoggerFactory>();
             _issueReporter = serviceProvider.GetRequiredService<IAppIssueReporter>();
+            _localization = serviceProvider.GetRequiredService<LocalizationState>();
             _logger = loggerFactory.CreateLogger<App>();
             RegisterGlobalExceptionHandlers();
             desktop.Exit += (_, _) =>
@@ -49,6 +52,7 @@ public partial class App : Application
                 _serviceProvider = null;
                 _issueReporter = null;
                 _logger = null;
+                _localization = null;
             };
             _logger.LogInformation(
                 "Application starting.",
@@ -106,7 +110,7 @@ public partial class App : Application
             return;
         }
 
-        _issueReporter.Report(CreateDispatcherUnhandledIssue(e.Exception));
+        _issueReporter.Report(CreateDispatcherUnhandledIssue(e.Exception, _localization));
         e.Handled = true;
     }
 
@@ -115,7 +119,7 @@ public partial class App : Application
         _issueReporter?.Report(new AppIssue
         {
             Code = "app.unobserved_task_exception",
-            UserMessage = "A background task failed. TokenMap wrote diagnostic details to the log.",
+            UserMessage = _localization?.UnobservedTaskUserMessage ?? "A background task failed. TokenMap wrote diagnostic details to the log.",
             TechnicalMessage = "An unobserved task exception reached the application boundary.",
             Exception = e.Exception,
             Context = AppIssueContext.Create(("Origin", "TaskScheduler.UnobservedTaskException")),
@@ -129,7 +133,7 @@ public partial class App : Application
         _issueReporter?.Report(new AppIssue
         {
             Code = "app.domain_unhandled",
-            UserMessage = "TokenMap hit an unrecoverable error. Review the log details and restart the app.",
+            UserMessage = _localization?.DomainUnhandledUserMessage ?? "TokenMap hit an unrecoverable error. Review the log details and restart the app.",
             TechnicalMessage = "An unhandled AppDomain exception reached the process boundary.",
             Exception = exception,
             Context = AppIssueContext.Create(
@@ -146,14 +150,14 @@ public partial class App : Application
             or InvalidProgramException
             or OutOfMemoryException;
 
-    internal static AppIssue CreateDispatcherUnhandledIssue(Exception exception)
+    internal static AppIssue CreateDispatcherUnhandledIssue(Exception exception, LocalizationState? localization = null)
     {
         ArgumentNullException.ThrowIfNull(exception);
 
         return new AppIssue
         {
             Code = "app.dispatcher_unhandled",
-            UserMessage = "TokenMap hit an unexpected error. Review the log details before continuing.",
+            UserMessage = localization?.DispatcherUnhandledUserMessage ?? "TokenMap hit an unexpected error. Review the log details before continuing.",
             TechnicalMessage = "An unhandled dispatcher exception reached the application boundary.",
             Exception = exception,
             Context = AppIssueContext.Create(("Origin", "Dispatcher.UIThread.UnhandledException")),

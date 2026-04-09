@@ -1,4 +1,5 @@
 using Clever.TokenMap.Core.Enums;
+using Clever.TokenMap.Core.Logging;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 
@@ -9,6 +10,8 @@ public sealed class AppSettings
     public AnalysisSettings Analysis { get; set; } = new();
 
     public AppearanceSettings Appearance { get; set; } = new();
+
+    public LocalizationSettings Localization { get; set; } = new();
 
     public PromptingSettings Prompting { get; set; } = new();
 
@@ -23,6 +26,7 @@ public sealed class AppSettings
         {
             Analysis = Analysis.Clone(),
             Appearance = Appearance.Clone(),
+            Localization = Localization.Clone(),
             Prompting = Prompting.Clone(),
             Logging = Logging.Clone(),
             RecentFolderPaths = [.. RecentFolderPaths],
@@ -92,13 +96,30 @@ public sealed class LoggingSettings
     }
 }
 
+public sealed class LocalizationSettings
+{
+    public string ApplicationLanguageTag { get; set; } = ApplicationLanguageTags.System;
+
+    public LocalizationSettings Clone() =>
+        new()
+        {
+            ApplicationLanguageTag = ApplicationLanguageTag,
+        };
+}
+
 public sealed class PromptingSettings
 {
-    public string RefactorPromptTemplate { get; set; } = RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate;
+    public string SelectedPromptLanguageTag { get; set; } = ApplicationLanguageTags.Default;
+
+    public Dictionary<string, string> RefactorPromptTemplatesByLanguage { get; set; } = [];
 
     public PromptingSettings Clone() =>
         new()
         {
-            RefactorPromptTemplate = RefactorPromptTemplate,
+            SelectedPromptLanguageTag = SelectedPromptLanguageTag,
+            RefactorPromptTemplatesByLanguage = RefactorPromptTemplatesByLanguage.ToDictionary(
+                static pair => pair.Key,
+                static pair => pair.Value,
+                StringComparer.OrdinalIgnoreCase),
         };
 }

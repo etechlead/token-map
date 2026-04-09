@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
 using CommunityToolkit.Mvvm.Input;
 
@@ -57,21 +58,24 @@ public sealed class AboutViewModel : ViewModelBase
     private readonly AsyncRelayCommand _openRepositoryCommand;
     private readonly IAppIssueReporter _issueReporter;
     private readonly IPathShellService _pathShellService;
+    private readonly LocalizationState _localization;
 
     public AboutViewModel(
         AppAboutInfo aboutInfo,
         IPathShellService pathShellService,
-        IAppIssueReporter issueReporter)
+        IAppIssueReporter issueReporter,
+        LocalizationState localization)
     {
         _aboutInfo = aboutInfo ?? throw new ArgumentNullException(nameof(aboutInfo));
         _pathShellService = pathShellService ?? throw new ArgumentNullException(nameof(pathShellService));
         _issueReporter = issueReporter ?? throw new ArgumentNullException(nameof(issueReporter));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         _openRepositoryCommand = new AsyncRelayCommand(OpenRepositoryAsync);
     }
 
     public string ProductName => _aboutInfo.ProductName;
 
-    public string VersionText => $"v{_aboutInfo.Version}";
+    public string VersionText => _localization.FormatVersion(_aboutInfo.Version);
 
     public string InformationalVersion => _aboutInfo.InformationalVersion;
 
@@ -81,7 +85,7 @@ public sealed class AboutViewModel : ViewModelBase
 
     public string RepositoryUrl => _aboutInfo.RepositoryUrl;
 
-    public string LicenseName => _aboutInfo.LicenseName;
+    public string LicenseName => _localization.AboutLicenseName;
 
     public IAsyncRelayCommand OpenRepositoryCommand => _openRepositoryCommand;
 
@@ -96,7 +100,7 @@ public sealed class AboutViewModel : ViewModelBase
         _issueReporter.Report(new AppIssue
         {
             Code = "about.open_repository_failed",
-            UserMessage = "TokenMap could not open the project repository link.",
+            UserMessage = _localization.AboutOpenRepositoryFailed,
             TechnicalMessage = "Opening the repository URL through the shell failed.",
             Context = AppIssueContext.Create(
                 ("RepositoryDisplayName", _aboutInfo.RepositoryDisplayName),

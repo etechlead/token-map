@@ -94,6 +94,11 @@ dotnet test Clever.TokenMap.sln --no-build
 
 For repo conventions and architecture details, see `docs/architecture.md` and `docs/workflow.md`.
 
+## Localization
+
+Localization rules and contributor guidance live in [docs/localization.md](docs/localization.md).
+That document covers how UI languages are discovered from `AppStrings*.resx` and how prompt-language options reuse the same supported culture list.
+
 ## Tech Stack
 
 - .NET 10

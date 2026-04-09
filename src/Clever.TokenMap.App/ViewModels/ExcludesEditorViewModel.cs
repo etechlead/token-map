@@ -14,15 +14,13 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public sealed partial class ExcludesEditorViewModel : ViewModelBase
 {
-    private const string GlobalExcludesHelperText = "Use gitignore-style rules, one per line. Use / for project-root rules, ! for re-include rules, and # for comments.";
-    private const string FolderExcludesHelperText = "Use gitignore-style rules, one per line. These rules apply only to the current folder and override .gitignore. Use / for folder-root rules, ! for re-include rules, and # for comments.";
-
     private readonly IAnalysisSessionController _analysisSessionController;
     private readonly Func<ScanOptions> _buildScanOptions;
     private readonly RelayCommand _cancelCommand;
     private readonly RelayCommand<ProjectNode?> _excludeNodeFromFolderCommand;
     private readonly RelayCommand _openFolderCommand;
     private readonly RelayCommand _openGlobalCommand;
+    private readonly LocalizationState _localization;
     private readonly AsyncRelayCommand _saveAndRescanCommand;
     private readonly RelayCommand _saveCommand;
     private readonly ISettingsCoordinator _settingsCoordinator;
@@ -38,11 +36,13 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
     public ExcludesEditorViewModel(
         ISettingsCoordinator settingsCoordinator,
         IAnalysisSessionController analysisSessionController,
-        Func<ScanOptions> buildScanOptions)
+        Func<ScanOptions> buildScanOptions,
+        LocalizationState localization)
     {
         _settingsCoordinator = settingsCoordinator;
         _analysisSessionController = analysisSessionController;
         _buildScanOptions = buildScanOptions;
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
 
         _cancelCommand = new RelayCommand(Cancel);
         _excludeNodeFromFolderCommand = new RelayCommand<ProjectNode?>(ExcludeNodeFromFolder, CanExcludeNodeFromFolder);
@@ -53,6 +53,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
 
         _analysisSessionController.PropertyChanged += AnalysisSessionControllerOnPropertyChanged;
         _settingsCoordinator.CurrentFolderState.PropertyChanged += CurrentFolderStateOnPropertyChanged;
+        ApplyLocalizedScopeText();
     }
 
     [ObservableProperty]
@@ -62,10 +63,10 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
     private string text = string.Join(Environment.NewLine, GlobalExcludeDefaults.DefaultEntries);
 
     [ObservableProperty]
-    private string title = "Global excludes";
+    private string title = string.Empty;
 
     [ObservableProperty]
-    private string helperText = GlobalExcludesHelperText;
+    private string helperText = string.Empty;
 
     [ObservableProperty]
     private bool showRescanNotice;
@@ -96,8 +97,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
     private void OpenGlobal()
     {
         _activeScope = ExcludesEditorScope.Global;
-        Title = "Global excludes";
-        HelperText = GlobalExcludesHelperText;
+        ApplyLocalizedScopeText();
         LoadText(_settingsCoordinator.State.GlobalExcludes);
         DismissRescanNotice();
         IsOpen = true;
@@ -117,8 +117,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
         }
 
         _activeScope = ExcludesEditorScope.Folder;
-        Title = $"Excludes for {FolderDisplayText.GetFolderDisplayName(_settingsCoordinator.CurrentFolderState.ActiveRootPath)}";
-        HelperText = FolderExcludesHelperText;
+        ApplyLocalizedScopeText();
 
         var entries = _settingsCoordinator.CurrentFolderState.FolderExcludes.ToList();
         if (!string.IsNullOrWhiteSpace(entryToAppend) &&
@@ -236,6 +235,7 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
         {
             _openFolderCommand.NotifyCanExecuteChanged();
             _excludeNodeFromFolderCommand.NotifyCanExecuteChanged();
+            ApplyLocalizedScopeText();
             CloseFolderScopedEditorIfNeeded();
         }
     }
@@ -284,6 +284,29 @@ public sealed partial class ExcludesEditorViewModel : ViewModelBase
 
     private static IReadOnlyList<string> ParseText(string? text) =>
         GlobalExcludeList.Normalize((text ?? string.Empty).ReplaceLineEndings("\n").Split('\n'));
+
+    internal void RefreshLocalization()
+    {
+        ApplyLocalizedScopeText();
+    }
+
+    private void ApplyLocalizedScopeText()
+    {
+        switch (_activeScope)
+        {
+            case ExcludesEditorScope.Folder:
+                Title = _settingsCoordinator.CurrentFolderState.HasActiveFolder
+                    ? _localization.FormatFolderExcludesTitle(
+                        FolderDisplayText.GetFolderDisplayName(_settingsCoordinator.CurrentFolderState.ActiveRootPath))
+                    : _localization.CurrentFolderSettingsTitleFallback;
+                HelperText = _localization.FolderExcludesHelperText;
+                break;
+            default:
+                Title = _localization.GlobalExcludesTitle;
+                HelperText = _localization.GlobalExcludesHelperText;
+                break;
+        }
+    }
 
     private static string BuildFolderExcludeEntry(ProjectNode node)
     {

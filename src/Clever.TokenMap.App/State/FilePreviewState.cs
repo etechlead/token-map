@@ -7,6 +7,14 @@ namespace Clever.TokenMap.App.State;
 
 public partial class FilePreviewState : ObservableObject
 {
+    private readonly LocalizationState _localization;
+    private FilePreviewContentResult? _lastResult;
+
+    public FilePreviewState(LocalizationState localization)
+    {
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+    }
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsPathActionsEnabled))]
     [NotifyPropertyChangedFor(nameof(DisplayPath))]
@@ -58,10 +66,11 @@ public partial class FilePreviewState : ObservableObject
         ArgumentNullException.ThrowIfNull(node);
 
         Node = node;
+        _lastResult = null;
         Content = string.Empty;
         Status = null;
-        StatusTitle = "Loading preview";
-        StatusMessage = "Reading file contents.";
+        StatusTitle = _localization.LoadingPreviewTitle;
+        StatusMessage = _localization.LoadingPreviewMessage;
         IsLoading = true;
         IsVisible = true;
         OnPropertyChanged(nameof(DisplayName));
@@ -75,6 +84,7 @@ public partial class FilePreviewState : ObservableObject
         ArgumentNullException.ThrowIfNull(result);
 
         Node = node;
+        _lastResult = result;
         IsLoading = false;
         Status = result.Status;
         Content = result.Status == FilePreviewReadStatus.Success ? result.Content ?? string.Empty : string.Empty;
@@ -91,6 +101,7 @@ public partial class FilePreviewState : ObservableObject
         IsLoading = false;
         Node = null;
         Status = null;
+        _lastResult = null;
         Content = string.Empty;
         StatusTitle = string.Empty;
         StatusMessage = string.Empty;
@@ -99,24 +110,39 @@ public partial class FilePreviewState : ObservableObject
         OnPropertyChanged(nameof(RelativePath));
     }
 
-    private static (string Title, string Message) BuildStatusText(FilePreviewContentResult result)
+    internal void RefreshLocalization()
+    {
+        if (IsLoading)
+        {
+            StatusTitle = _localization.LoadingPreviewTitle;
+            StatusMessage = _localization.LoadingPreviewMessage;
+            return;
+        }
+
+        if (_lastResult is not null)
+        {
+            (StatusTitle, StatusMessage) = BuildStatusText(_lastResult);
+        }
+    }
+
+    private (string Title, string Message) BuildStatusText(FilePreviewContentResult result)
     {
         return result.Status switch
         {
             FilePreviewReadStatus.Success => (string.Empty, string.Empty),
             FilePreviewReadStatus.NotText => (
-                "Preview unavailable",
-                "TokenMap only shows text files in the built-in preview."),
+                _localization.PreviewUnavailableTitle,
+                _localization.PreviewUnavailableMessage),
             FilePreviewReadStatus.TooLarge => (
-                "File too large",
-                "This file is larger than 2 MiB. Open it in the default app to inspect the full contents."),
+                _localization.FileTooLargeTitle,
+                _localization.FileTooLargeMessage),
             FilePreviewReadStatus.Missing => (
-                "File missing",
-                "The file is no longer available at its original path."),
+                _localization.FileMissingTitle,
+                _localization.FileMissingMessage),
             _ => (
-                "Preview failed",
+                _localization.PreviewFailedTitle,
                 string.IsNullOrWhiteSpace(result.ErrorMessage)
-                    ? "TokenMap could not read this file."
+                    ? _localization.PreviewFailedMessage
                     : result.ErrorMessage),
         };
     }

@@ -121,9 +121,24 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
             settings.Appearance.ShowTreemapMetricValues = showTreemapMetricValues;
         }
 
-        if (persistedSettings?.Prompting?.RefactorPromptTemplate is { } refactorPromptTemplate)
+        if (!string.IsNullOrWhiteSpace(persistedSettings?.Localization?.ApplicationLanguageTag))
         {
-            settings.Prompting.RefactorPromptTemplate = refactorPromptTemplate;
+            settings.Localization.ApplicationLanguageTag = persistedSettings.Localization.ApplicationLanguageTag!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(persistedSettings?.Prompting?.SelectedPromptLanguageTag))
+        {
+            settings.Prompting.SelectedPromptLanguageTag = persistedSettings.Prompting.SelectedPromptLanguageTag!;
+        }
+
+        if (persistedSettings?.Prompting?.RefactorPromptTemplatesByLanguage is { } refactorPromptTemplatesByLanguage)
+        {
+            settings.Prompting.RefactorPromptTemplatesByLanguage = refactorPromptTemplatesByLanguage
+                .Where(static pair => !string.IsNullOrWhiteSpace(pair.Key))
+                .ToDictionary(
+                    static pair => pair.Key,
+                    static pair => pair.Value ?? string.Empty,
+                    StringComparer.OrdinalIgnoreCase);
         }
 
         if (persistedSettings?.Logging?.MinLevel is { } minimumLevel)
@@ -157,9 +172,18 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
                 TreemapPalette = settings.Appearance.TreemapPalette,
                 ShowTreemapMetricValues = settings.Appearance.ShowTreemapMetricValues,
             },
+            Localization = new PersistedLocalizationSettings
+            {
+                ApplicationLanguageTag = settings.Localization.ApplicationLanguageTag,
+            },
             Prompting = new PersistedPromptingSettings
             {
-                RefactorPromptTemplate = settings.Prompting.RefactorPromptTemplate,
+                SelectedPromptLanguageTag = settings.Prompting.SelectedPromptLanguageTag,
+                RefactorPromptTemplatesByLanguage = settings.Prompting.RefactorPromptTemplatesByLanguage
+                    .ToDictionary(
+                        static pair => pair.Key,
+                        static pair => (string?)pair.Value,
+                        StringComparer.OrdinalIgnoreCase),
             },
             Logging = new PersistedLoggingSettings
             {
@@ -176,6 +200,8 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         public PersistedAnalysisSettings? Analysis { get; set; }
 
         public PersistedAppearanceSettings? Appearance { get; set; }
+
+        public PersistedLocalizationSettings? Localization { get; set; }
 
         public PersistedPromptingSettings? Prompting { get; set; }
 
@@ -221,9 +247,16 @@ public sealed class JsonAppSettingsStore : IAppSettingsStore
         public AppLogLevel? MinLevel { get; set; }
     }
 
+    private sealed class PersistedLocalizationSettings
+    {
+        public string? ApplicationLanguageTag { get; set; }
+    }
+
     private sealed class PersistedPromptingSettings
     {
-        public string? RefactorPromptTemplate { get; set; }
+        public string? SelectedPromptLanguageTag { get; set; }
+
+        public Dictionary<string, string?>? RefactorPromptTemplatesByLanguage { get; set; }
     }
 
     private sealed class NullableBooleanConverter : JsonConverter<bool?>

@@ -16,12 +16,12 @@
                 <TextBlock Name="RefactorPromptTitleText"
                            Classes="panel-title"
                            VerticalAlignment="Center"
-                           Text="Refactor prompt" />
+                           Text="{Binding Localization.RefactorPrompt}" />
                 <Button Name="CloseRefactorPromptModalButton"
                         Grid.Column="1"
                         Classes="close-button"
                         Command="{Binding CloseRefactorPromptCommand}"
-                        ToolTip.Tip="Close refactor prompt">
+                        ToolTip.Tip="{Binding Localization.CloseRefactorPromptTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
@@ -37,7 +37,7 @@
                   RowSpacing="10">
                 <TextBlock Name="RefactorPromptIntroText"
                            Classes="panel-body"
-                           Text="Edit the conversation starter if needed, then copy it into your coding agent." />
+                           Text="{Binding Localization.RefactorPromptIntro}" />
                 <TextBox Name="RefactorPromptEditor"
                          Grid.Row="1"
                          Classes="refactor-prompt-editor"
@@ -53,7 +53,7 @@
                 <TextBlock Name="RefactorPromptHintText"
                            Classes="panel-body"
                            VerticalAlignment="Center"
-                           Text="This prompt frames the file as a possible refactoring candidate without prescribing a specific implementation." />
+                           Text="{Binding Localization.RefactorPromptHint}" />
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
@@ -81,7 +81,7 @@
                     <Button Name="CloseRefactorPromptButton"
                             Classes="action-button"
                             Command="{Binding CloseRefactorPromptCommand}"
-                            Content="Close" />
+                            Content="{Binding Localization.Close}" />
                 </StackPanel>
             </Grid>
         </Grid>

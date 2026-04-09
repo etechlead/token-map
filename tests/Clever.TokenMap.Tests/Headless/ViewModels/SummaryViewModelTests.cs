@@ -1,3 +1,4 @@
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Models;
@@ -7,10 +8,13 @@ namespace Clever.TokenMap.Tests.Headless.ViewModels;
 
 public sealed class SummaryViewModelTests
 {
+    private static SummaryViewModel CreateViewModel() =>
+        new(new LocalizationState(new ApplicationLanguageService()));
+
     [Fact]
     public void ShowsProgressOnlyWhileAnalysisIsActive()
     {
-        var viewModel = new SummaryViewModel();
+        var viewModel = CreateViewModel();
 
         Assert.False(viewModel.IsProgressVisible);
 
@@ -54,7 +58,7 @@ public sealed class SummaryViewModelTests
     [Fact]
     public void IgnoresLateProgressAfterCompletion()
     {
-        var viewModel = new SummaryViewModel();
+        var viewModel = CreateViewModel();
 
         viewModel.SetState(AnalysisState.Scanning);
         viewModel.SetCompleted(CreateSnapshot());

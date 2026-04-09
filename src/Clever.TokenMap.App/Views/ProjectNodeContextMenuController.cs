@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
@@ -16,8 +17,11 @@ internal sealed class ProjectNodeContextMenuController
     private readonly Func<IClipboard?>? _clipboardAccessor;
     private readonly Func<MainWindowViewModel?> _viewModelAccessor;
     private readonly Action<bool>? _setSuppressedState;
+    private MenuItem? _copyFullPathItem;
     private MenuItem? _excludeItem;
+    private MenuItem? _openItem;
     private MenuItem? _previewItem;
+    private MenuItem? _copyRelativePathItem;
     private MenuItem? _refactorPromptItem;
     private MenuItem? _revealItem;
     private MenuItem? _setAsTreemapRootItem;
@@ -59,20 +63,23 @@ internal sealed class ProjectNodeContextMenuController
         {
             Placement = PlacementMode.Pointer,
         };
-        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.OpenHeader, ProjectNodeActionPresentation.OpenIconResourceKey, OpenItem_OnClick));
-        _previewItem = CreateMenuItem(ProjectNodeActionPresentation.PreviewHeader, ProjectNodeActionPresentation.PreviewIconResourceKey, PreviewItem_OnClick);
+        _openItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.OpenIconResourceKey, OpenItem_OnClick);
+        menu.Items.Add(_openItem);
+        _previewItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.PreviewIconResourceKey, PreviewItem_OnClick);
         menu.Items.Add(_previewItem);
-        _refactorPromptItem = CreateMenuItem(ProjectNodeActionPresentation.RefactorPromptHeader, ProjectNodeActionPresentation.RefactorPromptIconResourceKey, RefactorPromptItem_OnClick);
+        _refactorPromptItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.RefactorPromptIconResourceKey, RefactorPromptItem_OnClick);
         menu.Items.Add(_refactorPromptItem);
         _revealItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.RevealIconResourceKey, RevealItem_OnClick);
         menu.Items.Add(_revealItem);
-        _setAsTreemapRootItem = CreateMenuItem(ProjectNodeActionPresentation.SetAsTreemapRootHeader, ProjectNodeActionPresentation.SetAsTreemapRootIconResourceKey, SetAsTreemapRootItem_OnClick);
+        _setAsTreemapRootItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.SetAsTreemapRootIconResourceKey, SetAsTreemapRootItem_OnClick);
         menu.Items.Add(_setAsTreemapRootItem);
-        _excludeItem = CreateMenuItem(ProjectNodeActionPresentation.ExcludeFromScanHeader, ProjectNodeActionPresentation.ExcludeFromScanIconResourceKey, ExcludeItem_OnClick);
+        _excludeItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.ExcludeFromScanIconResourceKey, ExcludeItem_OnClick);
         menu.Items.Add(_excludeItem);
         menu.Items.Add(new Separator());
-        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.CopyFullPathHeader, ProjectNodeActionPresentation.CopyFullPathIconResourceKey, CopyFullPathItem_OnClick));
-        menu.Items.Add(CreateMenuItem(ProjectNodeActionPresentation.CopyRelativePathHeader, icon: null, CopyRelativePathItem_OnClick));
+        _copyFullPathItem = CreateMenuItem(string.Empty, ProjectNodeActionPresentation.CopyFullPathIconResourceKey, CopyFullPathItem_OnClick);
+        menu.Items.Add(_copyFullPathItem);
+        _copyRelativePathItem = CreateMenuItem(string.Empty, icon: null, CopyRelativePathItem_OnClick);
+        menu.Items.Add(_copyRelativePathItem);
         return menu;
     }
 
@@ -94,25 +101,33 @@ internal sealed class ProjectNodeContextMenuController
     private void UpdateMenuState()
     {
         var viewModel = _viewModelAccessor();
+        var localization = viewModel?.Localization;
         var canPreview = _currentNode?.Kind == ProjectNodeKind.File;
         var canOpenRefactorPrompt = viewModel?.CanOpenRefactorPrompt(_currentNode) == true;
         var canSetTreemapRoot = viewModel?.CanSetTreemapRoot(_currentNode) == true;
         var canExclude = viewModel?.CanExcludeNodeFromFolder(_currentNode) == true;
+        if (_openItem is not null)
+        {
+            _openItem.Header = ProjectNodeActionPresentation.GetOpenHeader(localization);
+        }
+
         if (_previewItem is not null)
         {
+            _previewItem.Header = ProjectNodeActionPresentation.GetPreviewHeader(localization);
             _previewItem.IsVisible = canPreview;
             _previewItem.IsEnabled = canPreview;
         }
 
         if (_refactorPromptItem is not null)
         {
+            _refactorPromptItem.Header = ProjectNodeActionPresentation.GetRefactorPromptHeader(localization);
             _refactorPromptItem.IsVisible = canOpenRefactorPrompt;
             _refactorPromptItem.IsEnabled = canOpenRefactorPrompt;
         }
 
         if (_revealItem is not null)
         {
-            _revealItem.Header = viewModel?.RevealMenuHeader ?? "Reveal";
+            _revealItem.Header = viewModel?.LocalizedRevealMenuHeader ?? viewModel?.RevealMenuHeader ?? "Reveal";
         }
 
         if (_setAsTreemapRootItem is null || _excludeItem is null)
@@ -120,10 +135,22 @@ internal sealed class ProjectNodeContextMenuController
             return;
         }
 
+        _setAsTreemapRootItem.Header = ProjectNodeActionPresentation.GetSetAsTreemapRootHeader(localization);
         _setAsTreemapRootItem.IsVisible = canSetTreemapRoot;
         _setAsTreemapRootItem.IsEnabled = canSetTreemapRoot;
+        _excludeItem.Header = ProjectNodeActionPresentation.GetExcludeFromScanHeader(localization);
         _excludeItem.IsVisible = canExclude;
         _excludeItem.IsEnabled = canExclude;
+
+        if (_copyFullPathItem is not null)
+        {
+            _copyFullPathItem.Header = ProjectNodeActionPresentation.GetCopyFullPathHeader(localization);
+        }
+
+        if (_copyRelativePathItem is not null)
+        {
+            _copyRelativePathItem.Header = ProjectNodeActionPresentation.GetCopyRelativePathHeader(localization);
+        }
     }
 
     private async void OpenItem_OnClick(object? sender, RoutedEventArgs e)

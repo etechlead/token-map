@@ -115,7 +115,7 @@ public partial class ShareSnapshotModalView : UserControl
         viewModel.ReportIssue(new AppIssue
         {
             Code = "share.copy_image_failed",
-            UserMessage = "TokenMap could not copy the share image to the clipboard.",
+            UserMessage = viewModel.Localization.ShareCopyImageFailed,
             TechnicalMessage = "Copying the rendered share image to the clipboard failed.",
             Exception = exception,
         });

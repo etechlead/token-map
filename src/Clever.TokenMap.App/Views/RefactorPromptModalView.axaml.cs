@@ -69,7 +69,7 @@ public partial class RefactorPromptModalView : UserControl
         viewModel.ReportIssue(new AppIssue
         {
             Code = "refactor_prompt.copy_failed",
-            UserMessage = "TokenMap could not copy the refactor prompt to the clipboard.",
+            UserMessage = viewModel.Localization.RefactorPromptCopyFailed,
             TechnicalMessage = "Copying the refactor prompt text to the clipboard failed.",
             Exception = exception,
         });

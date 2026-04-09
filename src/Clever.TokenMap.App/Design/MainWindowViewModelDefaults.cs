@@ -11,6 +11,7 @@ using Clever.TokenMap.Core.Interfaces;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
 using Clever.TokenMap.Core.Preview;
+using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.App.Design;
 
@@ -26,6 +27,9 @@ internal static class MainWindowViewModelDefaults
         var settingsCoordinator = new NullSettingsCoordinator();
         var pathShellService = new NullPathShellService();
         var appIssueState = new AppIssueState();
+        var applicationLanguageService = new ApplicationLanguageService();
+        var localization = new LocalizationState(applicationLanguageService);
+        var metricPresentationCatalog = new MetricPresentationCatalog(localization);
 
         return MainWindowViewModelFactory.Create(
             new MainWindowViewModelFactoryDependencies(
@@ -39,7 +43,9 @@ internal static class MainWindowViewModelDefaults
                 NullAppIssueReporter.Instance,
                 appIssueState,
                 new DesignAppStoragePaths(),
-                new NullApplicationControlService()));
+                new NullApplicationControlService(),
+                localization,
+                metricPresentationCatalog));
     }
 
     private static AnalysisSessionController CreateAnalysisSessionController(
@@ -121,7 +127,15 @@ internal static class MainWindowViewModelDefaults
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 
-        public void SetRefactorPromptTemplate(string templateText) => MutableState.RefactorPromptTemplate = templateText;
+        public void SetApplicationLanguageTag(string languageTag) =>
+            MutableState.ApplicationLanguageTag = ApplicationLanguageTags.Normalize(languageTag);
+
+        public void SetSelectedPromptLanguageTag(string languageTag) =>
+            MutableState.SelectedPromptLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag)
+                ?? ApplicationLanguageTags.Default;
+
+        public void SetRefactorPromptTemplate(string languageTag, string templateText) =>
+            MutableState.SetRefactorPromptTemplate(languageTag, templateText);
 
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 

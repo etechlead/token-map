@@ -8,6 +8,7 @@ using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Settings;
 using CommunityToolkit.Mvvm.Input;
 
 namespace Clever.TokenMap.Tests.Headless.ViewModels;
@@ -258,13 +259,40 @@ public sealed class ToolbarViewModelTests
             entry => Assert.Equal("src/generated/**", entry));
     }
 
+    [Fact]
+    public void LocalizedMetricLabels_UpdateWhenLanguageChanges()
+    {
+        var state = new SettingsState();
+        var languageService = new ApplicationLanguageService();
+        var localization = new LocalizationState(languageService);
+        var viewModel = new ToolbarViewModel(
+            new TestSettingsCoordinator(state),
+            new AsyncRelayCommand(() => Task.CompletedTask),
+            new AsyncRelayCommand(() => Task.CompletedTask),
+            new RelayCommand(() => { }),
+            localization,
+            new MetricPresentationCatalog(localization));
+
+        Assert.Equal("Tokens", viewModel.VisibleTreemapMetricOptions[0].Label);
+
+        languageService.ApplyPreference("ru");
+
+        Assert.Equal("Токены", viewModel.VisibleTreemapMetricOptions[0].Label);
+        Assert.Equal("Рефактор", Assert.Single(
+            viewModel.MetricVisibilityOptions,
+            option => option.Definition.Id == MetricIds.RefactorPriorityPoints).Label);
+    }
+
     private static ToolbarViewModel CreateViewModel(SettingsState state)
     {
+        var localization = new LocalizationState(new ApplicationLanguageService());
         return new ToolbarViewModel(
             new TestSettingsCoordinator(state),
             new AsyncRelayCommand(() => Task.CompletedTask),
             new AsyncRelayCommand(() => Task.CompletedTask),
-            new RelayCommand(() => { }));
+            new RelayCommand(() => { }),
+            localization,
+            new MetricPresentationCatalog(localization));
     }
 
     private sealed class TestSettingsCoordinator(SettingsState state) : ISettingsCoordinator
@@ -313,7 +341,15 @@ public sealed class ToolbarViewModelTests
 
         public void SetShowTreemapMetricValues(bool value) => MutableState.ShowTreemapMetricValues = value;
 
-        public void SetRefactorPromptTemplate(string templateText) => MutableState.RefactorPromptTemplate = templateText;
+        public void SetApplicationLanguageTag(string languageTag) =>
+            MutableState.ApplicationLanguageTag = ApplicationLanguageTags.Normalize(languageTag);
+
+        public void SetSelectedPromptLanguageTag(string languageTag) =>
+            MutableState.SelectedPromptLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag)
+                ?? ApplicationLanguageTags.Default;
+
+        public void SetRefactorPromptTemplate(string languageTag, string templateText) =>
+            MutableState.SetRefactorPromptTemplate(languageTag, templateText);
 
         public void RecordRecentFolder(string folderPath) => MutableState.RecordRecentFolder(folderPath);
 
@@ -330,4 +366,3 @@ public sealed class ToolbarViewModelTests
         }
     }
 }
-

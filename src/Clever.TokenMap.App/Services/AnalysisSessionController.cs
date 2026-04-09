@@ -18,6 +18,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
     private readonly IScanOptionsResolver _scanOptionsResolver;
     private readonly IAppIssueReporter _issueReporter;
     private readonly IAppLogger _logger;
+    private readonly LocalizationState? _localization;
 
     private CancellationTokenSource? _analysisCancellationTokenSource;
     private string? _activeAnalysisFolderPath;
@@ -29,7 +30,8 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         IFolderPathService folderPathService,
         IAppLogger? logger = null,
         IScanOptionsResolver? scanOptionsResolver = null,
-        IAppIssueReporter? issueReporter = null)
+        IAppIssueReporter? issueReporter = null,
+        LocalizationState? localization = null)
     {
         _projectAnalyzer = projectAnalyzer;
         _folderPickerService = folderPickerService;
@@ -37,6 +39,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
         _scanOptionsResolver = scanOptionsResolver ?? new PassthroughScanOptionsResolver();
         _logger = logger ?? NullAppLogger.Instance;
         _issueReporter = issueReporter ?? NullAppIssueReporter.Instance;
+        _localization = localization;
     }
 
     [ObservableProperty]
@@ -133,7 +136,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             _issueReporter.Report(new AppIssue
             {
                 Code = "analysis.root_missing",
-                UserMessage = $"TokenMap could not find '{folderPath}'.",
+                UserMessage = _localization?.FormatAnalysisRootMissing(folderPath) ?? $"TokenMap could not find '{folderPath}'.",
                 TechnicalMessage = "The selected project root does not exist.",
                 Context = AppIssueContext.Create(("FolderPath", folderPath)),
             });
@@ -197,7 +200,7 @@ public sealed partial class AnalysisSessionController : ObservableObject, IAnaly
             _issueReporter.Report(new AppIssue
             {
                 Code = "analysis.run_failed",
-                UserMessage = $"TokenMap could not finish analyzing '{folderPath}'.",
+                UserMessage = _localization?.FormatAnalysisRunFailed(folderPath) ?? $"TokenMap could not finish analyzing '{folderPath}'.",
                 TechnicalMessage = "The analysis flow failed before the workspace state could be updated.",
                 Exception = exception,
                 Context = AppIssueContext.Create(("FolderPath", folderPath)),

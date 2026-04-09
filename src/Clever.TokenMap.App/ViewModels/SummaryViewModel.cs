@@ -9,13 +9,25 @@ namespace Clever.TokenMap.App.ViewModels;
 
 public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 {
+    private readonly LocalizationState _localization;
     private bool _acceptProgressUpdates;
+    private AnalysisState _state = AnalysisState.Idle;
+    private ProjectSnapshot? _snapshot;
+    private AnalysisProgress? _progress;
+
+    public SummaryViewModel(LocalizationState localization)
+    {
+        _localization = localization;
+        _localization.LanguageChanged += (_, _) => RefreshLocalizedState();
+        summaryText = _localization.SummaryIdle;
+        totalsText = _localization.FormatTotalsText(0, 0, 0, 0);
+    }
 
     [ObservableProperty]
-    private string summaryText = "Select a folder to build a project treemap and metrics snapshot.";
+    private string summaryText;
 
     [ObservableProperty]
-    private string totalsText = "No snapshot loaded";
+    private string totalsText;
 
     [ObservableProperty]
     private double progressValue;
@@ -46,12 +58,13 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 
     public void SetState(AnalysisState state)
     {
+        _state = state;
         SummaryText = state switch
         {
-            AnalysisState.Idle => "Select a folder to build a project treemap and metrics snapshot.",
-            AnalysisState.Scanning => "Analyzing project structure, token counts and non-empty line statistics.",
-            AnalysisState.Cancelled => "Analysis was cancelled. Previous snapshot remains available.",
-            AnalysisState.Failed => "Analysis failed. Review the diagnostics issue and log details.",
+            AnalysisState.Idle => _localization.SummaryIdle,
+            AnalysisState.Scanning => _localization.SummaryScanning,
+            AnalysisState.Cancelled => _localization.SummaryCancelled,
+            AnalysisState.Failed => _localization.SummaryFailed,
             _ => SummaryText,
         };
 
@@ -63,7 +76,7 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
                 IsProgressIndeterminate = true;
                 IsProgressVisible = true;
                 IsProgressPillVisible = true;
-                ProgressPillText = "Scanning tree";
+                ProgressPillText = _localization.ProgressScanningTree;
                 break;
             default:
                 _acceptProgressUpdates = false;
@@ -78,15 +91,15 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 
     public void SetCompleted(ProjectSnapshot snapshot)
     {
+        _snapshot = snapshot;
         var tokenCount = snapshot.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.Tokens) ?? 0;
         var nonEmptyLineCount = snapshot.Root.ComputedMetrics.TryGetRoundedInt64(MetricIds.NonEmptyLines) ?? 0;
         var fileCount = snapshot.Root.Summary.DescendantFileCount;
         _acceptProgressUpdates = false;
         SummaryText = snapshot.Diagnostics.Count == 0
-            ? $"Analysis completed for {snapshot.Root.Name}."
-            : $"Analysis completed for {snapshot.Root.Name} with {snapshot.Diagnostics.Count:N0} diagnostics.";
-        TotalsText =
-            $"{tokenCount:N0} tokens - {nonEmptyLineCount:N0} non-empty lines - {fileCount:N0} files - {snapshot.Diagnostics.Count:N0} diagnostics";
+            ? _localization.FormatSummaryCompleted(snapshot.Root.Name)
+            : _localization.FormatSummaryCompletedWithDiagnostics(snapshot.Root.Name, snapshot.Diagnostics.Count);
+        TotalsText = _localization.FormatTotalsText(tokenCount, nonEmptyLineCount, fileCount, snapshot.Diagnostics.Count);
         ProgressValue = 0;
         IsProgressIndeterminate = false;
         IsProgressVisible = false;
@@ -100,6 +113,7 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
 
     public void UpdateProgress(AnalysisProgress progress)
     {
+        _progress = progress;
         if (!_acceptProgressUpdates)
         {
             return;
@@ -121,29 +135,37 @@ public partial class SummaryViewModel : ViewModelBase, ISummaryProjection
         }
     }
 
-    private static string BuildProgressPillText(AnalysisProgress progress)
+    private void RefreshLocalizedState()
+    {
+        if (_state == AnalysisState.Completed && _snapshot is not null)
+        {
+            SetCompleted(_snapshot);
+            return;
+        }
+
+        SetState(_state);
+        if (_state == AnalysisState.Scanning && _progress is not null)
+        {
+            UpdateProgress(_progress);
+        }
+    }
+
+    private string BuildProgressPillText(AnalysisProgress progress)
     {
         if (string.Equals(progress.Phase, "AnalyzingFiles", StringComparison.Ordinal) &&
             progress.TotalNodeCount is > 0)
         {
-            return string.Format(
-                CultureInfo.CurrentCulture,
-                "Analyzing files • {0:N0} / {1:N0}",
-                progress.ProcessedNodeCount,
-                progress.TotalNodeCount.Value);
+            return _localization.FormatProgressAnalyzingFiles(progress.ProcessedNodeCount, progress.TotalNodeCount.Value);
         }
 
         if (string.Equals(progress.Phase, "ScanningTree", StringComparison.Ordinal) &&
             progress.DiscoveredFileCount is > 0)
         {
-            return string.Format(
-                CultureInfo.CurrentCulture,
-                "Scanning tree • {0:N0} files found",
-                progress.DiscoveredFileCount.Value);
+            return _localization.FormatProgressScanningTreeFilesFound(progress.DiscoveredFileCount.Value);
         }
 
         return string.Equals(progress.Phase, "AnalyzingFiles", StringComparison.Ordinal)
-            ? "Analyzing files"
-            : "Scanning tree";
+            ? _localization.ProgressAnalyzingFiles
+            : _localization.ProgressScanningTree;
     }
 }

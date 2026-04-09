@@ -7,6 +7,7 @@ Maintain `TokenMap` as a local desktop app for source-tree analysis with synchro
 - Windows is the primary MVP target; macOS is secondary validation; do not spend the current task on Linux polish.
 - Current technical boundaries live in `docs/architecture.md`.
 - Day-to-day execution flow and active-plan handling live in `docs/workflow.md`.
+- Localization rules and language-extension flow live in `docs/localization.md`.
 
 ## Non-Negotiables
 - `Clever.TokenMap.Core` stays free of Avalonia.

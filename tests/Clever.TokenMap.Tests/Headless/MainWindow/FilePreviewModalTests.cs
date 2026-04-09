@@ -149,11 +149,11 @@ public sealed class FilePreviewModalTests
         Assert.NotNull(refactorPromptButton);
         Assert.NotNull(copyFullPathButton);
         Assert.NotNull(copyRelativePathButton);
-        Assert.Equal("Open", GetButtonText(openButton));
-        Assert.Equal(viewModel.RevealMenuHeader, GetButtonText(revealButton));
-        Assert.Equal("Refactor Prompt", GetButtonText(refactorPromptButton));
-        Assert.Equal("Copy Full Path", GetButtonText(copyFullPathButton));
-        Assert.Equal("Copy Relative Path", GetButtonText(copyRelativePathButton));
+        Assert.Equal(viewModel.Localization.OpenAction, GetButtonText(openButton));
+        Assert.Equal(viewModel.LocalizedRevealMenuHeader, GetButtonText(revealButton));
+        Assert.Equal(viewModel.Localization.RefactorPromptAction, GetButtonText(refactorPromptButton));
+        Assert.Equal(viewModel.Localization.CopyFullPathAction, GetButtonText(copyFullPathButton));
+        Assert.Equal(viewModel.Localization.CopyRelativePathAction, GetButtonText(copyRelativePathButton));
     }
 
     [AvaloniaFact]
@@ -224,10 +224,9 @@ public sealed class FilePreviewModalTests
         window.UpdateLayout();
 
         var button = FindNamedDescendant<Button>(window, "EditRefactorPromptTemplateButton");
-
         Assert.NotNull(button);
         Assert.True(button.IsVisible);
-        Assert.Equal("Edit refactor prompt template", GetButtonText(button));
+        Assert.Equal(viewModel.Localization.EditRefactorPromptTemplate, GetButtonText(button));
     }
 
     [AvaloniaFact]
@@ -244,10 +243,12 @@ public sealed class FilePreviewModalTests
         var modal = FindNamedDescendant<Control>(window, "RefactorPromptTemplateEditorModal");
         var placeholders = FindNamedDescendant<ItemsControl>(window, "RefactorPromptTemplatePlaceholdersItemsControl");
         var editor = FindNamedDescendant<TextBox>(window, "RefactorPromptTemplateEditorTextBox");
+        var promptLanguageComboBox = FindNamedDescendant<ComboBox>(window, "PromptLanguageComboBox");
 
         Assert.NotNull(modal);
         Assert.NotNull(placeholders);
         Assert.NotNull(editor);
+        Assert.NotNull(promptLanguageComboBox);
         Assert.True(modal.IsVisible);
         Assert.True(editor.AcceptsReturn);
         Assert.Contains(
@@ -368,7 +369,7 @@ public sealed class FilePreviewModalTests
         Assert.NotNull(statusTitle);
         Assert.False(editor.IsVisible);
         Assert.True(statusPanel.IsVisible);
-        Assert.Equal("File too large", statusTitle.Text);
+        Assert.Equal(viewModel.Localization.FileTooLargeTitle, statusTitle.Text);
     }
 
     [AvaloniaFact]
@@ -415,6 +416,7 @@ public sealed class FilePreviewModalTests
         SetCurrentNodeAndRefresh(controller, fileNode);
         Assert.True(previewItem.IsVisible);
         Assert.True(previewItem.IsEnabled);
+        Assert.Equal(viewModel.Localization.PreviewAction, previewItem.Header?.ToString());
 
         SetCurrentNodeAndRefresh(controller, directoryNode);
         Assert.False(previewItem.IsVisible);
@@ -436,6 +438,7 @@ public sealed class FilePreviewModalTests
         SetCurrentNodeAndRefresh(controller, fileNode);
         Assert.True(refactorPromptItem.IsVisible);
         Assert.True(refactorPromptItem.IsEnabled);
+        Assert.Equal(viewModel.Localization.RefactorPromptAction, refactorPromptItem.Header?.ToString());
 
         SetCurrentNodeAndRefresh(controller, directoryNode);
         Assert.False(refactorPromptItem.IsVisible);

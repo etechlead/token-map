@@ -22,14 +22,14 @@
                                      Classes="action-split-button"
                                      Command="{Binding Toolbar.OpenFolderCommand}"
                                      IsEnabled="{Binding Toolbar.CanConfigureScanOptions}"
-                                     ToolTip.Tip="Open a folder for analysis">
+                                     ToolTip.Tip="{Binding Localization.OpenFolderForAnalysisTooltip}">
                             <SplitButton.Content>
                                 <StackPanel Classes="action-button-content">
                                     <PathIcon Classes="action-button-icon"
                                               Data="{StaticResource FluentFolderOpen20RegularGeometry}" />
                                     <TextBlock Classes="action-button-label"
                                                VerticalAlignment="Center"
-                                               Text="Open Folder" />
+                                               Text="{Binding Localization.OpenFolder}" />
                                 </StackPanel>
                             </SplitButton.Content>
                             <SplitButton.Flyout>
@@ -71,7 +71,7 @@
                                                                     <Border Classes="recent-folder-status-badge"
                                                                             IsVisible="{Binding IsMissing}">
                                                                         <TextBlock Classes="recent-folder-status-text"
-                                                                                   Text="Missing" />
+                                                                                   Text="{Binding DataContext.Localization.Missing, ElementName=ToolbarHost}" />
                                                                     </Border>
                                                                 </StackPanel>
                                                                 <TextBlock Classes="recent-folder-path"
@@ -91,20 +91,20 @@
                                 Classes="action-button"
                                 Command="{Binding Toolbar.RescanCommand}"
                                 IsVisible="{Binding Toolbar.IsRescanVisible}"
-                                ToolTip.Tip="Run the scan again for the selected folder">
+                                ToolTip.Tip="{Binding Localization.RunScanAgainTooltip}">
                             <StackPanel Classes="action-button-content">
                                 <Path Classes="action-button-icon"
                                       Data="{StaticResource FluentArrowClockwiseDashes20RegularGeometry}" />
                                 <TextBlock VerticalAlignment="Center"
-                                           Text="Rescan" />
+                                           Text="{Binding Localization.Rescan}" />
                             </StackPanel>
                         </Button>
                         <Button Name="StopButton"
                                 Classes="action-button"
-                                Content="Stop"
+                                Content="{Binding Localization.Stop}"
                                 Command="{Binding Toolbar.CancelCommand}"
                                 IsVisible="{Binding Toolbar.IsStopVisible}"
-                                ToolTip.Tip="Stop the current scan" />
+                                ToolTip.Tip="{Binding Localization.StopCurrentScanTooltip}" />
                     </StackPanel>
                 </StackPanel>
 
@@ -119,7 +119,7 @@
                             MinWidth="120">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="summary-label"
-                                       Text="Tokens" />
+                                       Text="{Binding Localization.Tokens}" />
                             <TextBlock Name="TokenSummaryValueText"
                                        Classes="summary-value"
                                        Text="{Binding Summary.TokenSummaryValue}" />
@@ -130,7 +130,7 @@
                             MinWidth="120">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="summary-label"
-                                       Text="Lines" />
+                                       Text="{Binding Localization.Lines}" />
                             <TextBlock Name="LineSummaryValueText"
                                        Classes="summary-value"
                                        Text="{Binding Summary.LineSummaryValue}" />
@@ -141,7 +141,7 @@
                             MinWidth="120">
                         <StackPanel Spacing="4">
                             <TextBlock Classes="summary-label"
-                                       Text="Files" />
+                                       Text="{Binding Localization.Files}" />
                             <TextBlock Name="FileSummaryValueText"
                                        Classes="summary-value"
                                        Text="{Binding Summary.FileSummaryValue}" />
@@ -158,24 +158,24 @@
                             Classes="action-button"
                             IsVisible="{Binding HasSnapshot}"
                             Command="{Binding OpenShareSnapshotCommand}"
-                            ToolTip.Tip="Preview and copy a share image">
+                            ToolTip.Tip="{Binding Localization.PreviewAndCopyShareImageTooltip}">
                         <StackPanel Classes="action-button-content">
                             <Path Classes="action-button-icon"
                                   Data="{StaticResource TokenMapShareImage20Geometry}" />
                             <TextBlock VerticalAlignment="Center"
-                                       Text="Share" />
+                                       Text="{Binding Localization.Share}" />
                         </StackPanel>
                     </Button>
                     <Button Name="SettingsButton"
                             Classes="action-button"
                             VerticalAlignment="Center"
                             Command="{Binding ToggleSettingsCommand}"
-                            ToolTip.Tip="Open settings">
+                            ToolTip.Tip="{Binding Localization.OpenSettingsTooltip}">
                         <StackPanel Classes="action-button-content">
                             <Path Classes="action-button-icon"
                                   Data="{StaticResource FluentAppsSettings20RegularGeometry}" />
                             <TextBlock VerticalAlignment="Center"
-                                       Text="Settings" />
+                                       Text="{Binding Localization.Settings}" />
                         </StackPanel>
                     </Button>
                 </StackPanel>

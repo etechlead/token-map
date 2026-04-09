@@ -33,6 +33,9 @@ public sealed class TreemapControl : Control
     public static readonly StyledProperty<bool> ShowMetricValuesProperty =
         AvaloniaProperty.Register<TreemapControl, bool>(nameof(ShowMetricValues), false);
 
+    public static readonly StyledProperty<TreemapTextCatalog> TextCatalogProperty =
+        AvaloniaProperty.Register<TreemapControl, TreemapTextCatalog>(nameof(TextCatalog), TreemapTextCatalog.Default);
+
     public static readonly StyledProperty<IReadOnlyList<MetricId>> VisibleMetricIdsProperty =
         AvaloniaProperty.Register<TreemapControl, IReadOnlyList<MetricId>>(
             nameof(VisibleMetricIds),
@@ -123,6 +126,7 @@ public sealed class TreemapControl : Control
             PaletteProperty,
             ShowLabelsProperty,
             ShowMetricValuesProperty,
+            TextCatalogProperty,
             VisibleMetricIdsProperty,
             ShowDirectoryNodesProperty,
             LeafCornerRadiusProperty,
@@ -183,6 +187,12 @@ public sealed class TreemapControl : Control
     {
         get => GetValue(ShowMetricValuesProperty);
         set => SetValue(ShowMetricValuesProperty, value);
+    }
+
+    public TreemapTextCatalog TextCatalog
+    {
+        get => GetValue(TextCatalogProperty);
+        set => SetValue(TextCatalogProperty, value);
     }
 
     public IReadOnlyList<MetricId> VisibleMetricIds
@@ -368,6 +378,7 @@ public sealed class TreemapControl : Control
             change.Property == PaletteProperty ||
             change.Property == ShowLabelsProperty ||
             change.Property == ShowMetricValuesProperty ||
+            change.Property == TextCatalogProperty ||
             change.Property == VisibleMetricIdsProperty ||
             change.Property == LeafCornerRadiusProperty ||
             change.Property == ShowLeafBordersProperty)
@@ -399,13 +410,13 @@ public sealed class TreemapControl : Control
 
         if (RootNode is null || drawingBounds.Width <= 0 || drawingBounds.Height <= 0)
         {
-            DrawPlaceholder(context, "Run analysis to populate treemap.");
+            DrawPlaceholder(context, GetTextCatalog().PlaceholderNoSnapshot);
             return;
         }
 
         if (_nodeVisuals.Count == 0)
         {
-            DrawPlaceholder(context, "No weighted nodes for the selected metric.");
+            DrawPlaceholder(context, GetTextCatalog().PlaceholderNoWeightedNodes);
             return;
         }
 
@@ -913,7 +924,8 @@ public sealed class TreemapControl : Control
 
     private void UpdateTooltipState(ProjectNode node)
     {
-        var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? "(root)" : node.RelativePath;
+        var textCatalog = GetTextCatalog();
+        var relativePath = string.IsNullOrWhiteSpace(node.RelativePath) ? textCatalog.RootPath : node.RelativePath;
         var items = BuildTooltipItems(node);
         var lines = new List<string> { relativePath };
 
@@ -949,21 +961,17 @@ public sealed class TreemapControl : Control
 
     private List<TreemapTooltipValueRow> BuildVisibleMetricRows(ProjectNode node)
     {
+        var textCatalog = GetTextCatalog();
         var rows = new List<TreemapTooltipValueRow>();
         foreach (var metricId in GetNormalizedVisibleMetricIds())
         {
-            if (!TryGetMetricLabel(metricId, out var label))
-            {
-                continue;
-            }
-
-            rows.Add(new TreemapTooltipValueRow(label, FormatMetric(node, metricId)));
+            rows.Add(new TreemapTooltipValueRow(GetMetricLabel(metricId), FormatMetric(node, metricId)));
         }
 
         var share = RootNode is null
-            ? "n/a"
-            : FormatShare(GetMetricValue(node), GetMetricValue(RootNode));
-        rows.Add(new TreemapTooltipValueRow("Share", share));
+            ? textCatalog.NotAvailable
+            : FormatShare(GetMetricValue(node), GetMetricValue(RootNode), textCatalog.NotAvailable);
+        rows.Add(new TreemapTooltipValueRow(textCatalog.Share, share));
         return rows;
     }
 
@@ -981,30 +989,33 @@ public sealed class TreemapControl : Control
                 continue;
             }
 
-            rows.Add(new TreemapTooltipValueRow(definition.DisplayName, MetricValueFormatter.Format(definition.Id, value, CultureInfo.CurrentCulture)));
+            rows.Add(new TreemapTooltipValueRow(
+                GetMetricLabel(definition.Id),
+                MetricValueFormatter.Format(definition.Id, value, CultureInfo.CurrentCulture)));
         }
 
         return rows;
     }
 
-    private static List<TreemapTooltipValueRow> BuildInfoRows(ProjectNode node)
+    private List<TreemapTooltipValueRow> BuildInfoRows(ProjectNode node)
     {
+        var textCatalog = GetTextCatalog();
         var rows = new List<TreemapTooltipValueRow>
         {
-            new("Type", GetKindText(node)),
+            new(textCatalog.Type, GetKindText(node)),
         };
 
         if (node.Kind == ProjectNodeKind.File)
         {
             var extension = Path.GetExtension(node.Name) is { Length: > 0 } fileExtension
                 ? fileExtension
-                : "(none)";
-            rows.Add(new TreemapTooltipValueRow("Ext", extension));
+                : textCatalog.NoExtension;
+            rows.Add(new TreemapTooltipValueRow(textCatalog.Extension, extension));
             return rows;
         }
 
         rows.Add(new TreemapTooltipValueRow(
-            "Files in subtree",
+            textCatalog.FilesInSubtree,
             node.Summary.DescendantFileCount.ToString("N0", CultureInfo.CurrentCulture)));
         return rows;
     }
@@ -1049,16 +1060,15 @@ public sealed class TreemapControl : Control
             : normalizedMetricIds;
     }
 
-    private static bool TryGetMetricLabel(MetricId metricId, out string label)
+    private string GetMetricLabel(MetricId metricId)
     {
+        var fallback = metricId.Value;
         if (DefaultMetricCatalog.Instance.TryGet(metricId, out var definition))
         {
-            label = definition.DisplayName;
-            return true;
+            fallback = definition.DisplayName;
         }
 
-        label = string.Empty;
-        return false;
+        return GetTextCatalog().GetMetricLabel(metricId, fallback);
     }
 
     private static FormattedText CreateNodeLabelText(string text, double fontSize, IBrush foreground)
@@ -1142,16 +1152,22 @@ public sealed class TreemapControl : Control
     private double GetMetricValue(ProjectNode node) =>
         node.ComputedMetrics.TryGetNumber(DefaultMetricCatalog.NormalizeMetricId(Metric)) ?? 0;
 
-    private static string FormatShare(double current, double total) =>
-        total <= 0 || current <= 0 ? "n/a" : $"{current / total:P1}";
-
-    private static string GetKindText(ProjectNode node) =>
-        node.Kind switch
+    private string GetKindText(ProjectNode node)
+    {
+        var textCatalog = GetTextCatalog();
+        return node.Kind switch
         {
-            ProjectNodeKind.Root => "Root",
-            ProjectNodeKind.Directory => "Directory",
-            _ => "File",
+            ProjectNodeKind.Root => textCatalog.KindRoot,
+            ProjectNodeKind.Directory => textCatalog.KindDirectory,
+            _ => textCatalog.KindFile,
         };
+    }
+
+    private TreemapTextCatalog GetTextCatalog() =>
+        TextCatalog ?? TreemapTextCatalog.Default;
+
+    private static string FormatShare(double current, double total, string notAvailableText) =>
+        total <= 0 || current <= 0 ? notAvailableText : $"{current / total:P1}";
 
     private static string FormatMetric(ProjectNode node, MetricId metricId) =>
         MetricValueFormatter.Format(metricId, node.ComputedMetrics.GetOrDefault(metricId), CultureInfo.CurrentCulture);

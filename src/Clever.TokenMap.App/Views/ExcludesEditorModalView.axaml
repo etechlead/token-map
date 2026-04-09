@@ -14,7 +14,7 @@
                 <Button Grid.Column="1"
                         Classes="close-button"
                         Command="{Binding ExcludesEditor.CancelCommand}"
-                        ToolTip.Tip="Cancel editing excludes">
+                        ToolTip.Tip="{Binding Localization.CancelEditingExcludesTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
@@ -41,17 +41,17 @@
                         Grid.Column="0"
                         Classes="action-button"
                         Command="{Binding ExcludesEditor.CancelCommand}"
-                        Content="Cancel" />
+                        Content="{Binding Localization.Cancel}" />
                 <Button Name="SaveExcludesButton"
                         Grid.Column="2"
                         Classes="action-button"
                         Command="{Binding ExcludesEditor.SaveCommand}"
-                        Content="Save" />
+                        Content="{Binding Localization.Save}" />
                 <Button Name="SaveAndRescanExcludesButton"
                         Grid.Column="3"
                         Classes="action-button primary"
                         Command="{Binding ExcludesEditor.SaveAndRescanCommand}"
-                        Content="Save and Rescan" />
+                        Content="{Binding Localization.SaveAndRescan}" />
             </Grid>
         </Grid>
     </Border>

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
@@ -23,6 +24,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly IReadOnlyCurrentFolderSettingsState _currentFolderSettingsState;
     private readonly IReadOnlySettingsState _settingsState;
+    private readonly LocalizationState _localization;
+    private readonly MetricPresentationCatalog _metricPresentationCatalog;
     private readonly IReadOnlyList<MetricDefinition> _allMetricDefinitions;
     private readonly ObservableCollection<MetricSelectionOptionViewModel> _visibleTreemapMetricOptions = [];
     private readonly ObservableCollection<MetricVisibilityOptionViewModel> _metricVisibilityOptions = [];
@@ -34,16 +37,22 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         ISettingsCoordinator settingsCoordinator,
         IAsyncRelayCommand openFolderCommand,
         IAsyncRelayCommand rescanCommand,
-        IRelayCommand cancelCommand)
+        IRelayCommand cancelCommand,
+        LocalizationState localization,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         _settingsCoordinator = settingsCoordinator;
         _settingsState = settingsCoordinator.State;
         _currentFolderSettingsState = settingsCoordinator.CurrentFolderState;
+        _localization = localization;
+        _metricPresentationCatalog = metricPresentationCatalog;
         OpenFolderCommand = openFolderCommand;
         RescanCommand = rescanCommand;
         CancelCommand = cancelCommand;
         _settingsState.PropertyChanged += SettingsStateOnPropertyChanged;
         _currentFolderSettingsState.PropertyChanged += CurrentFolderSettingsStateOnPropertyChanged;
+        _localization.LanguageChanged += LocalizationOnLanguageChanged;
+        _metricPresentationCatalog.PresentationChanged += MetricPresentationCatalogOnPresentationChanged;
         _selectSystemThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.System));
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
@@ -59,7 +68,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         {
             var option = new MetricVisibilityOptionViewModel(
                 definition,
-                _settingsCoordinator.SetMetricVisibility);
+                _settingsCoordinator.SetMetricVisibility,
+                _metricPresentationCatalog);
             if (definition.SupportsTreemapWeight)
             {
                 _metricVisibilityOptions.Add(option);
@@ -96,6 +106,10 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public ReadOnlyObservableCollection<MetricVisibilityOptionViewModel> MetricVisibilityOptions { get; }
 
     public ReadOnlyObservableCollection<MetricVisibilityOptionViewModel> TreeOnlyMetricVisibilityOptions { get; }
+
+    public ReadOnlyCollection<ApplicationLanguageOption> ApplicationLanguageOptions => _localization.ApplicationLanguageOptions;
+
+    public MetricPresentationCatalog MetricPresentationCatalog => _metricPresentationCatalog;
 
     [ObservableProperty]
     private bool canConfigureScanOptions = true;
@@ -173,8 +187,24 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public bool CanConfigureFolderExcludes => CanConfigureScanOptions && HasCurrentFolderSettings;
 
     public string CurrentFolderSettingsTitle => HasCurrentFolderSettings
-        ? $"Current folder: {FolderDisplayText.GetFolderDisplayName(_currentFolderSettingsState.ActiveRootPath)}"
-        : "Current folder";
+        ? _localization.FormatCurrentFolderSettingsTitle(FolderDisplayText.GetFolderDisplayName(_currentFolderSettingsState.ActiveRootPath))
+        : _localization.CurrentFolderSettingsTitleFallback;
+
+    public ApplicationLanguageOption? SelectedApplicationLanguageOption
+    {
+        get => ApplicationLanguageOptions.FirstOrDefault(option =>
+            string.Equals(option.Value, _settingsState.ApplicationLanguageTag, StringComparison.OrdinalIgnoreCase));
+        set
+        {
+            if (value is null ||
+                string.Equals(value.Value, _settingsState.ApplicationLanguageTag, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            _settingsCoordinator.SetApplicationLanguageTag(value.Value);
+        }
+    }
 
     public ThemePreference SelectedThemePreference
     {
@@ -199,8 +229,8 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     }
 
     public string WorkspaceLayoutToggleToolTip => IsStackedWorkspaceLayout
-        ? "Switch to side-by-side layout"
-        : "Switch to stacked layout";
+        ? _localization.WorkspaceLayoutToggleToolTip(isStackedWorkspaceLayout: true)
+        : _localization.WorkspaceLayoutToggleToolTip(isStackedWorkspaceLayout: false);
 
     public TreemapPalette SelectedTreemapPalette
     {
@@ -298,6 +328,9 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
                 OnPropertyChanged(nameof(IsLightThemeSelected));
                 OnPropertyChanged(nameof(IsDarkThemeSelected));
                 break;
+            case nameof(IReadOnlySettingsState.ApplicationLanguageTag):
+                OnPropertyChanged(nameof(SelectedApplicationLanguageOption));
+                break;
             case nameof(IReadOnlySettingsState.WorkspaceLayoutMode):
                 OnPropertyChanged(nameof(SelectedWorkspaceLayoutMode));
                 OnPropertyChanged(nameof(IsSideBySideWorkspaceLayout));
@@ -334,6 +367,18 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public ScanOptions BuildScanOptions() =>
         _settingsCoordinator.BuildCurrentScanOptions();
 
+    private void LocalizationOnLanguageChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(CurrentFolderSettingsTitle));
+        OnPropertyChanged(nameof(WorkspaceLayoutToggleToolTip));
+        OnPropertyChanged(nameof(SelectedApplicationLanguageOption));
+    }
+
+    private void MetricPresentationCatalogOnPresentationChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(VisibleMetricDefinitions));
+    }
+
     private void RefreshMetricPresentation()
     {
         var visibleMetricIdSet = _settingsState.VisibleMetricIds.ToHashSet();
@@ -369,7 +414,10 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         for (var index = 0; index < visibleTreemapMetrics.Length; index++)
         {
             var definition = visibleTreemapMetrics[index];
-            var option = new MetricSelectionOptionViewModel(definition, metricId => SelectedMetric = metricId);
+            var option = new MetricSelectionOptionViewModel(
+                definition,
+                metricId => SelectedMetric = metricId,
+                _metricPresentationCatalog);
             option.Sync(definition.Id == SelectedMetric, index, visibleTreemapMetrics.Length);
             _visibleTreemapMetricOptions.Add(option);
         }

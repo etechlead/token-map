@@ -10,6 +10,7 @@ namespace Clever.TokenMap.App.ViewModels;
 public sealed class MainWindowWorkspacePresenter : ObservableObject
 {
     private readonly IAnalysisSessionController _analysisSessionController;
+    private readonly LocalizationState _localization;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly ISummaryProjection _summary;
     private readonly IToolbarAvailabilitySink _toolbar;
@@ -22,7 +23,8 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         ISettingsCoordinator settingsCoordinator,
         IToolbarAvailabilitySink toolbar,
         IProjectTreeWorkspaceView tree,
-        ISummaryProjection summary)
+        ISummaryProjection summary,
+        LocalizationState localization)
     {
         _analysisSessionController = analysisSessionController;
         _treemapNavigationState = treemapNavigationState;
@@ -30,6 +32,7 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
         _toolbar = toolbar;
         _tree = tree;
         _summary = summary;
+        _localization = localization;
 
         _tree.SetShareMetric(_settingsCoordinator.State.SelectedMetric);
         _tree.SetVisibleMetrics(_settingsCoordinator.State.VisibleMetricIds);
@@ -121,7 +124,8 @@ public sealed class MainWindowWorkspacePresenter : ObservableObject
 
         return new ShareSnapshotViewModel(
             snapshot,
-            FolderDisplayText.GetFolderDisplayName(_analysisSessionController.SelectedFolderPath));
+            FolderDisplayText.GetFolderDisplayName(_analysisSessionController.SelectedFolderPath),
+            _localization);
     }
 
     private void TreeOnSelectedNodeChanged(object? sender, ProjectNode? node)

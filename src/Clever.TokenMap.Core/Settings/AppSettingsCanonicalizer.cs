@@ -1,3 +1,4 @@
+using System.Globalization;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
@@ -19,8 +20,15 @@ public static class AppSettingsCanonicalizer
             settings.Analysis.VisibleMetricIds);
         settings.Appearance.WorkspaceLayoutMode = NormalizeWorkspaceLayoutMode(settings.Appearance.WorkspaceLayoutMode);
         settings.Appearance.TreemapPalette = NormalizeTreemapPalette(settings.Appearance.TreemapPalette);
+        settings.Localization.ApplicationLanguageTag =
+            NormalizeApplicationLanguageTag(settings.Localization.ApplicationLanguageTag);
         settings.Analysis.GlobalExcludes = [.. GlobalExcludeList.Normalize(settings.Analysis.GlobalExcludes)];
-        settings.Prompting.RefactorPromptTemplate = NormalizeRefactorPromptTemplate(settings.Prompting.RefactorPromptTemplate);
+        settings.Prompting.SelectedPromptLanguageTag =
+            NormalizePromptLanguageTag(settings.Prompting.SelectedPromptLanguageTag)
+            ?? NormalizePromptLanguageTag(settings.Localization.ApplicationLanguageTag)
+            ?? ApplicationLanguageTags.Default;
+        settings.Prompting.RefactorPromptTemplatesByLanguage =
+            NormalizeRefactorPromptTemplatesByLanguage(settings.Prompting.RefactorPromptTemplatesByLanguage);
         settings.RecentFolderPaths = NormalizeRecentFolderPaths(settings.RecentFolderPaths);
         return settings;
     }
@@ -34,6 +42,26 @@ public static class AppSettingsCanonicalizer
         Enum.IsDefined(palette)
             ? palette
             : TreemapPalette.Weighted;
+
+    public static string NormalizeApplicationLanguageTag(string? languageTag) =>
+        ApplicationLanguageTags.Normalize(languageTag);
+
+    public static string? NormalizePromptLanguageTag(string? languageTag)
+    {
+        if (string.IsNullOrWhiteSpace(languageTag))
+        {
+            return null;
+        }
+
+        try
+        {
+            return CultureInfo.GetCultureInfo(languageTag.Trim()).Name;
+        }
+        catch (CultureNotFoundException)
+        {
+            return null;
+        }
+    }
 
     public static List<string> NormalizeRecentFolderPaths(IEnumerable<string?> paths)
     {
@@ -91,10 +119,28 @@ public static class AppSettingsCanonicalizer
         return [.. DefaultMetricCatalog.GetAllUserVisibleMetricIds().Take(1)];
     }
 
-    public static string NormalizeRefactorPromptTemplate(string? template) =>
-        string.IsNullOrWhiteSpace(template)
-            ? RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate
-            : template.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
+    public static Dictionary<string, string> NormalizeRefactorPromptTemplatesByLanguage(
+        IReadOnlyDictionary<string, string>? templatesByLanguage)
+    {
+        var normalizedTemplates = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (templatesByLanguage is null)
+        {
+            return normalizedTemplates;
+        }
+
+        foreach (var pair in templatesByLanguage)
+        {
+            var normalizedTag = NormalizePromptLanguageTag(pair.Key);
+            if (normalizedTag is null)
+            {
+                continue;
+            }
+
+            normalizedTemplates[normalizedTag] = NormalizePromptTemplateText(pair.Value);
+        }
+
+        return normalizedTemplates;
+    }
 
     private static MetricId NormalizeSelectedMetric(MetricId selectedMetric, List<MetricId> visibleMetricIds)
     {
@@ -108,4 +154,9 @@ public static class AppSettingsCanonicalizer
         string.IsNullOrWhiteSpace(path)
             ? null
             : path.Trim();
+
+    private static string NormalizePromptTemplateText(string? template) =>
+        string.IsNullOrWhiteSpace(template)
+            ? string.Empty
+            : template.Replace("\r\n", "\n", StringComparison.Ordinal).Trim();
 }

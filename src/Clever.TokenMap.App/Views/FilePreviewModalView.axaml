@@ -22,7 +22,7 @@
                         Grid.Column="1"
                         Classes="close-button"
                         Command="{Binding CloseFilePreviewCommand}"
-                        ToolTip.Tip="Close file preview">
+                        ToolTip.Tip="{Binding Localization.CloseFilePreviewTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
@@ -45,7 +45,7 @@
                         <StackPanel Spacing="14">
                             <TextBlock Name="FilePreviewExplainabilityTitleText"
                                        Classes="panel-title"
-                                       Text="Explainability" />
+                                       Text="{Binding Localization.Explainability}" />
                             <ItemsControl Name="FilePreviewExplainabilitySectionsItemsControl"
                                           ItemsSource="{Binding FilePreviewExplainability.Sections}">
                                 <ItemsControl.ItemTemplate>
@@ -219,7 +219,7 @@
                         Grid.Column="1"
                         Classes="action-button primary"
                         Command="{Binding CloseFilePreviewCommand}"
-                        Content="Close" />
+                        Content="{Binding Localization.Close}" />
             </Grid>
         </Grid>
     </Border>

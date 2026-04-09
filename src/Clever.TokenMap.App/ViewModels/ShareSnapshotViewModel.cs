@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using Avalonia.Media;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
 using Clever.TokenMap.Core.Metrics;
@@ -19,10 +20,12 @@ public partial class ShareSnapshotViewModel : ViewModelBase
     private static readonly IBrush CopyButtonDefaultBrush = new SolidColorBrush(Color.Parse("#0F6CBD"));
     private static readonly IBrush CopyButtonSuccessBrush = new SolidColorBrush(Color.Parse("#2A8A57"));
     private static readonly IBrush CopyButtonForegroundBrush = Brushes.White;
+    private readonly LocalizationState _localization;
 
-    public ShareSnapshotViewModel(ProjectSnapshot snapshot, string? defaultProjectName)
+    public ShareSnapshotViewModel(ProjectSnapshot snapshot, string? defaultProjectName, LocalizationState localization)
     {
         Snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         ProjectName = string.IsNullOrWhiteSpace(defaultProjectName)
             ? FolderDisplayText.GetFolderDisplayName(snapshot.RootPath)
             : defaultProjectName.Trim();
@@ -79,11 +82,23 @@ public partial class ShareSnapshotViewModel : ViewModelBase
 
     public bool IsCopyFeedbackSuccess => CopyFeedbackState == ShareCopyFeedbackState.Success;
 
+    public string TokensLabel => _localization.ShareCardTokens;
+
+    public string LinesLabel => _localization.ShareCardLines;
+
+    public string FilesLabel => _localization.ShareCardFiles;
+
+    public string MadeWithLabel => _localization.ShareCardMadeWith;
+
+    public string IncludeProjectNameLabel => _localization.IncludeProjectName;
+
+    public string ProjectNameWatermark => _localization.ProjectNameWatermark;
+
     public string CopyButtonText =>
         CopyFeedbackState switch
         {
-            ShareCopyFeedbackState.Success => "Copied",
-            _ => "Copy",
+            ShareCopyFeedbackState.Success => _localization.Copied,
+            _ => _localization.Copy,
         };
 
     public IBrush CopyButtonBackground =>
@@ -96,4 +111,15 @@ public partial class ShareSnapshotViewModel : ViewModelBase
     public IBrush CopyButtonBorderBrush => CopyButtonBackground;
 
     public IBrush CopyButtonForeground { get; } = CopyButtonForegroundBrush;
+
+    internal void RefreshLocalization()
+    {
+        OnPropertyChanged(nameof(TokensLabel));
+        OnPropertyChanged(nameof(LinesLabel));
+        OnPropertyChanged(nameof(FilesLabel));
+        OnPropertyChanged(nameof(MadeWithLabel));
+        OnPropertyChanged(nameof(IncludeProjectNameLabel));
+        OnPropertyChanged(nameof(ProjectNameWatermark));
+        OnPropertyChanged(nameof(CopyButtonText));
+    }
 }

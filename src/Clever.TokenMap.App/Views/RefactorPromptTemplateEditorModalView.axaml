@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:state="using:Clever.TokenMap.App.State"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Clever.TokenMap.App.ViewModels"
              x:Class="Clever.TokenMap.App.Views.RefactorPromptTemplateEditorModalView"
@@ -14,17 +15,17 @@
                 <StackPanel Spacing="4">
                     <TextBlock Name="RefactorPromptTemplateEditorTitleText"
                                Classes="panel-title"
-                               Text="Refactor prompt template" />
+                               Text="{Binding Localization.RefactorPromptTemplate}" />
                     <TextBlock Name="RefactorPromptTemplateEditorScopeText"
                                Classes="panel-body"
-                               Text="Global setting for all repositories on this machine." />
+                               Text="{Binding Localization.RefactorPromptTemplateScope}" />
                 </StackPanel>
 
                 <Button Name="CloseRefactorPromptTemplateEditorModalButton"
                         Grid.Column="1"
                         Classes="close-button"
                         Command="{Binding RefactorPromptTemplateSettings.CloseEditorCommand}"
-                        ToolTip.Tip="Close refactor prompt template editor">
+                        ToolTip.Tip="{Binding Localization.CloseRefactorPromptTemplateEditorTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
@@ -38,10 +39,10 @@
                         <StackPanel Spacing="4">
                             <TextBlock Name="RefactorPromptTemplatePlaceholdersTitleText"
                                        Classes="toolbar-group-title"
-                                       Text="Placeholders" />
+                                       Text="{Binding Localization.Placeholders}" />
                             <TextBlock Name="RefactorPromptTemplatePlaceholdersHintText"
                                        Classes="panel-body"
-                                       Text="Insert these tokens anywhere in the template." />
+                                       Text="{Binding Localization.PlaceholdersHint}" />
                         </StackPanel>
 
                         <ScrollViewer Grid.Row="1"
@@ -79,13 +80,30 @@
                         Background="{DynamicResource TokenMapDividerBrush}" />
 
                 <Grid Grid.Column="2"
-                      RowDefinitions="Auto,*"
+                      RowDefinitions="Auto,Auto,*"
                       RowSpacing="10">
                     <TextBlock Name="RefactorPromptTemplateEditorHintText"
                                Classes="panel-body"
-                               Text="Edit the default conversation-starter template used for new refactor prompts." />
+                               Text="{Binding Localization.RefactorPromptTemplateEditorHint}" />
+                    <StackPanel Grid.Row="1"
+                                Spacing="4"
+                                HorizontalAlignment="Left">
+                        <TextBlock Foreground="{DynamicResource TokenMapMutedTextBrush}"
+                                   FontSize="11"
+                                   Text="{Binding Localization.PromptLanguage}" />
+                        <ComboBox Name="PromptLanguageComboBox"
+                                  Width="180"
+                                  ItemsSource="{Binding RefactorPromptTemplateSettings.PromptLanguageOptions}"
+                                  SelectedItem="{Binding RefactorPromptTemplateSettings.SelectedPromptLanguageOption, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="state:ApplicationLanguageOption">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
                     <TextBox Name="RefactorPromptTemplateEditorTextBox"
-                             Grid.Row="1"
+                             Grid.Row="2"
                              Classes="refactor-prompt-template-editor"
                              AcceptsReturn="True"
                              TextWrapping="Wrap"
@@ -102,7 +120,7 @@
                         Classes="action-button"
                         HorizontalAlignment="Left"
                         Command="{Binding RefactorPromptTemplateSettings.ResetEditorCommand}"
-                        Content="Reset to default" />
+                        Content="{Binding Localization.ResetToDefault}" />
 
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
@@ -112,11 +130,11 @@
                     <Button Name="CancelRefactorPromptTemplateButton"
                             Classes="action-button"
                             Command="{Binding RefactorPromptTemplateSettings.CloseEditorCommand}"
-                            Content="Cancel" />
+                            Content="{Binding Localization.Cancel}" />
                     <Button Name="SaveRefactorPromptTemplateButton"
                             Classes="action-button primary"
                             Command="{Binding RefactorPromptTemplateSettings.SaveEditorCommand}"
-                            Content="Save" />
+                            Content="{Binding Localization.Save}" />
                 </StackPanel>
             </Grid>
         </Grid>

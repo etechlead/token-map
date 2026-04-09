@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, ...</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, ...</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve"><value>TokenMap</value></data>
+  <data name="PreviousFoldersTitle" xml:space="preserve"><value>Previous folders</value></data>
+  <data name="Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="NoPreviousFoldersYet" xml:space="preserve"><value>No previous folders yet</value></data>
+  <data name="OpenFolder" xml:space="preserve"><value>Open Folder</value></data>
+  <data name="Missing" xml:space="preserve"><value>Missing</value></data>
+  <data name="RemoveFromRecentFoldersTooltip" xml:space="preserve"><value>Remove from recent folders</value></data>
+  <data name="OpenLogs" xml:space="preserve"><value>Open Logs</value></data>
+  <data name="Dismiss" xml:space="preserve"><value>Dismiss</value></data>
+  <data name="CloseApp" xml:space="preserve"><value>Close App</value></data>
+  <data name="Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="CloseSettingsTooltip" xml:space="preserve"><value>Close settings</value></data>
+  <data name="View" xml:space="preserve"><value>View</value></data>
+  <data name="TreemapPalette" xml:space="preserve"><value>Treemap palette</value></data>
+  <data name="TreemapPaletteWeighted" xml:space="preserve"><value>Weighted</value></data>
+  <data name="TreemapPaletteStudio" xml:space="preserve"><value>Studio</value></data>
+  <data name="TreemapPalettePlain" xml:space="preserve"><value>Plain</value></data>
+  <data name="Metrics" xml:space="preserve"><value>Metrics</value></data>
+  <data name="TreeOnly" xml:space="preserve"><value>Tree only</value></data>
+  <data name="ResetDefaults" xml:space="preserve"><value>Reset defaults</value></data>
+  <data name="ShowAll" xml:space="preserve"><value>Show all</value></data>
+  <data name="Scan" xml:space="preserve"><value>Scan</value></data>
+  <data name="RespectGitIgnore" xml:space="preserve"><value>Respect .gitignore</value></data>
+  <data name="UseGlobalExcludes" xml:space="preserve"><value>Use global excludes</value></data>
+  <data name="Edit" xml:space="preserve"><value>Edit</value></data>
+  <data name="UseFolderExcludes" xml:space="preserve"><value>Use folder excludes</value></data>
+  <data name="ScanSettingsUpdatedRescanToApply" xml:space="preserve"><value>Scan settings updated. Rescan to apply.</value></data>
+  <data name="RescanNow" xml:space="preserve"><value>Rescan now</value></data>
+  <data name="Prompts" xml:space="preserve"><value>Prompts</value></data>
+  <data name="EditRefactorPromptTemplate" xml:space="preserve"><value>Edit refactor prompt template</value></data>
+  <data name="Theme" xml:space="preserve"><value>Theme</value></data>
+  <data name="UseLightTheme" xml:space="preserve"><value>Use the light theme</value></data>
+  <data name="UseSystemTheme" xml:space="preserve"><value>Follow the system theme</value></data>
+  <data name="UseDarkTheme" xml:space="preserve"><value>Use the dark theme</value></data>
+  <data name="ProjectTree" xml:space="preserve"><value>Project Tree</value></data>
+  <data name="Name" xml:space="preserve"><value>Name</value></data>
+  <data name="PercentParent" xml:space="preserve"><value>% Parent</value></data>
+  <data name="Treemap" xml:space="preserve"><value>Treemap</value></data>
+  <data name="ShowValues" xml:space="preserve"><value>Show values</value></data>
+  <data name="Threshold" xml:space="preserve"><value>Threshold</value></data>
+  <data name="OpenAction" xml:space="preserve"><value>Open</value></data>
+  <data name="PreviewAction" xml:space="preserve"><value>Preview</value></data>
+  <data name="RefactorPromptAction" xml:space="preserve"><value>Refactor Prompt</value></data>
+  <data name="SetAsTreemapRootAction" xml:space="preserve"><value>Set as Treemap Root</value></data>
+  <data name="ExcludeFromScanAction" xml:space="preserve"><value>Exclude from Scan</value></data>
+  <data name="CopyFullPathAction" xml:space="preserve"><value>Copy Full Path</value></data>
+  <data name="CopyRelativePathAction" xml:space="preserve"><value>Copy Relative Path</value></data>
+  <data name="OpenFolderForAnalysisTooltip" xml:space="preserve"><value>Open a folder for analysis</value></data>
+  <data name="RunScanAgainTooltip" xml:space="preserve"><value>Run the scan again for the selected folder</value></data>
+  <data name="StopCurrentScanTooltip" xml:space="preserve"><value>Stop the current scan</value></data>
+  <data name="Rescan" xml:space="preserve"><value>Rescan</value></data>
+  <data name="Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Tokens" xml:space="preserve"><value>Tokens</value></data>
+  <data name="Lines" xml:space="preserve"><value>Lines</value></data>
+  <data name="Files" xml:space="preserve"><value>Files</value></data>
+  <data name="Share" xml:space="preserve"><value>Share</value></data>
+  <data name="PreviewAndCopyShareImageTooltip" xml:space="preserve"><value>Preview and copy a share image</value></data>
+  <data name="OpenSettingsTooltip" xml:space="preserve"><value>Open settings</value></data>
+  <data name="ShareImage" xml:space="preserve"><value>Share image</value></data>
+  <data name="CloseShareImagePreviewTooltip" xml:space="preserve"><value>Close share image preview</value></data>
+  <data name="ShareImagePreviewHint" xml:space="preserve"><value>Preview the card, optionally include a project name, then copy the image to the clipboard.</value></data>
+  <data name="IncludeProjectName" xml:space="preserve"><value>Include project name</value></data>
+  <data name="ProjectNameWatermark" xml:space="preserve"><value>Project name</value></data>
+  <data name="CloseFilePreviewTooltip" xml:space="preserve"><value>Close file preview</value></data>
+  <data name="Explainability" xml:space="preserve"><value>Explainability</value></data>
+  <data name="Close" xml:space="preserve"><value>Close</value></data>
+  <data name="CancelEditingExcludesTooltip" xml:space="preserve"><value>Cancel editing excludes</value></data>
+  <data name="Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Save" xml:space="preserve"><value>Save</value></data>
+  <data name="SaveAndRescan" xml:space="preserve"><value>Save and Rescan</value></data>
+  <data name="RefactorPrompt" xml:space="preserve"><value>Refactor prompt</value></data>
+  <data name="CloseRefactorPromptTooltip" xml:space="preserve"><value>Close refactor prompt</value></data>
+  <data name="RefactorPromptIntro" xml:space="preserve"><value>Edit the conversation starter if needed, then copy it into your coding agent.</value></data>
+  <data name="RefactorPromptHint" xml:space="preserve"><value>This prompt frames the file as a possible refactoring candidate without prescribing a specific implementation.</value></data>
+  <data name="RefactorPromptTemplate" xml:space="preserve"><value>Refactor prompt template</value></data>
+  <data name="RefactorPromptTemplateScope" xml:space="preserve"><value>Global setting for all repositories on this machine.</value></data>
+  <data name="CloseRefactorPromptTemplateEditorTooltip" xml:space="preserve"><value>Close refactor prompt template editor</value></data>
+  <data name="Placeholders" xml:space="preserve"><value>Placeholders</value></data>
+  <data name="PlaceholdersHint" xml:space="preserve"><value>Insert these tokens anywhere in the template.</value></data>
+  <data name="RefactorPromptTemplateEditorHint" xml:space="preserve"><value>Edit the default conversation-starter template used for new refactor prompts.</value></data>
+  <data name="ResetToDefault" xml:space="preserve"><value>Reset to default</value></data>
+  <data name="PromptLanguage" xml:space="preserve"><value>Prompt language</value></data>
+  <data name="ApplicationLanguage" xml:space="preserve"><value>Application language</value></data>
+  <data name="SystemLanguage" xml:space="preserve"><value>System</value></data>
+  <data name="EnglishLanguage" xml:space="preserve"><value>English</value></data>
+  <data name="RussianLanguage" xml:space="preserve"><value>Russian</value></data>
+  <data name="Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="Copied" xml:space="preserve"><value>Copied</value></data>
+  <data name="RevealAction" xml:space="preserve"><value>Reveal</value></data>
+  <data name="RevealInExplorerAction" xml:space="preserve"><value>Reveal in Explorer</value></data>
+  <data name="RevealInFinderAction" xml:space="preserve"><value>Reveal in Finder</value></data>
+  <data name="RevealInFileManagerAction" xml:space="preserve"><value>Reveal in File Manager</value></data>
+  <data name="ShareCardTokens" xml:space="preserve"><value>tokens</value></data>
+  <data name="ShareCardLines" xml:space="preserve"><value>lines</value></data>
+  <data name="ShareCardFiles" xml:space="preserve"><value>files</value></data>
+  <data name="ShareCardMadeWith" xml:space="preserve"><value>made with</value></data>
+  <data name="FormatCurrentFolderSettingsTitle" xml:space="preserve"><value>Current folder: {0}</value></data>
+  <data name="CurrentFolderSettingsTitleFallback" xml:space="preserve"><value>Current folder</value></data>
+  <data name="WorkspaceLayoutToggleToolTipSideBySide" xml:space="preserve"><value>Switch to side-by-side layout</value></data>
+  <data name="WorkspaceLayoutToggleToolTipStacked" xml:space="preserve"><value>Switch to stacked layout</value></data>
+  <data name="FatalIssueTitle" xml:space="preserve"><value>Unrecoverable application error</value></data>
+  <data name="NonFatalIssueTitle" xml:space="preserve"><value>Application issue</value></data>
+  <data name="FormatReferenceId" xml:space="preserve"><value>Reference ID: {0}</value></data>
+  <data name="AboutFallbackDescription" xml:space="preserve"><value>Local source-tree analysis</value></data>
+  <data name="AboutLicenseName" xml:space="preserve"><value>MIT license</value></data>
+  <data name="FormatVersion" xml:space="preserve"><value>v{0}</value></data>
+  <data name="AboutOpenRepositoryFailed" xml:space="preserve"><value>TokenMap could not open the project repository link.</value></data>
+  <data name="OpenLogsFailed" xml:space="preserve"><value>TokenMap could not open the diagnostics log folder.</value></data>
+  <data name="ShareCopyImageFailed" xml:space="preserve"><value>TokenMap could not copy the share image to the clipboard.</value></data>
+  <data name="RefactorPromptCopyFailed" xml:space="preserve"><value>TokenMap could not copy the refactor prompt to the clipboard.</value></data>
+  <data name="OpenNodeFailed" xml:space="preserve"><value>TokenMap could not open '{0}'.</value></data>
+  <data name="RevealNodeFailed" xml:space="preserve"><value>TokenMap could not reveal '{0}'.</value></data>
+  <data name="FormatAnalysisRootMissing" xml:space="preserve"><value>TokenMap could not find '{0}'.</value></data>
+  <data name="FormatAnalysisRunFailed" xml:space="preserve"><value>TokenMap could not finish analyzing '{0}'.</value></data>
+  <data name="RecentFoldersEmptyFlyoutSecondaryText" xml:space="preserve"><value>Analyze a folder once and it will appear here.</value></data>
+  <data name="StartupFailedToStart" xml:space="preserve"><value>TokenMap failed to start.</value></data>
+  <data name="StartupDiagnosticDetailsWrittenTo" xml:space="preserve"><value>Diagnostic details were written to:</value></data>
+  <data name="DispatcherUnhandledUserMessage" xml:space="preserve"><value>TokenMap hit an unexpected error. Review the log details before continuing.</value></data>
+  <data name="UnobservedTaskUserMessage" xml:space="preserve"><value>A background task failed. TokenMap wrote diagnostic details to the log.</value></data>
+  <data name="DomainUnhandledUserMessage" xml:space="preserve"><value>TokenMap hit an unrecoverable error. Review the log details and restart the app.</value></data>
+  <data name="SummaryIdle" xml:space="preserve"><value>Select a folder to build a project treemap and metrics snapshot.</value></data>
+  <data name="SummaryScanning" xml:space="preserve"><value>Analyzing project structure, token counts and non-empty line statistics.</value></data>
+  <data name="SummaryCancelled" xml:space="preserve"><value>Analysis was cancelled. Previous snapshot remains available.</value></data>
+  <data name="SummaryFailed" xml:space="preserve"><value>Analysis failed. Review the diagnostics issue and log details.</value></data>
+  <data name="FormatSummaryCompleted" xml:space="preserve"><value>Analysis completed for {0}.</value></data>
+  <data name="FormatSummaryCompletedWithDiagnostics" xml:space="preserve"><value>Analysis completed for {0} with {1:N0} diagnostics.</value></data>
+  <data name="FormatTotalsText" xml:space="preserve"><value>{0:N0} tokens - {1:N0} non-empty lines - {2:N0} files - {3:N0} diagnostics</value></data>
+  <data name="ProgressScanningTree" xml:space="preserve"><value>Scanning tree</value></data>
+  <data name="ProgressAnalyzingFiles" xml:space="preserve"><value>Analyzing files</value></data>
+  <data name="FormatProgressAnalyzingFiles" xml:space="preserve"><value>Analyzing files - {0:N0} / {1:N0}</value></data>
+  <data name="FormatProgressScanningTreeFilesFound" xml:space="preserve"><value>Scanning tree - {0:N0} files found</value></data>
+  <data name="GlobalExcludesTitle" xml:space="preserve"><value>Global excludes</value></data>
+  <data name="GlobalExcludesHelperText" xml:space="preserve"><value>Use gitignore-style rules, one per line. Use / for project-root rules, ! for re-include rules, and # for comments.</value></data>
+  <data name="FolderExcludesHelperText" xml:space="preserve"><value>Use gitignore-style rules, one per line. These rules apply only to the current folder and override .gitignore. Use / for folder-root rules, ! for re-include rules, and # for comments.</value></data>
+  <data name="FormatFolderExcludesTitle" xml:space="preserve"><value>Excludes for {0}</value></data>
+  <data name="LoadingPreviewTitle" xml:space="preserve"><value>Loading preview</value></data>
+  <data name="LoadingPreviewMessage" xml:space="preserve"><value>Reading file contents.</value></data>
+  <data name="PreviewUnavailableTitle" xml:space="preserve"><value>Preview unavailable</value></data>
+  <data name="PreviewUnavailableMessage" xml:space="preserve"><value>TokenMap only shows text files in the built-in preview.</value></data>
+  <data name="FileTooLargeTitle" xml:space="preserve"><value>File too large</value></data>
+  <data name="FileTooLargeMessage" xml:space="preserve"><value>This file is larger than 2 MiB. Open it in the default app to inspect the full contents.</value></data>
+  <data name="FileMissingTitle" xml:space="preserve"><value>File missing</value></data>
+  <data name="FileMissingMessage" xml:space="preserve"><value>The file is no longer available at its original path.</value></data>
+  <data name="PreviewFailedTitle" xml:space="preserve"><value>Preview failed</value></data>
+  <data name="PreviewFailedMessage" xml:space="preserve"><value>TokenMap could not read this file.</value></data>
+  <data name="ExplainabilityMetricUnavailable" xml:space="preserve"><value>This metric is unavailable for this file.</value></data>
+  <data name="ExplainabilityGitUnavailableNote" xml:space="preserve"><value>Git context unavailable. Refactor Priority currently equals the structural base.</value></data>
+  <data name="ExplainabilityGitBelowThresholdsNote" xml:space="preserve"><value>Git context is available, but all git signals stayed below the uplift thresholds.</value></data>
+  <data name="ExplainabilityStructuralBaseTitle" xml:space="preserve"><value>Structural base</value></data>
+  <data name="ExplainabilityStructuralBaseNote" xml:space="preserve"><value>Intrinsic score from file scale, callable burden, and risk distribution.</value></data>
+  <data name="ExplainabilityStructuralUnavailableNote" xml:space="preserve"><value>Structural breakdown unavailable for this file.</value></data>
+  <data name="ExplainabilityGitUpliftTitle" xml:space="preserve"><value>Git uplift</value></data>
+  <data name="ExplainabilityGitUpliftPositiveNote" xml:space="preserve"><value>Bounded urgency boost from recent change and co-change pressure.</value></data>
+  <data name="ExplainabilityGitUnavailableForFileNote" xml:space="preserve"><value>Git context unavailable for this file.</value></data>
+  <data name="ExplainabilityNotAvailable" xml:space="preserve"><value>n/a</value></data>
+  <data name="RefactorPromptStructuralBaseDrivers" xml:space="preserve"><value>Structural base drivers</value></data>
+  <data name="RefactorPromptGitDrivers" xml:space="preserve"><value>Git drivers</value></data>
+  <data name="RefactorPromptGitUnavailableLine" xml:space="preserve"><value>Git uplift: unavailable because git-derived change and co-change inputs were not produced for this file.</value></data>
+  <data name="RefactorPromptGitZeroLine" xml:space="preserve"><value>Git uplift: +0 pts because all git signals stayed below the uplift thresholds.</value></data>
+  <data name="PromptTemplatePlaceholderRelativePath" xml:space="preserve"><value>Relative path of the selected file.</value></data>
+  <data name="PromptTemplatePlaceholderTokens" xml:space="preserve"><value>Token count for the file.</value></data>
+  <data name="PromptTemplatePlaceholderNonEmptyLines" xml:space="preserve"><value>Non-empty line count.</value></data>
+  <data name="PromptTemplatePlaceholderFileSize" xml:space="preserve"><value>File size, formatted for display.</value></data>
+  <data name="PromptTemplatePlaceholderRefactorPriority" xml:space="preserve"><value>Composite refactor-priority score.</value></data>
+  <data name="PromptTemplatePlaceholderRefactorPriorityBreakdown" xml:space="preserve"><value>Multi-line explanation for the structural base and any git-derived uplift behind refactor priority.</value></data>
+  <data name="GetTreemapPlaceholderNoSnapshot" xml:space="preserve"><value>Run analysis to populate treemap.</value></data>
+  <data name="GetTreemapPlaceholderNoWeightedNodes" xml:space="preserve"><value>No weighted nodes for the selected metric.</value></data>
+  <data name="TreemapRootPath" xml:space="preserve"><value>(root)</value></data>
+  <data name="TreemapNotAvailable" xml:space="preserve"><value>n/a</value></data>
+  <data name="TreemapShare" xml:space="preserve"><value>Share</value></data>
+  <data name="TreemapType" xml:space="preserve"><value>Type</value></data>
+  <data name="TreemapExtension" xml:space="preserve"><value>Ext</value></data>
+  <data name="TreemapNoExtension" xml:space="preserve"><value>(none)</value></data>
+  <data name="TreemapFilesInSubtree" xml:space="preserve"><value>Files in subtree</value></data>
+  <data name="TreemapKindRoot" xml:space="preserve"><value>Root</value></data>
+  <data name="TreemapKindDirectory" xml:space="preserve"><value>Directory</value></data>
+  <data name="TreemapKindFile" xml:space="preserve"><value>File</value></data>
+  <data name="DefaultStructuralDescription" xml:space="preserve"><value>Structural input that feeds the intrinsic refactor-risk base score.</value></data>
+  <data name="Structural_code_lines" xml:space="preserve"><value>Code volume in the file. Larger files tend to accumulate more moving parts before method-level risk is considered.</value></data>
+  <data name="Structural_total_callable_burden_points" xml:space="preserve"><value>Sum of per-callable burden after soft thresholds for method length, cyclomatic complexity, nesting depth, and parameter count.</value></data>
+  <data name="Structural_top_callable_burden_points" xml:space="preserve"><value>Burden of the single heaviest callable. This catches one dominant method even when the rest of the file looks moderate.</value></data>
+  <data name="Structural_affected_callable_ratio" xml:space="preserve"><value>Share of callables that exceed the soft thresholds. Higher ratios mean the problem is spread across the file rather than isolated.</value></data>
+  <data name="Structural_top_three_callable_burden_share" xml:space="preserve"><value>Share of callable burden concentrated in the top three callables. High concentration means a small number of methods dominate the risk.</value></data>
+  <data name="DefaultGitDescription" xml:space="preserve"><value>Git-derived pressure that can amplify urgency without dominating the structural base.</value></data>
+  <data name="Git_churn_lines_90d" xml:space="preserve"><value>Recently rewritten line volume. Frequent rewrites raise urgency, but only as a bounded uplift on top of the structural base.</value></data>
+  <data name="Git_touch_count_90d" xml:space="preserve"><value>Number of recent commits that touched this file. Repeated touches suggest ongoing friction around the code.</value></data>
+  <data name="Git_author_count_90d" xml:space="preserve"><value>Number of recent contributors touching the file. More contributors usually increase coordination pressure around risky code.</value></data>
+  <data name="Git_strong_cochanged_file_count_90d" xml:space="preserve"><value>Files that repeatedly change together with this one. This indicates a tighter blast radius when the file moves.</value></data>
+  <data name="Git_unique_cochanged_file_count_90d" xml:space="preserve"><value>Breadth of different files that changed alongside this one across the recent history window.</value></data>
+  <data name="Git_avg_cochange_set_size_90d" xml:space="preserve"><value>Typical width of change sets that include this file. Wider sets suggest changes tend to propagate.</value></data>
+  <data name="tokensDisplayName" xml:space="preserve"><value>Tokens</value></data>
+  <data name="tokensShortName" xml:space="preserve"><value>Tokens</value></data>
+  <data name="tokensDescription" xml:space="preserve"><value>Token count for text files and directory rollups.</value></data>
+  <data name="non_empty_linesDisplayName" xml:space="preserve"><value>Non-empty lines</value></data>
+  <data name="non_empty_linesShortName" xml:space="preserve"><value>Lines</value></data>
+  <data name="non_empty_linesDescription" xml:space="preserve"><value>Non-empty line count for text files and directory rollups.</value></data>
+  <data name="file_size_bytesDisplayName" xml:space="preserve"><value>File size</value></data>
+  <data name="file_size_bytesShortName" xml:space="preserve"><value>Size</value></data>
+  <data name="file_size_bytesDescription" xml:space="preserve"><value>File size in bytes and summed directory size.</value></data>
+  <data name="complexity_pointsDisplayName" xml:space="preserve"><value>Structural Risk</value></data>
+  <data name="complexity_pointsShortName" xml:space="preserve"><value>Risk</value></data>
+  <data name="complexity_pointsDescription" xml:space="preserve"><value>Continuous intrinsic structural-risk score based on file scale, callable burden, and risk distribution.</value></data>
+  <data name="refactor_priority_pointsDisplayName" xml:space="preserve"><value>Refactor Priority</value></data>
+  <data name="refactor_priority_pointsShortName" xml:space="preserve"><value>Refactor</value></data>
+  <data name="refactor_priority_pointsDescription" xml:space="preserve"><value>Refactoring priority score that combines structural risk with recent change and co-change pressure.</value></data>
+  <data name="code_linesDisplayName" xml:space="preserve"><value>Code lines</value></data>
+  <data name="code_linesShortName" xml:space="preserve"><value>Code</value></data>
+  <data name="code_linesDescription" xml:space="preserve"><value>Lines that contain code tokens.</value></data>
+  <data name="total_callable_burden_pointsDisplayName" xml:space="preserve"><value>Total callable burden</value></data>
+  <data name="total_callable_burden_pointsShortName" xml:space="preserve"><value>Total burden</value></data>
+  <data name="total_callable_burden_pointsDescription" xml:space="preserve"><value>Combined burden across all callables after soft thresholds.</value></data>
+  <data name="top_callable_burden_pointsDisplayName" xml:space="preserve"><value>Top callable burden</value></data>
+  <data name="top_callable_burden_pointsShortName" xml:space="preserve"><value>Top burden</value></data>
+  <data name="top_callable_burden_pointsDescription" xml:space="preserve"><value>Burden of the single heaviest callable.</value></data>
+  <data name="affected_callable_ratioDisplayName" xml:space="preserve"><value>Affected callable ratio</value></data>
+  <data name="affected_callable_ratioShortName" xml:space="preserve"><value>Affected %</value></data>
+  <data name="affected_callable_ratioDescription" xml:space="preserve"><value>Share of callables that exceed the soft thresholds.</value></data>
+  <data name="top_three_callable_burden_shareDisplayName" xml:space="preserve"><value>Top-three burden share</value></data>
+  <data name="top_three_callable_burden_shareShortName" xml:space="preserve"><value>Top 3 share</value></data>
+  <data name="top_three_callable_burden_shareDescription" xml:space="preserve"><value>Share of callable burden concentrated in the top three callables.</value></data>
+  <data name="churn_lines_90dDisplayName" xml:space="preserve"><value>Churn lines (90d)</value></data>
+  <data name="churn_lines_90dShortName" xml:space="preserve"><value>Churn</value></data>
+  <data name="churn_lines_90dDescription" xml:space="preserve"><value>Recently rewritten line volume over the last 90 days.</value></data>
+  <data name="touch_count_90dDisplayName" xml:space="preserve"><value>Touch count (90d)</value></data>
+  <data name="touch_count_90dShortName" xml:space="preserve"><value>Touches</value></data>
+  <data name="touch_count_90dDescription" xml:space="preserve"><value>Number of recent commits that touched the file over the last 90 days.</value></data>
+  <data name="author_count_90dDisplayName" xml:space="preserve"><value>Author count (90d)</value></data>
+  <data name="author_count_90dShortName" xml:space="preserve"><value>Authors</value></data>
+  <data name="author_count_90dDescription" xml:space="preserve"><value>Number of recent contributors who touched the file over the last 90 days.</value></data>
+  <data name="unique_cochanged_file_count_90dDisplayName" xml:space="preserve"><value>Unique co-changed files (90d)</value></data>
+  <data name="unique_cochanged_file_count_90dShortName" xml:space="preserve"><value>Co-change breadth</value></data>
+  <data name="unique_cochanged_file_count_90dDescription" xml:space="preserve"><value>Number of distinct files that changed with this file over the last 90 days.</value></data>
+  <data name="strong_cochanged_file_count_90dDisplayName" xml:space="preserve"><value>Strong co-changed files (90d)</value></data>
+  <data name="strong_cochanged_file_count_90dShortName" xml:space="preserve"><value>Strong links</value></data>
+  <data name="strong_cochanged_file_count_90dDescription" xml:space="preserve"><value>Files that repeatedly changed together with this file over the last 90 days.</value></data>
+  <data name="avg_cochange_set_size_90dDisplayName" xml:space="preserve"><value>Average co-change set size (90d)</value></data>
+  <data name="avg_cochange_set_size_90dShortName" xml:space="preserve"><value>Avg co-change</value></data>
+  <data name="avg_cochange_set_size_90dDescription" xml:space="preserve"><value>Typical width of change sets that include this file over the last 90 days.</value></data>
+</root>

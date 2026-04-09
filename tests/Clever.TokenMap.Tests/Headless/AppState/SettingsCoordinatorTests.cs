@@ -10,6 +10,18 @@ namespace Clever.TokenMap.Tests.Headless.AppState;
 
 public sealed class SettingsCoordinatorTests
 {
+    private static SettingsCoordinator CreateCoordinator(
+        IAppSettingsStore appSettingsStore,
+        IFolderSettingsStore? folderSettingsStore = null,
+        IThemeService? themeService = null,
+        TimeSpan? debounceDelay = null) =>
+        new(
+            appSettingsStore,
+            folderSettingsStore ?? new RecordingFolderSettingsStore(),
+            themeService ?? new RecordingThemeService(),
+            new ApplicationLanguageService(),
+            debounceDelay: debounceDelay);
+
     [Fact]
     public void Constructor_AppliesPersistedSettingsToStateWithoutSaving()
     {
@@ -25,7 +37,7 @@ public sealed class SettingsCoordinatorTests
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
+        var coordinator = CreateCoordinator(store, themeService: themeService, debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Equal(MetricIds.NonEmptyLines, coordinator.State.SelectedMetric);
         Assert.False(coordinator.State.RespectGitIgnore);
@@ -52,7 +64,7 @@ public sealed class SettingsCoordinatorTests
         settings.RecentFolderPaths = [repoAPath, repoBPath];
 
         var store = new RecordingAppSettingsStore(settings);
-        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(25));
+        var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromMilliseconds(25));
 
         Assert.Collection(
             coordinator.State.RecentFolderPaths,
@@ -66,7 +78,7 @@ public sealed class SettingsCoordinatorTests
     {
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
+        var coordinator = CreateCoordinator(store, themeService: themeService, debounceDelay: TimeSpan.FromMilliseconds(40));
 
         coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         coordinator.SetWorkspaceLayoutMode(WorkspaceLayoutMode.Stacked);
@@ -94,11 +106,7 @@ public sealed class SettingsCoordinatorTests
         {
             var store = new RecordingAppSettingsStore(AppSettings.CreateDefault(), saveDelay: TimeSpan.FromMilliseconds(50));
             var callerThreadId = Environment.CurrentManagedThreadId;
-            var coordinator = new SettingsCoordinator(
-                store,
-                new RecordingFolderSettingsStore(),
-                new RecordingThemeService(),
-                debounceDelay: TimeSpan.FromMilliseconds(25));
+            var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromMilliseconds(25));
 
             coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
 
@@ -115,7 +123,7 @@ public sealed class SettingsCoordinatorTests
         var repoAPath = TestPaths.Folder("RepoA");
         var repoBPath = TestPaths.Folder("RepoB");
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
-        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), new RecordingThemeService(), debounceDelay: TimeSpan.FromMilliseconds(40));
+        var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromMilliseconds(40));
 
         coordinator.RecordRecentFolder(repoAPath);
         coordinator.RecordRecentFolder(repoBPath);
@@ -136,19 +144,16 @@ public sealed class SettingsCoordinatorTests
     {
         const string template = "Path={{relative_path}}";
         var store = new RecordingAppSettingsStore(AppSettings.CreateDefault());
-        var coordinator = new SettingsCoordinator(
-            store,
-            new RecordingFolderSettingsStore(),
-            new RecordingThemeService(),
-            debounceDelay: TimeSpan.FromMilliseconds(40));
+        var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromMilliseconds(40));
 
-        coordinator.SetRefactorPromptTemplate(template);
+        coordinator.SetRefactorPromptTemplate(ApplicationLanguageTags.Default, template);
 
         await store.WaitForSaveAsync();
 
         Assert.Equal(1, store.SaveCallCount);
         Assert.NotNull(store.LastSavedSettings);
-        Assert.Equal(template, store.LastSavedSettings!.Prompting.RefactorPromptTemplate);
+        Assert.Equal(ApplicationLanguageTags.Default, store.LastSavedSettings!.Prompting.SelectedPromptLanguageTag);
+        Assert.Equal(template, store.LastSavedSettings.Prompting.RefactorPromptTemplatesByLanguage[ApplicationLanguageTags.Default]);
     }
 
     [Fact]
@@ -158,11 +163,7 @@ public sealed class SettingsCoordinatorTests
         {
             var store = new RecordingAppSettingsStore(AppSettings.CreateDefault(), saveDelay: TimeSpan.FromMilliseconds(50));
             var callerThreadId = Environment.CurrentManagedThreadId;
-            var coordinator = new SettingsCoordinator(
-                store,
-                new RecordingFolderSettingsStore(),
-                new RecordingThemeService(),
-                debounceDelay: TimeSpan.FromSeconds(5));
+            var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromSeconds(5));
 
             coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
 
@@ -179,11 +180,7 @@ public sealed class SettingsCoordinatorTests
         var store = new SequencedDelayAppSettingsStore(
             AppSettings.CreateDefault(),
             firstSaveDelay: TimeSpan.FromMilliseconds(200));
-        var coordinator = new SettingsCoordinator(
-            store,
-            new RecordingFolderSettingsStore(),
-            new RecordingThemeService(),
-            debounceDelay: TimeSpan.FromMilliseconds(25));
+        var coordinator = CreateCoordinator(store, debounceDelay: TimeSpan.FromMilliseconds(25));
 
         coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         await store.WaitForSaveStartedAsync(1);
@@ -206,7 +203,7 @@ public sealed class SettingsCoordinatorTests
 
         var store = new RecordingAppSettingsStore(settings);
         var themeService = new RecordingThemeService();
-        var coordinator = new SettingsCoordinator(store, new RecordingFolderSettingsStore(), themeService, debounceDelay: TimeSpan.FromSeconds(5));
+        var coordinator = CreateCoordinator(store, themeService: themeService, debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.SetSelectedMetric(MetricIds.NonEmptyLines);
         coordinator.SetThemePreference(ThemePreference.Dark);
@@ -250,10 +247,9 @@ public sealed class SettingsCoordinatorTests
             },
         });
 
-        var coordinator = new SettingsCoordinator(
+        var coordinator = CreateCoordinator(
             new RecordingAppSettingsStore(AppSettings.CreateDefault()),
-            folderStore,
-            new RecordingThemeService(),
+            folderSettingsStore: folderStore,
             debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.SwitchActiveFolder(repoAPath);
@@ -283,10 +279,9 @@ public sealed class SettingsCoordinatorTests
         var repoAPath = TestPaths.Folder("RepoA");
         var repoBPath = TestPaths.Folder("RepoB");
         var folderStore = new BlockingFolderSettingsStore();
-        var coordinator = new SettingsCoordinator(
+        var coordinator = CreateCoordinator(
             new RecordingAppSettingsStore(AppSettings.CreateDefault()),
-            folderStore,
-            new RecordingThemeService(),
+            folderSettingsStore: folderStore,
             debounceDelay: TimeSpan.FromSeconds(5));
 
         coordinator.SwitchActiveFolder(repoAPath);
@@ -326,10 +321,9 @@ public sealed class SettingsCoordinatorTests
             },
         });
 
-        var coordinator = new SettingsCoordinator(
+        var coordinator = CreateCoordinator(
             new RecordingAppSettingsStore(AppSettings.CreateDefault()),
-            folderStore,
-            new RecordingThemeService(),
+            folderSettingsStore: folderStore,
             debounceDelay: TimeSpan.FromMilliseconds(25));
         var baseOptions = new ScanOptions
         {

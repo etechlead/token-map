@@ -1,4 +1,5 @@
 using System;
+using Clever.TokenMap.App.Services;
 using Clever.TokenMap.Core.Metrics;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -7,21 +8,27 @@ namespace Clever.TokenMap.App.ViewModels;
 public sealed class MetricVisibilityOptionViewModel : ObservableObject
 {
     private readonly Action<MetricId, bool> _setVisibility;
+    private readonly MetricPresentationCatalog _metricPresentationCatalog;
     private bool _isVisible;
     private bool _isToggleEnabled = true;
     private bool _isSyncing;
 
-    public MetricVisibilityOptionViewModel(MetricDefinition definition, Action<MetricId, bool> setVisibility)
+    public MetricVisibilityOptionViewModel(
+        MetricDefinition definition,
+        Action<MetricId, bool> setVisibility,
+        MetricPresentationCatalog metricPresentationCatalog)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         _setVisibility = setVisibility ?? throw new ArgumentNullException(nameof(setVisibility));
+        _metricPresentationCatalog = metricPresentationCatalog ?? throw new ArgumentNullException(nameof(metricPresentationCatalog));
+        _metricPresentationCatalog.PresentationChanged += MetricPresentationCatalogOnPresentationChanged;
     }
 
     public MetricDefinition Definition { get; }
 
-    public string Label => Definition.ShortName;
+    public string Label => _metricPresentationCatalog.GetShortName(Definition.Id);
 
-    public string Description => Definition.Description;
+    public string Description => _metricPresentationCatalog.GetDescription(Definition.Id);
 
     public bool IsVisible
     {
@@ -56,5 +63,11 @@ public sealed class MetricVisibilityOptionViewModel : ObservableObject
         }
 
         IsToggleEnabled = isToggleEnabled;
+    }
+
+    private void MetricPresentationCatalogOnPresentationChanged(object? sender, EventArgs e)
+    {
+        OnPropertyChanged(nameof(Label));
+        OnPropertyChanged(nameof(Description));
     }
 }

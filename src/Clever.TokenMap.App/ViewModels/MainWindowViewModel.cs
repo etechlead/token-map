@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Clever.TokenMap.App.Services;
@@ -8,6 +9,8 @@ using Clever.TokenMap.App.State;
 using Clever.TokenMap.Core.Diagnostics;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
+using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Treemap;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -20,6 +23,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly IFilePreviewController _filePreviewController;
     private readonly IAppIssueReporter _issueReporter;
     private readonly MainWindowWorkspacePresenter _workspacePresenter;
+    private readonly MetricPresentationCatalog _metricPresentationCatalog;
     private readonly RelayCommand _closeFilePreviewCommand;
     private readonly RelayCommand _closeRefactorPromptCommand;
     private readonly RelayCommand _closeSettingsCommand;
@@ -28,6 +32,7 @@ public partial class MainWindowViewModel : ViewModelBase
     private readonly RelayCommand _openShareSnapshotCommand;
     private readonly RelayCommand _resetTreemapRootCommand;
     private readonly RelayCommand _toggleSettingsCommand;
+    private TreemapTextCatalog _treemapTextCatalog = TreemapTextCatalog.Default;
 
     [ObservableProperty]
     private bool isSettingsOpen;
@@ -54,6 +59,7 @@ public partial class MainWindowViewModel : ViewModelBase
         ProjectTreeViewModel tree,
         SummaryViewModel summary,
         RefactorPromptTemplateSettingsViewModel refactorPromptTemplateSettings,
+        LocalizationState localization,
         IPathShellService pathShellService,
         IRefactorPromptComposer refactorPromptComposer,
         IFilePreviewController filePreviewController,
@@ -74,6 +80,9 @@ public partial class MainWindowViewModel : ViewModelBase
         Tree = tree;
         Summary = summary;
         RefactorPromptTemplateSettings = refactorPromptTemplateSettings;
+        Localization = localization;
+        _metricPresentationCatalog = toolbar.MetricPresentationCatalog;
+        _treemapTextCatalog = CreateTreemapTextCatalog();
 
         _navigateToTreemapBreadcrumbCommand = new RelayCommand<ProjectNode?>(_workspacePresenter.NavigateToTreemapBreadcrumb);
         _closeFilePreviewCommand = new RelayCommand(CloseFilePreview, () => IsFilePreviewOpen);
@@ -86,6 +95,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         _workspacePresenter.PropertyChanged += WorkspacePresenterOnPropertyChanged;
         FilePreview.PropertyChanged += FilePreviewOnPropertyChanged;
+        Localization.LanguageChanged += LocalizationOnLanguageChanged;
+        _metricPresentationCatalog.PresentationChanged += MetricPresentationCatalogOnPresentationChanged;
         FilePreviewExplainability = CreateFilePreviewExplainability();
     }
 
@@ -111,7 +122,12 @@ public partial class MainWindowViewModel : ViewModelBase
 
     public RefactorPromptTemplateSettingsViewModel RefactorPromptTemplateSettings { get; }
 
+    public LocalizationState Localization { get; }
+
+    public TreemapTextCatalog TreemapTextCatalog => _treemapTextCatalog;
+
     public string RevealMenuHeader => _pathShellService.RevealMenuHeader;
+    public string LocalizedRevealMenuHeader => Localization.GetRevealMenuHeader(_pathShellService.RevealMenuHeader);
 
     public ProjectNode? TreemapRootNode => _workspacePresenter.TreemapRootNode;
 
@@ -197,7 +213,7 @@ public partial class MainWindowViewModel : ViewModelBase
             node,
             static (service, currentNode, token) => service.TryOpenAsync(currentNode.FullPath, token),
             code: "shell.open_node_failed",
-            messageFactory: currentNode => $"TokenMap could not open '{currentNode.Name}'.",
+            messageFactory: currentNode => Localization.OpenNodeFailed(currentNode.Name),
             technicalMessage: "Opening a path through the shell failed.",
             cancellationToken: cancellationToken);
 
@@ -209,7 +225,7 @@ public partial class MainWindowViewModel : ViewModelBase
                 currentNode.Kind is not ProjectNodeKind.File,
                 token),
             code: "shell.reveal_node_failed",
-            messageFactory: currentNode => $"TokenMap could not reveal '{currentNode.Name}'.",
+            messageFactory: currentNode => Localization.RevealNodeFailed(currentNode.Name),
             technicalMessage: "Revealing a path through the shell failed.",
             cancellationToken: cancellationToken);
 
@@ -229,7 +245,8 @@ public partial class MainWindowViewModel : ViewModelBase
 
         RefactorPrompt = new RefactorPromptViewModel(
             node!.RelativePath,
-            _refactorPromptComposer.Compose(node));
+            _refactorPromptComposer.Compose(node),
+            Localization);
     }
 
     public void CloseFilePreview()
@@ -348,7 +365,53 @@ public partial class MainWindowViewModel : ViewModelBase
     }
 
     private FilePreviewExplainabilityViewModel? CreateFilePreviewExplainability() =>
-        FilePreviewExplainabilityViewModel.Create(FilePreview.Node);
+        FilePreviewExplainabilityViewModel.Create(FilePreview.Node, Localization, _metricPresentationCatalog);
+
+    private TreemapTextCatalog CreateTreemapTextCatalog()
+    {
+        var metricLabels = DefaultMetricCatalog.GetUserVisibleDefinitions()
+            .ToDictionary(
+                definition => definition.Id,
+                definition => _metricPresentationCatalog.GetDisplayName(definition.Id));
+        return new TreemapTextCatalog(
+            Localization.GetTreemapPlaceholderNoSnapshot(),
+            Localization.GetTreemapPlaceholderNoWeightedNodes(),
+            Localization.TreemapRootPath,
+            Localization.TreemapNotAvailable,
+            Localization.TreemapShare,
+            Localization.TreemapType,
+            Localization.TreemapExtension,
+            Localization.TreemapNoExtension,
+            Localization.TreemapFilesInSubtree,
+            Localization.TreemapKindRoot,
+            Localization.TreemapKindDirectory,
+            Localization.TreemapKindFile,
+            metricLabels);
+    }
+
+    private void RefreshTreemapTextCatalog()
+    {
+        _treemapTextCatalog = CreateTreemapTextCatalog();
+        OnPropertyChanged(nameof(TreemapTextCatalog));
+    }
+
+    private void LocalizationOnLanguageChanged(object? sender, EventArgs e)
+    {
+        RefreshTreemapTextCatalog();
+        RefactorPrompt?.RefreshLocalization();
+        ShareSnapshot?.RefreshLocalization();
+        FilePreview.RefreshLocalization();
+        ExcludesEditor.RefreshLocalization();
+        RecentFolders.RefreshLocalization();
+        OnPropertyChanged(nameof(LocalizedRevealMenuHeader));
+        FilePreviewExplainability = CreateFilePreviewExplainability();
+    }
+
+    private void MetricPresentationCatalogOnPresentationChanged(object? sender, EventArgs e)
+    {
+        RefreshTreemapTextCatalog();
+        FilePreviewExplainability = CreateFilePreviewExplainability();
+    }
 
     private ShareSnapshotViewModel? CreateShareSnapshotFromCurrentState(ShareSnapshotViewModel? previousState)
     {

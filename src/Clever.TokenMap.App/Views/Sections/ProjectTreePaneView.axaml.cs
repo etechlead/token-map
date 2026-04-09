@@ -14,6 +14,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Clever.TokenMap.App.State;
 using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Metrics;
@@ -38,6 +39,7 @@ public partial class ProjectTreePaneView : UserControl
     private int _projectTreeNameColumnWidthFreezeVersion;
     private string? _projectTreeRootNodeId;
     private INotifyCollectionChanged? _projectTreeVisibleNodes;
+    private LocalizationState? _localizationState;
     private ToolbarViewModel? _toolbarViewModel;
 
     public ProjectTreePaneView()
@@ -59,6 +61,7 @@ public partial class ProjectTreePaneView : UserControl
         };
         DetachedFromVisualTree += (_, _) =>
         {
+            DetachLocalizationSubscription();
             DetachToolbarSubscription();
             DetachProjectTreeVisibleNodesSubscription();
         };
@@ -354,6 +357,7 @@ public partial class ProjectTreePaneView : UserControl
     private void HandleDataContextChanged()
     {
         AttachProjectTreeVisibleNodesSubscription();
+        AttachLocalizationSubscription();
         AttachToolbarSubscription();
         ScheduleRefreshProjectTreeMetricColumns();
         ScheduleApplyProjectTreeTableHeaderStateFromViewModel();
@@ -443,6 +447,38 @@ public partial class ProjectTreePaneView : UserControl
         }
     }
 
+    private void AttachLocalizationSubscription()
+    {
+        var nextLocalization = (DataContext as MainWindowViewModel)?.Localization;
+        if (ReferenceEquals(_localizationState, nextLocalization))
+        {
+            return;
+        }
+
+        DetachLocalizationSubscription();
+        _localizationState = nextLocalization;
+        if (_localizationState is not null)
+        {
+            _localizationState.LanguageChanged += LocalizationStateOnLanguageChanged;
+        }
+    }
+
+    private void DetachLocalizationSubscription()
+    {
+        if (_localizationState is null)
+        {
+            return;
+        }
+
+        _localizationState.LanguageChanged -= LocalizationStateOnLanguageChanged;
+        _localizationState = null;
+    }
+
+    private void LocalizationStateOnLanguageChanged(object? sender, EventArgs e)
+    {
+        ScheduleRefreshProjectTreeMetricColumns();
+    }
+
     private void AttachToolbarSubscription()
     {
         var nextToolbar = (DataContext as MainWindowViewModel)?.Toolbar;
@@ -493,6 +529,11 @@ public partial class ProjectTreePaneView : UserControl
             return;
         }
 
+        if (DataContext is MainWindowViewModel staticHeaderViewModel)
+        {
+            RefreshProjectTreeStaticColumnHeaders(grid, staticHeaderViewModel);
+        }
+
         ClearProjectTreeMetricColumns(grid);
 
         if (DataContext is not MainWindowViewModel viewModel)
@@ -502,7 +543,7 @@ public partial class ProjectTreePaneView : UserControl
 
         foreach (var definition in viewModel.Toolbar.VisibleMetricDefinitions)
         {
-            grid.Columns.Add(CreateMetricColumn(definition));
+            grid.Columns.Add(CreateMetricColumn(definition, viewModel.Toolbar.MetricPresentationCatalog.GetShortName(definition.Id)));
         }
 
         EnsureProjectTreeTableBaseHeaders(grid);
@@ -520,13 +561,28 @@ public partial class ProjectTreePaneView : UserControl
         }
     }
 
-    private static DataGridTemplateColumn CreateMetricColumn(MetricDefinition definition)
+    private void RefreshProjectTreeStaticColumnHeaders(DataGrid grid, MainWindowViewModel viewModel)
+    {
+        if (grid.Columns.Count > 0)
+        {
+            grid.Columns[0].Header = viewModel.Localization.Name;
+            _projectTreeTableBaseHeaders[grid.Columns[0]] = viewModel.Localization.Name;
+        }
+
+        if (grid.Columns.Count > 1)
+        {
+            grid.Columns[1].Header = viewModel.Localization.PercentParent;
+            _projectTreeTableBaseHeaders[grid.Columns[1]] = viewModel.Localization.PercentParent;
+        }
+    }
+
+    private static DataGridTemplateColumn CreateMetricColumn(MetricDefinition definition, string headerText)
     {
         return new DataGridTemplateColumn
         {
-            Header = definition.ShortName,
+            Header = headerText,
             SortMemberPath = GetMetricSortMemberPath(definition.Id),
-            Width = GetMetricColumnWidth(definition),
+            Width = GetMetricColumnWidth(headerText, definition.Unit),
             CellTemplate = new FuncDataTemplate<ProjectTreeNodeViewModel>((node, _) =>
             {
                 var textBlock = new TextBlock
@@ -540,14 +596,14 @@ public partial class ProjectTreePaneView : UserControl
         };
     }
 
-    private static DataGridLength GetMetricColumnWidth(MetricDefinition definition)
+    private static DataGridLength GetMetricColumnWidth(string headerText, MetricUnit unit)
     {
-        if (definition.Unit == MetricUnit.Bytes)
+        if (unit == MetricUnit.Bytes)
         {
             return new DataGridLength(88);
         }
 
-        return definition.ShortName.Length switch
+        return headerText.Length switch
         {
             <= 5 => new DataGridLength(72),
             <= 8 => new DataGridLength(92),
@@ -807,7 +863,7 @@ public partial class ProjectTreePaneView : UserControl
 
     private static double CalculateInitialProjectTreeNameColumnWidth(DataGrid grid, MainWindowViewModel viewModel)
     {
-        var headerWidth = MeasureProjectTreeTextWidth(grid, "Name") + ProjectTreeNameColumnHeaderHorizontalPadding;
+        var headerWidth = MeasureProjectTreeTextWidth(grid, viewModel.Localization.Name) + ProjectTreeNameColumnHeaderHorizontalPadding;
         var visibleNodeWidth = viewModel.Tree.VisibleNodes.Count == 0
             ? 0d
             : viewModel.Tree.VisibleNodes.Max(node =>

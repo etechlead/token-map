@@ -16,19 +16,19 @@
                   RowSpacing="4">
                 <TextBlock Classes="panel-title"
                            VerticalAlignment="Center"
-                           Text="Share image" />
+                           Text="{Binding Localization.ShareImage}" />
                 <Button Name="CloseShareSnapshotModalButton"
                         Grid.Column="1"
                         Classes="close-button"
                         Command="{Binding CloseShareSnapshotCommand}"
-                        ToolTip.Tip="Close share image preview">
+                        ToolTip.Tip="{Binding Localization.CloseShareImagePreviewTooltip}">
                     <Path Classes="close-button-icon"
                           Data="{StaticResource FluentDismiss20Geometry}" />
                 </Button>
                 <TextBlock Grid.Row="1"
                            Grid.ColumnSpan="2"
                            Classes="panel-body"
-                           Text="Preview the card, optionally include a project name, then copy the image to the clipboard." />
+                           Text="{Binding Localization.ShareImagePreviewHint}" />
             </Grid>
 
             <Border Grid.Row="1"
@@ -52,14 +52,14 @@
                             x:DataType="vm:ShareSnapshotViewModel">
                     <CheckBox Name="IncludeProjectNameCheckBox"
                               VerticalAlignment="Center"
-                              Content="Include project name"
+                              Content="{Binding IncludeProjectNameLabel}"
                               IsChecked="{Binding IncludeProjectName}" />
 
                     <TextBox Name="ProjectNameTextBox"
                              Classes="share-project-name"
                              Width="320"
                              VerticalAlignment="Center"
-                             Watermark="Project name"
+                             Watermark="{Binding ProjectNameWatermark}"
                              IsVisible="{Binding IncludeProjectName}"
                              Text="{Binding ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </StackPanel>

@@ -16,6 +16,7 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
 {
     private readonly IAnalysisSessionController _analysisSessionController;
     private readonly IFolderPathService _folderPathService;
+    private readonly LocalizationState _localization;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly Func<ScanOptions> _buildScanOptions;
     private readonly ObservableCollection<RecentFolderItemViewModel> _items = [];
@@ -31,12 +32,14 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
         IAnalysisSessionController analysisSessionController,
         ISettingsCoordinator settingsCoordinator,
         IFolderPathService folderPathService,
-        Func<ScanOptions> buildScanOptions)
+        Func<ScanOptions> buildScanOptions,
+        LocalizationState localization)
     {
         _analysisSessionController = analysisSessionController;
         _settingsCoordinator = settingsCoordinator;
         _folderPathService = folderPathService;
         _buildScanOptions = buildScanOptions;
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
 
         Items = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_items);
         FlyoutItems = new ReadOnlyObservableCollection<RecentFolderItemViewModel>(_flyoutItems);
@@ -151,14 +154,20 @@ public sealed partial class RecentFoldersViewModel : ViewModelBase
             isMissing: !_folderPathService.Exists(folderPath.Trim()));
     }
 
-    private static RecentFolderItemViewModel CreateEmptyFlyoutItem()
+    private RecentFolderItemViewModel CreateEmptyFlyoutItem()
     {
         return new RecentFolderItemViewModel(
-            "No previous folders yet",
+            _localization.NoPreviousFoldersYet,
             string.Empty,
-            secondaryText: "Analyze a folder once and it will appear here.",
+            secondaryText: _localization.RecentFoldersEmptyFlyoutSecondaryText,
             canOpen: false,
             showFolderIcon: false);
     }
 
+    internal void RefreshLocalization()
+    {
+        RefreshRecentFolders();
+        OnPropertyChanged(nameof(HasRecentFolders));
+        OnPropertyChanged(nameof(ShowEmptyState));
+    }
 }

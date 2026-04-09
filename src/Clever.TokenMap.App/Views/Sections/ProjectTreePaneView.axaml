@@ -14,7 +14,7 @@
                 <TextBlock Name="ProjectTreeTitleText"
                            Classes="panel-title"
                            VerticalAlignment="Center"
-                           Text="Project Tree" />
+                           Text="{Binding Localization.ProjectTree}" />
                 <Button Name="ProjectTreeLayoutToggleButton"
                         Grid.Column="1"
                         Classes="workspace-layout-toggle"

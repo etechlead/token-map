@@ -16,10 +16,12 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
 {
     private const int MaxRecentFolderCount = 10;
     private static readonly StringComparer RecentFolderComparer = PathComparison.Comparer;
+    private static readonly StringComparer PromptTemplateLanguageComparer = StringComparer.OrdinalIgnoreCase;
 
     private readonly ObservableCollection<string> _recentFolderPaths = [];
     private List<MetricId> _visibleMetricIds = [.. DefaultMetricCatalog.GetDefaultVisibleMetricIds()];
     private List<string> _globalExcludes = [.. GlobalExcludeDefaults.DefaultEntries];
+    private Dictionary<string, string> _refactorPromptTemplatesByLanguage = new(PromptTemplateLanguageComparer);
 
     public SettingsState()
     {
@@ -49,13 +51,18 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     private bool showTreemapMetricValues = true;
 
     [ObservableProperty]
-    private string refactorPromptTemplate = RefactorPromptTemplateDefaults.DefaultRefactorPromptTemplate;
+    private string applicationLanguageTag = ApplicationLanguageTags.System;
+
+    [ObservableProperty]
+    private string selectedPromptLanguageTag = ApplicationLanguageTags.Default;
 
     public ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     public IReadOnlyList<MetricId> VisibleMetricIds => _visibleMetricIds;
 
     public IReadOnlyList<string> GlobalExcludes => _globalExcludes;
+
+    public IReadOnlyDictionary<string, string> RefactorPromptTemplatesByLanguage => _refactorPromptTemplatesByLanguage;
 
     public event NotifyCollectionChangedEventHandler? RecentFolderPathsChanged;
 
@@ -150,6 +157,43 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     public void ShowAllMetricIds() =>
         ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetAllUserVisibleMetricIds());
 
+    public string GetRefactorPromptTemplate(string languageTag)
+    {
+        var normalizedLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag);
+        if (normalizedLanguageTag is null)
+        {
+            return string.Empty;
+        }
+
+        return _refactorPromptTemplatesByLanguage.TryGetValue(normalizedLanguageTag, out var template)
+            ? template
+            : string.Empty;
+    }
+
+    public void SetRefactorPromptTemplate(string languageTag, string templateText)
+    {
+        var normalizedLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag);
+        if (normalizedLanguageTag is null)
+        {
+            return;
+        }
+
+        var normalizedTemplate = AppSettingsCanonicalizer.NormalizeRefactorPromptTemplatesByLanguage(
+            new Dictionary<string, string>
+            {
+                [normalizedLanguageTag] = templateText,
+            });
+        var nextTemplate = normalizedTemplate.GetValueOrDefault(normalizedLanguageTag, string.Empty);
+        if (_refactorPromptTemplatesByLanguage.TryGetValue(normalizedLanguageTag, out var currentTemplate) &&
+            string.Equals(currentTemplate, nextTemplate, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _refactorPromptTemplatesByLanguage[normalizedLanguageTag] = nextTemplate;
+        OnPropertyChanged(nameof(RefactorPromptTemplatesByLanguage));
+    }
+
     internal void ReplaceRecentFolderPaths(IEnumerable<string> folderPaths)
     {
         ArgumentNullException.ThrowIfNull(folderPaths);
@@ -172,6 +216,23 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
     {
         ArgumentNullException.ThrowIfNull(metricIds);
         ReplaceVisibleMetricIdsCore(metricIds);
+    }
+
+    internal void ReplaceRefactorPromptTemplatesByLanguage(IReadOnlyDictionary<string, string> templatesByLanguage)
+    {
+        ArgumentNullException.ThrowIfNull(templatesByLanguage);
+
+        var normalizedTemplates = AppSettingsCanonicalizer.NormalizeRefactorPromptTemplatesByLanguage(templatesByLanguage);
+        if (_refactorPromptTemplatesByLanguage.Count == normalizedTemplates.Count &&
+            _refactorPromptTemplatesByLanguage.All(pair =>
+                normalizedTemplates.TryGetValue(pair.Key, out var value) &&
+                string.Equals(pair.Value, value, StringComparison.Ordinal)))
+        {
+            return;
+        }
+
+        _refactorPromptTemplatesByLanguage = new Dictionary<string, string>(normalizedTemplates, PromptTemplateLanguageComparer);
+        OnPropertyChanged(nameof(RefactorPromptTemplatesByLanguage));
     }
 
     private void ReplaceVisibleMetricIdsCore(IEnumerable<MetricId> metricIds)

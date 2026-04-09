@@ -1,6 +1,7 @@
 using System;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Clever.TokenMap.App.State;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Clever.TokenMap.App.ViewModels;
@@ -16,9 +17,11 @@ public partial class RefactorPromptViewModel : ViewModelBase
     private static readonly IBrush CopyButtonDefaultBrush = new ImmutableSolidColorBrush(Color.Parse("#0F6CBD"));
     private static readonly IBrush CopyButtonSuccessBrush = new ImmutableSolidColorBrush(Color.Parse("#2A8A57"));
     private static readonly IBrush CopyButtonForegroundBrush = Brushes.White;
+    private readonly LocalizationState _localization;
 
-    public RefactorPromptViewModel(string relativePath, string promptText)
+    public RefactorPromptViewModel(string relativePath, string promptText, LocalizationState localization)
     {
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
         RelativePath = string.IsNullOrWhiteSpace(relativePath)
             ? "."
             : relativePath.Trim();
@@ -46,8 +49,8 @@ public partial class RefactorPromptViewModel : ViewModelBase
     public string CopyButtonText =>
         CopyFeedbackState switch
         {
-            RefactorPromptCopyFeedbackState.Success => "Copied",
-            _ => "Copy",
+            RefactorPromptCopyFeedbackState.Success => _localization.Copied,
+            _ => _localization.Copy,
         };
 
     public IBrush CopyButtonBackground =>
@@ -60,4 +63,9 @@ public partial class RefactorPromptViewModel : ViewModelBase
     public IBrush CopyButtonBorderBrush => CopyButtonBackground;
 
     public IBrush CopyButtonForeground { get; } = CopyButtonForegroundBrush;
+
+    internal void RefreshLocalization()
+    {
+        OnPropertyChanged(nameof(CopyButtonText));
+    }
 }

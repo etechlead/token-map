@@ -17,7 +17,7 @@
                 <TextBlock Classes="panel-title"
                            Name="TreemapTitleText"
                            VerticalAlignment="Center"
-                           Text="Treemap" />
+                           Text="{Binding Localization.Treemap}" />
                 <Border Grid.Column="1"
                         Classes="segmented-toggle-panel treemap-metric-switcher"
                         VerticalAlignment="Center"
@@ -69,7 +69,7 @@
                           VerticalAlignment="Center"
                           IsChecked="{Binding Toolbar.ShowTreemapMetricValues, Mode=TwoWay}"
                           IsEnabled="{Binding Toolbar.CanChangeMetric}"
-                          Content="Show values" />
+                          Content="{Binding Localization.ShowValues}" />
                 <ItemsControl Name="TreemapBreadcrumbsItemsControl"
                               Grid.Column="3"
                               HorizontalAlignment="Right"
@@ -106,6 +106,7 @@
                                          VisibleMetricIds="{Binding Toolbar.VisibleMetricIds}"
                                          Palette="{Binding Toolbar.SelectedTreemapPalette}"
                                          ShowMetricValues="{Binding Toolbar.ShowTreemapMetricValues}"
+                                         TextCatalog="{Binding TreemapTextCatalog}"
                                          SelectedNode="{Binding SelectedNode, Mode=TwoWay}" />
                 <controls:TreemapTooltipOverlay IsHitTestVisible="False"
                                                 Target="{Binding #ProjectTreemapControl}" />
@@ -121,7 +122,7 @@
                 <TextBlock Grid.Row="0"
                            VerticalAlignment="Center"
                            Classes="panel-body treemap-threshold-label"
-                           Text="Threshold" />
+                           Text="{Binding Localization.Threshold}" />
                 <Slider Name="TreemapThresholdSlider"
                         Classes="treemap-threshold-slider"
                         Grid.Row="1"

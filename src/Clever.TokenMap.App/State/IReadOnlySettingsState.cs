@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Metrics;
+using Clever.TokenMap.Core.Settings;
 
 namespace Clever.TokenMap.App.State;
 
@@ -25,11 +26,17 @@ public interface IReadOnlySettingsState : INotifyPropertyChanged
 
     bool ShowTreemapMetricValues { get; }
 
-    string RefactorPromptTemplate { get; }
+    string ApplicationLanguageTag { get; }
+
+    string SelectedPromptLanguageTag { get; }
+
+    IReadOnlyDictionary<string, string> RefactorPromptTemplatesByLanguage { get; }
 
     ReadOnlyObservableCollection<string> RecentFolderPaths { get; }
 
     IReadOnlyList<string> GlobalExcludes { get; }
 
     event NotifyCollectionChangedEventHandler? RecentFolderPathsChanged;
+
+    string GetRefactorPromptTemplate(string languageTag);
 }

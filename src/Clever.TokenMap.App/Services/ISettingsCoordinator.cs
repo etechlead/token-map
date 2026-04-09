@@ -38,7 +38,11 @@ public interface ISettingsCoordinator : IScanOptionsResolver
 
     void SetShowTreemapMetricValues(bool value);
 
-    void SetRefactorPromptTemplate(string templateText);
+    void SetApplicationLanguageTag(string languageTag);
+
+    void SetSelectedPromptLanguageTag(string languageTag);
+
+    void SetRefactorPromptTemplate(string languageTag, string templateText);
 
     void RecordRecentFolder(string folderPath);
 
