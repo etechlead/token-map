@@ -417,13 +417,6 @@ try {
         "--notes-file", $notesFilePath
     ) -Mutating
 
-    if (-not $SkipNextVersionBump) {
-        Invoke-SetVersion -TargetVersion $NextVersion
-        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("add", "--", $versionGitPath) -Mutating
-        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("commit", "-m", "chore(release): start $NextVersion") -Mutating
-        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("push", "origin", "main") -Mutating
-    }
-
     if ($WaitForReleaseAssets) {
         if ($DryRun) {
             Write-Host "Skipping release asset wait in dry-run mode."
@@ -438,6 +431,13 @@ try {
                 -TimeoutMinutes $ReleaseAssetsTimeoutMinutes `
                 -PollSeconds $ReleaseAssetsPollSeconds
         }
+    }
+
+    if (-not $SkipNextVersionBump) {
+        Invoke-SetVersion -TargetVersion $NextVersion
+        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("add", "--", $versionGitPath) -Mutating
+        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("commit", "-m", "chore(release): start $NextVersion") -Mutating
+        Invoke-ExternalCommand -FilePath "git" -ArgumentList @("push", "origin", "main") -Mutating
     }
 }
 finally {

@@ -30,6 +30,7 @@
 - Use `scripts/release.ps1` for the normal local release path.
 - The local release path sets the release version, runs repo verification, creates the release commit and tag, publishes the GitHub Release with supplied notes, then bumps to the next `-local` version.
 - Use `scripts/release.ps1 -WaitForReleaseAssets` when you want the local release path to wait for the three packaging workflows and verify the expected release assets after publish.
+- When `-WaitForReleaseAssets` is enabled, the next `-local` version bump happens only after the packaging workflows succeed and the expected release assets are present.
 
 ## Release Validation
 
