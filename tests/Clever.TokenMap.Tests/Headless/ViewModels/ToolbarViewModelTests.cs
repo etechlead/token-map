@@ -143,28 +143,6 @@ public sealed class ToolbarViewModelTests
     }
 
     [Fact]
-    public void ShowAllMetrics_DoesNotRestoreHiddenStructuralRisk()
-    {
-        var state = new SettingsState();
-        state.SetMetricVisibility(MetricIds.NonEmptyLines, isVisible: false);
-        state.SetMetricVisibility(MetricIds.FileSizeBytes, isVisible: false);
-        state.SetMetricVisibility(MetricIds.RefactorPriorityPoints, isVisible: false);
-        var viewModel = CreateViewModel(state);
-
-        viewModel.ShowAllMetricIdsCommand.Execute(null);
-
-        Assert.Equal(
-            [
-                MetricIds.Tokens,
-                MetricIds.NonEmptyLines,
-                MetricIds.FileSizeBytes,
-                MetricIds.RefactorPriorityPoints,
-            ],
-            state.VisibleMetricIds);
-        Assert.DoesNotContain(state.VisibleMetricIds, metricId => metricId == MetricIds.ComplexityPoints);
-    }
-
-    [Fact]
     public void VisibleTreemapMetricOptions_ExposeSharedMetricDescriptions()
     {
         var viewModel = CreateViewModel(new SettingsState());
@@ -322,10 +300,6 @@ public sealed class ToolbarViewModelTests
         public void SetSelectedMetric(MetricId metric) => MutableState.SelectedMetric = DefaultMetricCatalog.NormalizeMetricId(metric);
 
         public void SetMetricVisibility(MetricId metric, bool isVisible) => MutableState.SetMetricVisibility(metric, isVisible);
-
-        public void ResetVisibleMetricIdsToDefault() => MutableState.ResetVisibleMetricIdsToDefault();
-
-        public void ShowAllMetricIds() => MutableState.ShowAllMetricIds();
 
         public void SetRespectGitIgnore(bool value) => MutableState.RespectGitIgnore = value;
 

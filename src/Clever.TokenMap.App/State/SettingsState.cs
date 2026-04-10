@@ -151,12 +151,6 @@ public sealed partial class SettingsState : ObservableObject, IReadOnlySettingsS
         ReplaceVisibleMetricIdsCore(_visibleMetricIds.Where(id => id != normalizedMetricId));
     }
 
-    public void ResetVisibleMetricIdsToDefault() =>
-        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetDefaultVisibleMetricIds());
-
-    public void ShowAllMetricIds() =>
-        ReplaceVisibleMetricIdsCore(DefaultMetricCatalog.GetAllUserVisibleMetricIds());
-
     public string GetRefactorPromptTemplate(string languageTag)
     {
         var normalizedLanguageTag = AppSettingsCanonicalizer.NormalizePromptLanguageTag(languageTag);

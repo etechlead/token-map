@@ -31,8 +31,6 @@
   <data name="TreemapPalettePlain" xml:space="preserve"><value>Простая</value></data>
   <data name="Metrics" xml:space="preserve"><value>Метрики</value></data>
   <data name="TreeOnly" xml:space="preserve"><value>Только дерево</value></data>
-  <data name="ResetDefaults" xml:space="preserve"><value>Сбросить по умолчанию</value></data>
-  <data name="ShowAll" xml:space="preserve"><value>Показать все</value></data>
   <data name="Scan" xml:space="preserve"><value>Сканирование</value></data>
   <data name="RespectGitIgnore" xml:space="preserve"><value>Учитывать .gitignore</value></data>
   <data name="UseGlobalExcludes" xml:space="preserve"><value>Использовать глобальные исключения</value></data>

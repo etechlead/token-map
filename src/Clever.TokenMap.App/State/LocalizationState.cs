@@ -36,8 +36,6 @@ public sealed class LocalizationState : ObservableObject
         nameof(TreemapPalettePlain),
         nameof(Metrics),
         nameof(TreeOnly),
-        nameof(ResetDefaults),
-        nameof(ShowAll),
         nameof(Scan),
         nameof(RespectGitIgnore),
         nameof(UseGlobalExcludes),
@@ -161,8 +159,6 @@ public sealed class LocalizationState : ObservableObject
     public string TreemapPalettePlain => GetString(nameof(TreemapPalettePlain), "Plain");
     public string Metrics => GetString(nameof(Metrics), "Metrics");
     public string TreeOnly => GetString(nameof(TreeOnly), "Tree only");
-    public string ResetDefaults => GetString(nameof(ResetDefaults), "Reset defaults");
-    public string ShowAll => GetString(nameof(ShowAll), "Show all");
     public string Scan => GetString(nameof(Scan), "Scan");
     public string RespectGitIgnore => GetString(nameof(RespectGitIgnore), "Respect .gitignore");
     public string UseGlobalExcludes => GetString(nameof(UseGlobalExcludes), "Use global excludes");

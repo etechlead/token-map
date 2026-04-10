@@ -114,22 +114,6 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <Grid ColumnDefinitions="Auto,Auto,*"
-                                  ColumnSpacing="8">
-                                <Button Name="MetricsResetDefaultsButton"
-                                        Classes="action-button"
-                                        Padding="10,4"
-                                        MinHeight="28"
-                                        Command="{Binding Toolbar.ResetVisibleMetricIdsCommand}"
-                                        Content="{Binding Localization.ResetDefaults}" />
-                                <Button Name="MetricsShowAllButton"
-                                        Grid.Column="1"
-                                        Classes="action-button"
-                                        Padding="10,4"
-                                        MinHeight="28"
-                                        Command="{Binding Toolbar.ShowAllMetricIdsCommand}"
-                                        Content="{Binding Localization.ShowAll}" />
-                            </Grid>
                         </StackPanel>
                     </Border>
 

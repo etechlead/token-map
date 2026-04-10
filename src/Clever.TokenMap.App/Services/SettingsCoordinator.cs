@@ -80,12 +80,6 @@ public sealed class SettingsCoordinator : ISettingsCoordinator
     public void SetMetricVisibility(MetricId metric, bool isVisible) =>
         MutableState.SetMetricVisibility(metric, isVisible);
 
-    public void ResetVisibleMetricIdsToDefault() =>
-        MutableState.ResetVisibleMetricIdsToDefault();
-
-    public void ShowAllMetricIds() =>
-        MutableState.ShowAllMetricIds();
-
     public void SetRespectGitIgnore(bool value) =>
         MutableState.RespectGitIgnore = value;
 

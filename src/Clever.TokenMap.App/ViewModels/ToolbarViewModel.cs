@@ -19,8 +19,6 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     private readonly RelayCommand _selectLightThemePreferenceCommand;
     private readonly RelayCommand _selectSystemThemePreferenceCommand;
     private readonly RelayCommand _toggleWorkspaceLayoutCommand;
-    private readonly RelayCommand _resetVisibleMetricIdsCommand;
-    private readonly RelayCommand _showAllMetricIdsCommand;
     private readonly ISettingsCoordinator _settingsCoordinator;
     private readonly IReadOnlyCurrentFolderSettingsState _currentFolderSettingsState;
     private readonly IReadOnlySettingsState _settingsState;
@@ -57,8 +55,6 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
         _selectLightThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Light));
         _selectDarkThemePreferenceCommand = new RelayCommand(() => SelectThemePreference(ThemePreference.Dark));
         _toggleWorkspaceLayoutCommand = new RelayCommand(ToggleWorkspaceLayout);
-        _resetVisibleMetricIdsCommand = new RelayCommand(_settingsCoordinator.ResetVisibleMetricIdsToDefault);
-        _showAllMetricIdsCommand = new RelayCommand(_settingsCoordinator.ShowAllMetricIds);
         _allMetricDefinitions = DefaultMetricCatalog.GetUserVisibleDefinitions();
 
         VisibleTreemapMetricOptions = new ReadOnlyObservableCollection<MetricSelectionOptionViewModel>(_visibleTreemapMetricOptions);
@@ -96,10 +92,6 @@ public partial class ToolbarViewModel : ViewModelBase, IToolbarAvailabilitySink
     public IRelayCommand SelectDarkThemePreferenceCommand => _selectDarkThemePreferenceCommand;
 
     public IRelayCommand ToggleWorkspaceLayoutCommand => _toggleWorkspaceLayoutCommand;
-
-    public IRelayCommand ResetVisibleMetricIdsCommand => _resetVisibleMetricIdsCommand;
-
-    public IRelayCommand ShowAllMetricIdsCommand => _showAllMetricIdsCommand;
 
     public ReadOnlyObservableCollection<MetricSelectionOptionViewModel> VisibleTreemapMetricOptions { get; }
 
