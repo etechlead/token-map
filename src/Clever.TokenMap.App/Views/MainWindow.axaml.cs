@@ -90,7 +90,20 @@ public partial class MainWindow : Window
 
     private void MainWindow_OnKeyDown(object? sender, KeyEventArgs e)
     {
-        if (e.Key is not Key.Escape || DataContext is not MainWindowViewModel viewModel)
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        if (e.Key == Key.F5 &&
+            viewModel.Toolbar.RescanCommand.CanExecute(null))
+        {
+            viewModel.Toolbar.RescanCommand.Execute(null);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key is not Key.Escape)
         {
             return;
         }

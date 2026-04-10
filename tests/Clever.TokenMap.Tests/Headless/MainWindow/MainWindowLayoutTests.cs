@@ -662,6 +662,33 @@ public sealed class MainWindowLayoutTests
     }
 
     [AvaloniaFact]
+    public async Task MainWindow_F5_ExecutesRescanCommand()
+    {
+        var analyzer = new CountingProjectAnalyzer(
+            CreateSnapshot(),
+            CreateSnapshot());
+        var window = new AppMainWindow();
+        var viewModel = CreateMainWindowViewModel(analyzer);
+        window.DataContext = viewModel;
+
+        window.Show();
+        await viewModel.Toolbar.OpenFolderCommand.ExecuteAsync(null);
+
+        var keyArgs = new KeyEventArgs
+        {
+            RoutedEvent = InputElement.KeyDownEvent,
+            Source = window,
+            Key = Key.F5,
+        };
+
+        window.RaiseEvent(keyArgs);
+        await Task.Delay(50);
+
+        Assert.True(keyArgs.Handled);
+        Assert.Equal(2, analyzer.CallCount);
+    }
+
+    [AvaloniaFact]
     public async Task MainWindow_OpenFolderFlow_PopulatesTreeAndSummary()
     {
         var window = new AppMainWindow();
@@ -820,4 +847,3 @@ public sealed class MainWindowLayoutTests
                 string.Equals(button.Content?.ToString(), expectedLabel, StringComparison.Ordinal));
     }
 }
-
