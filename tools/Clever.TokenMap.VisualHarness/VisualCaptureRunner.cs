@@ -7,6 +7,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Clever.TokenMap.App.State;
+using Clever.TokenMap.App.ViewModels;
 using Clever.TokenMap.App.Views;
 using Clever.TokenMap.Core.Enums;
 using Clever.TokenMap.Core.Models;
@@ -223,6 +224,7 @@ internal static class VisualCaptureRunner
             settingsCoordinator,
             folderPathService,
             new NoOpPathShellService());
+        ApplyThreshold(viewModel, options.Threshold);
         viewModel.IsSettingsOpen = settingsOpen;
 
         var window = new MainWindow
@@ -262,6 +264,7 @@ internal static class VisualCaptureRunner
             settingsCoordinator,
             folderPathService,
             new NoOpPathShellService());
+        ApplyThreshold(viewModel, options.Threshold);
         viewModel.OpenShareSnapshotCommand.Execute(null);
 
         var window = new MainWindow
@@ -334,6 +337,7 @@ internal static class VisualCaptureRunner
             RootNode = snapshot.Root,
             Metric = options.Metric,
             Palette = palette,
+            MinimumVisibleWeight = options.Threshold ?? double.NegativeInfinity,
         };
 
         var host = new Border
@@ -353,6 +357,35 @@ internal static class VisualCaptureRunner
         };
 
         return CaptureWindowAsync(window, "Standalone treemap window did not render a frame.");
+    }
+
+    private static void ApplyThreshold(MainWindowViewModel viewModel, double? requestedThreshold)
+    {
+        if (requestedThreshold is null || !viewModel.CanAdjustTreemapThreshold)
+        {
+            return;
+        }
+
+        var bestSliderValue = viewModel.TreemapThresholdSliderMinimum;
+        var bestDifference = Math.Abs(viewModel.TreemapThresholdValue - requestedThreshold.Value);
+
+        for (var sliderValue = viewModel.TreemapThresholdSliderMinimum; sliderValue <= viewModel.TreemapThresholdSliderMaximum; sliderValue++)
+        {
+            viewModel.TreemapThresholdSliderValue = sliderValue;
+            var difference = Math.Abs(viewModel.TreemapThresholdValue - requestedThreshold.Value);
+            if (difference < bestDifference)
+            {
+                bestDifference = difference;
+                bestSliderValue = sliderValue;
+            }
+
+            if (difference <= 0d)
+            {
+                break;
+            }
+        }
+
+        viewModel.TreemapThresholdSliderValue = bestSliderValue;
     }
 
     private static async Task<WriteableBitmap> CaptureWindowAsync(Window window, string failureMessage)

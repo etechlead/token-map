@@ -77,11 +77,14 @@ internal static class CliParsing
 
     public static long ParseLong(string value) => long.Parse(value, CultureInfo.InvariantCulture);
 
+    public static double ParseDouble(string value) => double.Parse(value, CultureInfo.InvariantCulture);
+
     public static IReadOnlyList<string> GetMetricTokens() =>
     [
         "tokens",
         "lines",
         "size",
+        "refactor",
     ];
 
     public static string GetMetricToken(MetricId metricId)
@@ -91,7 +94,9 @@ internal static class CliParsing
             ? "lines"
             : normalizedMetricId == MetricIds.FileSizeBytes
                 ? "size"
-                : "tokens";
+                : normalizedMetricId == MetricIds.RefactorPriorityPoints
+                    ? "refactor"
+                    : "tokens";
     }
 
     public static MetricId ParseMetricId(string value)
@@ -101,8 +106,10 @@ internal static class CliParsing
             "tokens" => MetricIds.Tokens,
             "lines" => MetricIds.NonEmptyLines,
             "size" => MetricIds.FileSizeBytes,
+            "refactor" => MetricIds.RefactorPriorityPoints,
             "non_empty_lines" => MetricIds.NonEmptyLines,
             "file_size_bytes" => MetricIds.FileSizeBytes,
+            "refactor_priority_points" => MetricIds.RefactorPriorityPoints,
             _ => throw new InvalidOperationException(
                 $"Unsupported metric '{value}'. Expected {string.Join(", ", GetMetricTokens())}."),
         };

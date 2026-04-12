@@ -38,5 +38,6 @@ dotnet run --project tools/Clever.TokenMap.VisualHarness -- compare --left .arti
 powershell -File scripts/capture-readme-screenshot.ps1
 ```
 
-- By default the script captures the current repo root, writes raw harness artifacts to `.artifacts/visual-harness/readme/`, and updates `docs/readme/screenshot.png`.
+- By default the script captures the current repo root with the main window on the `Refactor` treemap tab and a treemap threshold of `25`, writes raw harness artifacts to `.artifacts/visual-harness/readme/`, and updates `docs/readme/screenshot.png`.
+- Override the treemap tab with `-Metric tokens|lines|size|refactor` or the filter with `-Threshold <number>` when the README asset or a review needs a different emphasis.
 - If `docs/readme/screenshot.png` already exists, its current pixel size is reused automatically as the harness window size so the capture stays in the same native resolution.

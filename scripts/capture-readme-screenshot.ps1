@@ -2,6 +2,9 @@ param(
     [string]$ProjectRoot = "",
     [string]$OutputPath = "",
     [string]$ArtifactDirectory = "",
+    [ValidateSet("tokens", "lines", "size", "refactor")]
+    [string]$Metric = "refactor",
+    [double]$Threshold = 25,
     [int]$WindowWidth = 0,
     [int]$WindowHeight = 0
 )
@@ -104,7 +107,8 @@ Invoke-ExternalCommand -FilePath "dotnet" -ArgumentList @(
     "--theme", "dark",
     "--surface", "main",
     "--palette", "weighted",
-    "--metric", "tokens",
+    "--metric", $Metric,
+    "--threshold", $Threshold.ToString([System.Globalization.CultureInfo]::InvariantCulture),
     "--window-width", $WindowWidth.ToString([System.Globalization.CultureInfo]::InvariantCulture),
     "--window-height", $WindowHeight.ToString([System.Globalization.CultureInfo]::InvariantCulture),
     "--output-dir", $artifactDirectoryValue

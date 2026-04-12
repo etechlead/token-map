@@ -12,6 +12,7 @@ public sealed class VisualHarnessCliTests
         var help = VisualHarnessCli.FormatCommandHelp(VisualHarnessCli.Capture.Command);
 
         Assert.Contains("--surface SURFACES", help);
+        Assert.Contains("--threshold N", help);
         Assert.Contains("Allowed: main, settings, share, treemap, all", help);
         Assert.Contains("Allowed: plain, weighted, studio, all", help);
         Assert.Contains("Default: main", help);
@@ -75,5 +76,29 @@ public sealed class VisualHarnessCliTests
         Assert.Equal(245_000_000L, options.ShareMetrics.Tokens);
         Assert.Equal(3_200_000, options.ShareMetrics.Lines);
         Assert.Equal(280_000, options.ShareMetrics.Files);
+    }
+
+    [Fact]
+    public void CaptureOptions_ParseCapture_ParsesRefactorMetric()
+    {
+        var options = CaptureOptions.ParseCapture(
+        [
+            "capture",
+            "--metric", "refactor",
+        ]);
+
+        Assert.Equal(MetricIds.RefactorPriorityPoints, options.Metric);
+    }
+
+    [Fact]
+    public void CaptureOptions_ParseCapture_ParsesThreshold()
+    {
+        var options = CaptureOptions.ParseCapture(
+        [
+            "capture",
+            "--threshold", "50",
+        ]);
+
+        Assert.Equal(50d, options.Threshold);
     }
 }

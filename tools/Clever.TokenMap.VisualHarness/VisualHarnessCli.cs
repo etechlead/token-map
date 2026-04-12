@@ -183,6 +183,11 @@ internal static class VisualHarnessCli
             defaultFactory: () => MetricIds.Tokens,
             defaultValueDescription: CliParsing.GetMetricToken(MetricIds.Tokens),
             allowedValues: CliParsing.GetMetricTokens());
+        var threshold = new CliValueOption<double>(
+            "--threshold",
+            "N",
+            "Request a treemap minimum visible weight using the selected metric's units.",
+            CliParsing.ParseDouble);
         var surfaces = new CliValueOption<IReadOnlyList<CaptureSurface>>(
             "--surface",
             "SURFACES",
@@ -250,6 +255,7 @@ internal static class VisualHarnessCli
             outputDirectory,
             theme,
             metric,
+            threshold,
             surfaces,
             palettes,
         };
@@ -288,6 +294,7 @@ internal static class VisualHarnessCli
             outputDirectory,
             theme,
             metric,
+            threshold,
             palettes,
             surfaces,
             compare,
@@ -460,6 +467,7 @@ internal sealed record CaptureCommandDefinition(
     CliValueOption<string> OutputDirectoryOption,
     CliValueOption<ThemePreference> ThemeOption,
     CliValueOption<MetricId> MetricOption,
+    CliValueOption<double> ThresholdOption,
     CliValueOption<IReadOnlyList<TreemapPalette>> PaletteOption,
     CliValueOption<IReadOnlyList<CaptureSurface>> SurfaceOption,
     CliFlagOption? CompareOption,
